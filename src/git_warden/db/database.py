@@ -366,6 +366,17 @@ class Database:
                 "UPDATE repo_findings SET delivered_gold = 1 WHERE full_name = ?", (full_name,)
             )
 
+    def actor_github_logins(self) -> list[tuple[str, str]]:
+        """(actor_key, github login) pairs for actor-account discovery (doc 02 2.1).
+
+        Drawn from seeded/observed identifiers: GitHub usernames and orgs.
+        """
+        rows = self.conn.execute(
+            "SELECT actor_key, value FROM actor_identifiers "
+            "WHERE platform = 'github' AND identifier_type IN ('username', 'organization')"
+        ).fetchall()
+        return [(r["actor_key"], r["value"]) for r in rows]
+
     def get_run(self, run_id: str) -> sqlite3.Row | None:
         return self.conn.execute(
             "SELECT * FROM runs WHERE run_id = ?", (run_id,)
