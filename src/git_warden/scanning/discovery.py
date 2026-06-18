@@ -81,9 +81,10 @@ def classify_hit(hit: RepoHit) -> str:
     if exts & (_SOURCE_EXT | _CONFIG_EXT):
         return "suspicious"  # the IOC is used in code/config, regardless of name
     short_name = hit.full_name.split("/", 1)[-1]  # repo name only, not the owner
-    if _DEFENSIVE_NAME.search(short_name):
-        return "defensive"
-    return "defensive"  # matches only in data/list/doc files -> catalog
+    # Data/list-only matches: a defensive repo NAME marks a catalog (drop); a
+    # non-defensive name with a high-specificity IOC is still worth a look
+    # (eval verify finding -- the two branches must differ).
+    return "defensive" if _DEFENSIVE_NAME.search(short_name) else "suspicious"
 
 
 def search_iocs(
