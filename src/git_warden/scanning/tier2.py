@@ -114,7 +114,7 @@ def clone_repo(
     ``--`` before the URL so a crafted value cannot become a path traversal or a
     git flag (eval finding #16). A failed/partial clone is cleaned up.
     """
-    if not _VALID_FULL_NAME.match(full_name) or ".." in full_name:
+    if not _VALID_FULL_NAME.fullmatch(full_name) or ".." in full_name:
         log.warning("clone rejected: invalid full_name", extra={"context": {"repo": full_name}})
         return None
     url = f"https://github.com/{full_name}.git"

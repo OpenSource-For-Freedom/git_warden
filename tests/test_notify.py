@@ -58,3 +58,32 @@ def test_post_discord_posts_when_webhook_set():
     assert ok
     assert sent["url"] == "https://discord.test/webhook"
     assert b"hello" in sent["body"]
+
+
+def test_post_discord_disables_mentions():
+    sent = {}
+
+    class FakeResp:
+        status = 204
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+
+    def fake_opener(req, timeout=20):
+        sent["body"] = req.data
+        return FakeResp()
+
+    post_discord("hi", webhook="https://discord.test/wh", opener=fake_opener)
+    body = json.loads(sent["body"])
+    assert body["allowed_mentions"] == {"parse": []}
+
+
+def test_format_finding_sanitizes_malicious_filename():
+    # Attacker-controlled filename trying to break out + ping @everyone.
+    row = _row(raw_payload=json.dumps({
+        "bash_findings": [{"file": "x`@everyone http://evil",
+                           "line": 1, "category": "exfiltration", "rule": "x"}],
+        "scanners": {},
+    }))
+    msg = format_finding(row)
+    assert "`@everyone" not in msg      # code-span breakout neutralized
+    assert "@everyone" not in msg       # raw mention broken with zero-width char
