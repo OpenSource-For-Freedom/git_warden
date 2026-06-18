@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+
+# Tooling
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Git Warden runtime data (never commit live registry / artifacts)
+data/*.sqlite
+data/*.sqlite-journal
+data/*.db
+data/cache/
+artifacts/
+*.parquet
+
+# Secrets
+.env
+*.local
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

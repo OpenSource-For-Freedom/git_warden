@@ -1,0 +1,32 @@
+[
+  {
+    "name": "Lazarus Group",
+    "category": "nation_state",
+    "aliases": ["Hidden Cobra", "APT38", "ZINC", "Diamond Sleet"]
+  },
+  {
+    "name": "APT28",
+    "category": "nation_state",
+    "aliases": ["Fancy Bear", "Sofacy", "Forest Blizzard", "Sednit"]
+  },
+  {
+    "name": "APT29",
+    "category": "nation_state",
+    "aliases": ["Cozy Bear", "Midnight Blizzard", "Nobelium", "The Dukes"]
+  },
+  {
+    "name": "Sandworm Team",
+    "category": "nation_state",
+    "aliases": ["Voodoo Bear", "Seashell Blizzard", "BlackEnergy"]
+  },
+  {
+    "name": "Wizard Spider",
+    "category": "apt",
+    "aliases": ["TrickBot", "UNC1878", "Gold Blackburn"]
+  },
+  {
+    "name": "Shai-Hulud",
+    "category": "federated_affiliated",
+    "aliases": []
+  }
+]
