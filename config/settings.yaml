@@ -1,0 +1,29 @@
+# Git Warden orchestration settings (doc 05 section 5.1).
+# Run configuration, alerting, and self-healing thresholds. Paired with
+# trigger.yaml, which classifies errors and chooses responses.
+
+run:
+  # Promotion: independent feeds required before an actor is promoted (PRD 11).
+  min_corroborating_sources: 2
+  # Tier-1 score at/above which a candidate is cloned for Tier-2.
+  tier2_threshold: 4
+  # Tier-2 bash score at/above which a repo is confirmed malicious.
+  confirm_threshold: 5
+  # IOC terms mirrored into GitHub code search per hunt.
+  max_iocs: 8
+
+rate_limits:           # per-source budgets; weekly cadence stays well under
+  github_per_hour: 5000
+  github_code_search_per_min: 10
+  osm_per_day: 1500
+
+alerting:
+  discord:
+    gold: true         # confirmed findings -> Discord
+    health: true       # threshold/health alerts -> Discord
+  # Above these per-run error counts, alert and let the operator decide whether
+  # to continue auto-recovery or pause-and-investigate (doc 05 section 5.3).
+  thresholds:
+    feed_errors: 3
+    clone_failures: 10
+    scan_errors: 10
