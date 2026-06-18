@@ -9,10 +9,18 @@ from git_warden.notify import format_finding, post_discord
 
 def _row(**kw):
     base = {
-        "full_name": "evil/repo", "url": "https://github.com/evil/repo",
+        "full_name": "evil/repo", "platform": "github",
+        "url": "https://github.com/evil/repo",
         "detection_method": "ioc_search", "score": 9, "actor_key": "lazarus group",
         "reasoning": "exfil to attacker host", "signals": json.dumps(["bash:reverse_shell"]),
         "matched_iocs": json.dumps(["flipboxstudio.info"]),
+        "raw_payload": json.dumps({
+            "bash_findings": [
+                {"file": "setup.sh", "line": 3, "category": "reverse_shell",
+                 "rule": "dev-tcp-redirect"}
+            ],
+            "scanners": {"semgrep": "skipped (not installed)"},
+        }),
     }
     base.update(kw)
     return base
@@ -23,7 +31,8 @@ def test_format_finding_includes_key_fields():
     assert "evil/repo" in msg
     assert "flipboxstudio.info" in msg
     assert "lazarus group" in msg
-    assert "reverse_shell" in msg
+    assert "reverse_shell" in msg          # detection provenance from bash rule
+    assert "setup.sh:3" in msg             # IOC with explicit file path (doc 02 6)
 
 
 def test_post_discord_noop_without_webhook(monkeypatch):

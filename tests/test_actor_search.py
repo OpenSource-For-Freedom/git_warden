@@ -52,6 +52,7 @@ def test_hunt_actor_account_stage_creates_attributed_findings(tmp_path):
     db = Database.open(tmp_path / "a.sqlite")
     db.start_run("seed", utcnow())
     db.ensure_actor("apt-x", "APT-X", ActorCategory.APT.value, "seed")
+    db.set_actor_status("apt-x", "promoted")  # eval #3: only promoted actors seed
     db.add_identifier("apt-x", ActorIdentifier(
         identifier_type=IdentifierType.ORGANIZATION, value="evilcorp", platform=Platform.GITHUB))
 

@@ -51,8 +51,10 @@ def test_is_attacker_host_patterns():
     # Ephemeral hosts and suspicious TLDs -> attacker-owned-looking.
     assert is_attacker_host("avamnrwqo7.rbmock.dev")
     assert is_attacker_host("python-log.lapxa354.workers.dev")
-    assert is_attacker_host("ddjidd564.github.io")
     assert is_attacker_host("flipboxstudio.info")
+    # eval #10: Pages domains host millions of benign sites -> NOT attacker-host.
+    assert not is_attacker_host("ddjidd564.github.io")
+    assert not is_attacker_host("someproject.gitlab.io")
     # Corporate/cloud/common domains -> not searched.
     assert not is_attacker_host("management.azure.com")
     assert not is_attacker_host("graph.microsoft.com")

@@ -73,3 +73,10 @@ def test_renamed_fork_plus_obfuscated_readme_promotes():
     res = score_repo(name="quick-sliver", full_name="someone/quick-sliver", known_terms=KNOWN,
                      readme=readme, renamed_fork=True)
     assert res.tier2  # renamed-fork (2) + obfuscation (2) >= 4
+
+
+def test_homoglyph_impersonation_detected():
+    # eval #7: Cyrillic 'ѕ' (U+0455) lookalike of Latin 's' -> homoglyph of Sliver.
+    res = score_repo(name="ѕliver", full_name="x/ѕliver", known_terms=KNOWN,
+                     readme="a normal readme long enough to avoid the minimal flag here.")
+    assert any(s.startswith("homoglyph-of:") for s in res.signal_names)

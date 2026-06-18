@@ -17,7 +17,24 @@ and signals can be tuned and tested offline.
 from __future__ import annotations
 
 import re
+import unicodedata
 from dataclasses import dataclass, field
+
+# Confusable/homoglyph map (doc 02 2.2): common Cyrillic/Greek lookalikes and a
+# few leet substitutions folded to a Latin "skeleton" so a visually-identical
+# tool-name impersonation is detected even at edit distance N.
+_CONFUSABLES = str.maketrans({
+    "а": "a", "е": "e", "о": "o", "р": "p", "с": "c", "у": "y", "х": "x", "і": "i",
+    "ѕ": "s", "ј": "j", "һ": "h", "к": "k", "м": "m", "н": "h", "т": "t", "в": "b",
+    "ո": "n", "ε": "e", "ο": "o", "α": "a", "ρ": "p", "ν": "v", "τ": "t", "ι": "i",
+    "κ": "k", "μ": "m", "ѵ": "v",
+    "0": "o", "1": "l", "3": "e", "5": "s",
+})
+
+
+def _skeleton(text: str) -> str:
+    """NFKC-normalize, casefold, and fold confusables to a comparison skeleton."""
+    return unicodedata.normalize("NFKC", text).casefold().translate(_CONFUSABLES)
 
 # Signal weights. Promotion needs corroboration -- see DEFAULT_TIER2_THRESHOLD.
 STRONG = 3
@@ -100,19 +117,23 @@ def _name_signals(
 ) -> list[tuple[str, int]]:
     signals: list[tuple[str, int]] = []
 
-    wrapped = next(
-        (t for t in known_terms if t and t.casefold() in short and t.casefold() != short),
-        None,
-    )
+    # Compare on confusable-folded skeletons so homoglyph impersonations match.
+    skel = _skeleton(short)
+    term_skels = [(t, _skeleton(t)) for t in known_terms if t]
+
+    # Homoglyph/confusable swap: skeleton equals a tool but the raw name differs.
+    homoglyph = next((t for t, ts in term_skels if ts and ts == skel and short != ts), None)
+    wrapped = next((t for t, ts in term_skels if ts and ts in skel and ts != skel), None)
     near = None
-    if not wrapped:
+    if not homoglyph and not wrapped:
         near = next(
-            (t for t in known_terms
-             if t and len(t) >= 4 and 1 <= _levenshtein(short, t.casefold()) <= 2),
+            (t for t, ts in term_skels if ts and len(ts) >= 4 and 1 <= _levenshtein(skel, ts) <= 2),
             None,
         )
 
-    if near:
+    if homoglyph:
+        signals.append((f"homoglyph-of:{homoglyph}", STRONG))
+    elif near:
         # Lookalike of a known tool (e.g. "shiver" ~ "sliver"): strong on its own.
         signals.append((f"typosquat-of:{near}", STRONG))
     elif wrapped and not renamed_fork:

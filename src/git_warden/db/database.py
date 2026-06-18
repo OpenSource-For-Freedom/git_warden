@@ -45,9 +45,25 @@ def connect(db_path: Path | str = DB_PATH) -> sqlite3.Connection:
     return conn
 
 
+def _ensure_columns(conn: sqlite3.Connection, table: str, columns: dict[str, str]) -> None:
+    """Lightweight forward-only migration: add any missing columns."""
+    existing = {row[1] for row in conn.execute(f"PRAGMA table_info({table})")}
+    for name, ddl in columns.items():
+        if name not in existing:
+            conn.execute(f"ALTER TABLE {table} ADD COLUMN {name} {ddl}")
+
+
 def init_db(conn: sqlite3.Connection) -> None:
-    """Create all tables from schema.sql. Idempotent (uses IF NOT EXISTS)."""
+    """Create all tables from schema.sql. Idempotent (uses IF NOT EXISTS).
+
+    Also runs forward-only column migrations so an older store gains new columns
+    (e.g. cross-platform fields) without a rebuild.
+    """
     conn.executescript(_SCHEMA_PATH.read_text(encoding="utf-8"))
+    _ensure_columns(conn, "repo_findings", {
+        "platform": "TEXT NOT NULL DEFAULT 'github'",
+        "code_hash": "TEXT",
+    })
     conn.commit()
 
 
@@ -316,15 +332,17 @@ class Database:
             c.execute(
                 """
                 INSERT INTO repo_findings
-                    (full_name, url, detection_method, status, score, actor_key,
-                     reasoning, signals, matched_iocs, first_seen_run, last_seen_run,
-                     raw_payload)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    (full_name, platform, url, detection_method, status, score,
+                     code_hash, actor_key, reasoning, signals, matched_iocs,
+                     first_seen_run, last_seen_run, raw_payload)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(full_name) DO UPDATE SET
+                    platform = excluded.platform,
                     url = COALESCE(excluded.url, repo_findings.url),
                     status = CASE WHEN repo_findings.status = 'rejected'
                                   THEN 'rejected' ELSE excluded.status END,
                     score = excluded.score,
+                    code_hash = COALESCE(excluded.code_hash, repo_findings.code_hash),
                     actor_key = COALESCE(repo_findings.actor_key, excluded.actor_key),
                     reasoning = excluded.reasoning,
                     signals = excluded.signals,
@@ -334,10 +352,12 @@ class Database:
                 """,
                 (
                     finding.full_name,
+                    finding.platform.value,
                     str(finding.url) if finding.url else None,
                     finding.detection_method.value,
                     finding.status.value,
                     finding.score,
+                    finding.code_hash,
                     finding.actor_key,
                     finding.reasoning,
                     json.dumps(finding.signals),
@@ -369,13 +389,54 @@ class Database:
     def actor_github_logins(self) -> list[tuple[str, str]]:
         """(actor_key, github login) pairs for actor-account discovery (doc 02 2.1).
 
-        Drawn from seeded/observed identifiers: GitHub usernames and orgs.
+        Only PROMOTED actors seed the search (eval finding #3): the layer acts on
+        the validated dataset, so quarantined/rejected actors never drive
+        discovery or attribution.
         """
         rows = self.conn.execute(
-            "SELECT actor_key, value FROM actor_identifiers "
-            "WHERE platform = 'github' AND identifier_type IN ('username', 'organization')"
+            "SELECT i.actor_key, i.value FROM actor_identifiers i "
+            "JOIN threat_actors a ON a.actor_key = i.actor_key "
+            "WHERE i.platform = 'github' "
+            "AND i.identifier_type IN ('username', 'organization') "
+            "AND a.status = 'promoted'"
         ).fetchall()
         return [(r["actor_key"], r["value"]) for r in rows]
+
+    def known_repo_names(self) -> set[str]:
+        """Every repo we already track, lowercased (eval finding #2).
+
+        Union of OSM repo artifacts and existing findings, so discovery reports
+        only genuinely-new repos. The caller adds pinned red-team tool repos.
+        """
+        from ..refs import repo_full_name
+
+        known: set[str] = set()
+        for row in self.list_artifacts(artifact_type="repo"):
+            ref = json.loads(row["raw_payload"]).get("resource_identifier") or row["name"]
+            full = repo_full_name(ref)
+            if full:
+                known.add(full.casefold())
+        for row in self.conn.execute("SELECT full_name FROM repo_findings"):
+            known.add(row["full_name"].casefold())
+        return known
+
+    def cross_platform_clusters(self) -> dict[str, list[dict]]:
+        """Confirmed findings grouped by code_hash (doc 04 section 6).
+
+        The same malicious core re-hosted across platforms shares a code hash, so
+        this collapses them into one tracked entity with multiple locations.
+        Returns only clusters with more than one location.
+        """
+        clusters: dict[str, list[dict]] = {}
+        rows = self.conn.execute(
+            "SELECT code_hash, platform, full_name, url FROM repo_findings "
+            "WHERE code_hash IS NOT NULL AND status = 'confirmed'"
+        ).fetchall()
+        for r in rows:
+            clusters.setdefault(r["code_hash"], []).append(
+                {"platform": r["platform"], "full_name": r["full_name"], "url": r["url"]}
+            )
+        return {h: locs for h, locs in clusters.items() if len(locs) > 1}
 
     # -- learned IOCs (the compounding loop) -------------------------------
     def record_learned_ioc(self, value: str, kind: str, source_repo: str, run_id: str) -> None:

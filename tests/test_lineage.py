@@ -72,7 +72,8 @@ def test_name_match_excludes_legit_org_and_dedups():
     assert names == {"attacker/sliver-weaponized"}
     cand = cands[0]
     assert cand.relation == "name_match"
-    assert "renamed" in cand.signals  # short name differs from "sliver"
+    # eval #4: 'renamed' is a fork-only signal; a name_match is not a fork.
+    assert "renamed" not in cand.signals
     assert "no-description" in cand.signals
 
 

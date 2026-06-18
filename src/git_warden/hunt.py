@@ -105,7 +105,9 @@ def hunt(
     """Run the hunt and return a summary. Persists findings into the registry."""
     now = now or datetime.now(UTC)
     db.start_run(run_id, now, config={"stage": "hunt", "tier2": do_tier2})
-    known = {r.casefold() for tool in tools for r in tool.repos}
+    # Repos we already track (OSM artifacts + prior findings) plus pinned tools,
+    # so discovery reports only genuinely-new repos (eval finding #2).
+    known = db.known_repo_names() | {r.casefold() for tool in tools for r in tool.repos}
     candidates: dict[str, RepoFinding] = {}
 
     if do_ioc:
@@ -129,11 +131,22 @@ def hunt(
         for ar in find_actor_account_repos(client, db.actor_github_logins(), known=known):
             candidates.setdefault(ar.full_name.casefold(), _finding_from_account(ar))
 
-    # Bound the run: keep the strongest candidates (most signals/IOC matches)
-    # before the expensive Tier-1 README fetches + Tier-2 clones.
+    # Bound the run: keep the strongest candidates before the expensive Tier-1
+    # README fetches + Tier-2 clones. Ranking is method-aware (eval finding #13)
+    # so high-trust actor-account leads (which carry no signals/IOCs yet) are not
+    # starved by noisy multi-signal lineage hits.
     if limit and len(candidates) > limit:
-        ranked = sorted(candidates.values(),
-                        key=lambda f: -(len(f.signals) + len(f.matched_iocs)))
+        method_base = {
+            DetectionMethod.ACTOR_ACCOUNT: 3,
+            DetectionMethod.OSM_REPOSITORY: 2,
+            DetectionMethod.IOC_SEARCH: 1,
+            DetectionMethod.REDTEAM_LINEAGE: 1,
+        }
+        ranked = sorted(
+            candidates.values(),
+            key=lambda f: -(method_base.get(f.detection_method, 0)
+                            + len(f.signals) + len(f.matched_iocs)),
+        )
         candidates = {f.full_name.casefold(): f for f in ranked[:limit]}
 
     # Tier-1 screen: fetch README, score name + README jointly.
@@ -173,7 +186,15 @@ def hunt(
                     finding.signals = sorted(set(finding.signals) | set(result.signal_summary()))
                     finding.reasoning = (finding.reasoning or "") + \
                         f" | Tier-2 confirmed (bash score {result.bash_score})"
+                    finding.code_hash = result.code_hash
                     finding.raw_payload["code_hash"] = result.code_hash
+                    # Provenance for the gold message (doc 02 6): file:line + rule
+                    # per bash finding, and which scanners fired.
+                    finding.raw_payload["bash_findings"] = [
+                        {"file": bf.file, "line": bf.line, "category": bf.category, "rule": bf.rule}
+                        for bf in result.bash_findings[:20]
+                    ]
+                    finding.raw_payload["scanners"] = result.scanners
                     db.upsert_finding(finding, run_id)
                     confirmed += 1
                     # Compounding loop: mine this confirmed repo's IOCs into the

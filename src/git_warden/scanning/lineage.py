@@ -60,7 +60,9 @@ def _recent(pushed_at: str | None, now: datetime, days: int) -> bool:
 
 def _signals(item: dict, anchor_short: str | None, now: datetime, recent_days: int) -> list[str]:
     signals: list[str] = []
-    if anchor_short and _short_name(item.get("full_name", "")) != anchor_short:
+    # "renamed" means a FORK renamed off the tool name (eval finding #4); a
+    # name_match repo is not a fork, so it must not get this signal.
+    if anchor_short and item.get("fork") and _short_name(item.get("full_name", "")) != anchor_short:
         signals.append("renamed")
     if item.get("fork"):
         signals.append("is-fork")
