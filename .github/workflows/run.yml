@@ -1,0 +1,59 @@
+name: Git Warden Run
+
+# Triggering is phased (doc 05 section 2): manual first for stability, then a
+# weekly cron. Event-driven (on new threat-intel) is a later phase.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1" # Mondays 06:00 UTC -- weekly batch (PRD section 8)
+
+permissions:
+  contents: read
+
+concurrency:
+  group: git-warden-run
+  cancel-in-progress: false
+
+jobs:
+  hunt:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install -e .
+
+      # Persist the SQLite store + caches across runs so the registry and the
+      # MITRE bundle accumulate week to week.
+      - name: Restore data
+        uses: actions/cache@v4
+        with:
+          path: data
+          key: git-warden-data-${{ github.run_id }}
+          restore-keys: git-warden-data-
+
+      # Repo secret names (GH_TOKEN, OSM_TOKEN, DISCORD_WEBHOOK) are mapped onto
+      # the GW_* env vars the code reads. Local .env uses the GW_* names directly.
+      - name: Ingest threat-intel breadcrumbs
+        env:
+          GW_GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          GW_OSM_API_KEY: ${{ secrets.OSM_TOKEN }}
+        run: python gw.py ingest
+
+      - name: Hunt malicious repositories (Tier-2 + gold)
+        env:
+          GW_GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          GW_OSM_API_KEY: ${{ secrets.OSM_TOKEN }}
+          GW_DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: python gw.py hunt --scan --gold
+
+      - name: Upload run artifacts (full transparency)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: git-warden-artifacts
+          path: artifacts/
+          if-no-files-found: ignore
