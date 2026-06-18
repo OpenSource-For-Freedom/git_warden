@@ -12,7 +12,7 @@ import json
 import logging
 import urllib.request
 
-from .config import DISCORD_WEBHOOK
+from .config import DISCORD_WEBHOOK, USER_AGENT
 
 log = logging.getLogger(__name__)
 
@@ -46,7 +46,10 @@ def post_discord(
         return False
     payload = json.dumps({"content": content[:1900]}).encode("utf-8")
     req = urllib.request.Request(
-        webhook, data=payload, headers={"Content-Type": "application/json"}
+        webhook,
+        data=payload,
+        # Discord rejects the default urllib User-Agent with 403 -- set our own.
+        headers={"Content-Type": "application/json", "User-Agent": USER_AGENT},
     )
     try:
         with opener(req, timeout=20) as resp:

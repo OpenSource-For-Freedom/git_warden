@@ -83,6 +83,7 @@ def hunt(
     do_lineage: bool = True,
     do_tier2: bool = False,
     max_iocs: int = 8,
+    limit: int = 0,
     scan_min_score: int = 4,
     gold: bool = False,
     notifier=None,
@@ -106,6 +107,13 @@ def hunt(
             for cand in find_lineage_candidates(client, tool, known_good=known, now=now):
                 key = cand.full_name.casefold()
                 candidates.setdefault(key, _finding_from_lineage(cand, tool))
+
+    # Bound the run: keep the strongest candidates (most signals/IOC matches)
+    # before the expensive Tier-1 README fetches + Tier-2 clones.
+    if limit and len(candidates) > limit:
+        ranked = sorted(candidates.values(),
+                        key=lambda f: -(len(f.signals) + len(f.matched_iocs)))
+        candidates = {f.full_name.casefold(): f for f in ranked[:limit]}
 
     # Tier-1 screen: fetch README, score name + README jointly.
     all_terms = {t for tool in tools for t in tool.match_terms}

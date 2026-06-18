@@ -73,6 +73,22 @@ def test_hunt_lineage_to_confirmed_gold(tmp_path):
     db.close()
 
 
+def test_hunt_limit_caps_candidates(tmp_path):
+    db = Database.open(tmp_path / "h3.sqlite")
+
+    class MultiForkClient(FakeClient):
+        def list_forks(self, owner, name, per_page=100, sort="newest"):
+            return [_fork(f"evil/sliver-clone-{i}") for i in range(5)] if name == "sliver" else []
+
+    summary = hunt(
+        db, MultiForkClient(), TOOLS,
+        run_id="hunt-3", now=utcnow(),
+        do_ioc=False, do_lineage=True, do_tier2=False, limit=2,
+    )
+    assert summary["counts"]["candidates"] == 2  # capped from 5
+    db.close()
+
+
 def test_hunt_without_tier2_leaves_candidates_screened(tmp_path):
     db = Database.open(tmp_path / "h2.sqlite")
     summary = hunt(
