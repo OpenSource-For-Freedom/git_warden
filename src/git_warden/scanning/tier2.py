@@ -20,6 +20,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from .bash_scanner import BashFinding, scan_repo, score_findings
+from .ioc import IocSet, extract_repo_iocs
 
 log = logging.getLogger(__name__)
 
@@ -41,6 +42,7 @@ class Tier2Result:
     bash_score: int = 0
     scanners: dict[str, str] = field(default_factory=dict)  # name -> status/summary
     confirmed: bool = False
+    learned_iocs: IocSet = field(default_factory=IocSet)  # IOCs mined from the code
 
     def signal_summary(self) -> list[str]:
         cats = sorted({f.category for f in self.bash_findings})
@@ -108,6 +110,9 @@ def analyze_repo(
     bash_score = score_findings(bash_findings)
     scanners = {name: _run_external(name, root, runner) for name in _EXTERNAL_SCANNERS}
     confirmed = bash_score >= confirm_threshold or "flagged" in scanners.values()
+    # Learning loop: mine IOCs from the code only once the repo is confirmed
+    # malicious, so the search corpus grows from trusted ground truth.
+    learned = extract_repo_iocs(root) if confirmed else IocSet()
     return Tier2Result(
         full_name=full_name,
         code_hash=repo_code_hash(root),
@@ -115,6 +120,7 @@ def analyze_repo(
         bash_score=bash_score,
         scanners=scanners,
         confirmed=confirmed,
+        learned_iocs=learned,
     )
 
 
