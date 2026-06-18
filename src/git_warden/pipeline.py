@@ -16,6 +16,7 @@ from .db import Database
 from .enums import ActorStatus, RunStatus
 from .feeds.base import ArtifactFeed, Feed
 from .models import SeedActor
+from .orchestration import RunHealth, resilient_call
 from .validator import validate_actors
 
 log = logging.getLogger(__name__)
@@ -35,9 +36,17 @@ def run_ingestion(
     now: datetime | None = None,
     min_sources: int = MIN_CORROBORATING_SOURCES,
     write_artifacts: bool = True,
+    playbook=None,
+    on_alert=None,
 ) -> dict:
-    """Execute one ingestion run and return its summary dict."""
+    """Execute one ingestion run and return its summary dict.
+
+    When ``playbook`` is provided (doc 05), per-feed calls get classified
+    retry/backoff and threshold alerting; otherwise a feed failure is just
+    isolated and logged (default, used by tests).
+    """
     artifact_feeds = artifact_feeds or []
+    health = RunHealth()
     now = now or datetime.now(UTC)
     run_id = run_id or default_run_id(now)
 
@@ -55,7 +64,14 @@ def run_ingestion(
 
     for feed in feeds:
         try:
-            observations = feed.collect(run_id, seeds)
+            if playbook is not None:
+                observations = resilient_call(
+                    lambda f=feed: f.collect(run_id, seeds),
+                    playbook=playbook, health=health, on_alert=on_alert,
+                    label=feed.source.value,
+                ) or []
+            else:
+                observations = feed.collect(run_id, seeds)
         except Exception as exc:  # isolate one feed's failure from the run
             feed_errors[feed.source.value] = str(exc)
             log.exception(

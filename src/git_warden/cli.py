@@ -22,6 +22,9 @@ def _cmd_ingest(args: argparse.Namespace) -> int:
     configure_logging(json_output=not args.pretty_logs)
     config.ensure_dirs()
 
+    from .notify import post_discord
+    from .orchestration import load_playbook
+
     seeds = load_seeds(args.seeds)
     db = Database.open(args.db)
     try:
@@ -33,6 +36,8 @@ def _cmd_ingest(args: argparse.Namespace) -> int:
             run_id=args.run_id,
             min_sources=args.min_sources,
             write_artifacts=not args.no_artifacts,
+            playbook=load_playbook(),
+            on_alert=lambda m: post_discord(m),
         )
     finally:
         db.close()

@@ -69,3 +69,27 @@ def test_pipeline_isolates_a_failing_feed(tmp_path):
     assert summary["counts"]["feed_errors"] == 1
     assert "fbi_cisa" in summary["feed_errors"]
     db.close()
+
+
+def test_pipeline_with_playbook_still_isolates_unclassified_failure(tmp_path):
+    # With the orchestration playbook, an unclassified feed error re-raises
+    # immediately (no retry/sleep) and is isolated -- run still completes.
+    from git_warden.orchestration import load_playbook
+
+    db = Database.open(tmp_path / "p3.sqlite")
+    good = make_fake_feed(FeedSource.GOOGLE_RSS, [("APT-X", ActorCategory.APT.value)])
+
+    class BoomFeed(type(good)):
+        def collect(self, run_id, seeds):
+            raise RuntimeError("feed down")
+
+    boom = BoomFeed()
+    boom.source = FeedSource.FBI_CISA
+
+    summary = run_ingestion(
+        db, [good, boom], seeds=[], run_id="run-1", now=utcnow(),
+        playbook=load_playbook(),
+    )
+    assert summary["counts"]["observations"] == 1
+    assert summary["counts"]["feed_errors"] == 1
+    db.close()
