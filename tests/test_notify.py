@@ -26,7 +26,9 @@ def test_format_finding_includes_key_fields():
     assert "reverse_shell" in msg
 
 
-def test_post_discord_noop_without_webhook():
+def test_post_discord_noop_without_webhook(monkeypatch):
+    # Force no ambient webhook (a local .env may otherwise supply one).
+    monkeypatch.setattr("git_warden.notify.DISCORD_WEBHOOK", "")
     assert post_discord("hi", webhook=None) is False
 
 
