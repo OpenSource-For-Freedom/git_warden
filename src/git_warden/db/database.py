@@ -377,6 +377,30 @@ class Database:
         ).fetchall()
         return [(r["actor_key"], r["value"]) for r in rows]
 
+    # -- learned IOCs (the compounding loop) -------------------------------
+    def record_learned_ioc(self, value: str, kind: str, source_repo: str, run_id: str) -> None:
+        """Store an IOC mined from a confirmed repo's code (dedup on value)."""
+        with self.transaction() as c:
+            c.execute(
+                "INSERT OR IGNORE INTO learned_iocs (value, kind, source_repo, first_seen_run) "
+                "VALUES (?, ?, ?, ?)",
+                (value, kind, source_repo, run_id),
+            )
+
+    def learned_search_terms(self) -> list[str]:
+        """Searchable strings from learned IOCs: domains + webhook ids."""
+        import re
+
+        terms: list[str] = []
+        for row in self.conn.execute("SELECT value, kind FROM learned_iocs"):
+            if row["kind"] == "domain":
+                terms.append(row["value"])
+            elif row["kind"] == "webhook":
+                m = re.search(r"webhooks/(\d+)", row["value"])
+                if m:
+                    terms.append(m.group(1))
+        return list(dict.fromkeys(terms))
+
     def get_run(self, run_id: str) -> sqlite3.Row | None:
         return self.conn.execute(
             "SELECT * FROM runs WHERE run_id = ?", (run_id,)

@@ -144,3 +144,45 @@ def extract_iocs(text: str | None) -> IocSet:
         domains=domains,
         hashes=Counter(h.lower() for h in _HASH.findall(text)),
     )
+
+
+_CODE_MAX_BYTES = 1_000_000
+
+
+def extract_code_iocs(text: str | None) -> IocSet:
+    """Extract IOCs from source CODE (the learning loop, expand core search).
+
+    Unlike :func:`extract_iocs` (tuned for OSM threat prose), code *is* the
+    behavior, so domains are not C2-context-gated -- instead only
+    attacker-owned-looking domains are kept (high precision). Webhooks/telegram/
+    hashes are taken anywhere.
+    """
+    text = text or ""
+    domains = Counter(
+        d.lower()
+        for d in _DOMAIN.findall(text)
+        if d.lower() not in BENIGN_DOMAINS and is_attacker_host(d.lower())
+    )
+    return IocSet(
+        webhooks=Counter(_DISCORD.findall(text)),
+        telegram=Counter(_TELEGRAM.findall(text)),
+        domains=domains,
+        hashes=Counter(),  # file hashes from prose; code-derived hashes are noisy
+    )
+
+
+def extract_repo_iocs(root) -> IocSet:
+    """Walk a cloned repo's text files and aggregate code IOCs."""
+    from pathlib import Path
+
+    agg = IocSet()
+    for path in Path(root).rglob("*"):
+        if not path.is_file() or ".git" in path.parts:
+            continue
+        try:
+            if path.stat().st_size > _CODE_MAX_BYTES:
+                continue
+            agg.merge(extract_code_iocs(path.read_text(encoding="utf-8", errors="ignore")))
+        except OSError:
+            continue
+    return agg

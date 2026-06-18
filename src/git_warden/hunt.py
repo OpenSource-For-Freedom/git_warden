@@ -109,7 +109,11 @@ def hunt(
     candidates: dict[str, RepoFinding] = {}
 
     if do_ioc:
-        terms = build_search_terms(_osm_iocs(db), max_iocs)
+        # Learned IOCs (from prior confirmed repos) lead, then OSM IOCs -- the
+        # compounding search corpus (expand core search).
+        learned = db.learned_search_terms()
+        base = build_search_terms(_osm_iocs(db), max_iocs)
+        terms = list(dict.fromkeys(learned + base))[:max_iocs]
         hits = search_iocs(client, terms, known=known, per_term=15)
         for hit in hits:
             if classify_hit(hit) == "suspicious":
@@ -172,6 +176,15 @@ def hunt(
                     finding.raw_payload["code_hash"] = result.code_hash
                     db.upsert_finding(finding, run_id)
                     confirmed += 1
+                    # Compounding loop: mine this confirmed repo's IOCs into the
+                    # search corpus so future hunts find more like it.
+                    li = result.learned_iocs
+                    for wh in li.webhooks:
+                        db.record_learned_ioc(wh, "webhook", finding.full_name, run_id)
+                    for tg in li.telegram:
+                        db.record_learned_ioc(tg, "telegram", finding.full_name, run_id)
+                    for dom in li.domains:
+                        db.record_learned_ioc(dom, "domain", finding.full_name, run_id)
 
     delivered = 0
     if gold and notifier is not None:
