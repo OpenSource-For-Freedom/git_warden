@@ -127,6 +127,19 @@ class GitHubClient:
         resp.raise_for_status()
         return resp.json().get("items", [])
 
+    def list_user_repos(self, login: str, per_page: int = 100) -> list[dict]:
+        """Public repos for a user or org login. [] if the account is 404.
+
+        Used for actor-account discovery (doc 02 section 2.1): repos under a
+        known threat-actor GitHub account. ``/users/{login}/repos`` serves both
+        users and orgs.
+        """
+        resp = self._get(f"/users/{login}/repos", params={"per_page": per_page, "sort": "updated"})
+        if resp.status_code == 404:
+            return []
+        resp.raise_for_status()
+        return resp.json()
+
     def list_forks(
         self, owner: str, name: str, per_page: int = 100, sort: str = "newest"
     ) -> list[dict]:

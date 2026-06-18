@@ -29,11 +29,13 @@ from .scanning import (
     build_search_terms,
     classify_hit,
     extract_iocs,
+    find_actor_account_repos,
     find_lineage_candidates,
     scan_candidate,
     score_repo,
     search_iocs,
 )
+from .scanning.actor_search import AccountRepo
 from .scanning.discovery import RepoHit
 
 log = logging.getLogger(__name__)
@@ -72,6 +74,16 @@ def _finding_from_lineage(cand, tool: RedTeamTool) -> RepoFinding:
     )
 
 
+def _finding_from_account(ar: AccountRepo) -> RepoFinding:
+    return RepoFinding(
+        full_name=ar.full_name,
+        url=ar.html_url or None,
+        detection_method=DetectionMethod.ACTOR_ACCOUNT,
+        actor_key=ar.actor_key,
+        reasoning=f"repository under known threat-actor account {ar.owner}",
+    )
+
+
 def hunt(
     db: Database,
     client,
@@ -81,6 +93,7 @@ def hunt(
     now: datetime | None = None,
     do_ioc: bool = True,
     do_lineage: bool = True,
+    do_actor: bool = True,
     do_tier2: bool = False,
     max_iocs: int = 8,
     limit: int = 0,
@@ -107,6 +120,10 @@ def hunt(
             for cand in find_lineage_candidates(client, tool, known_good=known, now=now):
                 key = cand.full_name.casefold()
                 candidates.setdefault(key, _finding_from_lineage(cand, tool))
+
+    if do_actor:
+        for ar in find_actor_account_repos(client, db.actor_github_logins(), known=known):
+            candidates.setdefault(ar.full_name.casefold(), _finding_from_account(ar))
 
     # Bound the run: keep the strongest candidates (most signals/IOC matches)
     # before the expensive Tier-1 README fetches + Tier-2 clones.
