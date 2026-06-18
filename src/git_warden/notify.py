@@ -17,36 +17,53 @@ from .config import DISCORD_WEBHOOK, USER_AGENT
 log = logging.getLogger(__name__)
 
 
+def _safe(value) -> str:
+    """Neutralize attacker-controlled (repo-derived) text for a Discord message.
+
+    File paths/IOCs come from cloned untrusted repos and could contain backticks
+    (code-span breakout), '@' (mentions), or newlines (spoofing). Strip/escape
+    them so a crafted filename can't ping @everyone or inject links/markdown.
+    """
+    text = str(value if value is not None else "").replace("\n", " ").replace("\r", " ")
+    # Neutralize the high-risk vectors: backtick (code-span breakout) and '@'
+    # (mentions). allowed_mentions:[] in post_discord is the hard guarantee.
+    return text.replace("`", "'").replace("@", "@​")
+
+
 def format_finding(row) -> str:
     """Render a repo_findings row as a Discord-ready gold message (doc 02 6).
 
     Includes IOCs with explicit file paths and which scanner(s)/rule(s) fired, so
     a reviewer can act without leaving the message.
     """
-    iocs = ", ".join(json.loads(row["matched_iocs"] or "[]")) or "n/a"
+    iocs = ", ".join(_safe(i) for i in json.loads(row["matched_iocs"] or "[]")) or "n/a"
     payload = json.loads(row["raw_payload"] or "{}")
     bash = payload.get("bash_findings") or []
     scanners = payload.get("scanners") or {}
 
-    # IOCs with explicit file paths: the per-file bash findings.
-    ioc_lines = [f"  - `{b['file']}:{b['line']}` {b['category']}/{b['rule']}" for b in bash[:8]]
+    # IOCs with explicit file paths: the per-file bash findings (paths sanitized).
+    ioc_lines = [
+        f"  - `{_safe(b['file'])}:{b['line']}` {_safe(b['category'])}/{_safe(b['rule'])}"
+        for b in bash[:8]
+    ]
     if len(bash) > 8:
         ioc_lines.append(f"  - … {len(bash) - 8} more")
 
     # Detection provenance: which scanner(s)/rule(s) fired.
-    rules = sorted({f"bash:{b['rule']}" for b in bash})
-    scanner_fired = [n for n, s in scanners.items() if s == "flagged"]
+    rules = sorted({f"bash:{_safe(b['rule'])}" for b in bash})
+    scanner_fired = [_safe(n) for n, s in scanners.items() if s == "flagged"]
     provenance = ", ".join(rules + scanner_fired) or "see signals"
 
     lines = [
         "**🛡️ Git Warden — confirmed malicious repository**",
-        f"**Repository:** `{row['full_name']}` ({row['platform']})  {row['url'] or ''}",
-        f"**Why:** {row['reasoning'] or 'see signals'}",
+        f"**Repository:** `{_safe(row['full_name'])}` ({row['platform']})  "
+        f"{_safe(row['url'] or '')}",
+        f"**Why:** {_safe(row['reasoning'] or 'see signals')}",
         f"**Detection provenance:** {provenance} (score {row['score']})",
         "**Indicators of compromise (file paths):**",
         *(ioc_lines or ["  - n/a"]),
         f"**Provenance (matched IOCs):** {iocs}",
-        f"**Attribution:** {row['actor_key'] or 'unattributed'}",
+        f"**Attribution:** {_safe(row['actor_key'] or 'unattributed')}",
     ]
     return "\n".join(lines)
 
@@ -62,7 +79,11 @@ def post_discord(
     if not webhook:
         log.info("discord: no webhook configured; skipping")
         return False
-    payload = json.dumps({"content": content[:1900]}).encode("utf-8")
+    payload = json.dumps(
+        # allowed_mentions parse:[] means no @everyone/@here/role ping can ever
+        # fire, even if some markup slips through sanitization (defense in depth).
+        {"content": content[:1900], "allowed_mentions": {"parse": []}}
+    ).encode("utf-8")
     req = urllib.request.Request(
         webhook,
         data=payload,

@@ -98,3 +98,8 @@ def test_run_external_semgrep_flags_only_on_results(monkeypatch, tmp_path):
     assert t2._run_external("semgrep", tmp_path, flag_runner) == "flagged"
     assert t2._run_external("semgrep", tmp_path, err_runner) == "error"
     assert t2._run_external("semgrep", tmp_path, clean_runner) == "clean"
+
+
+def test_clone_rejects_trailing_newline_in_full_name(tmp_path):
+    from git_warden.scanning.tier2 import clone_repo
+    assert clone_repo("owner/repo\n", tmp_path / "d") is None  # fullmatch, not $

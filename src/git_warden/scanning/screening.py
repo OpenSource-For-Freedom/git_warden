@@ -119,15 +119,18 @@ def _name_signals(
 
     # Compare on confusable-folded skeletons so homoglyph impersonations match.
     skel = _skeleton(short)
-    term_skels = [(t, _skeleton(t)) for t in known_terms if t]
+    # Carry both the raw casefold and the skeleton of each term, so the
+    # homoglyph test compares raw-vs-raw, not raw-vs-skeleton (eval verify #4).
+    term_info = [(t, t.casefold(), _skeleton(t)) for t in known_terms if t]
 
-    # Homoglyph/confusable swap: skeleton equals a tool but the raw name differs.
-    homoglyph = next((t for t, ts in term_skels if ts and ts == skel and short != ts), None)
-    wrapped = next((t for t, ts in term_skels if ts and ts in skel and ts != skel), None)
+    # Homoglyph/confusable swap: skeletons match but the RAW names differ.
+    homoglyph = next((t for t, traw, ts in term_info if ts and ts == skel and short != traw), None)
+    wrapped = next((t for t, traw, ts in term_info if ts and ts in skel and ts != skel), None)
     near = None
     if not homoglyph and not wrapped:
         near = next(
-            (t for t, ts in term_skels if ts and len(ts) >= 4 and 1 <= _levenshtein(skel, ts) <= 2),
+            (t for t, traw, ts in term_info
+             if ts and len(ts) >= 4 and 1 <= _levenshtein(skel, ts) <= 2),
             None,
         )
 

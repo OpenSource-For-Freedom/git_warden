@@ -101,3 +101,9 @@ def test_build_search_terms_selects_attacker_domains_and_webhook_ids():
 def test_build_search_terms_caps_at_max():
     iocs = IocSet(domains=Counter({f"h{i}.workers.dev": 10 - i for i in range(10)}))
     assert len(build_search_terms(iocs, 3)) == 3
+
+
+def test_classify_nondefensive_name_data_only_is_suspicious():
+    # eval verify: non-defensive name + IOC only in data files -> investigate.
+    hit = RepoHit("attacker/totally-evil", "attacker", "", paths=["notes.txt", "data.md"])
+    assert classify_hit(hit) == "suspicious"
