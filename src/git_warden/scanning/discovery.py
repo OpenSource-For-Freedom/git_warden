@@ -21,17 +21,27 @@ from dataclasses import dataclass, field
 log = logging.getLogger(__name__)
 
 # IOC code search surfaces defenders cataloging the IOC as well as attackers
-# using it. Repo names like these mark a defensive aggregator/feed/detector.
+# using it. These tokens (matched on the REPO short-name only, word-boundaried)
+# mark a defensive aggregator/feed/detector. Kept tight and specific: generic
+# words (research/analysis/scanner/mirror/hosts/feed/dataset/sandbox) were
+# dropped because they over-matched and let attackers evade by naming
+# (eval finding #1). Defensive-name is NOT an absolute veto -- a match inside
+# executable/config SOURCE always wins (the IOC is used, not just catalogued).
 _DEFENSIVE_NAME = re.compile(
-    r"detect|guard|blocklist|blacklist|hosts|malicious|malware|vuln|threat|"
-    r"\bioc[s]?\b|awesome|mirror|attack-data|supply.?chain|vigil|maltrail|"
-    r"indicator|sandbox|honeypot|research|dataset|feed|scanner|analysis",
+    r"blocklist|blacklist|allowlist|malware|malicious|\bvuln|\bioc[s]?\b|"
+    r"threat[-_]?intel|detection|detector|honeypot|maltrail|awesome[-_]|"
+    r"osint|advisor|attack[-_]data|supply[-_.]?chain",
     re.IGNORECASE,
 )
-# Attackers reference the IOC from executable source; defenders list it in data.
+# Attackers reference the IOC from executable source...
 _SOURCE_EXT = {
     ".js", ".mjs", ".cjs", ".ts", ".tsx", ".jsx", ".py", ".go", ".rb", ".php",
     ".sh", ".ps1", ".bat", ".rs", ".java", ".lua", ".c", ".cpp",
+}
+# ...or from config/markup that legitimately carries an exfil endpoint in a
+# malicious repo (eval finding #11). These also count as "use".
+_CONFIG_EXT = {
+    ".json", ".yml", ".yaml", ".toml", ".env", ".cfg", ".ini", ".html", ".ipynb",
 }
 
 
@@ -62,14 +72,18 @@ def build_search_terms(iocs, max_terms: int) -> list[str]:
 def classify_hit(hit: RepoHit) -> str:
     """'defensive' if the repo merely catalogs the IOC; 'suspicious' if it uses it.
 
-    Heuristic: a defensive-sounding repo name wins immediately; otherwise a match
-    inside executable source code is treated as use (suspicious), while a match
-    only in data/list/doc files is treated as a catalog (defensive).
+    Order matters (eval finding #1): a match inside executable/config SOURCE is
+    *use* and wins over a defensive-looking name -- an attacker can't evade by
+    naming their repo 'security-research'. Only a defensive repo short-name with
+    matches confined to data/list files (.txt/.md/.csv) is treated as a catalog.
     """
-    if _DEFENSIVE_NAME.search(hit.full_name):
-        return "defensive"
     exts = {os.path.splitext(p)[1].lower() for p in hit.paths}
-    return "suspicious" if exts & _SOURCE_EXT else "defensive"
+    if exts & (_SOURCE_EXT | _CONFIG_EXT):
+        return "suspicious"  # the IOC is used in code/config, regardless of name
+    short_name = hit.full_name.split("/", 1)[-1]  # repo name only, not the owner
+    if _DEFENSIVE_NAME.search(short_name):
+        return "defensive"
+    return "defensive"  # matches only in data/list/doc files -> catalog
 
 
 def search_iocs(

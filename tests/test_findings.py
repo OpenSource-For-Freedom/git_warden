@@ -6,8 +6,14 @@ import pytest
 from conftest import utcnow
 
 from git_warden.db import Database
-from git_warden.enums import DetectionMethod, RepoFindingStatus
-from git_warden.models import RepoFinding
+from git_warden.enums import (
+    ArtifactType,
+    DetectionMethod,
+    FeedSource,
+    Platform,
+    RepoFindingStatus,
+)
+from git_warden.models import MaliciousArtifact, RepoFinding
 
 
 @pytest.fixture
@@ -59,3 +65,28 @@ def test_actor_attribution_not_cleared_on_reupsert(db):
     db.upsert_finding(_finding(actor_key=None), "run-1")  # later sighting lacks attribution
     row = db.findings_by_status("candidate")[0]
     assert row["actor_key"] == "apt-x"
+
+
+def test_cross_platform_clusters_group_by_code_hash(db):
+    # eval #6 / doc 04 6: same code hash across platforms = one tracked entity.
+    db.upsert_finding(_finding("gh/evil", status=RepoFindingStatus.CONFIRMED,
+                               platform=Platform.GITHUB, code_hash="abc"), "run-1")
+    db.upsert_finding(_finding("gl/evil", status=RepoFindingStatus.CONFIRMED,
+                               platform=Platform.GITLAB, code_hash="abc"), "run-1")
+    db.upsert_finding(_finding("x/solo", status=RepoFindingStatus.CONFIRMED,
+                               code_hash="zzz"), "run-1")
+    clusters = db.cross_platform_clusters()
+    assert set(clusters["abc"][0].keys()) == {"platform", "full_name", "url"}
+    assert len(clusters["abc"]) == 2
+    assert "zzz" not in clusters  # single location is not a cross-platform cluster
+
+
+def test_known_repo_names_unions_artifacts_and_findings(db):
+    db.upsert_artifact(MaliciousArtifact(
+        artifact_type=ArtifactType.REPO, name="evil/repo", ecosystem="github",
+        source=FeedSource.OPEN_SOURCE_MALWARE,
+        raw_payload={"resource_identifier": "https://github.com/evil/repo"}), "run-1")
+    db.upsert_finding(_finding("other/found"), "run-1")
+    known = db.known_repo_names()
+    assert "evil/repo" in known       # from OSM artifact
+    assert "other/found" in known     # from prior finding

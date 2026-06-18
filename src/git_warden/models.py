@@ -249,10 +249,12 @@ class RepoFinding(BaseModel):
     """
 
     full_name: str = Field(min_length=1)  # owner/repo (the dedup key)
+    platform: Platform = Platform.GITHUB  # github | gitlab | gitea
     url: HttpUrl | None = None
     detection_method: DetectionMethod
     status: RepoFindingStatus = RepoFindingStatus.CANDIDATE
     score: int = 0
+    code_hash: str | None = None  # whole-repo fingerprint -> cross-platform dedup
     actor_key: str | None = None  # attribution, when known
     reasoning: str | None = None  # plain-language why-flagged
     signals: list[str] = Field(default_factory=list)  # detection signals fired

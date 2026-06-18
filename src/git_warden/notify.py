@@ -18,16 +18,34 @@ log = logging.getLogger(__name__)
 
 
 def format_finding(row) -> str:
-    """Render a repo_findings row as a Discord-ready gold message."""
-    signals = ", ".join(json.loads(row["signals"] or "[]")) or "n/a"
+    """Render a repo_findings row as a Discord-ready gold message (doc 02 6).
+
+    Includes IOCs with explicit file paths and which scanner(s)/rule(s) fired, so
+    a reviewer can act without leaving the message.
+    """
     iocs = ", ".join(json.loads(row["matched_iocs"] or "[]")) or "n/a"
+    payload = json.loads(row["raw_payload"] or "{}")
+    bash = payload.get("bash_findings") or []
+    scanners = payload.get("scanners") or {}
+
+    # IOCs with explicit file paths: the per-file bash findings.
+    ioc_lines = [f"  - `{b['file']}:{b['line']}` {b['category']}/{b['rule']}" for b in bash[:8]]
+    if len(bash) > 8:
+        ioc_lines.append(f"  - … {len(bash) - 8} more")
+
+    # Detection provenance: which scanner(s)/rule(s) fired.
+    rules = sorted({f"bash:{b['rule']}" for b in bash})
+    scanner_fired = [n for n, s in scanners.items() if s == "flagged"]
+    provenance = ", ".join(rules + scanner_fired) or "see signals"
+
     lines = [
         "**🛡️ Git Warden — confirmed malicious repository**",
-        f"**Repository:** `{row['full_name']}`  {row['url'] or ''}",
+        f"**Repository:** `{row['full_name']}` ({row['platform']})  {row['url'] or ''}",
         f"**Why:** {row['reasoning'] or 'see signals'}",
-        f"**Detection:** {row['detection_method']} (score {row['score']})",
-        f"**Signals:** {signals}",
-        f"**Provenance (IOCs):** {iocs}",
+        f"**Detection provenance:** {provenance} (score {row['score']})",
+        "**Indicators of compromise (file paths):**",
+        *(ioc_lines or ["  - n/a"]),
+        f"**Provenance (matched IOCs):** {iocs}",
         f"**Attribution:** {row['actor_key'] or 'unattributed'}",
     ]
     return "\n".join(lines)
