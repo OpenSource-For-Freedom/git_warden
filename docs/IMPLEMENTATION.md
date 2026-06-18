@@ -47,4 +47,7 @@ attribution. See the `corroboration-and-osm-design` memory.
   the classified-retry executor that consumes them is not wired yet.
 - **Gated web dashboard** (PRD §6).
 - Threat-actor → GitHub username/org seeding for the actor-account search path.
-- NVD feed adapter (ingestion source listed in doc 01, not yet implemented).
+
+## Descoped (for now)
+- **NVD** — deprioritized; free OSINT feeds + OSM cover the intel sources. No
+  NVD API key is required. (Listed as a source in doc 01; revisit if needed.)

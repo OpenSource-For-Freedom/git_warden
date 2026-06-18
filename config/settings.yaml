@@ -16,7 +16,6 @@ rate_limits:           # per-source budgets; weekly cadence stays well under
   github_per_hour: 5000
   github_code_search_per_min: 10
   osm_per_day: 1500
-  nvd_per_window: 50
 
 alerting:
   discord:
