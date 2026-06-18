@@ -64,6 +64,11 @@ def init_db(conn: sqlite3.Connection) -> None:
         "platform": "TEXT NOT NULL DEFAULT 'github'",
         "code_hash": "TEXT",
     })
+    # Created here (not in schema.sql) so it works on an upgraded store, where
+    # code_hash is added by the migration above rather than CREATE TABLE.
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_finding_code_hash ON repo_findings(code_hash)"
+    )
     conn.commit()
 
 

@@ -90,3 +90,35 @@ def test_known_repo_names_unions_artifacts_and_findings(db):
     known = db.known_repo_names()
     assert "evil/repo" in known       # from OSM artifact
     assert "other/found" in known     # from prior finding
+
+
+def test_open_migrates_legacy_repo_findings(tmp_path):
+    # A pre-cross-platform store (no platform/code_hash) must migrate on open,
+    # not crash on the code_hash index (regression guard for the readiness bug).
+    import sqlite3
+    path = tmp_path / "legacy.sqlite"
+    raw = sqlite3.connect(path)
+    # The real v1 repo_findings schema -- everything except platform/code_hash.
+    raw.executescript(
+        """
+        CREATE TABLE runs (run_id TEXT PRIMARY KEY);
+        CREATE TABLE repo_findings (
+            full_name TEXT PRIMARY KEY, url TEXT, detection_method TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'candidate', score INTEGER NOT NULL DEFAULT 0,
+            actor_key TEXT, reasoning TEXT, signals TEXT NOT NULL DEFAULT '[]',
+            matched_iocs TEXT NOT NULL DEFAULT '[]', first_seen_run TEXT,
+            last_seen_run TEXT, raw_payload TEXT NOT NULL DEFAULT '{}',
+            delivered_gold INTEGER NOT NULL DEFAULT 0
+        );
+        INSERT INTO repo_findings (full_name, detection_method)
+            VALUES ('old/repo', 'ioc_search');
+        """
+    )
+    raw.commit()
+    raw.close()
+
+    db = Database.open(path)  # must not raise
+    cols = {r[1] for r in db.conn.execute("PRAGMA table_info(repo_findings)")}
+    assert "platform" in cols and "code_hash" in cols
+    assert db.conn.execute("SELECT COUNT(*) FROM repo_findings").fetchone()[0] == 1
+    db.close()

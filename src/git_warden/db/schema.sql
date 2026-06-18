@@ -149,8 +149,9 @@ CREATE TABLE IF NOT EXISTS repo_findings (
 CREATE INDEX IF NOT EXISTS idx_finding_status ON repo_findings(status);
 CREATE INDEX IF NOT EXISTS idx_finding_method ON repo_findings(detection_method);
 CREATE INDEX IF NOT EXISTS idx_finding_actor ON repo_findings(actor_key);
--- Cross-platform dedup (doc 04 section 6): cluster locations by malicious core.
-CREATE INDEX IF NOT EXISTS idx_finding_code_hash ON repo_findings(code_hash);
+-- NOTE: the code_hash index (doc 04 6 cross-platform dedup) is created in
+-- init_db() AFTER the column migration, since on an upgraded store the column
+-- is added by ALTER TABLE and would not yet exist when this script runs.
 
 -- ---------------------------------------------------------------------------
 -- Learned IOCs: the compounding loop (expand core search)
