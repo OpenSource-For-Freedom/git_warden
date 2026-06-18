@@ -130,10 +130,12 @@ CREATE INDEX IF NOT EXISTS idx_artifact_status ON malicious_artifacts(status);
 -- surfaced them. Confirmed rows feed the Discord gold output (doc 02 section 6).
 CREATE TABLE IF NOT EXISTS repo_findings (
     full_name        TEXT PRIMARY KEY,        -- owner/repo, normalized lowercase
+    platform         TEXT NOT NULL DEFAULT 'github',  -- github | gitlab | gitea
     url              TEXT,
     detection_method TEXT NOT NULL,
     status           TEXT NOT NULL DEFAULT 'candidate',
     score            INTEGER NOT NULL DEFAULT 0,
+    code_hash        TEXT,                     -- whole-repo fingerprint (Tier-2)
     actor_key        TEXT REFERENCES threat_actors(actor_key) ON DELETE SET NULL,
     reasoning        TEXT,
     signals          TEXT NOT NULL DEFAULT '[]',   -- JSON
@@ -147,6 +149,8 @@ CREATE TABLE IF NOT EXISTS repo_findings (
 CREATE INDEX IF NOT EXISTS idx_finding_status ON repo_findings(status);
 CREATE INDEX IF NOT EXISTS idx_finding_method ON repo_findings(detection_method);
 CREATE INDEX IF NOT EXISTS idx_finding_actor ON repo_findings(actor_key);
+-- Cross-platform dedup (doc 04 section 6): cluster locations by malicious core.
+CREATE INDEX IF NOT EXISTS idx_finding_code_hash ON repo_findings(code_hash);
 
 -- ---------------------------------------------------------------------------
 -- Learned IOCs: the compounding loop (expand core search)

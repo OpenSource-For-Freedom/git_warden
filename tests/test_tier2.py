@@ -54,3 +54,47 @@ def test_scan_candidate_with_injected_clone(tmp_path):
 def test_scan_candidate_returns_none_on_clone_failure(tmp_path):
     result = scan_candidate("x/y", tmp_path, clone=lambda *a, **k: None)
     assert result is None
+
+
+def test_clone_rejects_invalid_full_name(tmp_path):
+    from git_warden.scanning.tier2 import clone_repo
+    # eval #16: traversal / non-allowlisted names rejected before any fs/clone op.
+    assert clone_repo("a/../../evil", tmp_path / "d1") is None
+    assert clone_repo("not-a-repo", tmp_path / "d2") is None
+    assert clone_repo("owner/re po", tmp_path / "d3") is None
+
+
+def test_enumeration_only_does_not_confirm(tmp_path):
+    # eval #15: weak recon alone must not reach confirmation/gold.
+    (tmp_path / "recon.sh").write_text(
+        "whoami\nuname -a\nid\nhostname\nnetstat -an\nifconfig\n", encoding="utf-8"
+    )
+    result = analyze_repo(tmp_path, "x/y")
+    assert not result.confirmed
+
+
+def test_run_external_semgrep_flags_only_on_results(monkeypatch, tmp_path):
+    import json as _json
+
+    import git_warden.scanning.tier2 as t2
+    monkeypatch.setattr(t2.shutil, "which", lambda n: "/usr/bin/" + n)
+
+    def _resp(returncode, payload):
+        class R:
+            pass
+        r = R()
+        r.returncode, r.stdout, r.stderr = returncode, _json.dumps(payload), ""
+        return r
+
+    def flag_runner(cmd, **k):
+        return _resp(1, {"results": [{"check_id": "x"}], "errors": []})
+
+    def err_runner(cmd, **k):
+        return _resp(2, {"results": [], "errors": [{"message": "boom"}]})
+
+    def clean_runner(cmd, **k):
+        return _resp(0, {"results": [], "errors": []})
+
+    assert t2._run_external("semgrep", tmp_path, flag_runner) == "flagged"
+    assert t2._run_external("semgrep", tmp_path, err_runner) == "error"
+    assert t2._run_external("semgrep", tmp_path, clean_runner) == "clean"

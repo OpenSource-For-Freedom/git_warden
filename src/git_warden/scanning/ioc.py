@@ -97,11 +97,14 @@ class IocSet:
 
 
 # Disposable hosting where attackers stand up throwaway C2/exfil endpoints.
+# NOTE: *.github.io / *.gitlab.io deliberately EXCLUDED (eval finding #10) --
+# Pages domains host millions of benign sites and flooded discovery; they are
+# not throwaway C2 like the entries below.
 _EPHEMERAL_SUFFIXES = (
     ".onrender.com", ".workers.dev", ".rbmock.dev", ".repl.co", ".replit.dev",
     ".glitch.me", ".pages.dev", ".ngrok.io", ".ngrok-free.app", ".ngrok.app",
     ".trycloudflare.com", ".serveo.net", ".r2.dev", ".deno.dev", ".fly.dev",
-    ".herokuapp.com", ".github.io", ".gitlab.io", ".surge.sh",
+    ".herokuapp.com", ".surge.sh",
 )
 # TLDs disproportionately used for malicious/throwaway domains.
 _SUSPICIOUS_TLDS = (
