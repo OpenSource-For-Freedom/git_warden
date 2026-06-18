@@ -35,18 +35,19 @@ jobs:
           key: git-warden-data-${{ github.run_id }}
           restore-keys: git-warden-data-
 
+      # Repo secret names (GH_TOKEN, OSM_TOKEN, DISCORD_WEBHOOK) are mapped onto
+      # the GW_* env vars the code reads. Local .env uses the GW_* names directly.
       - name: Ingest threat-intel breadcrumbs
         env:
-          GW_GITHUB_TOKEN: ${{ secrets.GW_GITHUB_TOKEN }}
-          GW_OSM_API_KEY: ${{ secrets.GW_OSM_API_KEY }}
-          GW_NVD_API_KEY: ${{ secrets.GW_NVD_API_KEY }}
+          GW_GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          GW_OSM_API_KEY: ${{ secrets.OSM_TOKEN }}
         run: python gw.py ingest
 
       - name: Hunt malicious repositories (Tier-2 + gold)
         env:
-          GW_GITHUB_TOKEN: ${{ secrets.GW_GITHUB_TOKEN }}
-          GW_OSM_API_KEY: ${{ secrets.GW_OSM_API_KEY }}
-          GW_DISCORD_WEBHOOK: ${{ secrets.GW_DISCORD_WEBHOOK }}
+          GW_GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          GW_OSM_API_KEY: ${{ secrets.OSM_TOKEN }}
+          GW_DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         run: python gw.py hunt --scan --gold
 
       - name: Upload run artifacts (full transparency)

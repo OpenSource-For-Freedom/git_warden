@@ -40,8 +40,9 @@ Credentials load from `.env` automatically (real env vars win). Tokens:
 |-----|------|-------|
 | `GW_GITHUB_TOKEN` | GitHub PAT, **read-only public** | required for code search + 5k/hr |
 | `GW_OSM_API_KEY` | OpenSourceMalware token (`osm_…`) | Bearer auth |
-| `GW_NVD_API_KEY` | NVD key (optional) | lifts the tightest budget |
 | `GW_DISCORD_WEBHOOK` | gold/alert channel | confirmed findings only |
+
+(No NVD key needed — free OSINT feeds + OSM cover the intel sources for now.)
 
 ## Commands
 
@@ -58,9 +59,19 @@ python gw.py probe --feed github --term lazarus  # probe any feed live
 ## Deployment
 
 GitHub Actions ([.github/workflows/](.github/workflows/)): `ci.yml` runs
-lint+tests; `run.yml` runs ingest→hunt weekly (manual first, per doc 05). Set
-the `GW_*` secrets in repo settings. Orchestration knobs live in
-[config/settings.yaml](config/settings.yaml) and [config/trigger.yaml](config/trigger.yaml).
+lint+tests; `run.yml` runs ingest→hunt weekly (manual first, per doc 05).
+
+Add these **repo Actions secrets** — the workflow maps them onto the `GW_*` env
+vars the code reads (local `.env` uses the `GW_*` names directly):
+
+| Repo secret | Maps to env var |
+|-------------|-----------------|
+| `GH_TOKEN` | `GW_GITHUB_TOKEN` |
+| `OSM_TOKEN` | `GW_OSM_API_KEY` |
+| `DISCORD_WEBHOOK` | `GW_DISCORD_WEBHOOK` |
+
+Orchestration knobs live in [config/settings.yaml](config/settings.yaml) and
+[config/trigger.yaml](config/trigger.yaml).
 
 ## Development
 

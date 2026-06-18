@@ -57,7 +57,7 @@ OSM_API_KEY = os.environ.get("GW_OSM_API_KEY")
 OSM_BASE_URL = os.environ.get(
     "GW_OSM_BASE_URL", "https://api.opensourcemalware.com/functions/v1/"
 )
-NVD_API_KEY = os.environ.get("GW_NVD_API_KEY")
+# NVD is descoped (free OSINT + OSM cover the sources); no key required.
 DISCORD_WEBHOOK = os.environ.get("GW_DISCORD_WEBHOOK")
 
 # --- Feed endpoints (overridable so we can re-point or pin them) ------------
