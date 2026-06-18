@@ -1,0 +1,113 @@
+[
+  {
+    "name": "Sliver",
+    "org": "BishopFox",
+    "repos": ["BishopFox/sliver"],
+    "homepage": null,
+    "aliases": ["sliver"],
+    "notes": "Go C2 framework; heavily cloned/weaponized."
+  },
+  {
+    "name": "MITRE CALDERA",
+    "org": "apache",
+    "repos": ["apache/caldera"],
+    "homepage": "https://caldera.mitre.org",
+    "aliases": ["caldera", "mitre caldera"],
+    "notes": "Parent project MITRE; GitHub owner is apache (org-to-repo mapping)."
+  },
+  {
+    "name": "Merlin",
+    "org": "Ne0nd0g",
+    "repos": ["Ne0nd0g/merlin"],
+    "homepage": null,
+    "aliases": ["merlin"]
+  },
+  {
+    "name": "Infection Monkey",
+    "org": "guardicore",
+    "repos": ["guardicore/monkey"],
+    "homepage": "https://www.guardicore.com/infectionmonkey/",
+    "aliases": ["infection monkey"]
+  },
+  {
+    "name": "Stratus Red Team",
+    "org": "DataDog",
+    "repos": ["DataDog/stratus-red-team"],
+    "homepage": "https://stratus-red-team.cloud",
+    "aliases": ["stratus red team", "stratus"]
+  },
+  {
+    "name": "CTID Adversary Emulation Library",
+    "org": "center-for-threat-informed-defense",
+    "repos": ["center-for-threat-informed-defense/adversary_emulation_library"],
+    "homepage": "https://ctid.io/adversary-emulation",
+    "aliases": ["adversary emulation library"]
+  },
+  {
+    "name": "Havoc",
+    "org": "HavocFramework",
+    "repos": ["HavocFramework/Havoc"],
+    "homepage": "https://havocframework.com",
+    "aliases": ["havoc"],
+    "notes": "Upstream archived; clones likely to proliferate."
+  },
+  {
+    "name": "Empire",
+    "org": "BC-SECURITY",
+    "repos": ["BC-SECURITY/Empire"],
+    "homepage": "https://bc-security.gitbook.io/empire-wiki/",
+    "aliases": ["powershell empire", "empire"]
+  },
+  {
+    "name": "Covenant",
+    "org": "cobbr",
+    "repos": ["cobbr/Covenant"],
+    "homepage": "https://cobbr.io/Covenant.html",
+    "aliases": ["covenant"]
+  },
+  {
+    "name": "Metasploit Framework",
+    "org": "rapid7",
+    "repos": ["rapid7/metasploit-framework"],
+    "homepage": "https://www.metasploit.com/",
+    "aliases": ["metasploit", "msf"]
+  },
+  {
+    "name": "Impacket",
+    "org": "fortra",
+    "repos": ["fortra/impacket"],
+    "homepage": "https://www.coresecurity.com",
+    "aliases": ["impacket"]
+  },
+  {
+    "name": "PowerSploit",
+    "org": "PowerShellMafia",
+    "repos": ["PowerShellMafia/PowerSploit"],
+    "homepage": null,
+    "aliases": ["powersploit"],
+    "notes": "Upstream archived."
+  },
+  {
+    "name": "SILENTTRINITY",
+    "org": "byt3bl33d3r",
+    "repos": ["byt3bl33d3r/SILENTTRINITY"],
+    "homepage": null,
+    "aliases": ["silenttrinity"]
+  },
+  {
+    "name": "Mythic",
+    "org": "MythicAgents",
+    "repos": [],
+    "homepage": "https://docs.mythic-c2.net",
+    "aliases": ["mythic"],
+    "notes": "Org-level: agents live under MythicAgents/*; core under its-a-feature/Mythic (verify)."
+  },
+  {
+    "name": "Cobalt Strike",
+    "org": null,
+    "repos": [],
+    "homepage": "https://www.cobaltstrike.com",
+    "aliases": ["cobaltstrike", "cobalt strike", "beacon"],
+    "notes": "Commercial, no official OSS repo. Cracked/leaked copies and beacon clones are heavily weaponized -- watch by name."
+  }
+]
