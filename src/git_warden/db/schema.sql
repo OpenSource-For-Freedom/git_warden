@@ -147,3 +147,16 @@ CREATE TABLE IF NOT EXISTS repo_findings (
 CREATE INDEX IF NOT EXISTS idx_finding_status ON repo_findings(status);
 CREATE INDEX IF NOT EXISTS idx_finding_method ON repo_findings(detection_method);
 CREATE INDEX IF NOT EXISTS idx_finding_actor ON repo_findings(actor_key);
+
+-- ---------------------------------------------------------------------------
+-- Learned IOCs: the compounding loop (expand core search)
+-- ---------------------------------------------------------------------------
+-- IOCs mined from the code of CONFIRMED malicious repos. Future hunts mirror
+-- these into GitHub code search alongside OSM's IOCs, so each confirmation
+-- widens the net.
+CREATE TABLE IF NOT EXISTS learned_iocs (
+    value          TEXT PRIMARY KEY,
+    kind           TEXT NOT NULL,          -- webhook | telegram | domain
+    source_repo    TEXT,
+    first_seen_run TEXT REFERENCES runs(run_id)
+);
