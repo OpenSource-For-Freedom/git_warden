@@ -4,7 +4,7 @@
 
 A defensive threat-intelligence engine that discovers, analyzes, and catalogs
 **malicious GitHub repositories**. Threat-intel feeds (MITRE ATT&CK, Google
-News, CISA, OpenSourceMalware) are *provenance breadcrumbs* — they help find and
+News, CISA, OpenSourceMalware) are *provenance breadcrumbs* they help find and
 attribute the repos. The product is the registry of malicious repos.
 
 See [docs/](docs/) for the design and [docs/IMPLEMENTATION.md](docs/IMPLEMENTATION.md)
@@ -15,9 +15,9 @@ for what's built vs. planned. Guiding principle: **accuracy over volume.**
 ```
 INGEST (breadcrumbs)                 HUNT (find malicious GitHub repos)
   MITRE ATT&CK ─┐                      ┌─ IOC search: mirror OSM IOCs into
-  Google News  ─┼─ corroborate ─►      │   GitHub code search  ──┐
+  Google News  ─┼─ corroborate ─►      │   GitHub code search ----|
   CISA         ─┘   threat actors      ├─ red-team lineage: forks/│
-  OpenSourceMalware ─► malicious        │   renames of pinned tools┤
+  OpenSourceMalware ─► malicious       │   renames of pinned tools┤
      packages/repos + IOCs ────────────┘                          ▼
                                         Tier-1 screen (name+README, no clone)
                                                           │
@@ -64,10 +64,10 @@ lint+tests; `run.yml` runs ingest→hunt weekly (manual first, per doc 05).
 Add these **repo Actions secrets** — the workflow maps them onto the `GW_*` env
 vars the code reads (local `.env` uses the `GW_*` names directly):
 
-| Repo secret | Maps to env var |
-|-------------|-----------------|
-| `GH_TOKEN` | `GW_GITHUB_TOKEN` |
-| `OSM_TOKEN` | `GW_OSM_API_KEY` |
+| Repo secret | Maps to env var.  |
+|-------------|-----------------  |
+| `GH_TOKEN`  | `GW_GITHUB_TOKEN` |
+| `OSM_TOKEN` | `GW_OSM_API_KEY`  |
 | `DISCORD_WEBHOOK` | `GW_DISCORD_WEBHOOK` |
 
 Orchestration knobs live in [config/settings.yaml](config/settings.yaml) and
