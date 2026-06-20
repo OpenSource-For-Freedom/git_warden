@@ -1,6 +1,6 @@
 """SQLite connection management and the ingestion repository.
 
-Stdlib ``sqlite3`` only -- no ORM (PRD section 9: SQLite, no external database
+Stdlib ``sqlite3`` only; no ORM (PRD section 9: SQLite, no external database
 in phase 1). The :class:`Database` class exposes the small set of operations the
 ingestion layer needs:
 
@@ -78,7 +78,7 @@ class Database:
     def __init__(self, conn: sqlite3.Connection) -> None:
         self.conn = conn
 
-    # -- lifecycle ---------------------------------------------------------
+    #; lifecycle ---------------------------------------------------------
     @classmethod
     def open(cls, db_path: Path | str = DB_PATH) -> Database:
         conn = connect(db_path)
@@ -90,7 +90,7 @@ class Database:
 
     @contextmanager
     def transaction(self) -> Iterator[sqlite3.Connection]:
-        """Atomic unit of work -- commit on success, roll back on error."""
+        """Atomic unit of work; commit on success, roll back on error."""
         try:
             yield self.conn
             self.conn.commit()
@@ -98,7 +98,7 @@ class Database:
             self.conn.rollback()
             raise
 
-    # -- runs --------------------------------------------------------------
+    #; runs --------------------------------------------------------------
     def start_run(self, run_id: str, started_at: datetime, config: dict | None = None) -> None:
         with self.transaction() as c:
             c.execute(
@@ -121,7 +121,7 @@ class Database:
                 (status.value, finished_at.isoformat(), json.dumps(counts or {}), run_id),
             )
 
-    # -- raw observations (append-only) ------------------------------------
+    #; raw observations (append-only) ------------------------------------
     def record_observation(self, obs: SourceObservation) -> int:
         """Insert one raw observation. Returns its row id. Never updates."""
         with self.transaction() as c:
@@ -148,7 +148,7 @@ class Database:
             )
             return int(cur.lastrowid)
 
-    # -- normalized actors -------------------------------------------------
+    #; normalized actors -------------------------------------------------
     def upsert_actor(self, actor: ThreatActor) -> None:
         """Create or update the normalized actor row (excluding corroboration).
 
@@ -191,7 +191,7 @@ class Database:
         """Create the actor on first sighting; otherwise only bump last_seen_run.
 
         Unlike :meth:`upsert_actor`, this never clobbers an existing actor's
-        status or category -- the validator owns status, and the first feed to
+        status or category; the validator owns status, and the first feed to
         name an actor sets its canonical name. This keeps re-runs idempotent.
         """
         with self.transaction() as c:
@@ -257,7 +257,7 @@ class Database:
             )
             _ = cur  # silence unused; insert side effect is the point
 
-    # -- queries -----------------------------------------------------------
+    #; queries -----------------------------------------------------------
     def corroborating_source_count(self, actor_key: str) -> int:
         """Number of distinct feeds that have observed this actor."""
         row = self.conn.execute(
@@ -270,7 +270,7 @@ class Database:
             "SELECT * FROM threat_actors WHERE actor_key = ?", (actor_key,)
         ).fetchone()
 
-    # -- malicious artifacts (OSM / Week-2 scan list) ----------------------
+    #; malicious artifacts (OSM / Week-2 scan list) ----------------------
     def upsert_artifact(self, artifact: MaliciousArtifact, run_id: str) -> int:
         """Insert or refresh a labeled artifact; returns its row id.
 
@@ -325,7 +325,7 @@ class Database:
             params.append(int(limit))
         return self.conn.execute(sql, params).fetchall()
 
-    # -- malicious-repo registry (the product) -----------------------------
+    #; malicious-repo registry (the product) -----------------------------
     def upsert_finding(self, finding: RepoFinding, run_id: str) -> None:
         """Insert or refresh a repo finding. Dedups on full_name.
 
@@ -392,7 +392,7 @@ class Database:
 
         Gold is our contribution: malicious repos OSM does NOT already report.
         OSM-known repos (including everything from the osm_repository validation
-        vector) are excluded -- re-reporting them would just echo OSM's own intel.
+        vector) are excluded; re-reporting them would just echo OSM's own intel.
         """
         known = self.osm_known_repos()
         rows = self.conn.execute(
@@ -444,8 +444,8 @@ class Database:
     def osm_known_repos(self) -> set[str]:
         """Repos OSM already reports (lowercased), from the repo artifacts.
 
-        Git Warden's product is NOVEL malicious repos -- ones OSM does not already
-        have -- which we contribute back. A confirmed repo already in OSM is used
+        Git Warden's product is NOVEL malicious repos; ones OSM does not already
+        have; which we contribute back. A confirmed repo already in OSM is used
         for detection VALIDATION, not re-reported to gold (it would just echo OSM's
         own intel back at them).
         """
@@ -464,14 +464,14 @@ class Database:
 
         We deliberately do NOT seed from OSM repo ownership. OSM's "repository"
         field for a malicious package is the repo the malware impersonates /
-        typosquats -- i.e. the legitimate VICTIM, not the attacker. A heavily
+        typosquats; i.e. the legitimate VICTIM, not the attacker. A heavily
         typosquatted legit org (e.g. tiledesk, 9 OSM entries) is indistinguishable
         from a prolific attacker by repo count, so counting OSM repos enumerated
         legit orgs and shipped their benign repos to gold.
 
         We also EXCLUDE red-team lineage confirmations. A weaponized-tool fork's
         author is typically a security researcher with a collection of offensive
-        tools, not a prolific malware actor -- seeding from them made the owner
+        tools, not a prolific malware actor; seeding from them made the owner
         pivot enumerate researchers' benign clones (opencode, PentestGPT). Only an
         owner of a repo confirmed via a malware-discovery method seeds the pivot.
         OSM's package names drive expansion via :meth:`malicious_package_terms`.
@@ -489,7 +489,7 @@ class Database:
         """OSM-labeled malicious repos to validate, as (full_name, url, intel).
 
         OSM pre-labels these malicious (mostly fake-interview / crypto-task lure
-        repos). We do not trust the label -- we clone and confirm via Tier-2 (a
+        repos). We do not trust the label; we clone and confirm via Tier-2 (a
         malware signature or a known-malicious dependency). ``intel`` carries OSM's
         own provenance (source, severity, tags, threat description) so a confirmed
         finding records WHO flagged it and the attribution (e.g. a 'dprk' tag).
@@ -573,7 +573,7 @@ class Database:
             )
         return {h: locs for h, locs in clusters.items() if len(locs) > 1}
 
-    # -- learned IOCs (the compounding loop) -------------------------------
+    #; learned IOCs (the compounding loop) -------------------------------
     def record_learned_ioc(self, value: str, kind: str, source_repo: str, run_id: str) -> None:
         """Store an IOC mined from a confirmed repo's code (dedup on value)."""
         with self.transaction() as c:
@@ -587,7 +587,7 @@ class Database:
         """Code signatures mined from confirmed repos (kind='code_sig').
 
         These are deobfuscator-stub chunks searched on GitHub to find sibling
-        infected repos -- the novel-repo discovery loop.
+        infected repos; the novel-repo discovery loop.
         """
         return [
             row["value"]

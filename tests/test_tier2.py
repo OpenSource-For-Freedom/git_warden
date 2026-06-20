@@ -98,7 +98,7 @@ def test_secret_file_exfil_confirms_alone(tmp_path):
 
 def test_two_exfil_channels_without_cred_do_not_confirm(tmp_path):
     # tiledesk-server FP: a chat platform legitimately has a Telegram connector
-    # AND a leftover webhook.site URL -- two exfil channels, no credential theft.
+    # AND a leftover webhook.site URL; two exfil channels, no credential theft.
     (tmp_path / "telegram.js").write_text(
         "const url = 'https://api.telegram.org/bot123/sendMessage';\n", encoding="utf-8")
     (tmp_path / "httpUtil.js").write_text(

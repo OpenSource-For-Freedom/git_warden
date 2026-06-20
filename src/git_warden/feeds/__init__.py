@@ -26,7 +26,7 @@ def default_feeds() -> list[Feed]:
     """The actor feeds run during ingestion.
 
     Google News supplies current activity; MITRE ATT&CK supplies authoritative
-    actor attribution -- together they satisfy the two-source promotion rule.
+    actor attribution; together they satisfy the two-source promotion rule.
     CISA stays in the mix as a supplementary source.
     """
     return [GoogleNewsFeed(), MitreAttackFeed(), CisaAdvisoriesFeed()]
