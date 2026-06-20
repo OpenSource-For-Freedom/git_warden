@@ -378,10 +378,14 @@ def hunt(
                     finding.code_hash = result.code_hash
                     finding.raw_payload["code_hash"] = result.code_hash
                     # Provenance for the gold message (doc 02 6): file:line + rule
-                    # per bash finding, and which scanners fired.
+                    # per bash finding. The CONFIRMING findings come first so a
+                    # noisy repo (1000s of weak hits) never buries the real signal.
+                    _confirming = {id(bf) for bf in result.confirming_findings}
+                    ordered = result.confirming_findings + [
+                        bf for bf in result.bash_findings if id(bf) not in _confirming]
                     finding.raw_payload["bash_findings"] = [
                         {"file": bf.file, "line": bf.line, "category": bf.category, "rule": bf.rule}
-                        for bf in result.bash_findings[:20]
+                        for bf in ordered[:20]
                     ]
                     finding.raw_payload["scanners"] = result.scanners
                     db.upsert_finding(finding, run_id)
