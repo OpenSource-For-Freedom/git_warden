@@ -195,6 +195,7 @@ def hunt(
     gold: bool = False,
     notifier=None,
     clone=None,
+    osm_live_known: set[str] | None = None,
 ) -> dict:
     """Run the hunt and return a summary. Persists findings into the registry."""
     now = now or datetime.now(UTC)
@@ -379,8 +380,15 @@ def hunt(
             _force_rmtree(workdir)
 
     delivered = 0
+    osm_live = {r.casefold() for r in (osm_live_known or set())}
     if gold and notifier is not None:
         for row in db.undelivered_gold():
+            # Live re-check: skip anything OSM has added to its feed since our
+            # ingest -- we only report repos OSM does NOT already have.
+            if row["full_name"].casefold() in osm_live:
+                log.info("gold: skipped (now in OSM live feed)",
+                         extra={"context": {"repo": row["full_name"]}})
+                continue
             if notifier(row):
                 db.mark_gold_delivered(row["full_name"])
                 delivered += 1
