@@ -7,7 +7,12 @@ import base64
 import pytest
 import requests
 
-from git_warden.github.client import GitHubAuthError, GitHubClient, RateLimit
+from git_warden.github.client import (
+    GitHubAuthError,
+    GitHubClient,
+    GitHubRateLimitError,
+    RateLimit,
+)
 
 
 class FakeResponse:
@@ -91,6 +96,48 @@ def test_rate_limit_parsed_from_headers():
     rl = RateLimit.from_headers(headers)
     assert rl.limit == 5000
     assert rl.remaining == 4999
+
+
+def test_search_code_returns_items():
+    session = FakeSession(
+        {"/search/code": FakeResponse(200, {"items": [{"path": "a.js"}]})}
+    )
+    client = GitHubClient(token="t", session=session)
+    assert client.search_code("workers.dev")[0]["path"] == "a.js"
+
+
+def test_search_code_secondary_limit_raises_rate_limit_with_retry_after():
+    session = FakeSession(
+        {"/search/code": FakeResponse(403, {"message": "secondary rate limit"},
+                                      headers={"Retry-After": "45"})}
+    )
+    client = GitHubClient(token="t", session=session)
+    with pytest.raises(GitHubRateLimitError) as ei:
+        client.search_code("x")
+    assert ei.value.retry_after == 45.0
+
+
+def test_search_code_primary_limit_waits_to_reset():
+    import time
+    session = FakeSession(
+        {"/search/code": FakeResponse(403, {"message": "API rate limit exceeded"},
+                                      headers={"X-RateLimit-Remaining": "0",
+                                               "X-RateLimit-Reset": str(int(time.time()) + 30)})}
+    )
+    client = GitHubClient(token="t", session=session)
+    with pytest.raises(GitHubRateLimitError) as ei:
+        client.search_code("x")
+    assert 0 < ei.value.retry_after <= 31
+
+
+def test_search_code_genuine_forbidden_is_not_rate_limit():
+    # A 403 with no rate-limit signal (bad token/scope) must NOT look like a
+    # throttle, or the caller would retry a hopeless request forever.
+    session = FakeSession({"/search/code": FakeResponse(403, {"message": "Forbidden"})})
+    client = GitHubClient(token="t", session=session)
+    with pytest.raises(RuntimeError) as ei:
+        client.search_code("x")
+    assert not isinstance(ei.value, GitHubRateLimitError)
 
 
 def test_compare_returns_ahead_and_files():

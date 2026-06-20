@@ -104,6 +104,16 @@ def classify_hit(hit: RepoHit) -> str:
     return "defensive" if _DEFENSIVE_NAME.search(short_name) else "suspicious"
 
 
+def _code_query(term: str) -> str:
+    """Quote package-name-like terms so ``@``/``/`` are literal, not operators.
+
+    GitHub code search tokenizes ``@scope/name`` oddly (often 0 hits); quoting it
+    as an exact phrase improves the match. Plain IOCs (domains, webhook ids) are
+    left unquoted so substring/subdomain matches still surface.
+    """
+    return f'"{term}"' if ("@" in term or "/" in term) else term
+
+
 def search_iocs(
     client,
     terms: list[str],
@@ -111,23 +121,40 @@ def search_iocs(
     known: set[str],
     per_term: int = 20,
     pace_seconds: float = 0.0,
+    max_backoff: float = 90.0,
+    sleeper=time.sleep,
 ) -> list[RepoHit]:
     """Code-search each IOC term; return NEW repos (not already known), deduped.
 
     ``known`` is the lowercased set of repos we already track (OSM repos +
     pinned tools), so results are genuinely new discoveries. ``pace_seconds``
-    spaces calls to respect code search's ~10/min limit (0 in tests).
+    spaces calls to respect code search's ~10/min limit (0 in tests). On a
+    rate-limit (an exception carrying ``retry_after``), we wait the requested
+    time -- capped at ``max_backoff`` -- and retry the term once before moving on,
+    so a burst throttle no longer silently drops IOCs.
     """
     by_repo: dict[str, RepoHit] = {}
     for index, term in enumerate(terms):
         if pace_seconds and index:
-            time.sleep(pace_seconds)
-        try:
-            items = client.search_code(term, per_page=per_term)
-        except Exception as exc:  # one IOC failing must not abort the sweep
-            log.warning("code search failed", extra={"context": {"term": term, "err": str(exc)}})
-            continue
-        for item in items:
+            sleeper(pace_seconds)
+        items = None
+        for attempt in range(2):  # initial try + one retry after a backoff
+            try:
+                items = client.search_code(_code_query(term), per_page=per_term)
+                break
+            except Exception as exc:  # one IOC failing must not abort the sweep
+                retry_after = getattr(exc, "retry_after", None)
+                if retry_after is not None and attempt == 0:
+                    wait = min(float(retry_after), max_backoff)
+                    log.info("code search rate-limited; backing off",
+                             extra={"context": {"term": term, "wait": round(wait, 1)}})
+                    sleeper(wait)
+                    continue
+                level = "rate-limited" if retry_after is not None else "failed"
+                log.warning(f"code search {level}",
+                            extra={"context": {"term": term, "err": str(exc)}})
+                break
+        for item in items or ():
             repo = item.get("repository") or {}
             full = repo.get("full_name")
             if not full or full.casefold() in known:
