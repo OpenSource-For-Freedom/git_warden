@@ -373,6 +373,15 @@ class Database:
                 ),
             )
 
+    def set_finding_status(self, full_name: str, status: str) -> int:
+        """Analyst override of a finding's status (PRD 3). Returns rows changed."""
+        with self.transaction() as c:
+            cur = c.execute(
+                "UPDATE repo_findings SET status = ? WHERE full_name = ?",
+                (status, full_name.strip().strip("/").casefold()),
+            )
+            return cur.rowcount
+
     def findings_by_status(self, status: str) -> list[sqlite3.Row]:
         return self.conn.execute(
             "SELECT * FROM repo_findings WHERE status = ? ORDER BY score DESC", (status,)

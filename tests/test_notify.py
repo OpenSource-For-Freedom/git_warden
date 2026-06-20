@@ -87,3 +87,12 @@ def test_format_finding_sanitizes_malicious_filename():
     msg = format_finding(row)
     assert "`@everyone" not in msg      # code-span breakout neutralized
     assert "@everyone" not in msg       # raw mention broken with zero-width char
+
+
+def test_format_finding_labels_red_team_fork():
+    msg = format_finding(_row(detection_method="redteam_lineage"))
+    assert "weaponized red-team tool fork" in msg.lower()
+
+
+def test_format_finding_has_validation_footer():
+    assert "Pending analyst validation" in format_finding(_row())

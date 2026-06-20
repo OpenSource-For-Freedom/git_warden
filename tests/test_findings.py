@@ -122,3 +122,10 @@ def test_open_migrates_legacy_repo_findings(tmp_path):
     assert "platform" in cols and "code_hash" in cols
     assert db.conn.execute("SELECT COUNT(*) FROM repo_findings").fetchone()[0] == 1
     db.close()
+
+
+def test_set_finding_status_validate_and_reject(db):
+    db.upsert_finding(_finding("evil/repo", status=RepoFindingStatus.CONFIRMED), "run-1")
+    assert db.set_finding_status("Evil/Repo", "validated") == 1   # casefold-normalized
+    assert db.findings_by_status("validated")[0]["full_name"] == "evil/repo"
+    assert db.set_finding_status("missing/repo", "rejected") == 0  # no such finding
