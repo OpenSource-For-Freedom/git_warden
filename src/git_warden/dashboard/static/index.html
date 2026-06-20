@@ -5,38 +5,39 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Git Warden — Threat Telemetry</title>
 <style>
-  :root{--bg:#0b0f14;--panel:#121821;--line:#1f2a37;--ink:#dfe7ef;--mut:#8aa0b4;
-        --bad:#ff5d6c;--good:#39d98a;--warn:#ffbf47;--accent:#5fa8ff;--novel:#c792ea;}
-  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);
-    font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
-  header{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;
-    align-items:baseline;gap:14px;flex-wrap:wrap}
-  header h1{font-size:15px;margin:0;letter-spacing:.5px}
-  .metrics{display:flex;gap:18px;flex-wrap:wrap;margin-left:auto}
-  .metric b{font-size:18px} .metric span{color:var(--mut);font-size:11px;margin-left:5px}
-  .wrap{display:grid;grid-template-columns:1.1fr 1fr;gap:14px;padding:14px}
-  .panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px}
-  .panel h2{font-size:12px;margin:0 0 10px;color:var(--mut);text-transform:uppercase;
-    letter-spacing:.8px}
-  table{width:100%;border-collapse:collapse} th,td{text-align:left;padding:5px 6px;
-    border-bottom:1px solid var(--line);white-space:nowrap}
-  th{color:var(--mut);font-weight:500;font-size:11px} tr.f{cursor:pointer}
-  tr.f:hover{background:#172230}
+  :root{--bg:#0a0e13;--panel:#111823;--line:#1e2a38;--ink:#e3ebf3;--mut:#869cb2;
+        --bad:#ff5d6c;--good:#39d98a;--warn:#ffb23e;--accent:#5fa8ff;--novel:#c792ea;--hash:#39d98a;}
+  *{box-sizing:border-box} html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:13px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;display:flex;flex-direction:column}
+  header{padding:10px 16px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
+  header h1{font-size:14px;margin:0;letter-spacing:.6px}
+  .metrics{display:flex;gap:16px;flex-wrap:wrap;margin-left:auto}
+  .metric b{font-size:17px}.metric span{color:var(--mut);font-size:11px;margin-left:5px}
+  .good{color:var(--good)}.bad{color:var(--bad)}.novel{color:var(--novel)}.gold{color:var(--warn)}.accent{color:var(--accent)}
+  main{flex:1;display:grid;grid-template-columns:1.55fr 1fr;gap:0;min-height:0}
+  #graphwrap{position:relative;border-right:1px solid var(--line);overflow:hidden}
+  #graph{width:100%;height:100%;display:block;cursor:grab}
+  .legend{position:absolute;top:8px;left:10px;font-size:11px;color:var(--mut);
+    background:rgba(10,14,19,.7);padding:6px 8px;border:1px solid var(--line);border-radius:6px}
+  .legend b{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:middle}
+  .hint{position:absolute;bottom:8px;left:10px;font-size:11px;color:var(--mut)}
+  #detail{padding:12px 14px;overflow:auto}
+  #detail h2{font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.8px;margin:0 0 10px}
   .tag{padding:1px 6px;border-radius:10px;font-size:11px;border:1px solid var(--line)}
-  .s-confirmed{color:var(--good)} .s-rejected{color:var(--bad)} .s-screened{color:var(--mut)}
-  .novel{color:var(--novel)} .gold{color:var(--warn)}
-  .bar{display:flex;align-items:center;gap:8px;margin:3px 0}
-  .bar i{height:10px;background:var(--accent);border-radius:3px;display:inline-block}
-  .bar.bad i{background:var(--bad)} .bar.good i{background:var(--good)}
-  .bar small{color:var(--mut);min-width:30px;text-align:right}
-  .clab{min-width:170px;max-width:170px;overflow:hidden;text-overflow:ellipsis}
-  .cluster{margin:8px 0;padding:8px;border:1px solid var(--line);border-radius:6px}
-  .cluster .k{color:var(--accent);word-break:break-all} .cluster ul{margin:5px 0 0 14px;padding:0}
-  .det code{background:#0c1218;padding:2px 5px;border-radius:4px;color:var(--warn);
-    word-break:break-all} .det .flag{color:var(--bad)} .muted{color:var(--mut)}
-  a{color:var(--accent)} .pill{font-size:10px;padding:1px 6px;border-radius:8px;background:#0c1218}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-  @media(max-width:1000px){.wrap,.grid2{grid-template-columns:1fr}}
+  .s-confirmed{color:var(--good)}.s-rejected{color:var(--bad)}.s-screened{color:var(--mut)}
+  code{background:#0c1219;padding:2px 5px;border-radius:4px;color:var(--warn);word-break:break-all}
+  pre{background:#0c1219;border:1px solid var(--line);border-radius:6px;padding:9px;overflow:auto;
+    max-height:240px;color:#cfe3c0;white-space:pre-wrap;word-break:break-all;font-size:12px;margin:4px 0}
+  .flag{margin:6px 0;padding:6px 8px;border:1px solid var(--line);border-radius:6px}
+  .flag .r{color:var(--bad)} .muted{color:var(--mut)} a{color:var(--accent)}
+  footer{border-top:1px solid var(--line);display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;padding:8px 14px;
+    max-height:150px;overflow:auto}
+  footer h3{font-size:11px;color:var(--mut);text-transform:uppercase;margin:0 0 5px;letter-spacing:.6px}
+  .bar{display:flex;align-items:center;gap:7px;margin:2px 0}
+  .bar i{height:9px;background:var(--accent);border-radius:3px}.bar.bad i{background:var(--bad)}.bar.good i{background:var(--good)}
+  .bar span{min-width:120px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bar small{color:var(--mut)}
 </style>
 </head>
 <body>
@@ -45,93 +46,123 @@
   <div class="metrics" id="metrics"></div>
 </header>
 
-<div class="grid2" style="padding:14px 14px 0">
-  <div class="panel"><h2>Campaign correlation</h2><div id="campaigns"></div></div>
-  <div class="panel det"><h2>Finding detail</h2><div id="detail" class="muted">
-    Select a repo from the registry below.</div></div>
-</div>
-
-<div class="wrap">
-  <div class="panel">
-    <h2>Registry — findings <span class="muted" id="fcount"></span></h2>
-    <div style="max-height:380px;overflow:auto"><table id="findings"></table></div>
-  </div>
-  <div class="panel">
-    <h2>Telemetry</h2>
-    <div class="grid2">
-      <div><div class="muted" style="margin-bottom:4px">Flags (by code)</div><div id="flags"></div></div>
-      <div><div class="muted" style="margin-bottom:4px">Signature yield</div><div id="yield"></div>
-        <div class="muted" style="margin:8px 0 4px">Detection methods</div><div id="methods"></div></div>
+<main>
+  <div id="graphwrap">
+    <svg id="graph"></svg>
+    <div class="legend">
+      <div><b style="background:#c792ea"></b>novel repo <b style="background:#869cb2;margin-left:8px"></b>OSM-known</div>
+      <div><b style="background:#5fa8ff"></b>owner <b style="background:#ffb23e;margin-left:8px"></b>signature</div>
+      <div class="muted" style="margin-top:3px">orange=shared sig · green=shared code-hash</div>
     </div>
+    <div class="hint">drag nodes · click a repo → payload &amp; flags →</div>
   </div>
-</div>
+  <div id="detail"><h2>Finding detail</h2>
+    <div class="muted">Click a repo node in the campaign graph to inspect its
+      malicious code, decoded payload, and flags.</div></div>
+</main>
+
+<footer>
+  <div><h3>Flags (by code)</h3><div id="flags"></div></div>
+  <div><h3>Signature yield</h3><div id="yield"></div></div>
+  <div><h3>Detection methods</h3><div id="methods"></div></div>
+</footer>
 
 <script>
 const $=id=>document.getElementById(id);
 const j=u=>fetch(u).then(r=>r.json());
 const esc=s=>String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-function bar(label,val,max,cls=''){const w=max?Math.max(4,Math.round(val/max*150)):4;
-  return `<div class="bar ${cls}"><span class="clab" title="${esc(label)}">${esc(label)}</span>`
-    +`<i style="width:${w}px"></i><small>${val}</small></div>`;}
+const NCOLOR={owner:'#5fa8ff',signature:'#ffb23e'};
+const ECOLOR={owns:'#33415560',signature:'#ffb23e88',codehash:'#39d98a88'};
 
-async function load(){
+function bar(label,val,max,cls){const w=max?Math.max(4,Math.round(val/max*120)):4;
+  return `<div class="bar ${cls||''}"><span title="${esc(label)}">${esc(label)}</span><i style="width:${w}px"></i><small>${val}</small></div>`;}
+
+async function loadMeta(){
   const s=await j('/api/summary');
-  $('metrics').innerHTML=[
-    ['confirmed',s.confirmed,'good'],['novel',s.novel,'novel'],
-    ['gold',s.gold_delivered,'gold'],['rejected (FP)',s.rejected,'bad'],
-    ['validated',s.validated,''],['runs',s.runs,'']
-  ].map(([k,v,c])=>`<div class="metric"><b class="${c}">${v}</b><span>${k}</span></div>`).join('');
-
-  const meth=Object.entries(s.by_method).sort((a,b)=>b[1]-a[1]);
-  const mmax=Math.max(1,...meth.map(m=>m[1]));
-  $('methods').innerHTML=meth.map(([k,v])=>bar(k,v,mmax,'good')).join('')||'<span class="muted">none</span>';
-
-  const c=await j('/api/campaigns');
-  $('campaigns').innerHTML=
-    section('Shared signature → campaign',c.by_signature)+
-    section('Repeat owner → account',c.by_owner)+
-    section('Shared code-hash → core',c.by_code_hash) || '<span class="muted">no clusters yet</span>';
-
-  const fs=await j('/api/findings');
-  $('fcount').textContent=`(${fs.length})`;
-  $('findings').innerHTML='<tr><th>repo</th><th>status</th><th>method</th><th>score</th><th></th></tr>'+
-    fs.map(f=>`<tr class="f" data-r="${esc(f.full_name)}">
-      <td>${esc(f.full_name)}</td>
-      <td class="s-${f.status}">${f.status}</td>
-      <td class="muted">${esc(f.method)}</td><td>${f.score}</td>
-      <td>${f.novel?'<span class="tag novel">novel</span>':''}${f.gold?' <span class="tag gold">gold</span>':''}</td>
-    </tr>`).join('');
-  document.querySelectorAll('tr.f').forEach(tr=>tr.onclick=()=>detail(tr.dataset.r));
-
+  $('metrics').innerHTML=[['confirmed',s.confirmed,'good'],['novel',s.novel,'novel'],
+    ['gold',s.gold_delivered,'gold'],['rejected (FP)',s.rejected,'bad'],['runs',s.runs,'']]
+    .map(([k,v,c])=>`<div class="metric"><b class="${c}">${v}</b><span>${k}</span></div>`).join('');
   const t=await j('/api/telemetry');
-  const fmax=Math.max(1,...t.flags.map(x=>x.count));
-  $('flags').innerHTML=t.flags.map(x=>bar(x.flag,x.count,fmax,'bad')).join('')||'<span class="muted">none</span>';
-  const ymax=Math.max(1,...t.signature_yield.map(x=>x.repos));
-  $('yield').innerHTML=t.signature_yield.map(x=>bar(x.signature,x.repos,ymax)).join('')||'<span class="muted">none</span>';
+  const fm=Math.max(1,...t.flags.map(x=>x.count));
+  $('flags').innerHTML=t.flags.slice(0,7).map(x=>bar(x.flag,x.count,fm,'bad')).join('');
+  const ym=Math.max(1,...t.signature_yield.map(x=>x.repos));
+  $('yield').innerHTML=t.signature_yield.map(x=>bar(x.signature,x.repos,ym)).join('')||'<span class="muted">—</span>';
+  const meth=Object.entries(s.by_method).sort((a,b)=>b[1]-a[1]);const mm=Math.max(1,...meth.map(m=>m[1]));
+  $('methods').innerHTML=meth.map(([k,v])=>bar(k,v,mm,'good')).join('');
 }
-function section(title,obj){const keys=Object.keys(obj);if(!keys.length)return '';
-  return `<div style="margin-bottom:6px;color:var(--mut)">${title}</div>`+
-    keys.map(k=>`<div class="cluster"><div class="k">${esc(k)} <span class="pill">${obj[k].length}</span></div>
-      <ul>${obj[k].map(r=>`<li><a href="#" onclick="detail('${esc(r)}');return false">${esc(r)}</a></li>`).join('')}</ul></div>`).join('');
+
+// ---- force-directed graph (vanilla, no deps) ----
+let RAF, NODES=[], EDGES=[], BYID={};
+const SVG=$('graph'), NS='http://www.w3.org/2000/svg';
+function size(){return [SVG.clientWidth||800, SVG.clientHeight||500];}
+async function loadGraph(){
+  const g=await j('/api/graph'); NODES=g.nodes; EDGES=g.edges; BYID={};
+  const [W,H]=size();
+  NODES.forEach((n,i)=>{n.x=W/2+Math.cos(i*1.7)*Math.min(W,H)*0.3;
+    n.y=H/2+Math.sin(i*1.7)*Math.min(W,H)*0.3;n.vx=0;n.vy=0;BYID[n.id]=n;});
+  draw(); if(RAF)cancelAnimationFrame(RAF); tick();
 }
-async function detail(repo){
-  const d=await j('/api/finding/'+repo);
-  if(d.error||!d.full_name){$('detail').innerHTML='<span class="muted">not found</span>';return;}
-  const flags=(d.flags||[]).slice(0,12).map(f=>`<div><code>${esc(f.file)}:${f.line}</code>
-     <span class="flag">${esc(f.category)}/${esc(f.rule)}</span></div>`).join('');
-  const osm=d.osm?`<div>Lead source: <span class="muted">OSM sev ${esc(d.osm.severity)} · tags ${esc((d.osm.tags||[]).join(', '))}</span></div>`:'';
-  $('detail').innerHTML=`
-    <div><b>${esc(d.full_name)}</b> ${d.novel?'<span class="tag novel">novel</span>':'<span class="tag">OSM-known</span>'}
-      ${d.gold?'<span class="tag gold">gold</span>':''}</div>
+function tick(){
+  const [W,H]=size();
+  for(let i=0;i<NODES.length;i++)for(let k=i+1;k<NODES.length;k++){
+    const a=NODES[i],b=NODES[k];let dx=a.x-b.x,dy=a.y-b.y,d2=dx*dx+dy*dy||1,d=Math.sqrt(d2),f=2600/d2;
+    const fx=f*dx/d,fy=f*dy/d;a.vx+=fx;a.vy+=fy;b.vx-=fx;b.vy-=fy;}
+  EDGES.forEach(e=>{const a=BYID[e.s],b=BYID[e.t];if(!a||!b)return;
+    let dx=b.x-a.x,dy=b.y-a.y,d=Math.sqrt(dx*dx+dy*dy)||1,f=(d-95)*0.03,fx=f*dx/d,fy=f*dy/d;
+    a.vx+=fx;a.vy+=fy;b.vx-=fx;b.vy-=fy;});
+  NODES.forEach(n=>{n.vx+=(W/2-n.x)*0.004;n.vy+=(H/2-n.y)*0.004;n.vx*=0.82;n.vy*=0.82;
+    if(!n.fix){n.x=Math.max(20,Math.min(W-20,n.x+n.vx));n.y=Math.max(20,Math.min(H-20,n.y+n.vy));}});
+  position(); RAF=requestAnimationFrame(tick);
+}
+function nodeR(n){return n.type==='repo'?Math.max(7,Math.min(16,5+(n.score||4))):n.type==='owner'?10:8;}
+function nodeFill(n){return n.type==='repo'?(n.novel?'#c792ea':'#869cb2'):NCOLOR[n.type];}
+function draw(){
+  SVG.innerHTML='';
+  EDGES.forEach(e=>{const l=document.createElementNS(NS,'line');l.setAttribute('stroke',ECOLOR[e.kind]||'#334155');
+    l.setAttribute('stroke-width',e.kind==='codehash'?2:1);if(e.kind==='signature')l.setAttribute('stroke-dasharray','3 3');
+    e._l=l;SVG.appendChild(l);});
+  NODES.forEach(n=>{const g=document.createElementNS(NS,'g');g.style.cursor='pointer';
+    const c=document.createElementNS(NS,'circle');c.setAttribute('r',nodeR(n));
+    c.setAttribute('fill',nodeFill(n));c.setAttribute('stroke','#0a0e13');c.setAttribute('stroke-width',1.5);
+    const t=document.createElementNS(NS,'text');t.textContent=n.label;t.setAttribute('fill','#cdd9e5');
+    t.setAttribute('font-size',n.type==='owner'?11:10);t.setAttribute('x',nodeR(n)+3);t.setAttribute('y',3);
+    g.appendChild(c);g.appendChild(t);n._g=g;n._c=c;
+    g.addEventListener('mousedown',ev=>{drag=n;n.fix=true;ev.preventDefault();});
+    g.addEventListener('click',()=>{if(n.type==='repo')showRepo(n.repo);});
+    SVG.appendChild(g);});
+}
+function position(){
+  EDGES.forEach(e=>{const a=BYID[e.s],b=BYID[e.t];if(!a||!b)return;
+    e._l.setAttribute('x1',a.x);e._l.setAttribute('y1',a.y);e._l.setAttribute('x2',b.x);e._l.setAttribute('y2',b.y);});
+  NODES.forEach(n=>n._g.setAttribute('transform',`translate(${n.x},${n.y})`));
+}
+let drag=null;
+SVG.addEventListener('mousemove',ev=>{if(!drag)return;const r=SVG.getBoundingClientRect();
+  drag.x=ev.clientX-r.left;drag.y=ev.clientY-r.top;});
+window.addEventListener('mouseup',()=>{if(drag){drag.fix=false;drag=null;}});
+
+function decodePayload(snip){const m=(snip||'').match(/atob\(\s*['"]([A-Za-z0-9+/=]+)/);
+  if(!m)return null;let b=m[1];b=b.slice(0,b.length-(b.length%4));try{return atob(b);}catch(e){return null;}}
+async function showRepo(repo){
+  const d=await j('/api/finding/'+repo); const D=$('detail');
+  if(d.error||!d.full_name){D.innerHTML='<h2>Finding detail</h2><span class="muted">not found</span>';return;}
+  const evalFlag=(d.flags||[]).find(f=>f.rule==='eval-decoded'||/atob/.test(f.snippet||''));
+  const decoded=evalFlag?decodePayload(evalFlag.snippet):null;
+  const flags=(d.flags||[]).slice(0,10).map(f=>`<div class="flag">
+    <code>${esc(f.file)}:${f.line}</code> <span class="r">${esc(f.category)}/${esc(f.rule)}</span>
+    ${f.snippet?`<pre>${esc(f.snippet)}</pre>`:''}</div>`).join('');
+  D.innerHTML=`<h2>Finding detail</h2>
+    <div><b>${esc(d.full_name)}</b> ${d.novel?'<span class="tag novel">novel</span>':'<span class="tag">OSM-known</span>'} ${d.gold?'<span class="tag gold">gold</span>':''}</div>
     <div><a href="${esc(d.url||'#')}" target="_blank">${esc(d.url||'')}</a></div>
-    <div>Status <span class="s-${d.status}">${esc(d.status)}</span> · method <span class="muted">${esc(d.method)}</span> · score ${d.score}</div>
-    <div>Attribution: <span class="muted">${esc(d.attribution||'unattributed')}</span></div>
-    ${osm}
-    <div style="margin-top:6px">Why: <span class="muted">${esc(d.reasoning||'')}</span></div>
-    <div style="margin-top:8px">Flags (file:line → rule):</div>${flags||'<span class="muted">none</span>'}
-    ${d.code_hash?`<div class="muted" style="margin-top:6px">code-hash ${esc(d.code_hash.slice(0,16))}…</div>`:''}`;
+    <div>status <span class="s-${d.status}">${esc(d.status)}</span> · method <span class="muted">${esc(d.method)}</span> · score ${d.score}</div>
+    <div>attribution <span class="muted">${esc(d.attribution||'unattributed')}</span></div>
+    ${decoded?`<div style="margin-top:8px">Decoded payload <span class="muted">(client-side atob of the injected blob)</span>:</div><pre>${esc(decoded.slice(0,1200))}</pre>`:''}
+    <div style="margin-top:6px">Flags &amp; code:</div>${flags||'<span class="muted">none</span>'}`;
 }
-load(); setInterval(load, 15000);  // live: refresh as hunts write
+
+loadMeta(); loadGraph();
+setInterval(()=>{loadMeta();}, 15000);
+window.addEventListener('resize',()=>{const[W,H]=size();});
 </script>
 </body>
 </html>

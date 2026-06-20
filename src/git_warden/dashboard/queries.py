@@ -148,6 +148,41 @@ def signature_yield(db: Database) -> list[dict[str, Any]]:
     ]
 
 
+def graph(db: Database) -> dict[str, Any]:
+    """Force-graph nodes/edges correlating confirmed repos, owners, signatures.
+
+    Nodes: repo (novel/method/score), owner, signature. Edges: owner-owns-repo,
+    signature-matched-repo, repo-repo (shared code-hash = same core).
+    """
+    c = db.conn
+    known = db.osm_known_repos()
+    nodes: dict[str, dict] = {}
+    edges: list[dict] = []
+
+    def add(node_id: str, ntype: str, label: str, **kw) -> None:
+        if node_id not in nodes:
+            nodes[node_id] = {"id": node_id, "type": ntype, "label": label, **kw}
+
+    by_hash: dict[str, list[str]] = {}
+    for r in c.execute("SELECT full_name, detection_method, matched_iocs, code_hash, score "
+                       "FROM repo_findings WHERE status = 'confirmed'"):
+        repo, owner = r["full_name"], _owner(r["full_name"])
+        add(f"repo:{repo}", "repo", repo.split("/", 1)[-1],
+            repo=repo, novel=repo.casefold() not in known,
+            method=r["detection_method"], score=r["score"])
+        add(f"owner:{owner}", "owner", owner)
+        edges.append({"s": f"owner:{owner}", "t": f"repo:{repo}", "kind": "owns"})
+        for sig in json.loads(r["matched_iocs"] or "[]"):
+            add(f"sig:{sig[:40]}", "signature", sig[:18] + "…")
+            edges.append({"s": f"sig:{sig[:40]}", "t": f"repo:{repo}", "kind": "signature"})
+        if r["code_hash"]:
+            by_hash.setdefault(r["code_hash"], []).append(repo)
+    for reps in by_hash.values():
+        for a, b in zip(reps, reps[1:], strict=False):
+            edges.append({"s": f"repo:{a}", "t": f"repo:{b}", "kind": "codehash"})
+    return {"nodes": list(nodes.values()), "edges": edges}
+
+
 def runs_timeline(db: Database) -> list[dict[str, Any]]:
     """Per-run confirmed/candidate counts, oldest first (telemetry over time)."""
     out = []

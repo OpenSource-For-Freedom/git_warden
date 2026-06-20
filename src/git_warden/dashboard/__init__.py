@@ -13,6 +13,7 @@ from .queries import (
     finding_detail,
     findings,
     flag_telemetry,
+    graph,
     runs_timeline,
     signature_yield,
     summary,
@@ -24,6 +25,7 @@ __all__ = [
     "finding_detail",
     "campaign_clusters",
     "flag_telemetry",
+    "graph",
     "signature_yield",
     "runs_timeline",
 ]

@@ -71,6 +71,19 @@ def test_finding_detail_and_telemetry(tmp_path):
     db.close()
 
 
+def test_graph_nodes_and_edges(tmp_path):
+    db = _seed(tmp_path)
+    g = queries.graph(db)
+    ids = {n["id"] for n in g["nodes"]}
+    assert {"repo:evil/a", "owner:evil", "sig:STUBSIG"} <= ids
+    repo = next(n for n in g["nodes"] if n["id"] == "repo:evil/a")
+    assert repo["novel"] is True and repo["type"] == "repo"
+    kinds = {(e["s"], e["t"], e["kind"]) for e in g["edges"]}
+    assert ("owner:evil", "repo:evil/a", "owns") in kinds
+    assert ("sig:STUBSIG", "repo:evil/a", "signature") in kinds
+    db.close()
+
+
 def test_fastapi_endpoints_smoke(tmp_path):
     _seed(tmp_path).close()
     from fastapi.testclient import TestClient
@@ -79,6 +92,7 @@ def test_fastapi_endpoints_smoke(tmp_path):
     client = TestClient(create_app(tmp_path / "d.sqlite"))
     assert client.get("/api/summary").json()["confirmed"] == 3
     assert client.get("/api/campaigns").json()["by_signature"]["STUBSIG"]
+    assert client.get("/api/graph").json()["nodes"]
     assert client.get("/api/finding/evil/a").json()["novel"] is True
     assert client.get("/api/finding/nope/nope").status_code == 404
     assert client.get("/").status_code == 200  # serves the dashboard HTML
