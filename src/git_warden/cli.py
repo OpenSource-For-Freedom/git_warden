@@ -444,6 +444,16 @@ def _cmd_review(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_serve(args: argparse.Namespace) -> int:
+    """Serve the live threat-telemetry dashboard (PRD section 6)."""
+    configure_logging(json_output=False)
+    from .dashboard.app import serve
+
+    print(f"Git Warden telemetry dashboard -> http://{args.host}:{args.port}  (db: {args.db})")
+    serve(db_path=args.db, host=args.host, port=args.port)
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="git-warden", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -500,6 +510,12 @@ def build_parser() -> argparse.ArgumentParser:
     review.add_argument("--approve", metavar="OWNER/REPO", help="Mark a finding validated.")
     review.add_argument("--reject", metavar="OWNER/REPO", help="Mark a finding rejected.")
     review.set_defaults(func=_cmd_review)
+
+    serve = sub.add_parser("serve", help="Serve the live threat-telemetry dashboard (PRD 6).")
+    serve.add_argument("--db", type=Path, default=config.DB_PATH, help="SQLite path.")
+    serve.add_argument("--host", default="127.0.0.1", help="Bind host.")
+    serve.add_argument("--port", type=int, default=8787, help="Bind port.")
+    serve.set_defaults(func=_cmd_serve)
 
     iocs = sub.add_parser("iocs", help="Aggregate the searchable IOC pivot set from OSM data.")
     iocs.add_argument("--db", type=Path, default=config.DB_PATH, help="SQLite path.")

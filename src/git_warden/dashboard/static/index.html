@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Git Warden — Threat Telemetry</title>
+<style>
+  :root{--bg:#0b0f14;--panel:#121821;--line:#1f2a37;--ink:#dfe7ef;--mut:#8aa0b4;
+        --bad:#ff5d6c;--good:#39d98a;--warn:#ffbf47;--accent:#5fa8ff;--novel:#c792ea;}
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);
+    font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  header{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;
+    align-items:baseline;gap:14px;flex-wrap:wrap}
+  header h1{font-size:15px;margin:0;letter-spacing:.5px}
+  .metrics{display:flex;gap:18px;flex-wrap:wrap;margin-left:auto}
+  .metric b{font-size:18px} .metric span{color:var(--mut);font-size:11px;margin-left:5px}
+  .wrap{display:grid;grid-template-columns:1.1fr 1fr;gap:14px;padding:14px}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px}
+  .panel h2{font-size:12px;margin:0 0 10px;color:var(--mut);text-transform:uppercase;
+    letter-spacing:.8px}
+  table{width:100%;border-collapse:collapse} th,td{text-align:left;padding:5px 6px;
+    border-bottom:1px solid var(--line);white-space:nowrap}
+  th{color:var(--mut);font-weight:500;font-size:11px} tr.f{cursor:pointer}
+  tr.f:hover{background:#172230}
+  .tag{padding:1px 6px;border-radius:10px;font-size:11px;border:1px solid var(--line)}
+  .s-confirmed{color:var(--good)} .s-rejected{color:var(--bad)} .s-screened{color:var(--mut)}
+  .novel{color:var(--novel)} .gold{color:var(--warn)}
+  .bar{display:flex;align-items:center;gap:8px;margin:3px 0}
+  .bar i{height:10px;background:var(--accent);border-radius:3px;display:inline-block}
+  .bar.bad i{background:var(--bad)} .bar.good i{background:var(--good)}
+  .bar small{color:var(--mut);min-width:30px;text-align:right}
+  .clab{min-width:170px;max-width:170px;overflow:hidden;text-overflow:ellipsis}
+  .cluster{margin:8px 0;padding:8px;border:1px solid var(--line);border-radius:6px}
+  .cluster .k{color:var(--accent);word-break:break-all} .cluster ul{margin:5px 0 0 14px;padding:0}
+  .det code{background:#0c1218;padding:2px 5px;border-radius:4px;color:var(--warn);
+    word-break:break-all} .det .flag{color:var(--bad)} .muted{color:var(--mut)}
+  a{color:var(--accent)} .pill{font-size:10px;padding:1px 6px;border-radius:8px;background:#0c1218}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:1000px){.wrap,.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <h1>🛡️ GIT WARDEN — THREAT TELEMETRY</h1>
+  <div class="metrics" id="metrics"></div>
+</header>
+
+<div class="grid2" style="padding:14px 14px 0">
+  <div class="panel"><h2>Campaign correlation</h2><div id="campaigns"></div></div>
+  <div class="panel det"><h2>Finding detail</h2><div id="detail" class="muted">
+    Select a repo from the registry below.</div></div>
+</div>
+
+<div class="wrap">
+  <div class="panel">
+    <h2>Registry — findings <span class="muted" id="fcount"></span></h2>
+    <div style="max-height:380px;overflow:auto"><table id="findings"></table></div>
+  </div>
+  <div class="panel">
+    <h2>Telemetry</h2>
+    <div class="grid2">
+      <div><div class="muted" style="margin-bottom:4px">Flags (by code)</div><div id="flags"></div></div>
+      <div><div class="muted" style="margin-bottom:4px">Signature yield</div><div id="yield"></div>
+        <div class="muted" style="margin:8px 0 4px">Detection methods</div><div id="methods"></div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const j=u=>fetch(u).then(r=>r.json());
+const esc=s=>String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+function bar(label,val,max,cls=''){const w=max?Math.max(4,Math.round(val/max*150)):4;
+  return `<div class="bar ${cls}"><span class="clab" title="${esc(label)}">${esc(label)}</span>`
+    +`<i style="width:${w}px"></i><small>${val}</small></div>`;}
+
+async function load(){
+  const s=await j('/api/summary');
+  $('metrics').innerHTML=[
+    ['confirmed',s.confirmed,'good'],['novel',s.novel,'novel'],
+    ['gold',s.gold_delivered,'gold'],['rejected (FP)',s.rejected,'bad'],
+    ['validated',s.validated,''],['runs',s.runs,'']
+  ].map(([k,v,c])=>`<div class="metric"><b class="${c}">${v}</b><span>${k}</span></div>`).join('');
+
+  const meth=Object.entries(s.by_method).sort((a,b)=>b[1]-a[1]);
+  const mmax=Math.max(1,...meth.map(m=>m[1]));
+  $('methods').innerHTML=meth.map(([k,v])=>bar(k,v,mmax,'good')).join('')||'<span class="muted">none</span>';
+
+  const c=await j('/api/campaigns');
+  $('campaigns').innerHTML=
+    section('Shared signature → campaign',c.by_signature)+
+    section('Repeat owner → account',c.by_owner)+
+    section('Shared code-hash → core',c.by_code_hash) || '<span class="muted">no clusters yet</span>';
+
+  const fs=await j('/api/findings');
+  $('fcount').textContent=`(${fs.length})`;
+  $('findings').innerHTML='<tr><th>repo</th><th>status</th><th>method</th><th>score</th><th></th></tr>'+
+    fs.map(f=>`<tr class="f" data-r="${esc(f.full_name)}">
+      <td>${esc(f.full_name)}</td>
+      <td class="s-${f.status}">${f.status}</td>
+      <td class="muted">${esc(f.method)}</td><td>${f.score}</td>
+      <td>${f.novel?'<span class="tag novel">novel</span>':''}${f.gold?' <span class="tag gold">gold</span>':''}</td>
+    </tr>`).join('');
+  document.querySelectorAll('tr.f').forEach(tr=>tr.onclick=()=>detail(tr.dataset.r));
+
+  const t=await j('/api/telemetry');
+  const fmax=Math.max(1,...t.flags.map(x=>x.count));
+  $('flags').innerHTML=t.flags.map(x=>bar(x.flag,x.count,fmax,'bad')).join('')||'<span class="muted">none</span>';
+  const ymax=Math.max(1,...t.signature_yield.map(x=>x.repos));
+  $('yield').innerHTML=t.signature_yield.map(x=>bar(x.signature,x.repos,ymax)).join('')||'<span class="muted">none</span>';
+}
+function section(title,obj){const keys=Object.keys(obj);if(!keys.length)return '';
+  return `<div style="margin-bottom:6px;color:var(--mut)">${title}</div>`+
+    keys.map(k=>`<div class="cluster"><div class="k">${esc(k)} <span class="pill">${obj[k].length}</span></div>
+      <ul>${obj[k].map(r=>`<li><a href="#" onclick="detail('${esc(r)}');return false">${esc(r)}</a></li>`).join('')}</ul></div>`).join('');
+}
+async function detail(repo){
+  const d=await j('/api/finding/'+repo);
+  if(d.error||!d.full_name){$('detail').innerHTML='<span class="muted">not found</span>';return;}
+  const flags=(d.flags||[]).slice(0,12).map(f=>`<div><code>${esc(f.file)}:${f.line}</code>
+     <span class="flag">${esc(f.category)}/${esc(f.rule)}</span></div>`).join('');
+  const osm=d.osm?`<div>Lead source: <span class="muted">OSM sev ${esc(d.osm.severity)} · tags ${esc((d.osm.tags||[]).join(', '))}</span></div>`:'';
+  $('detail').innerHTML=`
+    <div><b>${esc(d.full_name)}</b> ${d.novel?'<span class="tag novel">novel</span>':'<span class="tag">OSM-known</span>'}
+      ${d.gold?'<span class="tag gold">gold</span>':''}</div>
+    <div><a href="${esc(d.url||'#')}" target="_blank">${esc(d.url||'')}</a></div>
+    <div>Status <span class="s-${d.status}">${esc(d.status)}</span> · method <span class="muted">${esc(d.method)}</span> · score ${d.score}</div>
+    <div>Attribution: <span class="muted">${esc(d.attribution||'unattributed')}</span></div>
+    ${osm}
+    <div style="margin-top:6px">Why: <span class="muted">${esc(d.reasoning||'')}</span></div>
+    <div style="margin-top:8px">Flags (file:line → rule):</div>${flags||'<span class="muted">none</span>'}
+    ${d.code_hash?`<div class="muted" style="margin-top:6px">code-hash ${esc(d.code_hash.slice(0,16))}…</div>`:''}`;
+}
+load(); setInterval(load, 15000);  // live: refresh as hunts write
+</script>
+</body>
+</html>
