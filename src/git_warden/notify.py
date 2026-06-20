@@ -54,6 +54,16 @@ def format_finding(row) -> str:
     scanner_fired = [_safe(n) for n, s in scanners.items() if s == "flagged"]
     provenance = ", ".join(rules + scanner_fired) or "see signals"
 
+    # Lead-source intel: which feed pointed us here (OSM), with its own labeling.
+    # The CONFIRMATION above is ours (static detection); this records the lead so
+    # the message never reads "unattributed" when we actually have provenance.
+    osm = payload.get("osm") or {}
+    intel_line = None
+    if osm:
+        tags = ", ".join(_safe(t) for t in (osm.get("tags") or [])) or "none"
+        sev = _safe(osm.get("severity") or "n/a")
+        intel_line = f"OpenSourceMalware (severity {sev}; tags: {tags})"
+
     # Label by detection class (P3): a weaponized red-team fork reads differently
     # from a malicious supply-chain repo, so reviewers triage correctly.
     label = {
@@ -71,7 +81,8 @@ def format_finding(row) -> str:
         f"**Detection provenance:** {provenance} (score {row['score']})",
         "**Indicators of compromise (file paths):**",
         *(ioc_lines or ["  - n/a"]),
-        f"**Provenance (matched IOCs):** {iocs}",
+        f"**Matched IOCs:** {iocs}",
+        *( [f"**Lead source (intel):** {intel_line}"] if intel_line else [] ),
         f"**Attribution:** {_safe(row['actor_key'] or 'unattributed')}",
         "_Pending analyst validation — `git-warden review --approve/--reject`_",
     ]
