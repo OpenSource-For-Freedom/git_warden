@@ -460,13 +460,15 @@ class Database:
             )
         }
 
-    def osm_repo_targets(self, limit: int = 0) -> list[tuple[str, str]]:
-        """OSM-labeled malicious repos to Tier-2 validate, as (full_name, url).
+    def osm_repo_targets(self, limit: int = 0) -> list[tuple[str, str, dict]]:
+        """OSM-labeled malicious repos to validate, as (full_name, url, intel).
 
         OSM pre-labels these malicious (mostly fake-interview / crypto-task lure
         repos). We do not trust the label -- we clone and confirm via Tier-2 (a
-        malware signature or a known-malicious dependency). Repos already in the
-        findings registry are skipped (already triaged).
+        malware signature or a known-malicious dependency). ``intel`` carries OSM's
+        own provenance (source, severity, tags, threat description) so a confirmed
+        finding records WHO flagged it and the attribution (e.g. a 'dprk' tag).
+        Repos already in the findings registry are skipped (already triaged).
         """
         from ..refs import repo_full_name
 
@@ -474,15 +476,23 @@ class Database:
             row["full_name"].casefold()
             for row in self.conn.execute("SELECT full_name FROM repo_findings")
         }
-        out: list[tuple[str, str]] = []
+        out: list[tuple[str, str, dict]] = []
         for row in self.list_artifacts(artifact_type="repo"):
-            ref = json.loads(row["raw_payload"]).get("resource_identifier") or row["name"]
+            payload = json.loads(row["raw_payload"])
+            ref = payload.get("resource_identifier") or row["name"]
             full = repo_full_name(ref)
             if not full or full.casefold() in seen:
                 continue
             seen.add(full.casefold())
             url = ref if str(ref).startswith("http") else f"https://github.com/{full}"
-            out.append((full, url))
+            intel = {
+                "source": row["source"],
+                "severity": payload.get("severity_level"),
+                "tags": payload.get("tags") or [],
+                "threat": payload.get("threat_description")
+                or payload.get("payload_description"),
+            }
+            out.append((full, url, intel))
             if limit and len(out) >= limit:
                 break
         return out

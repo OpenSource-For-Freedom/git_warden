@@ -135,12 +135,41 @@ def _finding_from_owner(ar: OwnerRepo) -> RepoFinding:
     )
 
 
-def _finding_from_osm_repo(full_name: str, url: str) -> RepoFinding:
+# OSM nation/actor tags we surface as attribution (OSM's own labeling, not ours).
+_OSM_ATTRIBUTION = {
+    "dprk": "DPRK (North Korea)", "north korea": "DPRK (North Korea)",
+    "lazarus": "Lazarus Group", "kimsuky": "Kimsuky", "apt": "APT",
+    "russia": "Russia", "china": "China", "iran": "Iran",
+}
+
+
+def _osm_attribution(tags: list[str]) -> str | None:
+    """Map OSM tags to an attribution string, or None."""
+    for tag in tags:
+        hit = _OSM_ATTRIBUTION.get(str(tag).strip().lower())
+        if hit:
+            return f"{hit} (per OSM)"
+    return None
+
+
+def _finding_from_osm_repo(full_name: str, url: str, intel: dict) -> RepoFinding:
+    intel = intel or {}
+    severity = (intel.get("severity") or "").upper()
+    threat = (intel.get("threat") or "").strip()
+    tags = intel.get("tags") or []
+    reason = "OSM-flagged malicious repository"
+    if severity:
+        reason += f" (severity {severity})"
+    if threat:
+        reason += f": {threat[:160]}"
     return RepoFinding(
         full_name=full_name,
         url=url or None,
         detection_method=DetectionMethod.OSM_REPOSITORY,
-        reasoning="OSM-labeled malicious repository (validating via Tier-2)",
+        actor_key=_osm_attribution(tags),
+        reasoning=reason,
+        raw_payload={"osm": {"source": intel.get("source") or "open_source_malware",
+                             "severity": intel.get("severity"), "tags": tags}},
     )
 
 
@@ -215,10 +244,10 @@ def hunt(
         # Validate OSM-labeled malicious repos directly: clone + Tier-2 confirm a
         # malware signature or known-malicious dependency, rather than trusting
         # the label. Most lure repos are ephemeral (gone), but survivors confirm.
-        for full, url in db.osm_repo_targets(limit=max_osm):
+        for full, url, intel in db.osm_repo_targets(limit=max_osm):
             if is_defensive_repo(full):
                 continue
-            candidates.setdefault(full.casefold(), _finding_from_osm_repo(full, url))
+            candidates.setdefault(full.casefold(), _finding_from_osm_repo(full, url, intel))
 
     # Bound the run: keep the strongest candidates before the expensive Tier-1
     # README fetches + Tier-2 clones. Ranking is method-aware (eval finding #13)
