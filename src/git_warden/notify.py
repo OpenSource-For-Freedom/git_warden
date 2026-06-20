@@ -50,12 +50,21 @@ def format_finding(row) -> str:
         ioc_lines.append(f"  - … {len(bash) - 8} more")
 
     # Detection provenance: which scanner(s)/rule(s) fired.
-    rules = sorted({f"bash:{_safe(b['rule'])}" for b in bash})
+    rules = sorted({f"static:{_safe(b['rule'])}" for b in bash})
     scanner_fired = [_safe(n) for n, s in scanners.items() if s == "flagged"]
     provenance = ", ".join(rules + scanner_fired) or "see signals"
 
+    # Label by detection class (P3): a weaponized red-team fork reads differently
+    # from a malicious supply-chain repo, so reviewers triage correctly.
+    label = {
+        "redteam_lineage": "⚠️ Git Warden — weaponized red-team tool fork",
+        "ioc_search": "🛡️ Git Warden — malicious repository (IOC match)",
+        "osm_repository": "🛡️ Git Warden — malicious repository (OSM)",
+        "actor_account": "🛡️ Git Warden — threat-actor repository",
+    }.get(row["detection_method"], "🛡️ Git Warden — confirmed malicious repository")
+
     lines = [
-        "**🛡️ Git Warden — confirmed malicious repository**",
+        f"**{label}**",
         f"**Repository:** `{_safe(row['full_name'])}` ({row['platform']})  "
         f"{_safe(row['url'] or '')}",
         f"**Why:** {_safe(row['reasoning'] or 'see signals')}",
@@ -64,6 +73,7 @@ def format_finding(row) -> str:
         *(ioc_lines or ["  - n/a"]),
         f"**Provenance (matched IOCs):** {iocs}",
         f"**Attribution:** {_safe(row['actor_key'] or 'unattributed')}",
+        "_Pending analyst validation — `git-warden review --approve/--reject`_",
     ]
     return "\n".join(lines)
 
