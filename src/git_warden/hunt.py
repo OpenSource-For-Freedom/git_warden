@@ -19,6 +19,7 @@ from __future__ import annotations
 import json
 import logging
 import tempfile
+from collections import Counter
 from datetime import UTC, datetime
 
 from . import config
@@ -33,6 +34,7 @@ from .scanning import (
     find_actor_account_repos,
     find_lineage_candidates,
     find_owner_repos,
+    is_defensive_repo,
     scan_candidate,
     score_repo,
     search_iocs,
@@ -146,6 +148,8 @@ def hunt(
     do_enrich: bool = True,
     do_tier2: bool = False,
     max_iocs: int = 8,
+    max_packages: int = 8,
+    search_pace: float = 0.0,
     limit: int = 0,
     scan_min_score: int = 4,
     gold: bool = False,
@@ -161,25 +165,27 @@ def hunt(
     candidates: dict[str, RepoFinding] = {}
 
     if do_ioc:
-        # Enrichment corpus (expand core search beyond red-team): learned IOCs
-        # from prior confirmed repos, OSM IOCs, AND distinctive malicious package
-        # names (a repo referencing known malware is a candidate).
+        # IOC code search: learned IOCs (prior confirmed repos) + OSM IOCs.
         learned = db.learned_search_terms()
         base = build_search_terms(_osm_iocs(db), max_iocs)
-        packages = db.malicious_package_terms(limit=max_iocs)
-        package_set = set(packages)
-        terms = list(dict.fromkeys(learned + base + packages))[:max_iocs]
-        hits = search_iocs(client, terms, known=known, per_term=15)
-        for hit in hits:
+        ioc_terms = list(dict.fromkeys(learned + base))[:max_iocs]
+        for hit in search_iocs(client, ioc_terms, known=known, per_term=10,
+                               pace_seconds=search_pace):
             if classify_hit(hit) == "suspicious":
-                finding = _finding_from_hit(hit)
-                if any(m in package_set for m in hit.matched_iocs):
-                    finding.detection_method = DetectionMethod.PACKAGE_REF
-                candidates[hit.full_name.casefold()] = finding
+                candidates.setdefault(hit.full_name.casefold(), _finding_from_hit(hit))
 
     if do_enrich:
-        # Owner pivot -- the strongest enrichment: other repos by owners who have
-        # already shipped a known-malicious repo (still Tier-1/Tier-2 gated).
+        # Package pivot -- dedicated budget for the strongest OSM signal: repos
+        # that reference a confirmed-malicious package.
+        for hit in search_iocs(client, db.malicious_package_terms(limit=max_packages),
+                               known=known, per_term=10, pace_seconds=search_pace):
+            if classify_hit(hit) == "suspicious":
+                finding = _finding_from_hit(hit)
+                finding.detection_method = DetectionMethod.PACKAGE_REF
+                finding.reasoning = f"References known-malicious package(s) {hit.matched_iocs}"
+                candidates.setdefault(hit.full_name.casefold(), finding)
+
+        # Owner pivot -- repeat-offender owners (not single-lure-repo victims).
         for ar in find_owner_repos(client, db.malicious_repo_owners(), known=known):
             candidates.setdefault(ar.full_name.casefold(), _finding_from_owner(ar))
 
@@ -198,13 +204,16 @@ def hunt(
     # so high-trust actor-account leads (which carry no signals/IOCs yet) are not
     # starved by noisy multi-signal lineage hits.
     if limit and len(candidates) > limit:
+        # Intelligence-driven methods outrank red-team lineage so enrichment
+        # candidates aren't starved by forks carrying many weak metadata signals
+        # (the whole point: stop being "just red-team").
         method_base = {
-            DetectionMethod.ACTOR_ACCOUNT: 3,
-            DetectionMethod.MALICIOUS_OWNER: 3,  # owner of a known-malicious repo
-            DetectionMethod.PACKAGE_REF: 2,
-            DetectionMethod.OSM_REPOSITORY: 2,
-            DetectionMethod.IOC_SEARCH: 1,
-            DetectionMethod.REDTEAM_LINEAGE: 1,
+            DetectionMethod.MALICIOUS_OWNER: 6,  # owner already shipped malware
+            DetectionMethod.ACTOR_ACCOUNT: 6,
+            DetectionMethod.PACKAGE_REF: 5,
+            DetectionMethod.IOC_SEARCH: 4,
+            DetectionMethod.OSM_REPOSITORY: 4,
+            DetectionMethod.REDTEAM_LINEAGE: 0,
         }
         ranked = sorted(
             candidates.values(),
@@ -213,9 +222,17 @@ def hunt(
         )
         candidates = {f.full_name.casefold(): f for f in ranked[:limit]}
 
+    # Observability: prove which sources are actually contributing candidates
+    # (the enrichment check -- not "just red-team").
+    by_method = Counter(f.detection_method.value for f in candidates.values())
+    log.info("hunt discovery", extra={"context": {
+        "total_candidates": len(candidates), "by_method": dict(by_method)}})
+
     # Tier-1 screen: fetch README, score name + README jointly.
     all_terms = {t for tool in tools for t in tool.match_terms}
     screened_count = 0
+    confirmed_by_method: Counter = Counter()
+    rejected_mirrors = 0
     for finding in candidates.values():
         owner, _, name = finding.full_name.partition("/")
         readme = None
@@ -231,8 +248,17 @@ def hunt(
         )
         finding.score = result.score
         finding.signals = sorted(set(finding.signals) | set(result.signal_names))
-        finding.status = RepoFindingStatus.SCREENED if result.tier2 else RepoFindingStatus.CANDIDATE
-        if result.tier2:
+        # Intelligence-driven candidates (reference a known IOC / malicious
+        # package / are under a repeat-offender owner) reach Tier-2 on their
+        # discovery signal, NOT their (often benign) name -- unless they are a
+        # defender/sample/catalog repo, which we must not clone+confirm.
+        intel = finding.detection_method in (
+            DetectionMethod.IOC_SEARCH, DetectionMethod.PACKAGE_REF,
+            DetectionMethod.MALICIOUS_OWNER, DetectionMethod.ACTOR_ACCOUNT,
+        )
+        to_tier2 = result.tier2 or (intel and not is_defensive_repo(finding.full_name))
+        finding.status = RepoFindingStatus.SCREENED if to_tier2 else RepoFindingStatus.CANDIDATE
+        if to_tier2:
             screened_count += 1
         db.upsert_finding(finding, run_id)
 
@@ -262,6 +288,7 @@ def hunt(
                         finding.reasoning = (finding.reasoning or "") + \
                             " | unmodified fork of red-team tool (no intent change)"
                         db.upsert_finding(finding, run_id)
+                        rejected_mirrors += 1
                         continue
                 result = scan_candidate(finding.full_name, workdir,
                                         restrict_paths=restrict, confirm_categories=confirm_cats,
@@ -283,6 +310,7 @@ def hunt(
                     finding.raw_payload["scanners"] = result.scanners
                     db.upsert_finding(finding, run_id)
                     confirmed += 1
+                    confirmed_by_method[finding.detection_method.value] += 1
                     # Compounding loop: mine this confirmed repo's IOCs into the
                     # search corpus so future hunts find more like it.
                     li = result.learned_iocs
@@ -304,8 +332,11 @@ def hunt(
 
     counts = {
         "candidates": len(candidates),
+        "candidates_by_method": dict(by_method),
         "screened": screened_count,  # passed Tier-1 (cumulative, pre-Tier-2)
         "confirmed": confirmed,
+        "confirmed_by_method": dict(confirmed_by_method),
+        "rejected_mirrors": rejected_mirrors,  # unmodified red-team forks dropped
         "gold_delivered": delivered,
     }
     db.finish_run(run_id, datetime.now(UTC), RunStatus.COMPLETED, counts)

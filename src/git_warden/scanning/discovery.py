@@ -69,6 +69,23 @@ def build_search_terms(iocs, max_terms: int) -> list[str]:
     return list(dict.fromkeys(domains + ids))[:max_terms]
 
 
+# Broader name-based defender/sample/catalog check used as a CLONE gate: when we
+# auto-escalate an intelligence-driven candidate to Tier-2 on its discovery
+# signal (not its name), this keeps us from cloning a repo that merely *catalogs*
+# malware (advisory DBs, IOC feeds, malware-sample collections, our own tooling).
+_DEFENSIVE_REPO = re.compile(
+    r"malicious|malware|advisor|\bosv\b|\bcve\b|vuln|\bioc[s]?\b|sample|yara|sigma|"
+    r"detection|detector|threat[-_]?intel|awesome|blocklist|blacklist|honeypot|"
+    r"security[-_]?research|sandbox|maltrail|feed|dataset|git[-_]?warden",
+    re.IGNORECASE,
+)
+
+
+def is_defensive_repo(full_name: str) -> bool:
+    """True if the repo owner/name marks a defender/sample/catalog (don't clone)."""
+    return bool(_DEFENSIVE_REPO.search(full_name))
+
+
 def classify_hit(hit: RepoHit) -> str:
     """'defensive' if the repo merely catalogs the IOC; 'suspicious' if it uses it.
 

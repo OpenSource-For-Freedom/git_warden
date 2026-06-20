@@ -434,25 +434,30 @@ class Database:
             known.add(row["full_name"].casefold())
         return known
 
-    def malicious_repo_owners(self) -> set[str]:
-        """Owners of known-malicious repos (OSM artifacts + confirmed findings).
+    def malicious_repo_owners(self, min_count: int = 2) -> set[str]:
+        """Likely-malicious-ACTOR owners (not lure victims).
 
-        The enrichment engine's strongest pivot: a bad actor's account holds more
-        bad repos, so we enumerate every other repo under these owners.
+        OSM repo "owners" are often victims of fake-job/assessment lures, whose
+        other repos are benign. So we keep only repeat offenders -- owners with
+        >= min_count OSM-flagged repos -- plus any owner of a finding we already
+        confirmed/validated (a proven bad actor).
         """
+        from collections import Counter
+
         from ..refs import repo_full_name
 
-        owners: set[str] = set()
+        counts: Counter = Counter()
         for row in self.list_artifacts(artifact_type="repo"):
             ref = json.loads(row["raw_payload"]).get("resource_identifier") or row["name"]
             full = repo_full_name(ref)
             if full:
-                owners.add(full.split("/", 1)[0])
+                counts[full.split("/", 1)[0]] += 1
+        owners = {o for o, n in counts.items() if o and n >= min_count}
         for row in self.conn.execute(
             "SELECT full_name FROM repo_findings WHERE status IN ('confirmed', 'validated')"
         ):
             owners.add(row["full_name"].split("/", 1)[0])
-        return {o for o in owners if o}
+        return owners
 
     def malicious_package_terms(self, limit: int = 30) -> list[str]:
         """Distinctive malicious package names to code-search for (package pivot).

