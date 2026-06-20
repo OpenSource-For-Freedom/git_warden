@@ -98,7 +98,8 @@ class RepoFindingStatus(StrEnum):
 
     CANDIDATE = "candidate"
     SCREENED = "screened"
-    CONFIRMED = "confirmed"
+    CONFIRMED = "confirmed"  # Tier-2 evidence; delivered to Discord for validation
+    VALIDATED = "validated"  # analyst-approved (PRD section 3) -> broader distribution
     REJECTED = "rejected"
 
 
@@ -109,6 +110,9 @@ class DetectionMethod(StrEnum):
     REDTEAM_LINEAGE = "redteam_lineage"  # clone/fork of a pinned red-team tool
     ACTOR_ACCOUNT = "actor_account"  # under a promoted threat-actor account
     OSM_REPOSITORY = "osm_repository"  # OSM-flagged repository artifact
+    MALICIOUS_OWNER = "malicious_owner"  # other repo by a known-malicious-repo owner
+    PACKAGE_REF = "package_ref"  # references a known-malicious package
+    SIGNATURE_MATCH = "signature_match"  # shares a confirmed malware code signature
 
 
 class ArtifactStatus(StrEnum):

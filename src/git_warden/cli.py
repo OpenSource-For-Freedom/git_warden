@@ -50,7 +50,7 @@ def _cmd_ingest(args: argparse.Namespace) -> int:
 def _cmd_probe(args: argparse.Namespace) -> int:
     """Hit ONE live feed and show what comes back.
 
-    The incremental "do the returns look sane?" check -- run this against the
+    The incremental "do the returns look sane?" check; run this against the
     network before trusting the full pipeline, so we can pivot cheaply.
     """
     configure_logging(json_output=False)
@@ -196,7 +196,7 @@ def _cmd_lineage(args: argparse.Namespace) -> int:
             owner, _, name = cand.full_name.partition("/")
             try:
                 readme = client.get_readme(owner, name)
-            except Exception:  # noqa: BLE001 -- a single README fetch failing is non-fatal
+            except Exception:  # noqa: BLE001
                 readme = None
             result = score_repo(
                 name=cand.full_name,
@@ -247,7 +247,7 @@ def _cmd_screen_artifacts(args: argparse.Namespace) -> int:
         owner, name = parsed
         repo = client.get_repo(owner, name)
         if repo is None:
-            removed += 1  # 404: likely already taken down -- itself a signal
+            removed += 1  # 404: likely already taken down; itself a signal
             continue
         readme = None
         try:
@@ -344,7 +344,7 @@ def _cmd_discover(args: argparse.Namespace) -> int:
         if m:
             ids.append(m.group(1))
     domains = [d for d, _ in agg.domains.most_common(50) if is_attacker_host(d)]
-    # Attacker domains are the strongest pivot -- search them first.
+    # Attacker domains are the strongest pivot; search them first.
     terms = list(dict.fromkeys(domains + ids))[: args.max_iocs]
 
     print(f"mirroring {len(terms)} OSM IOCs into GitHub code search "
@@ -372,11 +372,24 @@ def _cmd_hunt(args: argparse.Namespace) -> int:
 
     from .github import GitHubClient
     from .hunt import hunt
-    from .notify import format_finding, post_discord
+    from .notify import cluster_embed, post_discord
     from .redteam import load_redteam_tools
 
     if not config.GITHUB_TOKEN:
         print("warning: GW_GITHUB_TOKEN not set -> code search disabled, rate limited.")
+
+    # Live OSM re-check: pull OSM's current repo feed so we never report a repo
+    # OSM already has (we contribute NOVEL findings; OSM-known repos validate our
+    # detection only). Best-effort; a fetch failure just falls back to the
+    # ingested OSM set already enforced by undelivered_gold().
+    osm_live_known: set[str] = set()
+    if args.gold and not args.no_osm_verify:
+        try:
+            from .feeds.osm import OsmFeed
+            osm_live_known = set(OsmFeed().current_repo_index().keys())
+            print(f"OSM live re-check: {len(osm_live_known)} repos currently in OSM feed.")
+        except Exception as exc:  # noqa: BLE001
+            print(f"warning: OSM live re-check failed ({exc}); using ingested OSM set.")
 
     db = Database.open(args.db)
     run_id = args.run_id or f"hunt-{datetime.now(UTC).strftime('%Y%m%dT%H%M%SZ')}"
@@ -384,19 +397,60 @@ def _cmd_hunt(args: argparse.Namespace) -> int:
         summary = hunt(
             db, GitHubClient(), load_redteam_tools(),
             run_id=run_id,
+            osm_live_known=osm_live_known,
             do_ioc=not args.no_ioc,
             do_lineage=not args.no_lineage,
             do_actor=not args.no_actor,
+            do_enrich=not args.no_enrich,
+            do_osm=not args.no_osm,
+            do_signature=not args.no_signature,
             do_tier2=args.scan,
             max_iocs=args.max_iocs,
+            max_packages=args.max_packages,
+            max_osm=args.max_osm,
+            max_signatures=args.max_signatures,
+            search_pace=args.pace,
             limit=args.limit,
             gold=args.gold,
-            notifier=lambda row: post_discord(format_finding(row)),
+            notifier=lambda cluster: post_discord(embeds=[cluster_embed(cluster)]),
         )
     finally:
         db.close()
     json.dump(summary, sys.stdout, indent=2)
     sys.stdout.write("\n")
+    return 0
+
+
+def _cmd_review(args: argparse.Namespace) -> int:
+    """Analyst validation of confirmed findings (human-in-the-loop, PRD 3)."""
+    configure_logging(json_output=False)
+    from .enums import RepoFindingStatus
+
+    db = Database.open(args.db)
+    try:
+        if args.approve:
+            n = db.set_finding_status(args.approve, RepoFindingStatus.VALIDATED.value)
+            print(f"validated {args.approve}" if n else f"no finding {args.approve!r}")
+        elif args.reject:
+            n = db.set_finding_status(args.reject, RepoFindingStatus.REJECTED.value)
+            print(f"rejected {args.reject}" if n else f"no finding {args.reject!r}")
+        else:
+            rows = db.findings_by_status("confirmed")
+            print(f"{len(rows)} confirmed finding(s) pending validation:")
+            for r in rows:
+                print(f"- {r['full_name']}  ({r['detection_method']})  score={r['score']}")
+    finally:
+        db.close()
+    return 0
+
+
+def _cmd_serve(args: argparse.Namespace) -> int:
+    """Serve the live threat-telemetry dashboard (PRD section 6)."""
+    configure_logging(json_output=False)
+    from .dashboard.app import serve
+
+    print(f"Git Warden telemetry dashboard -> http://{args.host}:{args.port}  (db: {args.db})")
+    serve(db_path=args.db, host=args.host, port=args.port)
     return 0
 
 
@@ -451,6 +505,18 @@ def build_parser() -> argparse.ArgumentParser:
     screen.add_argument("--limit", type=int, default=10, help="Repos to screen (rate-limited).")
     screen.set_defaults(func=_cmd_screen_artifacts)
 
+    review = sub.add_parser("review", help="Analyst validate confirmed findings (approve/reject).")
+    review.add_argument("--db", type=Path, default=config.DB_PATH, help="SQLite path.")
+    review.add_argument("--approve", metavar="OWNER/REPO", help="Mark a finding validated.")
+    review.add_argument("--reject", metavar="OWNER/REPO", help="Mark a finding rejected.")
+    review.set_defaults(func=_cmd_review)
+
+    serve = sub.add_parser("serve", help="Serve the live threat-telemetry dashboard (PRD 6).")
+    serve.add_argument("--db", type=Path, default=config.DB_PATH, help="SQLite path.")
+    serve.add_argument("--host", default="127.0.0.1", help="Bind host.")
+    serve.add_argument("--port", type=int, default=8787, help="Bind port.")
+    serve.set_defaults(func=_cmd_serve)
+
     iocs = sub.add_parser("iocs", help="Aggregate the searchable IOC pivot set from OSM data.")
     iocs.add_argument("--db", type=Path, default=config.DB_PATH, help="SQLite path.")
     iocs.add_argument("--limit", type=int, default=20, help="Top domains to show.")
@@ -473,9 +539,26 @@ def build_parser() -> argparse.ArgumentParser:
     hunt_p.add_argument("--no-ioc", action="store_true", help="Skip IOC code-search discovery.")
     hunt_p.add_argument("--no-lineage", action="store_true", help="Skip lineage discovery.")
     hunt_p.add_argument("--no-actor", action="store_true", help="Skip actor-account discovery.")
+    hunt_p.add_argument("--no-enrich", action="store_true",
+                        help="Skip OSM enrichment (owner/package pivots).")
+    hunt_p.add_argument("--no-osm", action="store_true",
+                        help="Skip direct Tier-2 validation of OSM-labeled malicious repos.")
+    hunt_p.add_argument("--no-osm-verify", action="store_true",
+                        help="Skip the live OSM re-check before gold delivery (novelty gate).")
+    hunt_p.add_argument("--no-signature", action="store_true",
+                        help="Skip malware code-signature search (novel-repo discovery).")
+    hunt_p.add_argument("--max-signatures", type=int, default=8,
+                        help="Malware code signatures to code-search (novel-repo engine).")
     hunt_p.add_argument("--scan", action="store_true", help="Run Tier-2 clone+scan.")
     hunt_p.add_argument("--gold", action="store_true", help="Deliver confirmed to Discord.")
     hunt_p.add_argument("--max-iocs", type=int, default=8, help="IOC terms to search.")
+    hunt_p.add_argument("--max-packages", type=int, default=8,
+                        help="Malicious package names to code-search (package pivot).")
+    hunt_p.add_argument("--max-osm", type=int, default=60,
+                        help="OSM-labeled repos to clone+validate in Tier-2.")
+    hunt_p.add_argument("--pace", type=float, default=7.0,
+                        help="Seconds between code searches. Code search allows ~10/min, so "
+                             "keep this >=6; the client also backs off on a rate-limit response.")
     hunt_p.add_argument("--limit", type=int, default=0,
                         help="Cap candidates processed (0 = no cap). Bounds a run.")
     hunt_p.add_argument("--pretty-logs", action="store_true", help="Human-readable logs.")
@@ -488,7 +571,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         return args.func(args)
-    except Exception:  # noqa: BLE001 -- top-level guard prints a clean error
+    except Exception:  # noqa: BLE001
         logging.getLogger("git_warden.cli").exception("ingestion failed")
         return 1
 

@@ -21,6 +21,14 @@ load_env_file(PROJECT_ROOT / ".env")
 
 DATA_DIR = PROJECT_ROOT / "data"
 ARTIFACTS_DIR = PROJECT_ROOT / "artifacts"
+
+# Tier-2 clone scratch. Set GW_WORK_DIR to keep large, ephemeral clones off a
+# near-full system drive (the operator points it at e.g. F:\gw-work on the host).
+# None => the system temp dir, which is the right default for CI/Linux. Never
+# hardcode a drive letter here; it must stay cross-platform.
+_work = os.environ.get("GW_WORK_DIR")
+WORK_DIR = Path(_work) if _work else None
+
 # Cached downloads of large reference datasets (e.g. the MITRE ATT&CK bundle).
 CACHE_DIR = DATA_DIR / "cache"
 
@@ -37,14 +45,20 @@ SEED_ACTORS_PATH = Path(
     os.environ.get("GW_SEED_ACTORS", PROJECT_ROOT / "config" / "seed_actors.json")
 )
 
-# Known-good red-team tooling registry -- the legitimate originals the scanner
+# Curated malware code-signature search queries (deobfuscator stubs, injection
+# patterns) used to hunt novel sibling repos of a confirmed campaign.
+MALWARE_SIGNATURES_PATH = Path(
+    os.environ.get("GW_MALWARE_SIGNATURES", PROJECT_ROOT / "config" / "malware_signatures.json")
+)
+
+# Known-good red-team tooling registry; the legitimate originals the scanner
 # pins to detect weaponized clones/forks (doc 02 section 5).
 REDTEAM_TOOLS_PATH = Path(
     os.environ.get("GW_REDTEAM_TOOLS", PROJECT_ROOT / "config" / "redteam_tools.json")
 )
 
 # --- Credentials (from environment / Actions secrets; never hard-coded) -----
-# Reads only -- see docs and .env.example for the required scopes per token.
+# Reads only; see docs and .env.example for the required scopes per token.
 GITHUB_TOKEN = os.environ.get("GW_GITHUB_TOKEN")
 # GitHub REST API. Read-only public access; token lifts the rate limit to
 # 5,000/hr and is required for GraphQL (doc 02).
@@ -52,7 +66,7 @@ GITHUB_API_URL = os.environ.get("GW_GITHUB_API_URL", "https://api.github.com")
 GITHUB_API_VERSION = "2022-11-28"
 # OSM: RESTful API, Bearer auth ("Authorization: Bearer osm_..."). Endpoints are
 # appended to the base URL, e.g. "query-latest" (100 most recent verified
-# reports -- the free ingestion endpoint).
+# reports; the free ingestion endpoint).
 OSM_API_KEY = os.environ.get("GW_OSM_API_KEY")
 OSM_BASE_URL = os.environ.get(
     "GW_OSM_BASE_URL", "https://api.opensourcemalware.com/functions/v1/"
@@ -95,3 +109,5 @@ def ensure_dirs() -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    if WORK_DIR:
+        WORK_DIR.mkdir(parents=True, exist_ok=True)

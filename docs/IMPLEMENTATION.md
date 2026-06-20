@@ -32,13 +32,23 @@ adversarial multi-agent evaluation (18 findings fixed; see git history).
   **homoglyph/confusable normalization** (NFKC + Cyrillic/Greek/leet skeleton),
   edit-distance typosquatting, obfuscation/exfil/remote-exec signals (doc 02 §2.2/3.1).
 - Tier-2 (`scanning/tier2.py`): validated/bounded clone (allowlisted name, `--`,
-  size caps) + whole-repo code-hash + OSS scanner orchestration (Semgrep via
-  `--json` results, YARA/GuardDog graceful-skip) + **custom bash Layer-1
-  scanner** (`bash_scanner.py`, doc 03). Bash-only confirmation requires a
-  high-signal category.
+  size caps) + whole-repo code-hash + **STATIC analysis only (never executes a
+  target)**. Combines the **bash Layer-1 scanner**, an **install-hook/manifest
+  scanner** (`manifest_scanner.py`; npm pre/postinstall, setup.py exec) and a
+  **JS/Python content scanner** (`content_scanner.py`; eval/atob/base64
+  obfuscation, child_process, webhook exfil), plus OSS scanners **GuardDog**
+  (ecosystem-aware) and **Semgrep** (`--json`). Confirmation needs a high-signal
+  category. **Red-team lineage** confirms only on WEAPONIZATION_CATEGORIES and an
+  **intent-change gate** (GitHub `compare`: unmodified forks dropped; only
+  diverged files count) so a fork of an offensive tool isn't flagged for the
+  tool's own code (doc 02 §5).
 - Malicious-repo registry (`repo_findings`) — the product. Gold output to Discord
   with file-path IOCs + scanner/rule provenance (`notify.py`, doc 02 §6).
-- `hunt` pipeline; method-aware run capping.
+- `hunt` pipeline; method-aware run capping. Gold messages are labeled by
+  detection class (weaponized red-team fork vs malicious repo) with file-path +
+  scanner/rule provenance. **Human-in-the-loop** (PRD §3): confirmed findings go
+  to Discord for validation; `git-warden review --approve/--reject` records the
+  analyst verdict (`validated`/`rejected`).
 - **Learning loop**: mine IOCs from confirmed repos' code → grow the search
   corpus (compounding discovery).
 
@@ -62,8 +72,11 @@ adversarial multi-agent evaluation (18 findings fixed; see git history).
   ready; only the per-platform client classes + OAuth remain.
 - **Bash scanner Layer 2** — sandboxed behavioral execution (doc 03 §3.2); the
   heavy lift (container/gVisor isolation, tracing, egress control).
-- **Actor→GitHub-handle seeding** — the actor-account path is built but only
-  fires once verified handles are curated into the seed identifiers.
+- **Actor→GitHub-handle seeding** — the path + plumbing are built and tested
+  (SeedActor `identifiers` → `actor_identifiers` → `actor_github_logins`, gated to
+  promoted actors); it fires once an operator curates verified GitHub
+  usernames/orgs into `config/seed_actors.json` (not fabricated). Format:
+  `"identifiers": [{"identifier_type": "organization", "value": "<login>", "platform": "github"}]`.
 - **Gated web dashboard** (PRD §6).
 
 ## Descoped

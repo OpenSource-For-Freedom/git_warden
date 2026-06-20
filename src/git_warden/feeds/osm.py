@@ -1,7 +1,7 @@
-"""OpenSourceMalware (OSM) adapter -- labeled malicious packages/repos.
+"""OpenSourceMalware (OSM) adapter; labeled malicious packages/repos.
 
 OSM is an *indicator* source (PRD section 10): records key on an artifact, not a
-threat actor. We ingest the free ``GET /query-latest`` endpoint -- using it as
+threat actor. We ingest the free ``GET /query-latest`` endpoint; using it as
 designed keeps us within OSM's ToS.
 
 ``query-latest`` takes a required ``ecosystem`` query parameter, so we poll each
@@ -15,7 +15,7 @@ like::
 
 Artifact type is derived from each record's ``report_type`` (``package`` ->
 PACKAGE, ``repositories`` -> REPO); other report types (domain, ip, ...) are
-skipped -- they are IOCs, not packages/repos. The whole record is retained in
+skipped; they are IOCs, not packages/repos. The whole record is retained in
 ``raw_payload``, which carries the IOC-rich ``payload_description`` for Week-2
 and the Discord gold output. Note: query-latest carries no package-author/
 publisher field, so actor correlation isn't possible from this endpoint.
@@ -38,7 +38,7 @@ from .base import ArtifactFeed
 log = logging.getLogger(__name__)
 
 # Ecosystems OSM supports for query-latest. We poll the package registries plus
-# "repositories"; "domains" is excluded -- it is an IOC type, not a package/repo.
+# "repositories"; "domains" is excluded; it is an IOC type, not a package/repo.
 PACKAGE_ECOSYSTEMS = (
     "npm",
     "pypi",
@@ -133,6 +133,40 @@ class OsmFeed(ArtifactFeed):
         super().__init__(http)
         self.token = token or OSM_API_KEY
         self.ecosystems = tuple(ecosystems)
+
+    def current_repo_index(self) -> dict[str, dict]:
+        """Live OSM ``repositories`` feed as {full_name.casefold(): intel}.
+
+        Used to re-check an OSM-repo lead at hunt time so a stale/delisted lead
+        from a prior ingest is dropped before we attribute it to OSM. NOTE: the
+        free API only exposes ``query-latest`` (a recent-window firehose, not a
+        per-repo lookup), so "present here" means "in OSM's current window".
+        Returns an empty dict on any failure (caller treats as 'cannot verify').
+        """
+        if not self.token:
+            return {}
+        headers = {"Authorization": f"Bearer {self.token}", "Accept": "application/json"}
+        try:
+            text = self.http.get_text(
+                osm_endpoint("query-latest"),
+                params={"ecosystem": REPOSITORY_ECOSYSTEM}, headers=headers,
+            )
+            artifacts = parse_query_latest(json.loads(text))
+        except Exception as exc:  # noqa: BLE001
+            log.warning("osm: live repo re-check failed",
+                        extra={"context": {"err": str(exc)}})
+            return {}
+        index: dict[str, dict] = {}
+        for art in artifacts:
+            payload = art.raw_payload or {}
+            index[art.name.casefold()] = {
+                "source": "open_source_malware",
+                "severity": payload.get("severity_level"),
+                "tags": payload.get("tags") or [],
+                "threat": payload.get("threat_description")
+                or payload.get("payload_description"),
+            }
+        return index
 
     def collect_artifacts(self, run_id: str) -> list[MaliciousArtifact]:  # noqa: ARG002
         if not self.token:
