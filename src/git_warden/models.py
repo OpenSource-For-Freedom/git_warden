@@ -6,12 +6,12 @@ point (PRD section 9: "Schema enforcement and normalization across sources").
 
 Two layers of data:
 
-* :class:`SourceObservation` -- the raw breadcrumb. One record per claim a
+* :class:`SourceObservation`; the raw breadcrumb. One record per claim a
   single feed makes in a single run. These are *retained forever*, including
   recognized false positives, so audits can confirm good data was never
   silently discarded (PRD section 11, "Retain everything").
 
-* :class:`ThreatActor` (+ :class:`ActorIdentifier`, :class:`Campaign`) -- the
+* :class:`ThreatActor` (+ :class:`ActorIdentifier`, :class:`Campaign`); the
   normalized, deduplicated entity that observations roll up into. An actor is
   only trusted once independent feeds corroborate it.
 """
@@ -42,7 +42,7 @@ def _normalize_name(value: str) -> str:
 
     Casefolding (not just lower()) so actor names that differ only by case or
     unicode case quirks collapse to one entity. Display casing is not preserved
-    here by design -- this value is the dedup key, not the label.
+    here by design; this value is the dedup key, not the label.
     """
     return " ".join(value.split()).casefold()
 
@@ -50,7 +50,7 @@ def _normalize_name(value: str) -> str:
 class ActorIdentifier(BaseModel):
     """A concrete handle that seeds downstream platform searches.
 
-    Usernames, orgs, packages, domains -- the things the GitHub/GitLab/Gitea
+    Usernames, orgs, packages, domains; the things the GitHub/GitLab/Gitea
     scanning layers actually query on.
     """
 
@@ -72,7 +72,7 @@ class ActorIdentifier(BaseModel):
 class Campaign(BaseModel):
     """A real-world campaign that links an actor to victims/sectors.
 
-    These are the breadcrumbs from PRD section 10 -- power grid, hospitals,
+    These are the breadcrumbs from PRD section 10; power grid, hospitals,
     banks, schools, financial institutions, government targets.
     """
 
@@ -112,7 +112,7 @@ class SourceObservation(BaseModel):
 
 
 class ThreatActor(BaseModel):
-    """Normalized, deduplicated actor -- the entity downstream layers act on.
+    """Normalized, deduplicated actor; the entity downstream layers act on.
 
     ``corroborating_sources`` is the set of *distinct* feeds that have observed
     this actor; its size drives the promotion decision. Storing the set (rather
@@ -186,7 +186,7 @@ class MaliciousArtifact(BaseModel):
     the source attributes one; it stays ``None`` for unattributed indicators.
 
     ``ecosystem`` is intentionally a free string (npm, pypi, github, ...) until
-    we see OSM's real vocabulary -- the adapter can normalize it later.
+    we see OSM's real vocabulary; the adapter can normalize it later.
     """
 
     artifact_type: ArtifactType
@@ -213,7 +213,7 @@ class RedTeamTool(BaseModel):
     that share their lineage but differ in ownership or intent as candidates.
     ``org`` captures the organization-to-repository mapping (a parent project
     name often differs from its repo names). A name-only entry (empty ``repos``)
-    is watched by name/alias -- e.g. commercial tools with no official repo.
+    is watched by name/alias; e.g. commercial tools with no official repo.
     """
 
     name: str = Field(min_length=1)
@@ -241,7 +241,7 @@ class RedTeamTool(BaseModel):
 
 
 class RepoFinding(BaseModel):
-    """A malicious (or candidate) GitHub repository -- the program's product.
+    """A malicious (or candidate) GitHub repository; the program's product.
 
     The unified registry record (PRD section 1; doc 02 section 6). Carries the
     repo, why it's flagged, its attribution, and the provenance breadcrumbs that

@@ -5,6 +5,21 @@
     "aliases": ["Hidden Cobra", "APT38", "ZINC", "Diamond Sleet"]
   },
   {
+    "name": "TraderTraitor",
+    "category": "nation_state",
+    "aliases": ["Jade Sleet", "UNC4899", "Slow Pisces"]
+  },
+  {
+    "name": "Famous Chollima",
+    "category": "federated_affiliated",
+    "aliases": ["Contagious Interview", "Wagemole", "UNC5267", "DeceptiveDevelopment"]
+  },
+  {
+    "name": "Kimsuky",
+    "category": "nation_state",
+    "aliases": ["Velvet Chollima", "Black Banshee", "Thallium", "Emerald Sleet"]
+  },
+  {
     "name": "APT28",
     "category": "nation_state",
     "aliases": ["Fancy Bear", "Sofacy", "Forest Blizzard", "Sednit"]
@@ -18,6 +33,51 @@
     "name": "Sandworm Team",
     "category": "nation_state",
     "aliases": ["Voodoo Bear", "Seashell Blizzard", "BlackEnergy"]
+  },
+  {
+    "name": "APT41",
+    "category": "nation_state",
+    "aliases": ["Wicked Panda", "Barium", "Winnti", "Brass Typhoon"]
+  },
+  {
+    "name": "MuddyWater",
+    "category": "nation_state",
+    "aliases": ["Static Kitten", "Mercury", "Seedworm", "Mango Sandstorm"]
+  },
+  {
+    "name": "OilRig",
+    "category": "nation_state",
+    "aliases": ["APT34", "Helix Kitten", "Cobalt Gypsy", "Hazel Sandstorm"]
+  },
+  {
+    "name": "Charming Kitten",
+    "category": "nation_state",
+    "aliases": ["APT35", "Mint Sandstorm", "Phosphorus", "TA453"]
+  },
+  {
+    "name": "Turla",
+    "category": "nation_state",
+    "aliases": ["Snake", "Venomous Bear", "Waterbug", "Secret Blizzard"]
+  },
+  {
+    "name": "Gamaredon Group",
+    "category": "nation_state",
+    "aliases": ["Primitive Bear", "Shuckworm", "Trident Ursa", "Aqua Blizzard"]
+  },
+  {
+    "name": "Volt Typhoon",
+    "category": "nation_state",
+    "aliases": ["Vanguard Panda", "BRONZE SILHOUETTE", "Insidious Taurus"]
+  },
+  {
+    "name": "FIN7",
+    "category": "apt",
+    "aliases": ["Carbon Spider", "Carbanak", "Sangria Tempest"]
+  },
+  {
+    "name": "Scattered Spider",
+    "category": "federated_affiliated",
+    "aliases": ["UNC3944", "Octo Tempest", "Muddled Libra", "Scatter Swine"]
   },
   {
     "name": "Wizard Spider",

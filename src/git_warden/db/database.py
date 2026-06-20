@@ -1,6 +1,6 @@
 """SQLite connection management and the ingestion repository.
 
-Stdlib ``sqlite3`` only -- no ORM (PRD section 9: SQLite, no external database
+Stdlib ``sqlite3`` only; no ORM (PRD section 9: SQLite, no external database
 in phase 1). The :class:`Database` class exposes the small set of operations the
 ingestion layer needs:
 
@@ -78,7 +78,7 @@ class Database:
     def __init__(self, conn: sqlite3.Connection) -> None:
         self.conn = conn
 
-    # -- lifecycle ---------------------------------------------------------
+    #; lifecycle ---------------------------------------------------------
     @classmethod
     def open(cls, db_path: Path | str = DB_PATH) -> Database:
         conn = connect(db_path)
@@ -90,7 +90,7 @@ class Database:
 
     @contextmanager
     def transaction(self) -> Iterator[sqlite3.Connection]:
-        """Atomic unit of work -- commit on success, roll back on error."""
+        """Atomic unit of work; commit on success, roll back on error."""
         try:
             yield self.conn
             self.conn.commit()
@@ -98,7 +98,7 @@ class Database:
             self.conn.rollback()
             raise
 
-    # -- runs --------------------------------------------------------------
+    #; runs --------------------------------------------------------------
     def start_run(self, run_id: str, started_at: datetime, config: dict | None = None) -> None:
         with self.transaction() as c:
             c.execute(
@@ -121,7 +121,7 @@ class Database:
                 (status.value, finished_at.isoformat(), json.dumps(counts or {}), run_id),
             )
 
-    # -- raw observations (append-only) ------------------------------------
+    #; raw observations (append-only) ------------------------------------
     def record_observation(self, obs: SourceObservation) -> int:
         """Insert one raw observation. Returns its row id. Never updates."""
         with self.transaction() as c:
@@ -148,7 +148,7 @@ class Database:
             )
             return int(cur.lastrowid)
 
-    # -- normalized actors -------------------------------------------------
+    #; normalized actors -------------------------------------------------
     def upsert_actor(self, actor: ThreatActor) -> None:
         """Create or update the normalized actor row (excluding corroboration).
 
@@ -191,7 +191,7 @@ class Database:
         """Create the actor on first sighting; otherwise only bump last_seen_run.
 
         Unlike :meth:`upsert_actor`, this never clobbers an existing actor's
-        status or category -- the validator owns status, and the first feed to
+        status or category; the validator owns status, and the first feed to
         name an actor sets its canonical name. This keeps re-runs idempotent.
         """
         with self.transaction() as c:
@@ -257,7 +257,7 @@ class Database:
             )
             _ = cur  # silence unused; insert side effect is the point
 
-    # -- queries -----------------------------------------------------------
+    #; queries -----------------------------------------------------------
     def corroborating_source_count(self, actor_key: str) -> int:
         """Number of distinct feeds that have observed this actor."""
         row = self.conn.execute(
@@ -270,7 +270,7 @@ class Database:
             "SELECT * FROM threat_actors WHERE actor_key = ?", (actor_key,)
         ).fetchone()
 
-    # -- malicious artifacts (OSM / Week-2 scan list) ----------------------
+    #; malicious artifacts (OSM / Week-2 scan list) ----------------------
     def upsert_artifact(self, artifact: MaliciousArtifact, run_id: str) -> int:
         """Insert or refresh a labeled artifact; returns its row id.
 
@@ -325,7 +325,7 @@ class Database:
             params.append(int(limit))
         return self.conn.execute(sql, params).fetchall()
 
-    # -- malicious-repo registry (the product) -----------------------------
+    #; malicious-repo registry (the product) -----------------------------
     def upsert_finding(self, finding: RepoFinding, run_id: str) -> None:
         """Insert or refresh a repo finding. Dedups on full_name.
 
@@ -373,17 +373,33 @@ class Database:
                 ),
             )
 
+    def set_finding_status(self, full_name: str, status: str) -> int:
+        """Analyst override of a finding's status (PRD 3). Returns rows changed."""
+        with self.transaction() as c:
+            cur = c.execute(
+                "UPDATE repo_findings SET status = ? WHERE full_name = ?",
+                (status, full_name.strip().strip("/").casefold()),
+            )
+            return cur.rowcount
+
     def findings_by_status(self, status: str) -> list[sqlite3.Row]:
         return self.conn.execute(
             "SELECT * FROM repo_findings WHERE status = ? ORDER BY score DESC", (status,)
         ).fetchall()
 
     def undelivered_gold(self) -> list[sqlite3.Row]:
-        """Confirmed findings not yet sent to Discord (gold queue)."""
-        return self.conn.execute(
+        """NOVEL confirmed findings not yet sent to Discord (gold queue).
+
+        Gold is our contribution: malicious repos OSM does NOT already report.
+        OSM-known repos (including everything from the osm_repository validation
+        vector) are excluded; re-reporting them would just echo OSM's own intel.
+        """
+        known = self.osm_known_repos()
+        rows = self.conn.execute(
             "SELECT * FROM repo_findings WHERE status = 'confirmed' AND delivered_gold = 0 "
-            "ORDER BY score DESC"
+            "AND detection_method != 'osm_repository' ORDER BY score DESC"
         ).fetchall()
+        return [r for r in rows if r["full_name"].casefold() not in known]
 
     def mark_gold_delivered(self, full_name: str) -> None:
         with self.transaction() as c:
@@ -425,6 +441,120 @@ class Database:
             known.add(row["full_name"].casefold())
         return known
 
+    def osm_known_repos(self) -> set[str]:
+        """Repos OSM already reports (lowercased), from the repo artifacts.
+
+        Git Warden's product is NOVEL malicious repos; ones OSM does not already
+        have; which we contribute back. A confirmed repo already in OSM is used
+        for detection VALIDATION, not re-reported to gold (it would just echo OSM's
+        own intel back at them).
+        """
+        from ..refs import repo_full_name
+
+        known: set[str] = set()
+        for row in self.list_artifacts(artifact_type="repo"):
+            ref = json.loads(row["raw_payload"]).get("resource_identifier") or row["name"]
+            full = repo_full_name(ref)
+            if full:
+                known.add(full.casefold())
+        return known
+
+    def malicious_repo_owners(self) -> set[str]:
+        """Proven-malicious-ACTOR owners: owners of a MALWARE repo WE confirmed.
+
+        We deliberately do NOT seed from OSM repo ownership. OSM's "repository"
+        field for a malicious package is the repo the malware impersonates /
+        typosquats; i.e. the legitimate VICTIM, not the attacker. A heavily
+        typosquatted legit org (e.g. tiledesk, 9 OSM entries) is indistinguishable
+        from a prolific attacker by repo count, so counting OSM repos enumerated
+        legit orgs and shipped their benign repos to gold.
+
+        We also EXCLUDE red-team lineage confirmations. A weaponized-tool fork's
+        author is typically a security researcher with a collection of offensive
+        tools, not a prolific malware actor; seeding from them made the owner
+        pivot enumerate researchers' benign clones (opencode, PentestGPT). Only an
+        owner of a repo confirmed via a malware-discovery method seeds the pivot.
+        OSM's package names drive expansion via :meth:`malicious_package_terms`.
+        """
+        return {
+            row["full_name"].split("/", 1)[0]
+            for row in self.conn.execute(
+                "SELECT full_name FROM repo_findings "
+                "WHERE status IN ('confirmed', 'validated') "
+                "AND detection_method != 'redteam_lineage'"
+            )
+        }
+
+    def osm_repo_targets(self, limit: int = 0) -> list[tuple[str, str, dict]]:
+        """OSM-labeled malicious repos to validate, as (full_name, url, intel).
+
+        OSM pre-labels these malicious (mostly fake-interview / crypto-task lure
+        repos). We do not trust the label; we clone and confirm via Tier-2 (a
+        malware signature or a known-malicious dependency). ``intel`` carries OSM's
+        own provenance (source, severity, tags, threat description) so a confirmed
+        finding records WHO flagged it and the attribution (e.g. a 'dprk' tag).
+        Repos already in the findings registry are skipped (already triaged).
+        """
+        from ..refs import repo_full_name
+
+        seen = {
+            row["full_name"].casefold()
+            for row in self.conn.execute("SELECT full_name FROM repo_findings")
+        }
+        out: list[tuple[str, str, dict]] = []
+        for row in self.list_artifacts(artifact_type="repo"):
+            payload = json.loads(row["raw_payload"])
+            ref = payload.get("resource_identifier") or row["name"]
+            full = repo_full_name(ref)
+            if not full or full.casefold() in seen:
+                continue
+            seen.add(full.casefold())
+            url = ref if str(ref).startswith("http") else f"https://github.com/{full}"
+            intel = {
+                "source": row["source"],
+                "severity": payload.get("severity_level"),
+                "tags": payload.get("tags") or [],
+                "threat": payload.get("threat_description")
+                or payload.get("payload_description"),
+            }
+            out.append((full, url, intel))
+            if limit and len(out) >= limit:
+                break
+        return out
+
+    def malicious_dependency_names(self) -> dict[str, frozenset[str]]:
+        """OSM-flagged package names per ECOSYSTEM, for manifest dependency match.
+
+        Keyed by ecosystem ('npm', 'pypi') so a package.json dependency is matched
+        only against npm malware and a requirements.txt only against pypi malware.
+        Cross-ecosystem matching caused a false positive: the legit npm
+        ``webpack-dev-server`` collided with a RubyGems typosquat of the same name.
+        A repo declaring a match installs known malware on install (Tier-2
+        confirmation). Ultra-short generic names are skipped (exact-match only).
+        """
+        out: dict[str, set[str]] = {"npm": set(), "pypi": set()}
+        for row in self.list_artifacts(artifact_type="package"):
+            eco = (row["ecosystem"] or "").strip().lower()
+            if eco not in out:
+                continue
+            name = (row["name"] or "").strip().lower()
+            if name.startswith("@") or len(name) >= 5:
+                out[eco].add(name)
+        return {eco: frozenset(names) for eco, names in out.items()}
+
+    def malicious_package_terms(self, limit: int = 30) -> list[str]:
+        """Distinctive malicious package names to code-search for (package pivot).
+
+        Searching a malicious package name in code finds repos that install /
+        distribute / depend on it. Generic short names are skipped to avoid noise.
+        """
+        terms: list[str] = []
+        for row in self.list_artifacts(artifact_type="package"):
+            name = (row["name"] or "").strip()
+            if name.startswith("@") or len(name) >= 8:  # scoped or non-trivial
+                terms.append(name)
+        return list(dict.fromkeys(terms))[:limit]
+
     def cross_platform_clusters(self) -> dict[str, list[dict]]:
         """Confirmed findings grouped by code_hash (doc 04 section 6).
 
@@ -443,7 +573,7 @@ class Database:
             )
         return {h: locs for h, locs in clusters.items() if len(locs) > 1}
 
-    # -- learned IOCs (the compounding loop) -------------------------------
+    #; learned IOCs (the compounding loop) -------------------------------
     def record_learned_ioc(self, value: str, kind: str, source_repo: str, run_id: str) -> None:
         """Store an IOC mined from a confirmed repo's code (dedup on value)."""
         with self.transaction() as c:
@@ -452,6 +582,19 @@ class Database:
                 "VALUES (?, ?, ?, ?)",
                 (value, kind, source_repo, run_id),
             )
+
+    def learned_signatures(self) -> list[str]:
+        """Code signatures mined from confirmed repos (kind='code_sig').
+
+        These are deobfuscator-stub chunks searched on GitHub to find sibling
+        infected repos; the novel-repo discovery loop.
+        """
+        return [
+            row["value"]
+            for row in self.conn.execute(
+                "SELECT value FROM learned_iocs WHERE kind = 'code_sig'"
+            )
+        ]
 
     def learned_search_terms(self) -> list[str]:
         """Searchable strings from learned IOCs: domains + webhook ids."""

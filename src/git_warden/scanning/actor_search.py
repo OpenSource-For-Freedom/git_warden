@@ -3,7 +3,7 @@
 Threat-actor usernames/organizations from the validated dataset seed the search:
 every public repo under a known actor account is a candidate, attributed to that
 actor. Handles are curated intelligence (seeded into the actor identifiers); this
-module just enumerates and attributes -- it does not invent attributions.
+module just enumerates and attributes; it does not invent attributions.
 """
 
 from __future__ import annotations

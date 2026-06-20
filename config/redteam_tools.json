@@ -108,6 +108,6 @@
     "repos": [],
     "homepage": "https://www.cobaltstrike.com",
     "aliases": ["cobaltstrike", "cobalt strike", "beacon"],
-    "notes": "Commercial, no official OSS repo. Cracked/leaked copies and beacon clones are heavily weaponized -- watch by name."
+    "notes": "Commercial, no official OSS repo. Cracked/leaked copies and beacon clones are heavily weaponized; watch by name."
   }
 ]

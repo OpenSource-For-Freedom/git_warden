@@ -1,7 +1,7 @@
 """Ingestion pipeline: feeds -> raw observations -> validation -> artifacts.
 
 Orchestrates one ingestion run end to end. Per-feed failures are isolated and
-logged rather than aborting the whole run -- an early nod to the resilience the
+logged rather than aborting the whole run; an early nod to the resilience the
 Phase-2 orchestration layer formalizes (doc 05).
 """
 

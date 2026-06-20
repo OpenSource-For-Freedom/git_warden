@@ -1,4 +1,4 @@
-"""Git Warden -- cross-platform malicious repository intelligence engine.
+"""Git Warden; cross-platform malicious repository intelligence engine.
 
 Week 1 delivers the ingestion layer: feeds -> validated data contract -> SQLite.
 See docs/ for the design documents driving this build.

