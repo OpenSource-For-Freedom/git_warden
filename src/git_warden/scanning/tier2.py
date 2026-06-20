@@ -8,6 +8,12 @@ those engines (doc 02 section 3.2); it orchestrates them.
 
 The clone step is injectable so the analysis is unit-testable on a fixture
 directory with no network or git.
+
+INVARIANT -- STATIC ANALYSIS ONLY: targets are shallow-cloned and *read*. Their
+code is NEVER executed: no pip/npm install, no setup.py, no lifecycle/postinstall
+scripts, no Makefiles, no running the repo. Behavioral/"detonation" execution is
+explicitly out of scope. Keep `git clone --depth 1`. Do not add anything here
+that runs target code.
 """
 
 from __future__ import annotations
@@ -15,9 +21,12 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import os
 import re
 import shutil
+import stat
 import subprocess
+import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -88,6 +97,28 @@ def repo_code_hash(root: Path) -> str:
     return digest.hexdigest()
 
 
+def _force_rmtree(path: Path) -> None:
+    """Remove a tree even when git left read-only ``.git`` pack files.
+
+    On Windows ``shutil.rmtree`` cannot unlink read-only files, so scratch husks
+    (40k+ files) pile up. The handler clears the read-only bit and retries. No-op
+    if the path is already gone. Cross-platform: ``onexc`` (Py3.12+) with an
+    ``onerror`` fallback for 3.11.
+    """
+    path = Path(path)
+    if not path.exists():
+        return
+
+    def _onexc(func, p, _exc):
+        os.chmod(p, stat.S_IWRITE)
+        func(p)
+
+    if sys.version_info >= (3, 12):
+        shutil.rmtree(path, onexc=_onexc)
+    else:  # pragma: no cover -- onexc was added in 3.12; onerror is the 3.11 path
+        shutil.rmtree(path, onerror=_onexc)
+
+
 def _within_bounds(root: Path) -> bool:
     """False if a cloned tree exceeds the file-count or total-byte caps (#9)."""
     files = 0
@@ -108,11 +139,13 @@ def _within_bounds(root: Path) -> bool:
 def clone_repo(
     full_name: str, dest: Path, *, runner=subprocess.run, timeout: int = 120
 ) -> Path | None:
-    """Shallow-clone a public repo. Returns the path, or None on failure.
+    """Shallow-clone a public repo for STATIC reading. Path, or None on failure.
 
-    Validates the untrusted ``full_name`` against a strict allowlist and passes
-    ``--`` before the URL so a crafted value cannot become a path traversal or a
-    git flag (eval finding #16). A failed/partial clone is cleaned up.
+    Static analysis only: the target is never executed -- ``--depth 1`` fetches
+    a single commit to read, nothing more. Validates the untrusted ``full_name``
+    against a strict allowlist and passes ``--`` before the URL so a crafted
+    value cannot become a path traversal or a git flag (eval finding #16). A
+    failed/partial clone is force-removed (handles git's read-only pack files).
     """
     if not _VALID_FULL_NAME.fullmatch(full_name) or ".." in full_name:
         log.warning("clone rejected: invalid full_name", extra={"context": {"repo": full_name}})
@@ -125,11 +158,11 @@ def clone_repo(
         )
     except (OSError, subprocess.SubprocessError) as exc:
         log.warning("clone failed", extra={"context": {"repo": full_name, "err": str(exc)}})
-        shutil.rmtree(dest, ignore_errors=True)
+        _force_rmtree(dest)
         return None
     if result.returncode != 0:
         log.warning("clone non-zero", extra={"context": {"repo": full_name}})
-        shutil.rmtree(dest, ignore_errors=True)
+        _force_rmtree(dest)
         return None
     return dest
 
@@ -200,14 +233,23 @@ def scan_candidate(
     runner=subprocess.run,
     confirm_threshold: int = CONFIRM_THRESHOLD,
 ) -> Tier2Result | None:
-    """Clone + analyze a candidate. Returns None if the clone fails or is too big."""
+    """Clone + STATICALLY analyze a candidate. None if the clone fails/too big.
+
+    Invariant: the target is only read; its code is NEVER executed. The clone is
+    force-removed on every exit path (success, skip, or error) so scratch does
+    not accumulate -- important on a near-full system drive.
+    """
     dest = Path(workdir) / full_name.replace("/", "__")
     cloned = clone(full_name, dest, runner=runner)
     if cloned is None:
         return None
-    # Reject an oversized/path-bomb tree before walking it (eval finding #9).
-    if not _within_bounds(cloned):
-        log.warning("clone exceeds size bounds; skipping", extra={"context": {"repo": full_name}})
-        shutil.rmtree(cloned, ignore_errors=True)
-        return None
-    return analyze_repo(cloned, full_name, runner=runner, confirm_threshold=confirm_threshold)
+    try:
+        # Reject an oversized/path-bomb tree before walking it (eval finding #9).
+        if not _within_bounds(cloned):
+            log.warning("clone exceeds size bounds; skipping",
+                        extra={"context": {"repo": full_name}})
+            return None
+        return analyze_repo(cloned, full_name, runner=runner,
+                            confirm_threshold=confirm_threshold)
+    finally:
+        _force_rmtree(cloned)

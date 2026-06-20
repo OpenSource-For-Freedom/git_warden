@@ -103,3 +103,36 @@ def test_run_external_semgrep_flags_only_on_results(monkeypatch, tmp_path):
 def test_clone_rejects_trailing_newline_in_full_name(tmp_path):
     from git_warden.scanning.tier2 import clone_repo
     assert clone_repo("owner/repo\n", tmp_path / "d") is None  # fullmatch, not $
+
+
+def test_force_rmtree_removes_readonly_files(tmp_path):
+    import os
+    import stat
+
+    from git_warden.scanning.tier2 import _force_rmtree
+    sub = tmp_path / "tree" / "sub"
+    sub.mkdir(parents=True)
+    f = sub / "pack.idx"
+    f.write_text("x", encoding="utf-8")
+    os.chmod(f, stat.S_IREAD)  # simulate git read-only pack file
+    _force_rmtree(tmp_path / "tree")
+    assert not (tmp_path / "tree").exists()
+
+
+def test_force_rmtree_noop_on_missing(tmp_path):
+    from git_warden.scanning.tier2 import _force_rmtree
+    _force_rmtree(tmp_path / "nope")  # must not raise
+
+
+def test_scan_candidate_removes_dest_after_scan(tmp_path):
+    captured = {}
+
+    def clone_capture(full_name, dest, *, runner=None):
+        dest.mkdir(parents=True, exist_ok=True)
+        (dest / "x.sh").write_text("echo hi\n", encoding="utf-8")
+        captured["dest"] = dest
+        return dest
+
+    result = scan_candidate("o/r", tmp_path, clone=clone_capture)
+    assert result is not None
+    assert not captured["dest"].exists()  # force-removed on success, no accumulation

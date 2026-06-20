@@ -21,6 +21,14 @@ load_env_file(PROJECT_ROOT / ".env")
 
 DATA_DIR = PROJECT_ROOT / "data"
 ARTIFACTS_DIR = PROJECT_ROOT / "artifacts"
+
+# Tier-2 clone scratch. Set GW_WORK_DIR to keep large, ephemeral clones off a
+# near-full system drive (the operator points it at e.g. F:\gw-work on the host).
+# None => the system temp dir, which is the right default for CI/Linux. Never
+# hardcode a drive letter here -- it must stay cross-platform.
+_work = os.environ.get("GW_WORK_DIR")
+WORK_DIR = Path(_work) if _work else None
+
 # Cached downloads of large reference datasets (e.g. the MITRE ATT&CK bundle).
 CACHE_DIR = DATA_DIR / "cache"
 
@@ -95,3 +103,5 @@ def ensure_dirs() -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    if WORK_DIR:
+        WORK_DIR.mkdir(parents=True, exist_ok=True)
