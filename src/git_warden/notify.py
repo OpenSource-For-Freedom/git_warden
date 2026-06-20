@@ -89,10 +89,63 @@ def format_finding(row) -> str:
     return "\n".join(lines)
 
 
+# Status -> embed accent colour (Discord integer RGB).
+_EMBED_COLOR = {
+    "confirmed": 0xE74C3C, "validated": 0xC0392B,
+    "screened": 0x8A9BB0, "rejected": 0x4A5568,
+}
+
+
+def finding_embed(row, *, novel: bool | None = None) -> dict:
+    """A standardized Discord rich-embed for one finding (doc 02 6).
+
+    Consistent card per finding: clickable repo title, the GitHub repo image,
+    colour by status, and fields for detection/attribution/IOCs/lead-source.
+    Using an embed (not auto-unfurled markdown) means the repo image and layout
+    render reliably and identically for single findings and campaign batches.
+    """
+    full = row["full_name"]
+    owner, name = (full.split("/", 1) + [""])[:2]
+    payload = json.loads(row["raw_payload"] or "{}")
+    bash = payload.get("bash_findings") or []
+    osm = payload.get("osm") or {}
+
+    rules = sorted({f"static:{_safe(b['rule'])}" for b in bash}) or ["see signals"]
+    ioc_lines = "\n".join(
+        f"`{_safe(b['file'])}:{b['line']}` {_safe(b['category'])}/{_safe(b['rule'])}"
+        for b in bash[:6]) or "n/a"
+    method = _safe(row["detection_method"])
+    if novel is None:
+        novel = method != "osm_repository"
+    fields = [
+        {"name": "Detection", "value": ", ".join(rules)[:1024], "inline": True},
+        {"name": "Method · score", "value": f"{method} · {row['score']}", "inline": True},
+        {"name": "Class", "value": "🆕 novel" if novel else "OSM-validated", "inline": True},
+        {"name": "Indicators (file:line → rule)", "value": ioc_lines[:1024], "inline": False},
+    ]
+    if osm:
+        tags = _safe(", ".join(osm.get("tags") or []))
+        lead = f"OpenSourceMalware · sev {_safe(osm.get('severity'))} · {tags}"
+        fields.append({"name": "Lead source", "value": lead[:1024], "inline": False})
+    fields.append({"name": "Attribution",
+                   "value": _safe(row["actor_key"] or "unattributed"), "inline": False})
+    return {
+        "author": {"name": "🛡️ Git Warden — confirmed malicious repository"},
+        "title": _safe(full)[:256],
+        "url": row["url"] or f"https://github.com/{full}",
+        "color": _EMBED_COLOR.get(row["status"], 0xE74C3C),
+        "description": _safe(row["reasoning"] or "")[:600],
+        "fields": fields,
+        "image": {"url": f"https://opengraph.githubassets.com/1/{owner}/{name}"},
+        "footer": {"text": "Pending analyst validation — git-warden review --approve/--reject"},
+    }
+
+
 def post_discord(
-    content: str, *, webhook: str | None = None, opener=urllib.request.urlopen
+    content: str = "", *, embeds: list | None = None,
+    webhook: str | None = None, opener=urllib.request.urlopen,
 ) -> bool:
-    """POST a message to the Discord webhook. Returns True on success.
+    """POST a message (content and/or up to 10 embeds) to the Discord webhook.
 
     No-op (returns False) when no webhook is configured, so dry runs are safe.
     """
@@ -100,11 +153,14 @@ def post_discord(
     if not webhook:
         log.info("discord: no webhook configured; skipping")
         return False
-    payload = json.dumps(
-        # allowed_mentions parse:[] means no @everyone/@here/role ping can ever
-        # fire, even if some markup slips through sanitization (defense in depth).
-        {"content": content[:1900], "allowed_mentions": {"parse": []}}
-    ).encode("utf-8")
+    # allowed_mentions parse:[] means no @everyone/@here/role ping can ever fire,
+    # even if some markup slips through sanitization (defense in depth).
+    body: dict = {"allowed_mentions": {"parse": []}}
+    if content:
+        body["content"] = content[:1900]
+    if embeds:
+        body["embeds"] = embeds[:10]
+    payload = json.dumps(body).encode("utf-8")
     req = urllib.request.Request(
         webhook,
         data=payload,
