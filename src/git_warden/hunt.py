@@ -3,8 +3,8 @@
 Ties the Week-2 stages into one run that produces malicious-GitHub-repo findings
 (the product). Discovery sources (all breadcrumb-driven):
 
-* IOC search -- mirror OSM IOCs into GitHub code search (the multiplier).
-* Red-team lineage -- forks/renames of pinned tools.
+* IOC search; mirror OSM IOCs into GitHub code search (the multiplier).
+* Red-team lineage; forks/renames of pinned tools.
 
 Each candidate is Tier-1 screened (name + README), persisted to the registry,
 optionally Tier-2 scanned (clone + bash scanner + OSS scanners) to confirm, and
@@ -26,6 +26,7 @@ from . import config
 from .db import Database
 from .enums import DetectionMethod, RepoFindingStatus, RunStatus
 from .models import RedTeamTool, RepoFinding
+from .notify import cluster_findings
 from .scanning import (
     IocSet,
     build_search_terms,
@@ -219,7 +220,7 @@ def hunt(
                 candidates.setdefault(hit.full_name.casefold(), _finding_from_hit(hit))
 
     if do_enrich:
-        # Package pivot -- dedicated budget for the strongest OSM signal: repos
+        # Package pivot; dedicated budget for the strongest OSM signal: repos
         # that reference a confirmed-malicious package.
         for hit in search_iocs(client, db.malicious_package_terms(limit=max_packages),
                                known=known, per_term=10, pace_seconds=search_pace):
@@ -229,7 +230,7 @@ def hunt(
                 finding.reasoning = f"References known-malicious package(s) {hit.matched_iocs}"
                 candidates.setdefault(hit.full_name.casefold(), finding)
 
-        # Owner pivot -- enumerate other repos of owners we PROVED malicious (a
+        # Owner pivot; enumerate other repos of owners we PROVED malicious (a
         # confirmed Tier-2 finding), never OSM impersonation-target owners.
         for ar in find_owner_repos(client, db.malicious_repo_owners(), known=known):
             candidates.setdefault(ar.full_name.casefold(), _finding_from_owner(ar))
@@ -294,7 +295,7 @@ def hunt(
         candidates = {f.full_name.casefold(): f for f in ranked[:limit]}
 
     # Observability: prove which sources are actually contributing candidates
-    # (the enrichment check -- not "just red-team").
+    # (the enrichment check; not "just red-team").
     by_method = Counter(f.detection_method.value for f in candidates.values())
     log.info("hunt discovery", extra={"context": {
         "total_candidates": len(candidates), "by_method": dict(by_method)}})
@@ -321,7 +322,7 @@ def hunt(
         finding.signals = sorted(set(finding.signals) | set(result.signal_names))
         # Intelligence-driven candidates (reference a known IOC / malicious
         # package / are under a repeat-offender owner) reach Tier-2 on their
-        # discovery signal, NOT their (often benign) name -- unless they are a
+        # discovery signal, NOT their (often benign) name; unless they are a
         # defender/sample/catalog repo, which we must not clone+confirm.
         intel = finding.detection_method in (
             DetectionMethod.IOC_SEARCH, DetectionMethod.PACKAGE_REF,
@@ -411,16 +412,14 @@ def hunt(
     delivered = 0
     osm_live = {r.casefold() for r in (osm_live_known or set())}
     if gold and notifier is not None:
-        for row in db.undelivered_gold():
-            # Live re-check: skip anything OSM has added to its feed since our
-            # ingest -- we only report repos OSM does NOT already have.
-            if row["full_name"].casefold() in osm_live:
-                log.info("gold: skipped (now in OSM live feed)",
-                         extra={"context": {"repo": row["full_name"]}})
-                continue
-            if notifier(row):
-                db.mark_gold_delivered(row["full_name"])
-                delivered += 1
+        # Live re-check: never report a repo OSM has added since our ingest.
+        rows = [r for r in db.undelivered_gold() if r["full_name"].casefold() not in osm_live]
+        # ONE report per connected cluster (campaign), never duplicated per-repo.
+        for cluster in cluster_findings(rows):
+            if notifier(cluster):
+                for r in cluster:
+                    db.mark_gold_delivered(r["full_name"])
+                    delivered += 1
 
     counts = {
         "candidates": len(candidates),

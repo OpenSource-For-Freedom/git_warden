@@ -23,7 +23,7 @@ def _repo(full):
 def test_malicious_repo_owners_only_from_confirmed_findings(tmp_path):
     db = Database.open(tmp_path / "o.sqlite")
     db.start_run("r1", utcnow())
-    # OSM repo ownership is an impersonation target (victim) -- must NOT seed.
+    # OSM repo ownership is an impersonation target (victim); must NOT seed.
     for name in ("tiledesk/server", "tiledesk/dashboard", "tiledesk/ai"):
         db.upsert_artifact(MaliciousArtifact(
             artifact_type=ArtifactType.REPO, name=name, ecosystem="github",
@@ -110,7 +110,7 @@ def test_osm_repo_ownership_never_seeds_owner_pivot(tmp_path):
     db = Database.open(tmp_path / "ro.sqlite")
     db.start_run("r1", utcnow())
     # No matter how many OSM repos an owner has, OSM ownership alone never seeds
-    # the owner pivot -- those repos are impersonation targets (legit victims).
+    # the owner pivot; those repos are impersonation targets (legit victims).
     for owner, name in [
         ("victim", "interviewtask"), ("legitorg", "dropper1"), ("legitorg", "dropper2"),
     ]:
@@ -162,7 +162,7 @@ def test_is_defensive_repo_excludes_catalogs():
 
 def test_intel_candidate_reaches_tier2_without_name_signal(tmp_path):
     # An owner-pivot repo with a benign NAME still reaches Tier-2 (its discovery
-    # signal is the suspicion) -- and a malicious payload confirms it.
+    # signal is the suspicion); and a malicious payload confirms it.
     db = Database.open(tmp_path / "it.sqlite")
     db.start_run("seed", utcnow())
     # A confirmed repo makes evilcorp a proven actor; the pivot enumerates more.

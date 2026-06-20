@@ -2,14 +2,14 @@
 
 Clones a high-scoring candidate, fingerprints it by code hash for cross-repo
 dedup (doc 02 section 4), runs our custom bash scanner (doc 03), and invokes the
-established OSS scanners -- GuardDog, Semgrep, YARA -- when their binaries are
+established OSS scanners; GuardDog, Semgrep, YARA; when their binaries are
 present, skipping gracefully when they are not. The program does not reinvent
 those engines (doc 02 section 3.2); it orchestrates them.
 
 The clone step is injectable so the analysis is unit-testable on a fixture
 directory with no network or git.
 
-INVARIANT -- STATIC ANALYSIS ONLY: targets are shallow-cloned and *read*. Their
+INVARIANT; STATIC ANALYSIS ONLY: targets are shallow-cloned and *read*. Their
 code is NEVER executed: no pip/npm install, no setup.py, no lifecycle/postinstall
 scripts, no Makefiles, no running the repo. Behavioral/"detonation" execution is
 explicitly out of scope. Keep `git clone --depth 1`. Do not add anything here
@@ -41,7 +41,7 @@ log = logging.getLogger(__name__)
 # OSS scanners orchestrated in Tier-2 (doc 02 3.2). We do not reinvent these.
 _SCANNER_NAMES = ("semgrep", "guarddog", "yara")
 
-# Weighted score over distinct (category, rule) pairs -- used for RANKING and run
+# Weighted score over distinct (category, rule) pairs; used for RANKING and run
 # artifacts, not as the confirmation gate (confirmation is the Tier-A/Tier-B
 # signature logic below). Distinct pairs are summed so rule spam can't inflate.
 _CATEGORY_WEIGHTS = {
@@ -58,13 +58,13 @@ _CATEGORY_WEIGHTS = {
 # and SCORED (retained in run artifacts, PRD section 13.1). CONFIRMATION to gold,
 # however, is precision-first (PRD section 5: drop a correct candidate before
 # publishing a false positive): it requires a near-zero-legit-base-rate SIGNATURE.
-# Dual-use idioms that pile up in legitimate dev/security repos -- ``whoami`` in
-# CI, ``nmap`` in a pentest Dockerfile, ``eval "$(tool init)"``, base64 -- are
+# Dual-use idioms that pile up in legitimate dev/security repos; ``whoami`` in
+# CI, ``nmap`` in a pentest Dockerfile, ``eval "$(tool init)"``, base64; are
 # scored but never confirm. A recon->action "chain" was tried and removed: it
 # confirmed legit repos (opencode, PentestGPT) whose recon co-occurs with benign
 # actions; a genuine "recon and report" implant exfils via a real channel, which
 # is itself a signature below.
-# Tier A -- CONFIRM ALONE. Intrinsically malicious even as the sole signal: a
+# Tier A; CONFIRM ALONE. Intrinsically malicious even as the sole signal: a
 # reverse shell, decode-and-execute, env dump to the network, a package install
 # hook, process injection, an authorized_keys/shadow grab. Near-zero legitimate
 # base rate, so one is enough.
@@ -79,7 +79,7 @@ _CONFIRM_ALONE_RULES = frozenset({
     ("credential_harvest", "shadow-passwd"),  # reads /etc/shadow (password hashes)
     ("exfiltration", "secret-exfil"),  # curl/wget posting a secret FILE out
     ("malicious_dependency", "osm-listed"),  # installs a known-malicious package
-    # NOTE: persistence/authorized-keys is intentionally NOT Tier-A -- writing
+    # NOTE: persistence/authorized-keys is intentionally NOT Tier-A; writing
     # authorized_keys is standard CI/container SSH provisioning (openclaw FP).
     ("process_injection", "ld-preload"), ("process_injection", "ptrace-mem"),
     ("process_injection", "gdb-attach"),
@@ -88,10 +88,10 @@ _CONFIRM_ALONE_RULES = frozenset({
     ("install_hook", "npm-preuninstall"), ("install_hook", "py-setup-exec"),
     ("install_hook", "vscode-autorun"),  # VS Code task auto-running on folderOpen
 })
-# Tier B -- CORROBORATED, split into two phases. Each is benign alone (a project's
+# Tier B; CORROBORATED, split into two phases. Each is benign alone (a project's
 # own Discord/Telegram channel; an ops script reading creds). Confirmation needs
 # the STEAL-AND-SEND pattern: a credential-access signal AND an exfil channel.
-# Two exfil channels alone are NOT enough -- a chat platform like tiledesk-server
+# Two exfil channels alone are NOT enough; a chat platform like tiledesk-server
 # legitimately has both a Telegram connector and a leftover webhook.site URL.
 _TIERB_CRED = frozenset({
     ("credential_harvest", "ssh-keys"), ("credential_harvest", "cloud-creds"),
@@ -132,7 +132,7 @@ def _fetch_target_suspicious(snippet: str) -> bool:
             return True
     return False
 # Intent-change categories for RED-TEAM lineage (P1, doc 02 5): a fork of an
-# offensive tool legitimately *has* reverse shells / injection -- that is the
+# offensive tool legitimately *has* reverse shells / injection; that is the
 # tool's purpose, not evidence of weaponization. Only ADDED supply-chain
 # mechanisms (install hooks, exfil to attacker infra, fresh obfuscation, fetch-
 # and-run, credential theft) indicate the intent changed. So lineage confirms
@@ -222,7 +222,7 @@ def _force_rmtree(path: Path) -> None:
 
     if sys.version_info >= (3, 12):
         shutil.rmtree(path, onexc=_onexc)
-    else:  # pragma: no cover -- onexc was added in 3.12; onerror is the 3.11 path
+    else:  # pragma: no cover; onexc was added in 3.12; onerror is the 3.11 path
         shutil.rmtree(path, onerror=_onexc)
 
 
@@ -248,7 +248,7 @@ def clone_repo(
 ) -> Path | None:
     """Shallow-clone a public repo for STATIC reading. Path, or None on failure.
 
-    Static analysis only: the target is never executed -- ``--depth 1`` fetches
+    Static analysis only: the target is never executed; ``--depth 1`` fetches
     a single commit to read, nothing more. Validates the untrusted ``full_name``
     against a strict allowlist and passes ``--`` before the URL so a crafted
     value cannot become a path traversal or a git flag (eval finding #16). A
@@ -298,7 +298,7 @@ def _run_external(name: str, root: Path, runner) -> str:
 
     if name == "guarddog":
         # GuardDog statically scans a package directory for malicious indicators
-        # (install hooks, exfiltration, typosquatting) -- doc 02 3.2 / PRD. It
+        # (install hooks, exfiltration, typosquatting); doc 02 3.2 / PRD. It
         # does not install or run the package.
         eco = _guarddog_ecosystem(root)
         if eco is None:
@@ -372,7 +372,7 @@ def analyze_repo(
             exfil_files.setdefault(f.file, f)
     # Tier B confirms only as steal-AND-send IN THE SAME FILE: a real stealer reads
     # a secret and exfils it in one payload. A big legit app has credential config
-    # (CI) and a messaging feature (src/) in DIFFERENT files -- not theft (the
+    # (CI) and a messaging feature (src/) in DIFFERENT files; not theft (the
     # openclaw / tiledesk-server false positives).
     steal_and_send = set(cred_files) & set(exfil_files)
     for fl in steal_and_send:
@@ -381,13 +381,13 @@ def analyze_repo(
     # Only a MALWARE-SPECIFIC scanner (GuardDog: install hooks/exfil/typosquat;
     # YARA: malware rulesets) may solely confirm. Semgrep runs `--config auto`, a
     # general SAST pass that flags ordinary code smells (e.g. child_process.exec)
-    # in legitimate apps -- letting it confirm alone would re-introduce the
+    # in legitimate apps; letting it confirm alone would re-introduce the
     # tiledesk false positives in CI (where it is installed). Its findings still
     # appear in provenance via signal_summary, just not as sole proof.
     oss_confirmed = any(scanners.get(n) == "flagged" for n in ("guarddog", "yara"))
     confirmed = static_confirmed or oss_confirmed
     # Learning loop: mine IOCs and code signatures only once confirmed, from
-    # trusted ground truth -- the signatures hunt sibling repos of this campaign.
+    # trusted ground truth; the signatures hunt sibling repos of this campaign.
     learned = extract_repo_iocs(root) if confirmed else IocSet()
     learned_sigs = extract_code_signatures(root) if confirmed else []
     return Tier2Result(
@@ -417,7 +417,7 @@ def scan_candidate(
 
     Invariant: the target is only read; its code is NEVER executed. The clone is
     force-removed on every exit path (success, skip, or error) so scratch does
-    not accumulate -- important on a near-full system drive.
+    not accumulate; important on a near-full system drive.
     """
     dest = Path(workdir) / full_name.replace("/", "__")
     cloned = clone(full_name, dest, runner=runner)

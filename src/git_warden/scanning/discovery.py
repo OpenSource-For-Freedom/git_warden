@@ -2,7 +2,7 @@
 
 The multiplier. OSM tells us a known-malicious repo exfiltrates to, say, a
 specific Discord webhook id or a ``*.workers.dev`` endpoint. We search GitHub
-*code* for that same IOC -- any repo whose code references it is very likely
+*code* for that same IOC; any repo whose code references it is very likely
 part of the same campaign, including repos OSM never catalogued. Those become
 new candidate malicious repos for Tier-1/Tier-2 confirmation.
 
@@ -25,7 +25,7 @@ log = logging.getLogger(__name__)
 # mark a defensive aggregator/feed/detector. Kept tight and specific: generic
 # words (research/analysis/scanner/mirror/hosts/feed/dataset/sandbox) were
 # dropped because they over-matched and let attackers evade by naming
-# (eval finding #1). Defensive-name is NOT an absolute veto -- a match inside
+# (eval finding #1). Defensive-name is NOT an absolute veto; a match inside
 # executable/config SOURCE always wins (the IOC is used, not just catalogued).
 _DEFENSIVE_NAME = re.compile(
     r"blocklist|blacklist|allowlist|malware|malicious|\bvuln|\bioc[s]?\b|"
@@ -90,7 +90,7 @@ def classify_hit(hit: RepoHit) -> str:
     """'defensive' if the repo merely catalogs the IOC; 'suspicious' if it uses it.
 
     Order matters (eval finding #1): a match inside executable/config SOURCE is
-    *use* and wins over a defensive-looking name -- an attacker can't evade by
+    *use* and wins over a defensive-looking name; an attacker can't evade by
     naming their repo 'security-research'. Only a defensive repo short-name with
     matches confined to data/list files (.txt/.md/.csv) is treated as a catalog.
     """
@@ -100,7 +100,7 @@ def classify_hit(hit: RepoHit) -> str:
     short_name = hit.full_name.split("/", 1)[-1]  # repo name only, not the owner
     # Data/list-only matches: a defensive repo NAME marks a catalog (drop); a
     # non-defensive name with a high-specificity IOC is still worth a look
-    # (eval verify finding -- the two branches must differ).
+    # (eval verify finding; the two branches must differ).
     return "defensive" if _DEFENSIVE_NAME.search(short_name) else "suspicious"
 
 
@@ -130,7 +130,7 @@ def search_iocs(
     pinned tools), so results are genuinely new discoveries. ``pace_seconds``
     spaces calls to respect code search's ~10/min limit (0 in tests). On a
     rate-limit (an exception carrying ``retry_after``), we wait the requested
-    time -- capped at ``max_backoff`` -- and retry the term once before moving on,
+    time; capped at ``max_backoff``; and retry the term once before moving on,
     so a burst throttle no longer silently drops IOCs.
     """
     by_repo: dict[str, RepoHit] = {}

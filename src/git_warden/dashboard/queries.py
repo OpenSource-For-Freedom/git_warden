@@ -1,7 +1,7 @@
 """Pure correlation queries over the registry for the telemetry dashboard.
 
 Every function takes a :class:`~git_warden.db.Database` and returns plain
-JSON-able data -- no web framework -- so the correlation logic is fully
+JSON-able data; no web framework; so the correlation logic is fully
 unit-testable. The FastAPI layer (:mod:`.app`) just serializes these.
 """
 

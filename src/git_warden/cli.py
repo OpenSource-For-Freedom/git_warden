@@ -50,7 +50,7 @@ def _cmd_ingest(args: argparse.Namespace) -> int:
 def _cmd_probe(args: argparse.Namespace) -> int:
     """Hit ONE live feed and show what comes back.
 
-    The incremental "do the returns look sane?" check -- run this against the
+    The incremental "do the returns look sane?" check; run this against the
     network before trusting the full pipeline, so we can pivot cheaply.
     """
     configure_logging(json_output=False)
@@ -196,7 +196,7 @@ def _cmd_lineage(args: argparse.Namespace) -> int:
             owner, _, name = cand.full_name.partition("/")
             try:
                 readme = client.get_readme(owner, name)
-            except Exception:  # noqa: BLE001 -- a single README fetch failing is non-fatal
+            except Exception:  # noqa: BLE001
                 readme = None
             result = score_repo(
                 name=cand.full_name,
@@ -247,7 +247,7 @@ def _cmd_screen_artifacts(args: argparse.Namespace) -> int:
         owner, name = parsed
         repo = client.get_repo(owner, name)
         if repo is None:
-            removed += 1  # 404: likely already taken down -- itself a signal
+            removed += 1  # 404: likely already taken down; itself a signal
             continue
         readme = None
         try:
@@ -344,7 +344,7 @@ def _cmd_discover(args: argparse.Namespace) -> int:
         if m:
             ids.append(m.group(1))
     domains = [d for d, _ in agg.domains.most_common(50) if is_attacker_host(d)]
-    # Attacker domains are the strongest pivot -- search them first.
+    # Attacker domains are the strongest pivot; search them first.
     terms = list(dict.fromkeys(domains + ids))[: args.max_iocs]
 
     print(f"mirroring {len(terms)} OSM IOCs into GitHub code search "
@@ -372,7 +372,7 @@ def _cmd_hunt(args: argparse.Namespace) -> int:
 
     from .github import GitHubClient
     from .hunt import hunt
-    from .notify import finding_embed, post_discord
+    from .notify import cluster_embed, post_discord
     from .redteam import load_redteam_tools
 
     if not config.GITHUB_TOKEN:
@@ -380,7 +380,7 @@ def _cmd_hunt(args: argparse.Namespace) -> int:
 
     # Live OSM re-check: pull OSM's current repo feed so we never report a repo
     # OSM already has (we contribute NOVEL findings; OSM-known repos validate our
-    # detection only). Best-effort -- a fetch failure just falls back to the
+    # detection only). Best-effort; a fetch failure just falls back to the
     # ingested OSM set already enforced by undelivered_gold().
     osm_live_known: set[str] = set()
     if args.gold and not args.no_osm_verify:
@@ -388,7 +388,7 @@ def _cmd_hunt(args: argparse.Namespace) -> int:
             from .feeds.osm import OsmFeed
             osm_live_known = set(OsmFeed().current_repo_index().keys())
             print(f"OSM live re-check: {len(osm_live_known)} repos currently in OSM feed.")
-        except Exception as exc:  # noqa: BLE001 -- verification is best-effort
+        except Exception as exc:  # noqa: BLE001
             print(f"warning: OSM live re-check failed ({exc}); using ingested OSM set.")
 
     db = Database.open(args.db)
@@ -412,7 +412,7 @@ def _cmd_hunt(args: argparse.Namespace) -> int:
             search_pace=args.pace,
             limit=args.limit,
             gold=args.gold,
-            notifier=lambda row: post_discord(embeds=[finding_embed(row)]),
+            notifier=lambda cluster: post_discord(embeds=[cluster_embed(cluster)]),
         )
     finally:
         db.close()
@@ -571,7 +571,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         return args.func(args)
-    except Exception:  # noqa: BLE001 -- top-level guard prints a clean error
+    except Exception:  # noqa: BLE001
         logging.getLogger("git_warden.cli").exception("ingestion failed")
         return 1
 

@@ -34,8 +34,8 @@ adversarial multi-agent evaluation (18 findings fixed; see git history).
 - Tier-2 (`scanning/tier2.py`): validated/bounded clone (allowlisted name, `--`,
   size caps) + whole-repo code-hash + **STATIC analysis only (never executes a
   target)**. Combines the **bash Layer-1 scanner**, an **install-hook/manifest
-  scanner** (`manifest_scanner.py` -- npm pre/postinstall, setup.py exec) and a
-  **JS/Python content scanner** (`content_scanner.py` -- eval/atob/base64
+  scanner** (`manifest_scanner.py`; npm pre/postinstall, setup.py exec) and a
+  **JS/Python content scanner** (`content_scanner.py`; eval/atob/base64
   obfuscation, child_process, webhook exfil), plus OSS scanners **GuardDog**
   (ecosystem-aware) and **Semgrep** (`--json`). Confirmation needs a high-signal
   category. **Red-team lineage** confirms only on WEAPONIZATION_CATEGORIES and an

@@ -8,7 +8,7 @@ The HTTP session is injectable so the client is unit-testable offline (a fake
 session returns canned responses); production uses ``requests``.
 
 GraphQL (fetching metadata + README in one call, doc 02 section 2.3) is a later
-optimization -- REST is enough to stand up and validate access first.
+optimization; REST is enough to stand up and validate access first.
 """
 
 from __future__ import annotations
@@ -92,10 +92,10 @@ class GitHubClient:
         )
         self.last_rate_limit = RateLimit.from_headers(resp.headers)
         if resp.status_code == 401:
-            raise GitHubAuthError("GitHub rejected the token (401) -- check GW_GITHUB_TOKEN")
+            raise GitHubAuthError("GitHub rejected the token (401); check GW_GITHUB_TOKEN")
         return resp
 
-    # -- API surface for Tier-1 --------------------------------------------
+    #; API surface for Tier-1 --------------------------------------------
     def rate_limit(self) -> RateLimit:
         """Query /rate_limit (does not consume quota)."""
         resp = self._get("/rate_limit")
@@ -174,7 +174,7 @@ class GitHubClient:
             if wait is not None:
                 raise GitHubRateLimitError(f"code search rate-limited ({resp.status_code})", wait)
             raise RuntimeError(
-                "GitHub code search forbidden -- token required or insufficient scope")
+                "GitHub code search forbidden; token required or insufficient scope")
         resp.raise_for_status()
         return resp.json().get("items", [])
 
@@ -228,7 +228,7 @@ class GitHubClient:
         forks = resp.json()
         if len(forks) >= per_page:
             log.info(
-                "forks page full -- more may exist",
+                "forks page full; more may exist",
                 extra={"context": {"repo": f"{owner}/{name}", "page_size": per_page}},
             )
         return forks

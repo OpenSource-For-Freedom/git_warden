@@ -1,8 +1,8 @@
-"""MITRE ATT&CK Groups adapter -- authoritative actor-registry corroboration.
+"""MITRE ATT&CK Groups adapter; authoritative actor-registry corroboration.
 
 Unlike the RSS feeds, this is a slow-moving *truth-set*: the enterprise ATT&CK
 bundle (~53 MB) lists known intrusion sets with their aliases. It answers "is
-this a recognized, named threat actor?" -- an independent signal from news
+this a recognized, named threat actor?"; an independent signal from news
 activity, so an actor seen in both can be promoted (PRD section 11).
 
 The bundle is downloaded once and cached; it is only re-fetched when the cache

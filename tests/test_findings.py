@@ -98,7 +98,7 @@ def test_open_migrates_legacy_repo_findings(tmp_path):
     import sqlite3
     path = tmp_path / "legacy.sqlite"
     raw = sqlite3.connect(path)
-    # The real v1 repo_findings schema -- everything except platform/code_hash.
+    # The real v1 repo_findings schema; everything except platform/code_hash.
     raw.executescript(
         """
         CREATE TABLE runs (run_id TEXT PRIMARY KEY);

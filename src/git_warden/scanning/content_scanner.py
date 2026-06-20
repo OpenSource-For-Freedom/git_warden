@@ -4,7 +4,7 @@ Real malicious repos hide payloads in source: ``eval(atob(...))`` /
 ``Buffer.from(x,'base64')`` decode-and-run, ``child_process`` spawning, and
 exfiltration to Discord/Telegram webhooks. The bash Layer-1 scanner targets
 shell; this targets the supply-chain languages so true malicious repos actually
-confirm. STATIC regex over file contents only -- nothing is executed.
+confirm. STATIC regex over file contents only; nothing is executed.
 
 Findings reuse :class:`~git_warden.scanning.bash_scanner.BashFinding`.
 """
@@ -22,7 +22,7 @@ _SOURCE_EXT = _JS_EXT | _PY_EXT | {".rb", ".php", ".go", ".ps1"}
 _MAX_BYTES = 1_000_000
 
 # Each rule carries the language family it applies to so a Python pattern can't
-# match a JavaScript file (the tiledesk FP fired ``py-dyn`` -- ``compile(`` -- on
+# match a JavaScript file (the tiledesk FP fired ``py-dyn``; ``compile(``; on
 # ``index.js``). "any" rules are language-agnostic (webhook URLs, key paths).
 # Rules tuple: (rule_name, lang, pattern). lang in {"js", "py", "any"}.
 _RULES: dict[str, list[tuple[str, str, re.Pattern]]] = {
@@ -52,7 +52,7 @@ _RULES: dict[str, list[tuple[str, str, re.Pattern]]] = {
     "credential_access": [
         ("env-dump", "any", re.compile(
             r"JSON\.stringify\(\s*process\.env|os\.environ\b.*(?:post|send|requests)", re.I)),
-        # Actual secret-FILE access (private keys, cloud creds) -- a credential
+        # Actual secret-FILE access (private keys, cloud creds); a credential
         # theft signal. A bare ``.env`` reference is NOT here: every dotenv app
         # has one, and it manufactured the tiledesk false positives.
         ("keyfiles", "any", re.compile(r"\.ssh/id_|\.aws/credentials|\.config/gcloud", re.I)),
