@@ -185,7 +185,8 @@ def hunt(
                 finding.reasoning = f"References known-malicious package(s) {hit.matched_iocs}"
                 candidates.setdefault(hit.full_name.casefold(), finding)
 
-        # Owner pivot -- repeat-offender owners (not single-lure-repo victims).
+        # Owner pivot -- enumerate other repos of owners we PROVED malicious (a
+        # confirmed Tier-2 finding), never OSM impersonation-target owners.
         for ar in find_owner_repos(client, db.malicious_repo_owners(), known=known):
             candidates.setdefault(ar.full_name.casefold(), _finding_from_owner(ar))
 
