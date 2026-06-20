@@ -53,9 +53,40 @@ _CATEGORY_WEIGHTS = {
     # manifest / content (supply-chain malware)
     "install_hook": 5, "network_exfil": 4, "code_execution": 3, "credential_access": 3,
 }
-_STRONG_CATEGORIES = frozenset({
-    "reverse_shell", "download_exec", "exfiltration", "obfuscation", "persistence",
-    "credential_harvest", "process_injection", "install_hook", "network_exfil",
+# Confirmation requires a genuine malware-SIGNATURE rule, not merely a rule that
+# happens to sit in a strong category. The tiledesk false positives confirmed on
+# ``credential_access/keyfiles`` (a bare ``.env`` reference) and
+# ``credential_harvest/env-token-grab`` (the literal string ``GITHUB_TOKEN`` in a
+# Dockerfile ARG) -- ubiquitous in legitimate code. Those weak rules can still
+# add context/score, but only a (category, rule) pair listed here can satisfy the
+# "strong signal present" gate. Common idioms (child_process, bare exec, env-var
+# *names*, .env *references*, host recon) are deliberately excluded.
+_STRONG_RULES = frozenset({
+    # bash Layer-1 -- unambiguous offensive shell
+    ("reverse_shell", "dev-tcp-redirect"), ("reverse_shell", "nc-exec"),
+    ("reverse_shell", "bash-i-socket"), ("reverse_shell", "mkfifo-shell"),
+    ("reverse_shell", "python-reverse"),
+    ("download_exec", "curl-pipe-shell"), ("download_exec", "fetch-then-exec"),
+    ("exfiltration", "discord-webhook"), ("exfiltration", "telegram-bot"),
+    ("exfiltration", "archive-then-send"),
+    ("obfuscation", "base64-decode-exec"), ("obfuscation", "eval-base64"),
+    ("obfuscation", "hex-escapes"),
+    ("persistence", "cron"), ("persistence", "rc-files"), ("persistence", "systemd"),
+    ("persistence", "authorized-keys"), ("persistence", "rc-local"),
+    ("credential_harvest", "ssh-keys"), ("credential_harvest", "cloud-creds"),
+    ("credential_harvest", "shadow-passwd"),
+    ("process_injection", "ld-preload"), ("process_injection", "ptrace-mem"),
+    ("process_injection", "gdb-attach"),
+    # content scanner -- decode-and-run / exfil signatures
+    ("obfuscation", "eval-decoded"), ("obfuscation", "py-decode-exec"),
+    ("obfuscation", "fromcharcode-blob"), ("obfuscation", "hex-blob"),
+    ("network_exfil", "discord-webhook"), ("network_exfil", "telegram-bot"),
+    ("network_exfil", "paste-exfil"),
+    ("credential_access", "env-dump"),
+    # manifest scanner -- a lifecycle hook is only emitted with a suspicious cmd
+    ("install_hook", "npm-preinstall"), ("install_hook", "npm-install"),
+    ("install_hook", "npm-postinstall"), ("install_hook", "npm-prepare"),
+    ("install_hook", "npm-preuninstall"), ("install_hook", "py-setup-exec"),
 })
 # Intent-change categories for RED-TEAM lineage (P1, doc 02 5): a fork of an
 # offensive tool legitimately *has* reverse shells / injection -- that is the
@@ -267,10 +298,24 @@ def analyze_repo(
 
     score = _score_static(findings)
     scanners = {name: _run_external(name, root, runner) for name in _SCANNER_NAMES}
-    confirm_cats = confirm_categories if confirm_categories is not None else _STRONG_CATEGORIES
-    strong = any(f.category in confirm_cats for f in findings)
+    # A genuine malware-signature rule must be present (not just a weak rule in a
+    # strong category). For red-team lineage, that signature must additionally
+    # fall in the weaponization categories (confirm_categories) so the tool's own
+    # offensive code never confirms.
+    def _is_strong(f: BashFinding) -> bool:
+        if (f.category, f.rule) not in _STRONG_RULES:
+            return False
+        return confirm_categories is None or f.category in confirm_categories
+    strong = any(_is_strong(f) for f in findings)
     static_confirmed = score >= confirm_threshold and strong
-    confirmed = static_confirmed or "flagged" in scanners.values()
+    # Only a MALWARE-SPECIFIC scanner (GuardDog: install hooks/exfil/typosquat;
+    # YARA: malware rulesets) may solely confirm. Semgrep runs `--config auto`, a
+    # general SAST pass that flags ordinary code smells (e.g. child_process.exec)
+    # in legitimate apps -- letting it confirm alone would re-introduce the
+    # tiledesk false positives in CI (where it is installed). Its findings still
+    # appear in provenance via signal_summary, just not as sole proof.
+    oss_confirmed = any(scanners.get(n) == "flagged" for n in ("guarddog", "yara"))
+    confirmed = static_confirmed or oss_confirmed
     # Learning loop: mine IOCs only once confirmed, from trusted ground truth.
     learned = extract_repo_iocs(root) if confirmed else IocSet()
     return Tier2Result(

@@ -15,7 +15,7 @@ import json
 import re
 from pathlib import Path
 
-from .bash_scanner import BashFinding
+from .bash_scanner import BashFinding, is_ignored_path
 
 _LIFECYCLE = ("preinstall", "install", "postinstall", "prepare", "preuninstall")
 
@@ -39,7 +39,7 @@ def scan_manifests(root) -> list[BashFinding]:
     root = Path(root)
     findings: list[BashFinding] = []
     for path in root.rglob("*"):
-        if not path.is_file() or ".git" in path.parts:
+        if not path.is_file() or is_ignored_path(path):
             continue
         name = path.name.lower()
         if name not in ("package.json", "setup.py"):
