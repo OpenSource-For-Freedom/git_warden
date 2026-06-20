@@ -384,7 +384,8 @@ def hunt(
                     ordered = result.confirming_findings + [
                         bf for bf in result.bash_findings if id(bf) not in _confirming]
                     finding.raw_payload["bash_findings"] = [
-                        {"file": bf.file, "line": bf.line, "category": bf.category, "rule": bf.rule}
+                        {"file": bf.file, "line": bf.line, "category": bf.category,
+                         "rule": bf.rule, "snippet": bf.snippet[:280]}
                         for bf in ordered[:20]
                     ]
                     finding.raw_payload["scanners"] = result.scanners
