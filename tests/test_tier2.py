@@ -73,6 +73,44 @@ def test_enumeration_only_does_not_confirm(tmp_path):
     assert not result.confirmed
 
 
+def test_semgrep_flag_alone_does_not_confirm(monkeypatch, tmp_path):
+    # Semgrep --config auto flags ordinary code smells; on its own it must NOT
+    # confirm a clean repo (would re-introduce the tiledesk FP in CI).
+    import git_warden.scanning.tier2 as t2
+    (tmp_path / "app.js").write_text("export const add = (a, b) => a + b;\n", encoding="utf-8")
+    monkeypatch.setattr(t2.shutil, "which", lambda n: "/usr/bin/" + n)
+
+    def runner(cmd, **k):
+        class R:
+            returncode = 0
+            stdout = '{"results": [{"check_id": "smell"}], "errors": []}' if cmd[0] == "semgrep" \
+                else "{}"
+            stderr = ""
+        return R()
+
+    result = analyze_repo(tmp_path, "legit/app", runner=runner)
+    assert result.scanners["semgrep"] == "flagged"
+    assert not result.confirmed  # semgrep smell != malware
+
+
+def test_guarddog_flag_confirms(monkeypatch, tmp_path):
+    # A malware-specific scanner (GuardDog) flagging IS sufficient to confirm.
+    import json as _json
+
+    import git_warden.scanning.tier2 as t2
+    (tmp_path / "package.json").write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(t2.shutil, "which", lambda n: "/usr/bin/" + n)
+
+    def runner(cmd, **k):
+        class R:
+            returncode = 0
+            stdout = _json.dumps({"issues": 1}) if cmd[0] == "guarddog" else "{}"
+            stderr = ""
+        return R()
+
+    assert analyze_repo(tmp_path, "evil/pkg", runner=runner).confirmed
+
+
 def test_run_external_semgrep_flags_only_on_results(monkeypatch, tmp_path):
     import json as _json
 
