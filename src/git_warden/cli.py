@@ -390,6 +390,8 @@ def _cmd_hunt(args: argparse.Namespace) -> int:
             do_enrich=not args.no_enrich,
             do_tier2=args.scan,
             max_iocs=args.max_iocs,
+            max_packages=args.max_packages,
+            search_pace=args.pace,
             limit=args.limit,
             gold=args.gold,
             notifier=lambda row: post_discord(format_finding(row)),
@@ -508,6 +510,10 @@ def build_parser() -> argparse.ArgumentParser:
     hunt_p.add_argument("--scan", action="store_true", help="Run Tier-2 clone+scan.")
     hunt_p.add_argument("--gold", action="store_true", help="Deliver confirmed to Discord.")
     hunt_p.add_argument("--max-iocs", type=int, default=8, help="IOC terms to search.")
+    hunt_p.add_argument("--max-packages", type=int, default=8,
+                        help="Malicious package names to code-search (package pivot).")
+    hunt_p.add_argument("--pace", type=float, default=3.0,
+                        help="Seconds between code searches (avoid secondary rate limits).")
     hunt_p.add_argument("--limit", type=int, default=0,
                         help="Cap candidates processed (0 = no cap). Bounds a run.")
     hunt_p.add_argument("--pretty-logs", action="store_true", help="Human-readable logs.")
