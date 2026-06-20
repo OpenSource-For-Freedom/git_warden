@@ -84,6 +84,7 @@ _CONFIRM_ALONE_RULES = frozenset({
     ("install_hook", "npm-preinstall"), ("install_hook", "npm-install"),
     ("install_hook", "npm-postinstall"), ("install_hook", "npm-prepare"),
     ("install_hook", "npm-preuninstall"), ("install_hook", "py-setup-exec"),
+    ("install_hook", "vscode-autorun"),  # VS Code task auto-running on folderOpen
 })
 # Tier B -- CORROBORATED, split into two phases. Each is benign alone (a project's
 # own Discord/Telegram channel; an ops script reading creds). Confirmation needs
