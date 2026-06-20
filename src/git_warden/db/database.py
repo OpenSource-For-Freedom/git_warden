@@ -460,6 +460,33 @@ class Database:
             )
         }
 
+    def osm_repo_targets(self, limit: int = 0) -> list[tuple[str, str]]:
+        """OSM-labeled malicious repos to Tier-2 validate, as (full_name, url).
+
+        OSM pre-labels these malicious (mostly fake-interview / crypto-task lure
+        repos). We do not trust the label -- we clone and confirm via Tier-2 (a
+        malware signature or a known-malicious dependency). Repos already in the
+        findings registry are skipped (already triaged).
+        """
+        from ..refs import repo_full_name
+
+        seen = {
+            row["full_name"].casefold()
+            for row in self.conn.execute("SELECT full_name FROM repo_findings")
+        }
+        out: list[tuple[str, str]] = []
+        for row in self.list_artifacts(artifact_type="repo"):
+            ref = json.loads(row["raw_payload"]).get("resource_identifier") or row["name"]
+            full = repo_full_name(ref)
+            if not full or full.casefold() in seen:
+                continue
+            seen.add(full.casefold())
+            url = ref if str(ref).startswith("http") else f"https://github.com/{full}"
+            out.append((full, url))
+            if limit and len(out) >= limit:
+                break
+        return out
+
     def malicious_dependency_names(self) -> frozenset[str]:
         """OSM-flagged package names (lowercased) for manifest dependency matching.
 
