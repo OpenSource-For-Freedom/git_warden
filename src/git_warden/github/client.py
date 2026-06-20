@@ -127,6 +127,26 @@ class GitHubClient:
         resp.raise_for_status()
         return resp.json().get("items", [])
 
+    def compare(
+        self, base_full: str, base_branch: str, head_full: str, head_branch: str
+    ) -> dict | None:
+        """Compare a fork against its upstream (doc 02 5 intent change).
+
+        Returns ``{ahead_by, files}`` (files = changed paths) or None if the
+        comparison can't be made. ``ahead_by == 0`` means an unmodified mirror.
+        """
+        base_owner = base_full.split("/", 1)[0]
+        head_owner = head_full.split("/", 1)[0]
+        basehead = f"{base_owner}:{base_branch}...{head_owner}:{head_branch}"
+        resp = self._get(f"/repos/{base_full}/compare/{basehead}")
+        if resp.status_code != 200:
+            return None
+        data = resp.json()
+        return {
+            "ahead_by": data.get("ahead_by", 0),
+            "files": [f.get("filename") for f in (data.get("files") or []) if f.get("filename")],
+        }
+
     def list_user_repos(self, login: str, per_page: int = 100) -> list[dict]:
         """Public repos for a user or org login. [] if the account is 404.
 
