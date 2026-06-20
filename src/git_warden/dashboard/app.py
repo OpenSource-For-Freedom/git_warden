@@ -66,6 +66,10 @@ def create_app(db_path=DB_PATH):
     def api_campaigns():
         return _q(queries.campaign_clusters)
 
+    @app.get("/api/graph")
+    def api_graph():
+        return _q(queries.graph)
+
     @app.get("/api/telemetry")
     def api_telemetry():
         return {
