@@ -72,7 +72,8 @@ _RULES: dict[str, list[tuple[str, re.Pattern]]] = {
     "credential_harvest": [
         ("ssh-keys", re.compile(r"id_rsa|id_ed25519|\.ssh/id_", re.I)),
         ("cloud-creds", re.compile(r"\.aws/credentials|\.config/gcloud|\.azure/", re.I)),
-        ("shadow-passwd", re.compile(r"/etc/shadow|/etc/passwd", re.I)),
+        # reads /etc/shadow (password hashes); /etc/passwd is benign/ubiquitous
+        ("shadow-passwd", re.compile(r"/etc/shadow\b", re.I)),
         ("env-token-grab", re.compile(r"\b(AWS_SECRET|GITHUB_TOKEN|NPM_TOKEN|API_KEY)\b", re.I)),
     ],
     "process_injection": [

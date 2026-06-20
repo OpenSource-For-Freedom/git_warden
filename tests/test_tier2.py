@@ -116,6 +116,17 @@ def test_steal_and_send_confirms(tmp_path):
     assert analyze_repo(tmp_path, "evil/stealer").confirmed
 
 
+def test_cred_and_exfil_in_different_files_do_not_confirm(tmp_path):
+    # openclaw FP: AWS creds (CI) and a Telegram feature (src/) live in different
+    # files -> not a steal-and-send payload, so no confirmation.
+    (tmp_path / "a.js").write_text(
+        "const k = require('fs').readFileSync(home + '/.aws/credentials');\n",
+        encoding="utf-8")
+    (tmp_path / "b.js").write_text(
+        "fetch('https://api.telegram.org/bot1/sendMessage');\n", encoding="utf-8")
+    assert not analyze_repo(tmp_path, "legit/bigapp").confirmed
+
+
 def test_ci_writing_deploy_key_does_not_confirm(tmp_path):
     # The opencode FP: CI legitimately WRITES a deploy key from a secret (it does
     # not read+exfil it). ssh-keys is a lone Tier-B -> not enough.
@@ -128,6 +139,23 @@ def test_ci_writing_deploy_key_does_not_confirm(tmp_path):
         encoding="utf-8",
     )
     assert not analyze_repo(tmp_path, "legit/tool").confirmed
+
+
+def test_devops_passwd_and_authorized_keys_do_not_confirm(tmp_path):
+    # openclaw FP: /etc/passwd in container setup + authorized_keys in CI are
+    # standard provisioning, not malware.
+    (tmp_path / "setup.sh").write_text(
+        "#!/bin/bash\ngrep root /etc/passwd\n"
+        "echo \"$DEPLOY_KEY\" >> ~/.ssh/authorized_keys\nwhoami; id\n",
+        encoding="utf-8",
+    )
+    assert not analyze_repo(tmp_path, "legit/openclaw").confirmed
+
+
+def test_etc_shadow_read_confirms(tmp_path):
+    # Reading /etc/shadow (password hashes) IS credential theft -> Tier-A.
+    (tmp_path / "x.sh").write_text("#!/bin/bash\ncat /etc/shadow\n", encoding="utf-8")
+    assert analyze_repo(tmp_path, "evil/dump").confirmed
 
 
 def test_reverse_shell_confirms(tmp_path):
