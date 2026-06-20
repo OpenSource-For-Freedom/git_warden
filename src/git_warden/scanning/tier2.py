@@ -53,15 +53,24 @@ _CATEGORY_WEIGHTS = {
     # manifest / content (supply-chain malware)
     "install_hook": 5, "network_exfil": 4, "code_execution": 3, "credential_access": 3,
 }
-# Confirmation requires a genuine malware-SIGNATURE rule, not merely a rule that
-# happens to sit in a strong category. The tiledesk false positives confirmed on
-# ``credential_access/keyfiles`` (a bare ``.env`` reference) and
-# ``credential_harvest/env-token-grab`` (the literal string ``GITHUB_TOKEN`` in a
-# Dockerfile ARG) -- ubiquitous in legitimate code. Those weak rules can still
-# add context/score, but only a (category, rule) pair listed here can satisfy the
-# "strong signal present" gate. Common idioms (child_process, bare exec, env-var
-# *names*, .env *references*, host recon) are deliberately excluded.
-_STRONG_RULES = frozenset({
+# Git Warden hunts the FULL attack surface (doc 03): hidden network attacks,
+# enumeration/recon, typosquatting, viral implants -- not just supply-chain
+# payloads. Confirmation uses a two-part model so the whole surface is in scope
+# WITHOUT the tiledesk false positives:
+#
+#   confirmed = a single unambiguous SIGNATURE  OR  a recon->ACTION attack chain
+#
+# A SIGNATURE is a single (category, rule) that is malicious on its own -- a
+# reverse shell, curl|bash, eval(atob(...)), a webhook exfil, an install hook.
+# The CHAIN catches subtler attacks: a recon/collection signal (enumeration,
+# network scan, credential gathering) paired with an ACTION signal (exfil,
+# download-exec, reverse shell, persistence, obfuscation, injection, lateral
+# movement). What made the tiledesk repos benign was the absence of an ACTION
+# phase -- they reference ``.env`` and run ``whoami`` in CI but never exfil,
+# execute untrusted code, or persist. A real implant ACTS on what it gathers.
+# Bare idioms (child_process, exec(), env-var *names*, ``.env`` *references*) are
+# neither a signature nor an action, so they cannot confirm on their own.
+_SIGNATURE_RULES = frozenset({
     # bash Layer-1 -- unambiguous offensive shell
     ("reverse_shell", "dev-tcp-redirect"), ("reverse_shell", "nc-exec"),
     ("reverse_shell", "bash-i-socket"), ("reverse_shell", "mkfifo-shell"),
@@ -87,6 +96,30 @@ _STRONG_RULES = frozenset({
     ("install_hook", "npm-preinstall"), ("install_hook", "npm-install"),
     ("install_hook", "npm-postinstall"), ("install_hook", "npm-prepare"),
     ("install_hook", "npm-preuninstall"), ("install_hook", "py-setup-exec"),
+})
+# Recon/collection phase -- "casing the joint." Benign on its own (CI runs
+# ``whoami``; apps read ``.env``); an attack signal only when paired with action.
+_RECON_CATEGORIES = frozenset({
+    "enumeration", "network_scan", "credential_harvest", "credential_access",
+})
+# Action/egress/control phase -- getting data out, running untrusted code,
+# establishing control, or hiding. Pairing recon with any of these is the chain
+# that distinguishes an implant from a build script.
+_ACTION_CATEGORIES = frozenset({
+    "exfiltration", "network_exfil", "download_exec", "reverse_shell",
+    "install_hook", "persistence", "process_injection", "lateral_movement",
+    "obfuscation",
+})
+# Idioms too common to drive a chain even though they sit in a recon/action
+# category: a token-NAME reference, bare base64 decode, ``curl -d``, ifconfig.
+# Recorded as findings (context/score) but cannot, on their own, satisfy a phase
+# -- otherwise a legit app that decodes base64 and reads an env var would chain.
+_WEAK_RULES = frozenset({
+    ("credential_harvest", "env-token-grab"),  # references a token's NAME, not theft
+    ("obfuscation", "atob"),                    # bare atob() -- ubiquitous in JS
+    ("obfuscation", "base64-buffer"),           # bare Buffer.from(x,'base64')
+    ("exfiltration", "curl-post-data"),         # curl -d -- common API call idiom
+    ("enumeration", "net-recon"),               # ifconfig/netstat -- common diagnostics
 })
 # Intent-change categories for RED-TEAM lineage (P1, doc 02 5): a fork of an
 # offensive tool legitimately *has* reverse shells / injection -- that is the
@@ -285,9 +318,11 @@ def analyze_repo(
     """Run Tier-2 STATIC analysis on an already-cloned repo (never executes it).
 
     Combines the bash Layer-1 scanner, the install-hook/manifest scanner, and the
-    JS/Python content scanner, plus the OSS scanners. ``restrict_paths`` limits
+    JS/Python content scanner, plus the OSS scanners. Confirmation spans the full
+    attack surface via a two-part gate (see module constants): a single
+    unambiguous SIGNATURE, or a recon->ACTION chain. ``restrict_paths`` limits
     which files count toward confirmation (red-team lineage diverged files, P1);
-    ``confirm_categories`` overrides which categories can confirm (lineage uses
+    ``confirm_categories`` restricts which categories may count (lineage uses
     WEAPONIZATION_CATEGORIES so a fork only confirms on added malicious mechanisms,
     not the tool's own offensive code).
     """
@@ -298,16 +333,22 @@ def analyze_repo(
 
     score = _score_static(findings)
     scanners = {name: _run_external(name, root, runner) for name in _SCANNER_NAMES}
-    # A genuine malware-signature rule must be present (not just a weak rule in a
-    # strong category). For red-team lineage, that signature must additionally
-    # fall in the weaponization categories (confirm_categories) so the tool's own
-    # offensive code never confirms.
-    def _is_strong(f: BashFinding) -> bool:
-        if (f.category, f.rule) not in _STRONG_RULES:
-            return False
-        return confirm_categories is None or f.category in confirm_categories
-    strong = any(_is_strong(f) for f in findings)
-    static_confirmed = score >= confirm_threshold and strong
+    # Two-part gate over the full attack surface: a single unambiguous SIGNATURE,
+    # or a recon->ACTION chain (gathering paired with egress/control/evasion). For
+    # red-team lineage, confirm_categories restricts which categories may count so
+    # the tool's own offensive code never confirms -- only ADDED weaponization.
+    def _ok(category: str) -> bool:
+        return confirm_categories is None or category in confirm_categories
+
+    def _phase(f: BashFinding, categories: frozenset[str]) -> bool:
+        return (f.category in categories and (f.category, f.rule) not in _WEAK_RULES
+                and _ok(f.category))
+    signature = any((f.category, f.rule) in _SIGNATURE_RULES and _ok(f.category)
+                    for f in findings)
+    has_recon = any(_phase(f, _RECON_CATEGORIES) for f in findings)
+    has_action = any(_phase(f, _ACTION_CATEGORIES) for f in findings)
+    chain = has_recon and has_action
+    static_confirmed = score >= confirm_threshold and (signature or chain)
     # Only a MALWARE-SPECIFIC scanner (GuardDog: install hooks/exfil/typosquat;
     # YARA: malware rulesets) may solely confirm. Semgrep runs `--config auto`, a
     # general SAST pass that flags ordinary code smells (e.g. child_process.exec)

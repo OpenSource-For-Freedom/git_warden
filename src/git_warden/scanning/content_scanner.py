@@ -52,7 +52,10 @@ _RULES: dict[str, list[tuple[str, str, re.Pattern]]] = {
     "credential_access": [
         ("env-dump", "any", re.compile(
             r"JSON\.stringify\(\s*process\.env|os\.environ\b.*(?:post|send|requests)", re.I)),
-        ("keyfiles", "any", re.compile(r"\.ssh/id_|\.aws/credentials|\.npmrc|\.env\b", re.I)),
+        # Actual secret-FILE access (private keys, cloud creds) -- a credential
+        # theft signal. A bare ``.env`` reference is NOT here: every dotenv app
+        # has one, and it manufactured the tiledesk false positives.
+        ("keyfiles", "any", re.compile(r"\.ssh/id_|\.aws/credentials|\.config/gcloud", re.I)),
     ],
 }
 
