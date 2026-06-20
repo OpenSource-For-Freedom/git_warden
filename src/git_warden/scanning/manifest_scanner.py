@@ -34,15 +34,50 @@ _PY_SETUP_EXEC = re.compile(
 _MAX_BYTES = 1_000_000
 
 
-def scan_manifests(root) -> list[BashFinding]:
-    """Flag malicious package lifecycle hooks. Static parse only."""
+# Python requirement lines: ``name==1.2.3`` / ``name>=1`` / bare ``name``.
+_REQ_LINE = re.compile(r"^\s*([A-Za-z0-9._-]+)\s*(?:[=<>!~;\[].*)?$")
+
+
+def _declared_deps(name: str, text: str) -> set[str]:
+    """Dependency names declared by a manifest (npm package.json / pip reqs)."""
+    deps: set[str] = set()
+    if name == "package.json":
+        try:
+            data = json.loads(text or "{}") or {}
+        except ValueError:
+            return deps
+        for key in ("dependencies", "devDependencies", "optionalDependencies",
+                    "peerDependencies"):
+            section = data.get(key)
+            if isinstance(section, dict):
+                deps.update(section.keys())
+    else:  # requirements*.txt
+        for line in text.splitlines():
+            line = line.strip()
+            if not line or line.startswith(("#", "-")):
+                continue
+            m = _REQ_LINE.match(line)
+            if m:
+                deps.add(m.group(1))
+    return deps
+
+
+def scan_manifests(root, malicious_packages: frozenset[str] = frozenset()) -> list[BashFinding]:
+    """Flag malicious lifecycle hooks AND known-malicious DEPENDENCIES. Static.
+
+    ``malicious_packages`` is the OSM-flagged package set (lowercased). A repo that
+    declares one as a dependency installs known malware on ``npm/pip install`` --
+    the delivery vector behind fake-interview / crypto-task lure repos, whose own
+    code looks benign. This cross-reference is a Tier-A confirmation.
+    """
     root = Path(root)
     findings: list[BashFinding] = []
     for path in root.rglob("*"):
         if not path.is_file() or is_ignored_path(path):
             continue
         name = path.name.lower()
-        if name not in ("package.json", "setup.py"):
+        is_reqs = name.startswith("requirements") and name.endswith(".txt")
+        if name not in ("package.json", "setup.py") and not is_reqs:
             continue
         try:
             if path.stat().st_size > _MAX_BYTES:
@@ -51,6 +86,13 @@ def scan_manifests(root) -> list[BashFinding]:
         except OSError:
             continue
         rel = str(path.relative_to(root)).replace("\\", "/")
+
+        if malicious_packages and (name == "package.json" or is_reqs):
+            manifest_kind = "package.json" if name == "package.json" else name
+            for dep in _declared_deps(manifest_kind, text):
+                if dep.lower() in malicious_packages:
+                    findings.append(BashFinding(
+                        rel, 0, "malicious_dependency", "osm-listed", dep[:120]))
 
         if name == "package.json":
             try:
@@ -63,7 +105,7 @@ def scan_manifests(root) -> list[BashFinding]:
                     findings.append(
                         BashFinding(rel, 0, "install_hook", f"npm-{hook}", str(cmd)[:200])
                     )
-        else:  # setup.py
+        elif name == "setup.py":
             for match in _PY_SETUP_EXEC.finditer(text):
                 line = text[: match.start()].count("\n") + 1
                 findings.append(
