@@ -4,6 +4,7 @@ from .actor_search import AccountRepo, find_actor_account_repos
 from .bash_scanner import BashFinding, scan_repo, score_findings
 from .content_scanner import scan_content
 from .discovery import RepoHit, build_search_terms, classify_hit, search_iocs
+from .enrichment import OwnerRepo, find_owner_repos
 from .ioc import IocSet, extract_iocs, is_attacker_host
 from .lineage import LineageCandidate, find_lineage_candidates
 from .manifest_scanner import scan_manifests
@@ -22,6 +23,8 @@ __all__ = [
     "search_iocs",
     "classify_hit",
     "build_search_terms",
+    "OwnerRepo",
+    "find_owner_repos",
     "BashFinding",
     "scan_repo",
     "score_findings",

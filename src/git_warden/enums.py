@@ -110,6 +110,8 @@ class DetectionMethod(StrEnum):
     REDTEAM_LINEAGE = "redteam_lineage"  # clone/fork of a pinned red-team tool
     ACTOR_ACCOUNT = "actor_account"  # under a promoted threat-actor account
     OSM_REPOSITORY = "osm_repository"  # OSM-flagged repository artifact
+    MALICIOUS_OWNER = "malicious_owner"  # other repo by a known-malicious-repo owner
+    PACKAGE_REF = "package_ref"  # references a known-malicious package
 
 
 class ArtifactStatus(StrEnum):
