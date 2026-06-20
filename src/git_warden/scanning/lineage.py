@@ -1,7 +1,7 @@
 """Red-team tooling repurposing detection (doc 02 section 5).
 
 For each pinned legitimate tool, find repos that share its lineage but sit under
-a different owner -- the renamed/re-hosted copies that are the repurposing
+a different owner; the renamed/re-hosted copies that are the repurposing
 surface:
 
 * **forks** of a pinned anchor repo, and
@@ -10,7 +10,7 @@ surface:
 This is the *candidate-finding* stage (metadata only, no cloning). It narrows
 the field and attaches lightweight signals; confirming that a candidate's code
 or intent actually changed is Tier-2's job (clone + code-hash + scanners). Every
-candidate is explicitly "needs Tier-2 verification" -- accuracy over volume.
+candidate is explicitly "needs Tier-2 verification"; accuracy over volume.
 
 ``find_lineage_candidates`` takes any client exposing ``list_forks`` and
 ``search_repositories``, so it is unit-tested offline with a fake.

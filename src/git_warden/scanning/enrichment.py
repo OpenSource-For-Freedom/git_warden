@@ -6,7 +6,7 @@ strongest pivot: enumerate every other public repo under an owner who already
 shipped a known-malicious repo (a bad actor's account holds more bad repos).
 Each becomes a candidate that still passes Tier-1/Tier-2 before it confirms.
 
-(The package pivot -- code-searching malicious package names -- rides the
+(The package pivot; code-searching malicious package names; rides the
 existing IOC code-search path in hunt; see Database.malicious_package_terms.)
 """
 

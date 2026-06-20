@@ -73,7 +73,7 @@ def test_pipeline_isolates_a_failing_feed(tmp_path):
 
 def test_pipeline_with_playbook_still_isolates_unclassified_failure(tmp_path):
     # With the orchestration playbook, an unclassified feed error re-raises
-    # immediately (no retry/sleep) and is isolated -- run still completes.
+    # immediately (no retry/sleep) and is isolated; run still completes.
     from git_warden.orchestration import load_playbook
 
     db = Database.open(tmp_path / "p3.sqlite")

@@ -1,4 +1,4 @@
-"""Minimal .env loader (stdlib only -- no python-dotenv dependency).
+"""Minimal .env loader (stdlib only; no python-dotenv dependency).
 
 Loads KEY=VALUE lines from a .env file into ``os.environ`` so credentials don't
 have to be exported by hand each shell. Real environment variables always win:

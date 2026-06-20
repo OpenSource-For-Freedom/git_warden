@@ -1,6 +1,6 @@
 """Tier-1 screening: score a repo on name + README, no cloning (doc 02 section 3.1).
 
-Decides the *entrypoints* -- which repos are worth the cost of a Tier-2 clone +
+Decides the *entrypoints*; which repos are worth the cost of a Tier-2 clone +
 scanner run. A repository name alone is a weak signal (doc 02 section 2.2: a
 bland name is a hiding technique and "cannot, by itself, justify a flag"), so we
 score the name and README *jointly* and require corroborating evidence before
@@ -36,7 +36,7 @@ def _skeleton(text: str) -> str:
     """NFKC-normalize, casefold, and fold confusables to a comparison skeleton."""
     return unicodedata.normalize("NFKC", text).casefold().translate(_CONFUSABLES)
 
-# Signal weights. Promotion needs corroboration -- see DEFAULT_TIER2_THRESHOLD.
+# Signal weights. Promotion needs corroboration; see DEFAULT_TIER2_THRESHOLD.
 STRONG = 3
 MEDIUM = 2
 WEAK = 1
@@ -44,7 +44,7 @@ DEFAULT_TIER2_THRESHOLD = 4
 
 # Overtly malicious tokens that, in a repo NAME, suggest intent. Deliberately
 # tight: common red-team terms (c2, exploit, payload, beacon, rat) are excluded
-# because legitimate tools use them -- they would add noise.
+# because legitimate tools use them; they would add noise.
 _NAME_TOKENS = (
     "malware",
     "stealer",

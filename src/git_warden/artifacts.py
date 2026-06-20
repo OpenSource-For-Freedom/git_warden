@@ -2,7 +2,7 @@
 
 Every run emits a CSV of all observed actors (including quarantined and rejected
 ones, so audits confirm nothing good was silently dropped) and a JSON summary of
-the run. These are inspection/audit outputs -- distinct from the gold Discord
+the run. These are inspection/audit outputs; distinct from the gold Discord
 feed, which carries only confirmed findings.
 """
 

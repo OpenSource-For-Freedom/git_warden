@@ -1,4 +1,4 @@
-"""Live threat-telemetry dashboard (PRD section 6 -- gated web dashboard).
+"""Live threat-telemetry dashboard (PRD section 6; gated web dashboard).
 
 A read-only view over the SQLite registry that correlates code, repos, and flags:
 campaign clusters (shared code-signature / owner / code-hash), per-finding

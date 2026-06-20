@@ -1,15 +1,15 @@
-"""Custom bash malware scanner -- Layer 1 (static/signature), doc 03.
+"""Custom bash malware scanner; Layer 1 (static/signature), doc 03.
 
 No adequate free bash-specific scanner exists, so this is our own (doc 03 sec 1).
 Layer 1 inspects code without executing it, across the full attack surface
 (doc 03 sec 2): enumeration, persistence, lateral movement, exfiltration,
 reverse shells, process injection, credential harvesting, network scanning, and
-obfuscation/evasion. It recursively finds bash and bash-bearing files -- shell
-embedded in setup scripts, CI workflows, Dockerfiles (doc 03 sec 4) -- and emits
+obfuscation/evasion. It recursively finds bash and bash-bearing files; shell
+embedded in setup scripts, CI workflows, Dockerfiles (doc 03 sec 4); and emits
 per-file, categorized findings (doc 03 sec 5).
 
 Layer 2 (sandboxed behavioral execution, doc 03 sec 3.2) is deliberately out of
-scope here -- it is the heavy lift and lands later.
+scope here; it is the heavy lift and lands later.
 
 Pure functions over text/paths: fully unit-testable with no execution.
 """
@@ -110,10 +110,10 @@ _SHEBANG = re.compile(r"^#!.*\b(ba|z|k)?sh\b")
 _MAX_BYTES = 1_000_000
 
 # Paths that are NOT the repo author's executable payload. Two kinds:
-#   * Vendored/generated trees (THIRD-PARTY code) -- the tiledesk FP came from
+#   * Vendored/generated trees (THIRD-PARTY code); the tiledesk FP came from
 #     `node_modules/bytes` and `node_modules/content-disposition`.
 #   * Test / fixture / example trees, which legitimately contain attack strings
-#     as data -- the crewhaus FP came from a prompt-injection DETECTOR whose
+#     as data; the crewhaus FP came from a prompt-injection DETECTOR whose
 #     `index.test.ts` cites `webhook.site` / telegram as test fixtures.
 # Excluding both means only first-party, shipped code can confirm a finding.
 # (Names are compared case-insensitively.)

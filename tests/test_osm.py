@@ -12,7 +12,7 @@ from git_warden.enums import ArtifactType, FeedSource
 from git_warden.feeds.osm import OsmFeed, parse_query_latest
 from git_warden.pipeline import run_ingestion
 
-# Live envelope: {count, threats: [...]} -- no top-level ecosystem. Type comes
+# Live envelope: {count, threats: [...]}; no top-level ecosystem. Type comes
 # from each record's report_type; ecosystem from registry. Mirrors real data.
 NPM_RESPONSE = {
     "count": 2,
