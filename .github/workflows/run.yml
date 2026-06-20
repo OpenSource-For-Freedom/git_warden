@@ -24,7 +24,10 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install
-        run: pip install -e .
+        # Tier-2 OSS scanners (doc 02 3.2): GuardDog (npm/pypi malicious-package
+        # detection) + Semgrep. Both are STATIC analyzers -- they read targets,
+        # never install/run them.
+        run: pip install -e . semgrep guarddog
 
       # Persist the SQLite store + caches across runs so the registry and the
       # MITRE bundle accumulate week to week.

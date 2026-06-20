@@ -30,27 +30,48 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .bash_scanner import BashFinding, scan_repo, score_findings
+from .bash_scanner import BashFinding, scan_repo
+from .content_scanner import scan_content
 from .ioc import IocSet, extract_repo_iocs
+from .manifest_scanner import scan_manifests
 
 log = logging.getLogger(__name__)
 
-# OSS scanners orchestrated in Tier-2. Each entry: how to invoke it on a path.
-# semgrep runs with --json so we flag only on actual results, not error codes
-# or chatter (eval finding #5).
-_EXTERNAL_SCANNERS = {
-    "semgrep": lambda root: ["semgrep", "--json", "--quiet", "--config", "auto", str(root)],
-    "yara": None,  # needs a compiled ruleset path; wired when rules are provisioned
-    "guarddog": None,  # package-ecosystem oriented; applied to package candidates
-}
+# OSS scanners orchestrated in Tier-2 (doc 02 3.2). We do not reinvent these.
+_SCANNER_NAMES = ("semgrep", "guarddog", "yara")
 
 CONFIRM_THRESHOLD = 5
-# A bash-only confirmation needs at least one high-signal category, so a lone
-# enumeration/network-scan hit can't reach gold (eval finding #15).
-_STRONG_BASH_CATEGORIES = frozenset({
-    "reverse_shell", "download_exec", "exfiltration", "obfuscation",
-    "persistence", "credential_harvest", "process_injection",
+
+# Weights across ALL static scanners (bash + manifest + content). Distinct
+# (category, rule) pairs are summed; a high-signal category is required to
+# confirm so weak recon alone can't reach gold (eval finding #15).
+_CATEGORY_WEIGHTS = {
+    # bash Layer-1
+    "reverse_shell": 5, "download_exec": 4, "exfiltration": 4, "obfuscation": 4,
+    "persistence": 3, "credential_harvest": 3, "process_injection": 3,
+    "lateral_movement": 2, "network_scan": 2, "enumeration": 1,
+    # manifest / content (supply-chain malware)
+    "install_hook": 5, "network_exfil": 4, "code_execution": 3, "credential_access": 3,
+}
+_STRONG_CATEGORIES = frozenset({
+    "reverse_shell", "download_exec", "exfiltration", "obfuscation", "persistence",
+    "credential_harvest", "process_injection", "install_hook", "network_exfil",
 })
+
+
+def _score_static(findings: list[BashFinding]) -> int:
+    """Weighted score over distinct (category, rule) pairs (spam-resistant)."""
+    seen = {(f.category, f.rule) for f in findings}
+    return sum(_CATEGORY_WEIGHTS.get(category, 1) for category, _ in seen)
+
+
+def _guarddog_ecosystem(root: Path) -> str | None:
+    """npm/pypi if the repo carries a matching manifest, else None."""
+    if (Path(root) / "package.json").exists():
+        return "npm"
+    if (Path(root) / "setup.py").exists() or (Path(root) / "pyproject.toml").exists():
+        return "pypi"
+    return None
 # full_name is untrusted intel -> strict allowlist before any clone/path use
 # (eval finding #16).
 _VALID_FULL_NAME = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
@@ -72,7 +93,7 @@ class Tier2Result:
 
     def signal_summary(self) -> list[str]:
         cats = sorted({f.category for f in self.bash_findings})
-        return [f"bash:{c}" for c in cats] + [
+        return [f"static:{c}" for c in cats] + [
             f"{name}:{status}" for name, status in self.scanners.items() if status == "flagged"
         ]
 
@@ -170,29 +191,45 @@ def clone_repo(
 def _run_external(name: str, root: Path, runner) -> str:
     """Run one OSS scanner if installed; return a status string.
 
-    'flagged' must mean a real detection, never an error/chatter (eval #5). For
-    semgrep we parse --json and flag only when the ``results`` array is non-empty;
-    its error exit codes map to 'error' and do NOT contribute to confirmation.
+    'flagged' must mean a real detection, never an error/chatter (eval #5).
+    These scanners READ the repo statically; none executes target code.
     """
-    builder = _EXTERNAL_SCANNERS.get(name)
-    if builder is None or shutil.which(name) is None:
+    if shutil.which(name) is None:
         return "skipped (not installed)"
-    try:
-        result = runner(builder(root), capture_output=True, text=True, timeout=300)
-    except (OSError, subprocess.SubprocessError) as exc:
-        return f"error: {exc}"
 
     if name == "semgrep":
         try:
+            result = runner(["semgrep", "--json", "--quiet", "--config", "auto", str(root)],
+                            capture_output=True, text=True, timeout=300)
             payload = json.loads(result.stdout or "{}")
+        except (OSError, subprocess.SubprocessError):
+            return "error"
         except ValueError:
-            return f"error: unparseable output (exit {result.returncode})"
+            return "error"
         if payload.get("errors") and not payload.get("results"):
             return "error"
         return "flagged" if payload.get("results") else "clean"
 
-    # Generic fallback for scanners wired later (not used while others are None).
-    return "flagged" if (result.returncode != 0 or result.stdout.strip()) else "clean"
+    if name == "guarddog":
+        # GuardDog statically scans a package directory for malicious indicators
+        # (install hooks, exfiltration, typosquatting) -- doc 02 3.2 / PRD. It
+        # does not install or run the package.
+        eco = _guarddog_ecosystem(root)
+        if eco is None:
+            return "skipped (no package manifest)"
+        try:
+            result = runner(["guarddog", eco, "scan", str(root), "--output-format", "json"],
+                            capture_output=True, text=True, timeout=300)
+            payload = json.loads(result.stdout or "{}")
+        except (OSError, subprocess.SubprocessError):
+            return "error"
+        except ValueError:
+            return "error"
+        issues = payload.get("issues")
+        results = payload.get("results") or payload.get("findings")
+        return "flagged" if (issues or results) else "clean"
+
+    return "skipped (no rules)"  # yara: rulesets provisioned later
 
 
 def analyze_repo(
@@ -201,24 +238,33 @@ def analyze_repo(
     *,
     runner=subprocess.run,
     confirm_threshold: int = CONFIRM_THRESHOLD,
+    restrict_paths: set[str] | None = None,
 ) -> Tier2Result:
-    """Run Tier-2 analysis on an already-cloned repo directory."""
-    bash_findings = scan_repo(root)
-    bash_score = score_findings(bash_findings)
-    scanners = {name: _run_external(name, root, runner) for name in _EXTERNAL_SCANNERS}
-    # Bash-only confirmation requires a high-signal category, not just a score
-    # reachable from weak recon hits (eval finding #15).
-    strong_bash = any(f.category in _STRONG_BASH_CATEGORIES for f in bash_findings)
-    bash_confirmed = bash_score >= confirm_threshold and strong_bash
-    confirmed = bash_confirmed or "flagged" in scanners.values()
-    # Learning loop: mine IOCs from the code only once the repo is confirmed
-    # malicious, so the search corpus grows from trusted ground truth.
+    """Run Tier-2 STATIC analysis on an already-cloned repo (never executes it).
+
+    Combines the bash Layer-1 scanner, the install-hook/manifest scanner, and the
+    JS/Python content scanner, plus the OSS scanners. ``restrict_paths`` (used for
+    red-team lineage, P1) limits which files count toward confirmation -- so a
+    fork of an offensive tool only confirms on malicious additions in *diverged*
+    files, not the tool's own code.
+    """
+    findings = scan_repo(root) + scan_manifests(root) + scan_content(root)
+    if restrict_paths is not None:
+        allowed = {p.replace("\\", "/") for p in restrict_paths}
+        findings = [f for f in findings if f.file.replace("\\", "/") in allowed]
+
+    score = _score_static(findings)
+    scanners = {name: _run_external(name, root, runner) for name in _SCANNER_NAMES}
+    strong = any(f.category in _STRONG_CATEGORIES for f in findings)
+    static_confirmed = score >= confirm_threshold and strong
+    confirmed = static_confirmed or "flagged" in scanners.values()
+    # Learning loop: mine IOCs only once confirmed, from trusted ground truth.
     learned = extract_repo_iocs(root) if confirmed else IocSet()
     return Tier2Result(
         full_name=full_name,
         code_hash=repo_code_hash(root),
-        bash_findings=bash_findings,
-        bash_score=bash_score,
+        bash_findings=findings,   # all static findings (bash + manifest + content)
+        bash_score=score,
         scanners=scanners,
         confirmed=confirmed,
         learned_iocs=learned,
@@ -232,6 +278,7 @@ def scan_candidate(
     clone=clone_repo,
     runner=subprocess.run,
     confirm_threshold: int = CONFIRM_THRESHOLD,
+    restrict_paths: set[str] | None = None,
 ) -> Tier2Result | None:
     """Clone + STATICALLY analyze a candidate. None if the clone fails/too big.
 
@@ -250,6 +297,6 @@ def scan_candidate(
                         extra={"context": {"repo": full_name}})
             return None
         return analyze_repo(cloned, full_name, runner=runner,
-                            confirm_threshold=confirm_threshold)
+                            confirm_threshold=confirm_threshold, restrict_paths=restrict_paths)
     finally:
         _force_rmtree(cloned)
