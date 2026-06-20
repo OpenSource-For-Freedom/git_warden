@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import base64
 import logging
+import time
 from dataclasses import dataclass
 
 import requests
@@ -47,6 +48,20 @@ class RateLimit:
 
 class GitHubAuthError(RuntimeError):
     """Raised when GitHub rejects the token (401)."""
+
+
+class GitHubRateLimitError(RuntimeError):
+    """Raised when GitHub rate-limits a request (primary or secondary).
+
+    Carries ``retry_after`` (seconds) computed from the response headers so the
+    caller can wait exactly as long as GitHub asks rather than guessing. Code
+    search is the tight case: ~10 requests/minute, with a separate secondary
+    (abuse) limit on bursts that returns 403 + ``Retry-After``.
+    """
+
+    def __init__(self, message: str, retry_after: float):
+        super().__init__(message)
+        self.retry_after = retry_after
 
 
 class GitHubClient:
@@ -115,15 +130,51 @@ class GitHubClient:
         resp.raise_for_status()
         return resp.json().get("items", [])
 
+    @staticmethod
+    def _rate_limit_wait(resp) -> float | None:
+        """Seconds to wait if ``resp`` is a rate-limit (else None for a real 403).
+
+        Distinguishes a throttle from a genuine 'forbidden': honors ``Retry-After``
+        (secondary/abuse limit), then an exhausted primary budget
+        (``X-RateLimit-Remaining: 0`` -> wait to ``X-RateLimit-Reset``), then a
+        rate-limit message as a last resort. Returns None when it is truly
+        forbidden (bad/missing token, insufficient scope) so we don't loop on it.
+        """
+        retry_after = resp.headers.get("Retry-After")
+        if retry_after is not None:
+            try:
+                return max(1.0, float(retry_after))
+            except ValueError:
+                pass
+        if resp.headers.get("X-RateLimit-Remaining") == "0":
+            reset = resp.headers.get("X-RateLimit-Reset")
+            try:
+                return max(1.0, float(reset) - time.time()) if reset else 60.0
+            except ValueError:
+                return 60.0
+        try:
+            message = (resp.json() or {}).get("message", "")
+        except ValueError:
+            message = ""
+        if "rate limit" in message.lower() or "abuse" in message.lower():
+            return 60.0
+        return None
+
     def search_code(self, query: str, per_page: int = 20) -> list[dict]:
         """Search code for a literal IOC/string; returns ``items`` (may be empty).
 
-        Code search requires authentication and has a tighter rate limit
-        (~10 req/min). 403 means forbidden (no token) or a secondary rate limit.
+        Code search requires authentication and has a tight rate limit
+        (~10 req/min) plus a secondary burst limit. A throttling 403/429 raises
+        :class:`GitHubRateLimitError` (with the wait); a genuine 403 (bad token)
+        raises ``RuntimeError`` so the caller doesn't retry a hopeless request.
         """
         resp = self._get("/search/code", params={"q": query, "per_page": per_page})
-        if resp.status_code == 403:
-            raise RuntimeError("GitHub code search forbidden -- token required or rate limited")
+        if resp.status_code in (403, 429):
+            wait = self._rate_limit_wait(resp)
+            if wait is not None:
+                raise GitHubRateLimitError(f"code search rate-limited ({resp.status_code})", wait)
+            raise RuntimeError(
+                "GitHub code search forbidden -- token required or insufficient scope")
         resp.raise_for_status()
         return resp.json().get("items", [])
 

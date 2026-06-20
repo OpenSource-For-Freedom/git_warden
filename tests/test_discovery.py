@@ -62,6 +62,49 @@ def test_one_failing_ioc_does_not_abort():
     assert {h.full_name for h in hits} == {"attacker/x"}
 
 
+def test_rate_limit_backs_off_then_retries_term():
+    # An exception carrying retry_after is a throttle: wait, then retry the term.
+    class Throttle(RuntimeError):
+        retry_after = 30.0
+
+    class Limited(FakeClient):
+        def __init__(self, by_term):
+            super().__init__(by_term)
+            self.first = True
+
+        def search_code(self, query, per_page=20):
+            if self.first:
+                self.first = False
+                raise Throttle("secondary rate limit")
+            return super().search_code(query, per_page)
+
+    waits = []
+    client = Limited({"good.example": [_item("attacker/x")]})
+    hits = search_iocs(client, ["good.example"], known=set(),
+                       max_backoff=90.0, sleeper=waits.append)
+    assert {h.full_name for h in hits} == {"attacker/x"}  # retry succeeded
+    assert waits == [30.0]                                 # waited the requested time
+
+
+def test_rate_limit_wait_is_capped():
+    class Throttle(RuntimeError):
+        retry_after = 100000.0
+
+    class Limited(FakeClient):
+        def search_code(self, query, per_page=20):
+            raise Throttle("limited")
+
+    waits = []
+    search_iocs(Limited({}), ["x"], known=set(), max_backoff=90.0, sleeper=waits.append)
+    assert waits == [90.0]  # capped, not the absurd server value
+
+
+def test_package_name_terms_are_quoted():
+    client = FakeClient({})
+    search_iocs(client, ["@scope/evil-pkg", "foo.workers.dev"], known=set())
+    assert client.calls == ['"@scope/evil-pkg"', "foo.workers.dev"]  # scoped quoted, domain not
+
+
 def test_classify_source_use_overrides_defensive_name():
     # eval #1: a match in executable source means the IOC is USED -> suspicious,
     # even under a defensive-sounding name (attacker can't evade by naming).
