@@ -21,6 +21,7 @@ import logging
 import tempfile
 from datetime import UTC, datetime
 
+from . import config
 from .db import Database
 from .enums import DetectionMethod, RepoFindingStatus, RunStatus
 from .models import RedTeamTool, RepoFinding
@@ -37,6 +38,7 @@ from .scanning import (
 )
 from .scanning.actor_search import AccountRepo
 from .scanning.discovery import RepoHit
+from .scanning.tier2 import _force_rmtree
 
 log = logging.getLogger(__name__)
 
@@ -176,7 +178,12 @@ def hunt(
     if do_tier2:
         screened = [f for f in candidates.values()
                     if f.score >= scan_min_score or f.status is RepoFindingStatus.SCREENED]
-        with tempfile.TemporaryDirectory() as workdir:
+        # Tier-2 STATICALLY analyzes each clone (never executes it). Scratch goes
+        # to config.WORK_DIR when set, to keep large/ephemeral clones off a
+        # near-full system drive; dir=None uses system temp (correct for CI/Linux).
+        # Force-removed in finally so git's read-only pack files don't leave husks.
+        workdir = tempfile.mkdtemp(dir=config.WORK_DIR)
+        try:
             for finding in screened:
                 kwargs = {"clone": clone} if clone else {}
                 result = scan_candidate(finding.full_name, workdir, **kwargs)
@@ -206,6 +213,8 @@ def hunt(
                         db.record_learned_ioc(tg, "telegram", finding.full_name, run_id)
                     for dom in li.domains:
                         db.record_learned_ioc(dom, "domain", finding.full_name, run_id)
+        finally:
+            _force_rmtree(workdir)
 
     delivered = 0
     if gold and notifier is not None:
