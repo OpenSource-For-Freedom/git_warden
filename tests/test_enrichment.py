@@ -32,9 +32,15 @@ def test_malicious_repo_owners_only_from_confirmed_findings(tmp_path):
     db.upsert_finding(RepoFinding(full_name="badguy/stealer",
                                   detection_method=DetectionMethod.IOC_SEARCH,
                                   status=RepoFindingStatus.CONFIRMED), "r1")
+    # A red-team fork confirmation must NOT seed the owner pivot: its author is a
+    # researcher with offensive-tool clones, not a malware actor.
+    db.upsert_finding(RepoFinding(full_name="researcher/sliver-fork",
+                                  detection_method=DetectionMethod.REDTEAM_LINEAGE,
+                                  status=RepoFindingStatus.CONFIRMED), "r1")
     owners = db.malicious_repo_owners()
-    assert owners == {"badguy"}      # only the owner of a repo WE confirmed
-    assert "tiledesk" not in owners  # heavily-typosquatted legit org, never seeded
+    assert owners == {"badguy"}        # only the owner of a MALWARE repo we confirmed
+    assert "tiledesk" not in owners    # heavily-typosquatted legit org, never seeded
+    assert "researcher" not in owners  # red-team fork author, never seeded
     db.close()
 
 
