@@ -135,6 +135,15 @@ def _finding_from_owner(ar: OwnerRepo) -> RepoFinding:
     )
 
 
+def _finding_from_osm_repo(full_name: str, url: str) -> RepoFinding:
+    return RepoFinding(
+        full_name=full_name,
+        url=url or None,
+        detection_method=DetectionMethod.OSM_REPOSITORY,
+        reasoning="OSM-labeled malicious repository (validating via Tier-2)",
+    )
+
+
 def hunt(
     db: Database,
     client,
@@ -146,9 +155,11 @@ def hunt(
     do_lineage: bool = True,
     do_actor: bool = True,
     do_enrich: bool = True,
+    do_osm: bool = True,
     do_tier2: bool = False,
     max_iocs: int = 8,
     max_packages: int = 8,
+    max_osm: int = 60,
     search_pace: float = 0.0,
     limit: int = 0,
     scan_min_score: int = 4,
@@ -199,6 +210,15 @@ def hunt(
     if do_actor:
         for ar in find_actor_account_repos(client, db.actor_github_logins(), known=known):
             candidates.setdefault(ar.full_name.casefold(), _finding_from_account(ar))
+
+    if do_osm:
+        # Validate OSM-labeled malicious repos directly: clone + Tier-2 confirm a
+        # malware signature or known-malicious dependency, rather than trusting
+        # the label. Most lure repos are ephemeral (gone), but survivors confirm.
+        for full, url in db.osm_repo_targets(limit=max_osm):
+            if is_defensive_repo(full):
+                continue
+            candidates.setdefault(full.casefold(), _finding_from_osm_repo(full, url))
 
     # Bound the run: keep the strongest candidates before the expensive Tier-1
     # README fetches + Tier-2 clones. Ranking is method-aware (eval finding #13)
@@ -256,6 +276,7 @@ def hunt(
         intel = finding.detection_method in (
             DetectionMethod.IOC_SEARCH, DetectionMethod.PACKAGE_REF,
             DetectionMethod.MALICIOUS_OWNER, DetectionMethod.ACTOR_ACCOUNT,
+            DetectionMethod.OSM_REPOSITORY,
         )
         to_tier2 = result.tier2 or (intel and not is_defensive_repo(finding.full_name))
         finding.status = RepoFindingStatus.SCREENED if to_tier2 else RepoFindingStatus.CANDIDATE

@@ -388,9 +388,11 @@ def _cmd_hunt(args: argparse.Namespace) -> int:
             do_lineage=not args.no_lineage,
             do_actor=not args.no_actor,
             do_enrich=not args.no_enrich,
+            do_osm=not args.no_osm,
             do_tier2=args.scan,
             max_iocs=args.max_iocs,
             max_packages=args.max_packages,
+            max_osm=args.max_osm,
             search_pace=args.pace,
             limit=args.limit,
             gold=args.gold,
@@ -507,11 +509,15 @@ def build_parser() -> argparse.ArgumentParser:
     hunt_p.add_argument("--no-actor", action="store_true", help="Skip actor-account discovery.")
     hunt_p.add_argument("--no-enrich", action="store_true",
                         help="Skip OSM enrichment (owner/package pivots).")
+    hunt_p.add_argument("--no-osm", action="store_true",
+                        help="Skip direct Tier-2 validation of OSM-labeled malicious repos.")
     hunt_p.add_argument("--scan", action="store_true", help="Run Tier-2 clone+scan.")
     hunt_p.add_argument("--gold", action="store_true", help="Deliver confirmed to Discord.")
     hunt_p.add_argument("--max-iocs", type=int, default=8, help="IOC terms to search.")
     hunt_p.add_argument("--max-packages", type=int, default=8,
                         help="Malicious package names to code-search (package pivot).")
+    hunt_p.add_argument("--max-osm", type=int, default=60,
+                        help="OSM-labeled repos to clone+validate in Tier-2.")
     hunt_p.add_argument("--pace", type=float, default=7.0,
                         help="Seconds between code searches. Code search allows ~10/min, so "
                              "keep this >=6; the client also backs off on a rate-limit response.")
