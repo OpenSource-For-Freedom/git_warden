@@ -434,30 +434,26 @@ class Database:
             known.add(row["full_name"].casefold())
         return known
 
-    def malicious_repo_owners(self, min_count: int = 2) -> set[str]:
-        """Likely-malicious-ACTOR owners (not lure victims).
+    def malicious_repo_owners(self) -> set[str]:
+        """Proven-malicious-ACTOR owners: owners of a repo WE confirmed.
 
-        OSM repo "owners" are often victims of fake-job/assessment lures, whose
-        other repos are benign. So we keep only repeat offenders -- owners with
-        >= min_count OSM-flagged repos -- plus any owner of a finding we already
-        confirmed/validated (a proven bad actor).
+        We deliberately do NOT seed from OSM repo ownership. OSM's "repository"
+        field for a malicious package is the repo the malware impersonates /
+        typosquats -- i.e. the legitimate VICTIM, not the attacker. A heavily
+        typosquatted legit org (e.g. tiledesk, 9 OSM entries) is indistinguishable
+        from a prolific attacker by repo count, so counting OSM repos enumerated
+        legit orgs and shipped their benign repos to gold. The only defensible
+        "this owner is an actor" signal is an owner of a repo we ourselves
+        confirmed/validated in Tier-2. OSM's package names drive expansion instead
+        via the package pivot (:meth:`malicious_package_terms`).
         """
-        from collections import Counter
-
-        from ..refs import repo_full_name
-
-        counts: Counter = Counter()
-        for row in self.list_artifacts(artifact_type="repo"):
-            ref = json.loads(row["raw_payload"]).get("resource_identifier") or row["name"]
-            full = repo_full_name(ref)
-            if full:
-                counts[full.split("/", 1)[0]] += 1
-        owners = {o for o, n in counts.items() if o and n >= min_count}
-        for row in self.conn.execute(
-            "SELECT full_name FROM repo_findings WHERE status IN ('confirmed', 'validated')"
-        ):
-            owners.add(row["full_name"].split("/", 1)[0])
-        return owners
+        return {
+            row["full_name"].split("/", 1)[0]
+            for row in self.conn.execute(
+                "SELECT full_name FROM repo_findings "
+                "WHERE status IN ('confirmed', 'validated')"
+            )
+        }
 
     def malicious_package_terms(self, limit: int = 30) -> list[str]:
         """Distinctive malicious package names to code-search for (package pivot).

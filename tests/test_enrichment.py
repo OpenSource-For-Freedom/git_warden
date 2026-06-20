@@ -20,10 +20,11 @@ def _repo(full):
             "html_url": f"https://github.com/{full}"}
 
 
-def test_malicious_repo_owners_from_artifacts_and_findings(tmp_path):
+def test_malicious_repo_owners_only_from_confirmed_findings(tmp_path):
     db = Database.open(tmp_path / "o.sqlite")
     db.start_run("r1", utcnow())
-    for name in ("evilcorp/dropper", "evilcorp/loader"):  # repeat offender (>= 2)
+    # OSM repo ownership is an impersonation target (victim) -- must NOT seed.
+    for name in ("tiledesk/server", "tiledesk/dashboard", "tiledesk/ai"):
         db.upsert_artifact(MaliciousArtifact(
             artifact_type=ArtifactType.REPO, name=name, ecosystem="github",
             source=FeedSource.OPEN_SOURCE_MALWARE,
@@ -32,8 +33,8 @@ def test_malicious_repo_owners_from_artifacts_and_findings(tmp_path):
                                   detection_method=DetectionMethod.IOC_SEARCH,
                                   status=RepoFindingStatus.CONFIRMED), "r1")
     owners = db.malicious_repo_owners()
-    assert "evilcorp" in owners      # repeat offender from OSM artifacts
-    assert "badguy" in owners        # from confirmed finding
+    assert owners == {"badguy"}      # only the owner of a repo WE confirmed
+    assert "tiledesk" not in owners  # heavily-typosquatted legit org, never seeded
     db.close()
 
 
@@ -81,11 +82,10 @@ class _EnrichClient:
 def test_hunt_owner_pivot_creates_candidates(tmp_path):
     db = Database.open(tmp_path / "h.sqlite")
     db.start_run("seed", utcnow())
-    for name in ("evilcorp/dropper", "evilcorp/loader"):  # repeat offender
-        db.upsert_artifact(MaliciousArtifact(
-            artifact_type=ArtifactType.REPO, name=name, ecosystem="github",
-            source=FeedSource.OPEN_SOURCE_MALWARE,
-            raw_payload={"resource_identifier": f"https://github.com/{name}"}), "seed")
+    # A repo WE confirmed makes its owner a proven actor to pivot from.
+    db.upsert_finding(RepoFinding(full_name="evilcorp/dropper",
+                                  detection_method=DetectionMethod.IOC_SEARCH,
+                                  status=RepoFindingStatus.CONFIRMED), "seed")
 
     hunt(db, _EnrichClient(), TOOLS, run_id="hunt-e", now=utcnow(),
          do_ioc=False, do_lineage=False, do_actor=False, do_enrich=True, do_tier2=False)
@@ -100,20 +100,19 @@ def test_hunt_owner_pivot_creates_candidates(tmp_path):
     db.close()
 
 
-def test_malicious_repo_owners_repeat_offenders_only(tmp_path):
+def test_osm_repo_ownership_never_seeds_owner_pivot(tmp_path):
     db = Database.open(tmp_path / "ro.sqlite")
     db.start_run("r1", utcnow())
-    # victim: one lure repo -> dropped. repeat offender: two -> kept.
+    # No matter how many OSM repos an owner has, OSM ownership alone never seeds
+    # the owner pivot -- those repos are impersonation targets (legit victims).
     for owner, name in [
-        ("victim", "interviewtask"), ("badactor", "dropper1"), ("badactor", "dropper2"),
+        ("victim", "interviewtask"), ("legitorg", "dropper1"), ("legitorg", "dropper2"),
     ]:
         db.upsert_artifact(MaliciousArtifact(
             artifact_type=ArtifactType.REPO, name=f"{owner}/{name}", ecosystem="github",
             source=FeedSource.OPEN_SOURCE_MALWARE,
             raw_payload={"resource_identifier": f"https://github.com/{owner}/{name}"}), "r1")
-    owners = db.malicious_repo_owners(min_count=2)
-    assert "badactor" in owners       # >= 2 OSM repos
-    assert "victim" not in owners      # single lure repo -> victim, dropped
+    assert db.malicious_repo_owners() == set()  # no confirmed findings -> no owners
     db.close()
 
 
@@ -130,11 +129,10 @@ def test_intel_candidate_reaches_tier2_without_name_signal(tmp_path):
     # signal is the suspicion) -- and a malicious payload confirms it.
     db = Database.open(tmp_path / "it.sqlite")
     db.start_run("seed", utcnow())
-    for i in range(2):  # repeat offender so owner pivot keeps it
-        db.upsert_artifact(MaliciousArtifact(
-            artifact_type=ArtifactType.REPO, name=f"evilcorp/m{i}", ecosystem="github",
-            source=FeedSource.OPEN_SOURCE_MALWARE,
-            raw_payload={"resource_identifier": f"https://github.com/evilcorp/m{i}"}), "seed")
+    # A confirmed repo makes evilcorp a proven actor; the pivot enumerates more.
+    db.upsert_finding(RepoFinding(full_name="evilcorp/known-bad",
+                                  detection_method=DetectionMethod.IOC_SEARCH,
+                                  status=RepoFindingStatus.CONFIRMED), "seed")
 
     class C(_EnrichClient):
         def list_user_repos(self, login, per_page=100):
