@@ -32,12 +32,14 @@ from .scanning import (
     extract_iocs,
     find_actor_account_repos,
     find_lineage_candidates,
+    find_owner_repos,
     scan_candidate,
     score_repo,
     search_iocs,
 )
 from .scanning.actor_search import AccountRepo
 from .scanning.discovery import RepoHit
+from .scanning.enrichment import OwnerRepo
 from .scanning.tier2 import WEAPONIZATION_CATEGORIES, _force_rmtree
 
 log = logging.getLogger(__name__)
@@ -122,6 +124,15 @@ def _finding_from_account(ar: AccountRepo) -> RepoFinding:
     )
 
 
+def _finding_from_owner(ar: OwnerRepo) -> RepoFinding:
+    return RepoFinding(
+        full_name=ar.full_name,
+        url=ar.html_url or None,
+        detection_method=DetectionMethod.MALICIOUS_OWNER,
+        reasoning=f"repository under owner {ar.owner} of a known-malicious repo",
+    )
+
+
 def hunt(
     db: Database,
     client,
@@ -132,6 +143,7 @@ def hunt(
     do_ioc: bool = True,
     do_lineage: bool = True,
     do_actor: bool = True,
+    do_enrich: bool = True,
     do_tier2: bool = False,
     max_iocs: int = 8,
     limit: int = 0,
@@ -149,15 +161,27 @@ def hunt(
     candidates: dict[str, RepoFinding] = {}
 
     if do_ioc:
-        # Learned IOCs (from prior confirmed repos) lead, then OSM IOCs -- the
-        # compounding search corpus (expand core search).
+        # Enrichment corpus (expand core search beyond red-team): learned IOCs
+        # from prior confirmed repos, OSM IOCs, AND distinctive malicious package
+        # names (a repo referencing known malware is a candidate).
         learned = db.learned_search_terms()
         base = build_search_terms(_osm_iocs(db), max_iocs)
-        terms = list(dict.fromkeys(learned + base))[:max_iocs]
+        packages = db.malicious_package_terms(limit=max_iocs)
+        package_set = set(packages)
+        terms = list(dict.fromkeys(learned + base + packages))[:max_iocs]
         hits = search_iocs(client, terms, known=known, per_term=15)
         for hit in hits:
             if classify_hit(hit) == "suspicious":
-                candidates[hit.full_name.casefold()] = _finding_from_hit(hit)
+                finding = _finding_from_hit(hit)
+                if any(m in package_set for m in hit.matched_iocs):
+                    finding.detection_method = DetectionMethod.PACKAGE_REF
+                candidates[hit.full_name.casefold()] = finding
+
+    if do_enrich:
+        # Owner pivot -- the strongest enrichment: other repos by owners who have
+        # already shipped a known-malicious repo (still Tier-1/Tier-2 gated).
+        for ar in find_owner_repos(client, db.malicious_repo_owners(), known=known):
+            candidates.setdefault(ar.full_name.casefold(), _finding_from_owner(ar))
 
     if do_lineage:
         for tool in tools:
@@ -176,6 +200,8 @@ def hunt(
     if limit and len(candidates) > limit:
         method_base = {
             DetectionMethod.ACTOR_ACCOUNT: 3,
+            DetectionMethod.MALICIOUS_OWNER: 3,  # owner of a known-malicious repo
+            DetectionMethod.PACKAGE_REF: 2,
             DetectionMethod.OSM_REPOSITORY: 2,
             DetectionMethod.IOC_SEARCH: 1,
             DetectionMethod.REDTEAM_LINEAGE: 1,

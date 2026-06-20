@@ -434,6 +434,39 @@ class Database:
             known.add(row["full_name"].casefold())
         return known
 
+    def malicious_repo_owners(self) -> set[str]:
+        """Owners of known-malicious repos (OSM artifacts + confirmed findings).
+
+        The enrichment engine's strongest pivot: a bad actor's account holds more
+        bad repos, so we enumerate every other repo under these owners.
+        """
+        from ..refs import repo_full_name
+
+        owners: set[str] = set()
+        for row in self.list_artifacts(artifact_type="repo"):
+            ref = json.loads(row["raw_payload"]).get("resource_identifier") or row["name"]
+            full = repo_full_name(ref)
+            if full:
+                owners.add(full.split("/", 1)[0])
+        for row in self.conn.execute(
+            "SELECT full_name FROM repo_findings WHERE status IN ('confirmed', 'validated')"
+        ):
+            owners.add(row["full_name"].split("/", 1)[0])
+        return {o for o in owners if o}
+
+    def malicious_package_terms(self, limit: int = 30) -> list[str]:
+        """Distinctive malicious package names to code-search for (package pivot).
+
+        Searching a malicious package name in code finds repos that install /
+        distribute / depend on it. Generic short names are skipped to avoid noise.
+        """
+        terms: list[str] = []
+        for row in self.list_artifacts(artifact_type="package"):
+            name = (row["name"] or "").strip()
+            if name.startswith("@") or len(name) >= 8:  # scoped or non-trivial
+                terms.append(name)
+        return list(dict.fromkeys(terms))[:limit]
+
     def cross_platform_clusters(self) -> dict[str, list[dict]]:
         """Confirmed findings grouped by code_hash (doc 04 section 6).
 
