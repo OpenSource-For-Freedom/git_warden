@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import json
 
-from git_warden.notify import format_finding, post_discord
+from git_warden.notify import finding_embed, format_finding, post_discord
 
 
 def _row(**kw):
     base = {
-        "full_name": "evil/repo", "platform": "github",
+        "full_name": "evil/repo", "platform": "github", "status": "confirmed",
         "url": "https://github.com/evil/repo",
         "detection_method": "ioc_search", "score": 9, "actor_key": "lazarus group",
         "reasoning": "exfil to attacker host", "signals": json.dumps(["bash:reverse_shell"]),
@@ -96,3 +96,42 @@ def test_format_finding_labels_red_team_fork():
 
 def test_format_finding_has_validation_footer():
     assert "Pending analyst validation" in format_finding(_row())
+
+
+def test_finding_embed_standardized_card_with_repo_image():
+    e = finding_embed(_row())
+    assert e["title"] == "evil/repo"
+    assert e["url"] == "https://github.com/evil/repo"
+    # the GitHub repo image (Open Graph card) -- the 'repo image' that was missing
+    assert e["image"]["url"] == "https://opengraph.githubassets.com/1/evil/repo"
+    assert e["color"] == 0xE74C3C
+    names = {f["name"]: f["value"] for f in e["fields"]}
+    assert "setup.sh:3" in names["Indicators (file:line → rule)"]
+    assert names["Class"] == "🆕 novel"  # ioc_search -> novel
+    assert "Pending analyst validation" in e["footer"]["text"]
+
+
+def test_finding_embed_osm_repo_is_classified_validated():
+    e = finding_embed(_row(detection_method="osm_repository"))
+    names = {f["name"]: f["value"] for f in e["fields"]}
+    assert names["Class"] == "OSM-validated"
+
+
+def test_post_discord_sends_embeds():
+    sent = {}
+
+    class FakeResp:
+        status = 204
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+
+    def fake_opener(req, timeout=20):
+        sent["body"] = req.data
+        return FakeResp()
+
+    ok = post_discord(embeds=[finding_embed(_row())],
+                      webhook="https://discord.test/wh", opener=fake_opener)
+    assert ok
+    body = json.loads(sent["body"])
+    assert body["embeds"][0]["title"] == "evil/repo"
+    assert "content" not in body  # embed-only message
