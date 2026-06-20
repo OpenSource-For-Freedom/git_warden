@@ -82,7 +82,7 @@ def scan_manifests(root, malicious_packages=None) -> list[BashFinding]:
             continue
         name = path.name.lower()
         is_reqs = name.startswith("requirements") and name.endswith(".txt")
-        if name not in ("package.json", "setup.py") and not is_reqs:
+        if name not in ("package.json", "setup.py", "tasks.json") and not is_reqs:
             continue
         try:
             if path.stat().st_size > _MAX_BYTES:
@@ -117,4 +117,28 @@ def scan_manifests(root, malicious_packages=None) -> list[BashFinding]:
                 findings.append(
                     BashFinding(rel, line, "install_hook", "py-setup-exec", match.group(0)[:120])
                 )
+        elif name == "tasks.json":
+            # VS Code task that auto-runs on folder-open (the DPRK lure vector,
+            # OSM-flagged on CoreX): opening the repo in VS Code silently executes
+            # the command. Malicious when it carries a fetch-and-run / exec idiom.
+            findings.extend(_scan_vscode_tasks(text, rel))
     return findings
+
+
+def _scan_vscode_tasks(text: str, rel: str) -> list[BashFinding]:
+    try:
+        tasks = (json.loads(text or "{}") or {}).get("tasks") or []
+    except ValueError:
+        return []
+    out: list[BashFinding] = []
+    for task in tasks if isinstance(tasks, list) else []:
+        if not isinstance(task, dict):
+            continue
+        run_on = ((task.get("runOptions") or {}).get("runOn") or "").lower()
+        cmd = task.get("command")
+        parts = [cmd] if isinstance(cmd, str) else (cmd if isinstance(cmd, list) else [])
+        parts += task.get("args") or []
+        blob = " ".join(str(p) for p in parts)
+        if run_on == "folderopen" and _SUSPICIOUS_CMD.search(blob):
+            out.append(BashFinding(rel, 0, "install_hook", "vscode-autorun", blob[:200]))
+    return out

