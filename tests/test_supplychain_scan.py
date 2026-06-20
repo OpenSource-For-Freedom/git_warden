@@ -74,6 +74,52 @@ def test_clean_js_repo_not_confirmed(tmp_path):
     assert not analyze_repo(tmp_path, "good/lib").confirmed
 
 
+def test_node_modules_excluded_from_scanning(tmp_path):
+    # The tiledesk FP: legit deps `bytes` / `content-disposition` tripped js-exec.
+    # Vendored trees are third-party -- never attribute them to the target repo.
+    dep = tmp_path / "node_modules" / "content-disposition"
+    dep.mkdir(parents=True)
+    (dep / "index.js").write_text("function f(){ return spawn('x'); }\n", encoding="utf-8")
+    assert scan_content(tmp_path) == []
+
+
+def test_python_rule_does_not_match_javascript(tmp_path):
+    # `py-dyn` (compile()/__import__) must not fire on a .js file (tiledesk's
+    # emaitransappRoute/index.js was flagged py-dyn). Language-gated now.
+    (tmp_path / "index.js").write_text(
+        "const re = compile(pattern);\nmodule.exports = re;\n", encoding="utf-8"
+    )
+    assert not any(f.rule == "py-dyn" for f in scan_content(tmp_path))
+
+
+def test_minified_bundle_skipped(tmp_path):
+    (tmp_path / "vendor.min.js").write_text(
+        "var x=String.fromCharCode(1,2,3,4,5,6,7,8,9);\n", encoding="utf-8"
+    )
+    assert scan_content(tmp_path) == []
+
+
+def test_legitimate_app_does_not_confirm(tmp_path):
+    # A tiledesk-shaped legit app: references .env, uses child_process/exec, names
+    # GITHUB_TOKEN in a Dockerfile ARG, runs host recon in CI. None of these are
+    # malware signatures, so NOTHING here may confirm (the tiledesk FP did).
+    (tmp_path / "index.js").write_text(
+        "require('dotenv').config({path: '.env'});\n"
+        "const { exec } = require('child_process');\n"
+        "exec('node build.js');\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "Dockerfile").write_text(
+        "FROM node:20\nARG GITHUB_TOKEN\nARG NPM_TOKEN\nRUN npm ci\n", encoding="utf-8"
+    )
+    wf = tmp_path / ".github" / "workflows"
+    wf.mkdir(parents=True)
+    (wf / "ci.yml").write_text(
+        "jobs:\n  build:\n    steps:\n      - run: whoami\n", encoding="utf-8")
+    result = analyze_repo(tmp_path, "tiledesk/email-transcription-app")
+    assert not result.confirmed
+
+
 def test_run_external_guarddog_flags_on_issues(monkeypatch, tmp_path):
     import git_warden.scanning.tier2 as t2
     (tmp_path / "package.json").write_text("{}", encoding="utf-8")

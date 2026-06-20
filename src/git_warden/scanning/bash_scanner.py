@@ -102,6 +102,23 @@ _EMBEDDED_SUFFIXES = {".yml", ".yaml"}  # CI workflows etc.
 _SHEBANG = re.compile(r"^#!.*\b(ba|z|k)?sh\b")
 _MAX_BYTES = 1_000_000
 
+# Vendored / generated trees hold THIRD-PARTY code, not the repo author's work.
+# Scanning them attributes a dependency's (often legitimate) code to the target
+# repo -- the tiledesk false positives came from `node_modules/bytes` and
+# `node_modules/content-disposition`. Exclude them from every scanner so only
+# first-party code can confirm a finding.
+_IGNORE_DIRS = frozenset({
+    ".git", "node_modules", "bower_components", "vendor", "third_party",
+    "third-party", "dist", "build", "out", ".next", ".nuxt", "target",
+    ".venv", "venv", "virtualenv", "site-packages", "__pycache__", "Pods",
+    ".gradle", ".terraform", ".yarn",
+})
+
+
+def is_ignored_path(path: Path) -> bool:
+    """True if a path lives under a vendored/generated dir (skip for scanning)."""
+    return bool(_IGNORE_DIRS.intersection(path.parts))
+
 
 @dataclass
 class BashFinding:
@@ -140,7 +157,7 @@ def scan_repo(root: Path) -> list[BashFinding]:
     root = Path(root)
     findings: list[BashFinding] = []
     for path in root.rglob("*"):
-        if not path.is_file() or ".git" in path.parts:
+        if not path.is_file() or is_ignored_path(path):
             continue
         try:
             if path.stat().st_size > _MAX_BYTES:
