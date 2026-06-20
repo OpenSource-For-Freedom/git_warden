@@ -49,7 +49,7 @@ def test_bland_name_long_clean_readme_does_not_promote():
 
 def test_named_renamed_fork_alone_is_not_enough():
     # A fork that KEEPS the tool name (e.g. quick-sliver) and adds nothing else
-    # must not auto-clone -- this is the de-noising guard against benign forks.
+    # must not auto-clone; this is the de-noising guard against benign forks.
     res = score_repo(name="quick-sliver", full_name="someone/quick-sliver", known_terms=KNOWN,
                      readme="reasonably long readme describing a c2 framework project here.",
                      renamed_fork=True)

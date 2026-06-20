@@ -20,9 +20,9 @@ error_classes:
 
   auth_failure:           # 401 / 403 invalid or expired credentials
     match: ["401", "bad credentials", "token", "forbidden"]
-    response: flag_manual          # no blind retry -- alert and stop this source
+    response: flag_manual          # no blind retry; alert and stop this source
     alert: true
 
-  not_found:              # 404 -- repo removed / private (often itself a signal)
+  not_found:              # 404; repo removed / private (often itself a signal)
     match: ["404", "not found"]
     response: skip_and_log

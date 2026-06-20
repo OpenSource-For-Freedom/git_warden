@@ -1,9 +1,9 @@
-"""Extract searchable IOCs from OSM threat text -- the discovery multiplier.
+"""Extract searchable IOCs from OSM threat text; the discovery multiplier.
 
 OSM is a proof-of-concept corpus: each report's ``payload_description`` names
 the concrete infrastructure a malicious repo/package uses (Discord/Telegram
 exfil webhooks, C2 domains, file hashes). We mine those IOCs and mirror them
-into our own GitHub code search -- a repo exfiltrating to the same webhook or
+into our own GitHub code search; a repo exfiltrating to the same webhook or
 domain is very likely part of the same campaign that OSM has not fully mapped.
 
 ``extract_iocs`` is pure so it is unit-tested against fixture text.
@@ -42,7 +42,7 @@ BENIGN_DOMAINS = frozenset({
     "go.dev",
     "golang.org",
     "crates.io",
-    # Generic exfil HOSTS (captured as webhooks/telegram already) -- useless as
+    # Generic exfil HOSTS (captured as webhooks/telegram already); useless as
     # domain search terms because they appear in millions of repos.
     "discord.com",
     "discordapp.com",
@@ -60,7 +60,7 @@ BENIGN_DOMAINS = frozenset({
     "ggpolarbear.com",
     "clientbp.ggpolarbear.com",
     "sentry.io",
-    # Legit AI/inference APIs on suspicious-looking TLDs (.xyz) -- referenced by
+    # Legit AI/inference APIs on suspicious-looking TLDs (.xyz); referenced by
     # many benign ML repos (the hazyresearch/m2, evo-design/evo false positives).
     "api.together.xyz",
     "together.xyz",
@@ -73,7 +73,7 @@ _DOMAIN = re.compile(r"https?://([a-z0-9.\-]+\.[a-z]{2,})", re.IGNORECASE)
 _HASH = re.compile(r"\b[a-f0-9]{64}\b", re.IGNORECASE)
 
 # A domain is only treated as a C2/exfil IOC when it appears on a line about
-# exfiltration/destination/callback -- not every URL mentioned in a report.
+# exfiltration/destination/callback; not every URL mentioned in a report.
 _C2_CONTEXT = re.compile(
     r"exfil|destinat|\bc2\b|command.?and.?control|webhook|beacon|callback|"
     r"upload|network\s+request|posts?\s+to|sends?\s+(?:data|to)|connect",
@@ -124,7 +124,7 @@ def is_attacker_host(domain: str) -> bool:
 
     A pattern allowlist, not a denylist: corporate/cloud/CDN domains (azure.com,
     googleapis.com, ...) simply don't match, so they are never searched. Trades
-    some recall (a plain attacker .com is missed) for high precision -- the
+    some recall (a plain attacker .com is missed) for high precision; the
     chosen no-noise stance; Tier-2 still catches what discovery misses.
     """
     d = domain.lower()
@@ -161,7 +161,7 @@ def extract_code_iocs(text: str | None) -> IocSet:
     """Extract IOCs from source CODE (the learning loop, expand core search).
 
     Unlike :func:`extract_iocs` (tuned for OSM threat prose), code *is* the
-    behavior, so domains are not C2-context-gated -- instead only
+    behavior, so domains are not C2-context-gated; instead only
     attacker-owned-looking domains are kept (high precision). Webhooks/telegram/
     hashes are taken anywhere.
     """

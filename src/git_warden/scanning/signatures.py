@@ -5,7 +5,7 @@ A confirmed obfuscated payload carries a *reusable* signature. The DPRK
 (``postcss.config.js`` etc.); the LEADING region of that base64 encodes the
 deobfuscator stub, which the campaign reuses across many repos while the trailing
 data differs. A chunk of that stub is a high-precision GitHub code-search term
-that surfaces SIBLING infected repos -- including ones OSM never catalogued.
+that surfaces SIBLING infected repos; including ones OSM never catalogued.
 
 This is the learning loop applied to code signatures: mine a stub from a confirmed
 repo (:func:`extract_code_signatures`), then search GitHub for it (via the same

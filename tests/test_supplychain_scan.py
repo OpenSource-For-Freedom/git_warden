@@ -76,7 +76,7 @@ def test_clean_js_repo_not_confirmed(tmp_path):
 
 def test_node_modules_excluded_from_scanning(tmp_path):
     # The tiledesk FP: legit deps `bytes` / `content-disposition` tripped js-exec.
-    # Vendored trees are third-party -- never attribute them to the target repo.
+    # Vendored trees are third-party; never attribute them to the target repo.
     dep = tmp_path / "node_modules" / "content-disposition"
     dep.mkdir(parents=True)
     (dep / "index.js").write_text("function f(){ return spawn('x'); }\n", encoding="utf-8")
@@ -122,7 +122,7 @@ def test_legitimate_app_does_not_confirm(tmp_path):
 
 def test_legit_setup_py_build_does_not_confirm(tmp_path):
     # hazyresearch/m2 + evo-design/evo FP: a setup.py that compiles extensions
-    # and reads its version is NOT malware -- only fetch-and-run is.
+    # and reads its version is NOT malware; only fetch-and-run is.
     (tmp_path / "setup.py").write_text(
         "import subprocess\n"
         "subprocess.check_output(['nvcc', '--version'])\n"

@@ -131,7 +131,7 @@ def test_hunt_lineage_to_confirmed_gold(tmp_path):
         run_id="hunt-1", now=utcnow(),
         do_ioc=False, do_lineage=True, do_tier2=True, gold=True,
         clone=_fake_clone,
-        notifier=lambda row: (delivered.append(row["full_name"]) or True),
+        notifier=lambda cluster: (delivered.extend(r["full_name"] for r in cluster) or True),
     )
 
     assert summary["counts"]["candidates"] == 1
@@ -213,7 +213,7 @@ def test_hunt_uses_work_dir_and_cleans_up(tmp_path, monkeypatch):
     db.close()
 
     assert seen["workdir"].parent == workroot       # scratch landed under WORK_DIR
-    assert list(workroot.iterdir()) == []           # fully cleaned -- no husks
+    assert list(workroot.iterdir()) == []           # fully cleaned; no husks
 
 
 def test_hunt_work_dir_falls_back_to_system_temp(tmp_path, monkeypatch):

@@ -5,7 +5,7 @@ name: Git Warden Run
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 6 * * 1" # Mondays 06:00 UTC -- weekly batch (PRD section 8)
+    - cron: "0 13 * * 1" # Mondays 13:00 UTC (~9am US-Eastern); weekly batch (PRD 8)
 
 permissions:
   contents: read
@@ -25,7 +25,7 @@ jobs:
           python-version: "3.12"
       - name: Install
         # Tier-2 OSS scanners (doc 02 3.2): GuardDog (npm/pypi malicious-package
-        # detection) + Semgrep. Both are STATIC analyzers -- they read targets,
+        # detection) + Semgrep. Both are STATIC analyzers; they read targets,
         # never install/run them.
         run: pip install -e . semgrep guarddog
 

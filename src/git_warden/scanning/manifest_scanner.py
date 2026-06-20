@@ -2,7 +2,7 @@
 
 Supply-chain malware's #1 vector is a package *lifecycle hook* that runs code on
 install (``npm`` pre/postinstall, ``setup.py`` exec). This STATICALLY parses
-manifests and flags hooks with suspicious commands -- it NEVER executes anything
+manifests and flags hooks with suspicious commands; it NEVER executes anything
 (no install, no setup.py, no scripts). The referenced payload files themselves
 are caught by the content scanner.
 
@@ -26,7 +26,7 @@ _SUSPICIOUS_CMD = re.compile(
     re.IGNORECASE,
 )
 # FETCH-AND-RUN inside setup.py (static regex; we do not run it). A bare
-# exec()/subprocess in setup.py is NORMAL -- legit packages compile extensions
+# exec()/subprocess in setup.py is NORMAL; legit packages compile extensions
 # (subprocess -> cmake/nvcc) and read their version (exec(open('_version.py'))).
 # Malware DECODES or DOWNLOADS a payload and runs it, so we require that context:
 # exec/eval of base64/marshal/zlib/fetched content, or os.system/subprocess that
@@ -74,7 +74,7 @@ def scan_manifests(root, malicious_packages=None) -> list[BashFinding]:
 
     ``malicious_packages`` maps ecosystem ('npm'/'pypi') -> frozenset of OSM-flagged
     names. A repo that declares one as a dependency installs known malware on
-    ``npm/pip install`` -- the delivery vector behind fake-interview / crypto-task
+    ``npm/pip install``; the delivery vector behind fake-interview / crypto-task
     lure repos, whose own code looks benign. Matching is ECOSYSTEM-SCOPED
     (package.json vs npm, requirements/pip vs pypi) so a legit npm package does not
     collide with a same-named typosquat on another registry. Tier-A confirmation.
