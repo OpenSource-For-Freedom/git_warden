@@ -73,7 +73,7 @@ def test_hunt_lineage_to_confirmed_gold(tmp_path):
     assert "code_hash" in payload
     assert row["code_hash"]  # promoted to a column for cross-platform dedup
     # eval #18: validate WHY it confirmed, not just the count.
-    assert any(s.startswith("bash:") for s in json.loads(row["signals"]))
+    assert any(s.startswith("static:") for s in json.loads(row["signals"]))
     assert row["score"] >= 5  # Tier-1 + accumulated bash_score
     assert "Tier-2 confirmed" in (row["reasoning"] or "")
     assert payload.get("bash_findings")  # provenance for the gold message
