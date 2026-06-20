@@ -435,23 +435,28 @@ class Database:
         return known
 
     def malicious_repo_owners(self) -> set[str]:
-        """Proven-malicious-ACTOR owners: owners of a repo WE confirmed.
+        """Proven-malicious-ACTOR owners: owners of a MALWARE repo WE confirmed.
 
         We deliberately do NOT seed from OSM repo ownership. OSM's "repository"
         field for a malicious package is the repo the malware impersonates /
         typosquats -- i.e. the legitimate VICTIM, not the attacker. A heavily
         typosquatted legit org (e.g. tiledesk, 9 OSM entries) is indistinguishable
         from a prolific attacker by repo count, so counting OSM repos enumerated
-        legit orgs and shipped their benign repos to gold. The only defensible
-        "this owner is an actor" signal is an owner of a repo we ourselves
-        confirmed/validated in Tier-2. OSM's package names drive expansion instead
-        via the package pivot (:meth:`malicious_package_terms`).
+        legit orgs and shipped their benign repos to gold.
+
+        We also EXCLUDE red-team lineage confirmations. A weaponized-tool fork's
+        author is typically a security researcher with a collection of offensive
+        tools, not a prolific malware actor -- seeding from them made the owner
+        pivot enumerate researchers' benign clones (opencode, PentestGPT). Only an
+        owner of a repo confirmed via a malware-discovery method seeds the pivot.
+        OSM's package names drive expansion via :meth:`malicious_package_terms`.
         """
         return {
             row["full_name"].split("/", 1)[0]
             for row in self.conn.execute(
                 "SELECT full_name FROM repo_findings "
-                "WHERE status IN ('confirmed', 'validated')"
+                "WHERE status IN ('confirmed', 'validated') "
+                "AND detection_method != 'redteam_lineage'"
             )
         }
 
