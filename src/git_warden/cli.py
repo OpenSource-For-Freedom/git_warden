@@ -400,6 +400,29 @@ def _cmd_hunt(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_review(args: argparse.Namespace) -> int:
+    """Analyst validation of confirmed findings (human-in-the-loop, PRD 3)."""
+    configure_logging(json_output=False)
+    from .enums import RepoFindingStatus
+
+    db = Database.open(args.db)
+    try:
+        if args.approve:
+            n = db.set_finding_status(args.approve, RepoFindingStatus.VALIDATED.value)
+            print(f"validated {args.approve}" if n else f"no finding {args.approve!r}")
+        elif args.reject:
+            n = db.set_finding_status(args.reject, RepoFindingStatus.REJECTED.value)
+            print(f"rejected {args.reject}" if n else f"no finding {args.reject!r}")
+        else:
+            rows = db.findings_by_status("confirmed")
+            print(f"{len(rows)} confirmed finding(s) pending validation:")
+            for r in rows:
+                print(f"- {r['full_name']}  ({r['detection_method']})  score={r['score']}")
+    finally:
+        db.close()
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="git-warden", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -450,6 +473,12 @@ def build_parser() -> argparse.ArgumentParser:
     screen.add_argument("--db", type=Path, default=config.DB_PATH, help="SQLite path.")
     screen.add_argument("--limit", type=int, default=10, help="Repos to screen (rate-limited).")
     screen.set_defaults(func=_cmd_screen_artifacts)
+
+    review = sub.add_parser("review", help="Analyst validate confirmed findings (approve/reject).")
+    review.add_argument("--db", type=Path, default=config.DB_PATH, help="SQLite path.")
+    review.add_argument("--approve", metavar="OWNER/REPO", help="Mark a finding validated.")
+    review.add_argument("--reject", metavar="OWNER/REPO", help="Mark a finding rejected.")
+    review.set_defaults(func=_cmd_review)
 
     iocs = sub.add_parser("iocs", help="Aggregate the searchable IOC pivot set from OSM data.")
     iocs.add_argument("--db", type=Path, default=config.DB_PATH, help="SQLite path.")

@@ -98,7 +98,8 @@ class RepoFindingStatus(StrEnum):
 
     CANDIDATE = "candidate"
     SCREENED = "screened"
-    CONFIRMED = "confirmed"
+    CONFIRMED = "confirmed"  # Tier-2 evidence; delivered to Discord for validation
+    VALIDATED = "validated"  # analyst-approved (PRD section 3) -> broader distribution
     REJECTED = "rejected"
 
 
