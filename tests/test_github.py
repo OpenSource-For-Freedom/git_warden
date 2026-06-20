@@ -91,3 +91,19 @@ def test_rate_limit_parsed_from_headers():
     rl = RateLimit.from_headers(headers)
     assert rl.limit == 5000
     assert rl.remaining == 4999
+
+
+def test_compare_returns_ahead_and_files():
+    session = FakeSession({
+        "/repos/up/tool/compare/up:main...fork:main":
+            FakeResponse(200, {"ahead_by": 3, "files": [{"filename": "evil.js"}]})
+    })
+    client = GitHubClient(token="t", session=session)
+    out = client.compare("up/tool", "main", "fork/x", "main")
+    assert out["ahead_by"] == 3
+    assert out["files"] == ["evil.js"]
+
+
+def test_compare_none_on_error():
+    client = GitHubClient(token="t", session=FakeSession({}))
+    assert client.compare("up/tool", "main", "fork/x", "main") is None

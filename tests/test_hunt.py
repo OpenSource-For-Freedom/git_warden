@@ -165,3 +165,38 @@ def test_hunt_work_dir_falls_back_to_system_temp(tmp_path, monkeypatch):
 
     assert seen["workdir"].resolve().parent == Path(tempfile.gettempdir()).resolve()
     assert not seen["workdir"].exists()  # cleaned up
+
+
+class _MirrorClient(FakeClient):
+    def get_repo(self, owner, name):
+        return {"default_branch": "main"}
+
+    def compare(self, base_full, base_branch, head_full, head_branch):
+        return {"ahead_by": 0, "files": []}  # unmodified mirror
+
+
+class _DivergedClient(FakeClient):
+    def get_repo(self, owner, name):
+        return {"default_branch": "main"}
+
+    def compare(self, base_full, base_branch, head_full, head_branch):
+        return {"ahead_by": 5, "files": ["setup.sh"]}  # diverged, changed setup.sh
+
+
+def test_hunt_drops_unmodified_red_team_fork(tmp_path):
+    # P1: a fork identical to the upstream tool is rejected, never gold.
+    db = Database.open(tmp_path / "mir.sqlite")
+    hunt(db, _MirrorClient(), TOOLS, run_id="hunt-mir", now=utcnow(),
+         do_ioc=False, do_lineage=True, do_actor=False, do_tier2=True, clone=_fake_clone)
+    assert not db.findings_by_status("confirmed")
+    assert db.findings_by_status("rejected")  # mirror rejected
+    db.close()
+
+
+def test_hunt_confirms_weaponized_red_team_fork(tmp_path):
+    # P1: a diverged fork whose changed files carry exfil/cred-theft confirms.
+    db = Database.open(tmp_path / "div.sqlite")
+    hunt(db, _DivergedClient(), TOOLS, run_id="hunt-div", now=utcnow(),
+         do_ioc=False, do_lineage=True, do_actor=False, do_tier2=True, clone=_fake_clone)
+    assert db.findings_by_status("confirmed")  # weaponization in diverged file
+    db.close()

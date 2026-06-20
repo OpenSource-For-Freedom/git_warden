@@ -38,7 +38,7 @@ from .scanning import (
 )
 from .scanning.actor_search import AccountRepo
 from .scanning.discovery import RepoHit
-from .scanning.tier2 import _force_rmtree
+from .scanning.tier2 import WEAPONIZATION_CATEGORIES, _force_rmtree
 
 log = logging.getLogger(__name__)
 
@@ -72,8 +72,44 @@ def _finding_from_lineage(cand, tool: RedTeamTool) -> RepoFinding:
         detection_method=DetectionMethod.REDTEAM_LINEAGE,
         signals=list(cand.signals),
         reasoning=f"{cand.relation} of pinned red-team tool {tool.name}",
-        raw_payload={"anchor": tool.name, "relation": cand.relation},
+        raw_payload={
+            "anchor": tool.name,
+            "anchor_repo": cand.anchor_repo,
+            "relation": cand.relation,
+            "fork_branch": cand.default_branch or "HEAD",
+        },
     )
+
+
+def _intent_gate(client, finding: RepoFinding, anchor_default: dict) -> tuple[bool, set | None]:
+    """Red-team lineage intent check (P1, doc 02 5).
+
+    Returns (proceed, restrict_paths). An unmodified fork (ahead_by == 0) is a
+    benign mirror -> (False, None) drops it. A diverged fork -> (True, changed
+    files) so Tier-2 only weighs the fork's additions. Best-effort: if compare
+    can't be made, proceed without restriction.
+    """
+    rp = finding.raw_payload
+    if rp.get("relation") != "fork" or not rp.get("anchor_repo"):
+        return True, None  # name_match has no upstream to diff; categories gate it
+    anchor = rp["anchor_repo"]
+    if anchor not in anchor_default:
+        owner, _, name = anchor.partition("/")
+        try:
+            ar = client.get_repo(owner, name)
+        except Exception:  # noqa: BLE001
+            ar = None
+        anchor_default[anchor] = (ar or {}).get("default_branch") or "HEAD"
+    try:
+        cmp = client.compare(anchor, anchor_default[anchor], finding.full_name,
+                             rp.get("fork_branch") or "HEAD")
+    except Exception:  # noqa: BLE001
+        cmp = None
+    if cmp is None:
+        return True, None
+    if cmp.get("ahead_by", 0) == 0:
+        return False, None  # unmodified mirror of the red-team tool
+    return True, set(cmp.get("files") or []) or None
 
 
 def _finding_from_account(ar: AccountRepo) -> RepoFinding:
@@ -183,10 +219,27 @@ def hunt(
         # near-full system drive; dir=None uses system temp (correct for CI/Linux).
         # Force-removed in finally so git's read-only pack files don't leave husks.
         workdir = tempfile.mkdtemp(dir=config.WORK_DIR)
+        anchor_default: dict[str, str] = {}
         try:
             for finding in screened:
                 kwargs = {"clone": clone} if clone else {}
-                result = scan_candidate(finding.full_name, workdir, **kwargs)
+                restrict = None
+                confirm_cats = None
+                # P1: red-team forks confirm only on weaponization (added install
+                # hooks / exfil / obfuscation), never the tool's own code; and an
+                # unmodified mirror is dropped outright.
+                if finding.detection_method is DetectionMethod.REDTEAM_LINEAGE:
+                    confirm_cats = WEAPONIZATION_CATEGORIES
+                    proceed, restrict = _intent_gate(client, finding, anchor_default)
+                    if not proceed:
+                        finding.status = RepoFindingStatus.REJECTED
+                        finding.reasoning = (finding.reasoning or "") + \
+                            " | unmodified fork of red-team tool (no intent change)"
+                        db.upsert_finding(finding, run_id)
+                        continue
+                result = scan_candidate(finding.full_name, workdir,
+                                        restrict_paths=restrict, confirm_categories=confirm_cats,
+                                        **kwargs)
                 if result and result.confirmed:
                     finding.status = RepoFindingStatus.CONFIRMED
                     finding.score += result.bash_score

@@ -57,6 +57,16 @@ _STRONG_CATEGORIES = frozenset({
     "reverse_shell", "download_exec", "exfiltration", "obfuscation", "persistence",
     "credential_harvest", "process_injection", "install_hook", "network_exfil",
 })
+# Intent-change categories for RED-TEAM lineage (P1, doc 02 5): a fork of an
+# offensive tool legitimately *has* reverse shells / injection -- that is the
+# tool's purpose, not evidence of weaponization. Only ADDED supply-chain
+# mechanisms (install hooks, exfil to attacker infra, fresh obfuscation, fetch-
+# and-run, credential theft) indicate the intent changed. So lineage confirms
+# ONLY on these, never on the tool's own offensive code.
+WEAPONIZATION_CATEGORIES = frozenset({
+    "install_hook", "network_exfil", "obfuscation", "download_exec",
+    "exfiltration", "credential_access", "credential_harvest",
+})
 
 
 def _score_static(findings: list[BashFinding]) -> int:
@@ -239,14 +249,16 @@ def analyze_repo(
     runner=subprocess.run,
     confirm_threshold: int = CONFIRM_THRESHOLD,
     restrict_paths: set[str] | None = None,
+    confirm_categories: frozenset[str] | None = None,
 ) -> Tier2Result:
     """Run Tier-2 STATIC analysis on an already-cloned repo (never executes it).
 
     Combines the bash Layer-1 scanner, the install-hook/manifest scanner, and the
-    JS/Python content scanner, plus the OSS scanners. ``restrict_paths`` (used for
-    red-team lineage, P1) limits which files count toward confirmation -- so a
-    fork of an offensive tool only confirms on malicious additions in *diverged*
-    files, not the tool's own code.
+    JS/Python content scanner, plus the OSS scanners. ``restrict_paths`` limits
+    which files count toward confirmation (red-team lineage diverged files, P1);
+    ``confirm_categories`` overrides which categories can confirm (lineage uses
+    WEAPONIZATION_CATEGORIES so a fork only confirms on added malicious mechanisms,
+    not the tool's own offensive code).
     """
     findings = scan_repo(root) + scan_manifests(root) + scan_content(root)
     if restrict_paths is not None:
@@ -255,7 +267,8 @@ def analyze_repo(
 
     score = _score_static(findings)
     scanners = {name: _run_external(name, root, runner) for name in _SCANNER_NAMES}
-    strong = any(f.category in _STRONG_CATEGORIES for f in findings)
+    confirm_cats = confirm_categories if confirm_categories is not None else _STRONG_CATEGORIES
+    strong = any(f.category in confirm_cats for f in findings)
     static_confirmed = score >= confirm_threshold and strong
     confirmed = static_confirmed or "flagged" in scanners.values()
     # Learning loop: mine IOCs only once confirmed, from trusted ground truth.
@@ -279,6 +292,7 @@ def scan_candidate(
     runner=subprocess.run,
     confirm_threshold: int = CONFIRM_THRESHOLD,
     restrict_paths: set[str] | None = None,
+    confirm_categories: frozenset[str] | None = None,
 ) -> Tier2Result | None:
     """Clone + STATICALLY analyze a candidate. None if the clone fails/too big.
 
@@ -297,6 +311,7 @@ def scan_candidate(
                         extra={"context": {"repo": full_name}})
             return None
         return analyze_repo(cloned, full_name, runner=runner,
-                            confirm_threshold=confirm_threshold, restrict_paths=restrict_paths)
+                            confirm_threshold=confirm_threshold, restrict_paths=restrict_paths,
+                            confirm_categories=confirm_categories)
     finally:
         _force_rmtree(cloned)
