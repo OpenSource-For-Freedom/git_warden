@@ -41,6 +41,7 @@ class LineageCandidate:
     pushed_at: str | None
     description: str | None
     html_url: str
+    default_branch: str = ""
     signals: list[str] = field(default_factory=list)
 
 
@@ -89,6 +90,7 @@ def _candidate(item: dict, relation: str, tool: RedTeamTool, anchor_repo: str | 
         pushed_at=item.get("pushed_at"),
         description=item.get("description"),
         html_url=item.get("html_url", ""),
+        default_branch=item.get("default_branch", ""),
         signals=_signals(item, anchor_short, now, recent_days),
     )
 

