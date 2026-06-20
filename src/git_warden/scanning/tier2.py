@@ -76,10 +76,11 @@ _CONFIRM_ALONE_RULES = frozenset({
     ("obfuscation", "py-decode-exec"), ("obfuscation", "fromcharcode-blob"),
     ("obfuscation", "hex-blob"),
     ("credential_access", "env-dump"),
-    ("credential_harvest", "shadow-passwd"),
+    ("credential_harvest", "shadow-passwd"),  # reads /etc/shadow (password hashes)
     ("exfiltration", "secret-exfil"),  # curl/wget posting a secret FILE out
     ("malicious_dependency", "osm-listed"),  # installs a known-malicious package
-    ("persistence", "authorized-keys"),
+    # NOTE: persistence/authorized-keys is intentionally NOT Tier-A -- writing
+    # authorized_keys is standard CI/container SSH provisioning (openclaw FP).
     ("process_injection", "ld-preload"), ("process_injection", "ptrace-mem"),
     ("process_injection", "gdb-attach"),
     ("install_hook", "npm-preinstall"), ("install_hook", "npm-install"),
@@ -174,6 +175,7 @@ class Tier2Result:
     confirmed: bool = False
     learned_iocs: IocSet = field(default_factory=IocSet)  # IOCs mined from the code
     learned_signatures: list[str] = field(default_factory=list)  # code sigs mined
+    confirming_findings: list[BashFinding] = field(default_factory=list)  # what confirmed
 
     def signal_summary(self) -> list[str]:
         cats = sorted({f.category for f in self.bash_findings})
@@ -352,7 +354,10 @@ def analyze_repo(
     def _ok(category: str) -> bool:
         return confirm_categories is None or category in confirm_categories
 
-    confirm_alone = has_cred = has_exfil = False
+    confirm_alone = False
+    confirming: list[BashFinding] = []  # the findings that actually drive confirmation
+    cred_files: dict[str, BashFinding] = {}
+    exfil_files: dict[str, BashFinding] = {}
     for f in findings:
         key = (f.category, f.rule)
         if not _ok(f.category):
@@ -360,12 +365,19 @@ def analyze_repo(
         if key in _CONFIRM_ALONE_RULES or (
                 key in _HOST_GATED_ALONE and _fetch_target_suspicious(f.snippet)):
             confirm_alone = True
+            confirming.append(f)
         elif key in _TIERB_CRED:
-            has_cred = True
+            cred_files.setdefault(f.file, f)
         elif key in _TIERB_EXFIL:
-            has_exfil = True
-    # Tier A confirms alone; Tier B confirms only as steal-AND-send.
-    static_confirmed = confirm_alone or (has_cred and has_exfil)
+            exfil_files.setdefault(f.file, f)
+    # Tier B confirms only as steal-AND-send IN THE SAME FILE: a real stealer reads
+    # a secret and exfils it in one payload. A big legit app has credential config
+    # (CI) and a messaging feature (src/) in DIFFERENT files -- not theft (the
+    # openclaw / tiledesk-server false positives).
+    steal_and_send = set(cred_files) & set(exfil_files)
+    for fl in steal_and_send:
+        confirming.extend((cred_files[fl], exfil_files[fl]))
+    static_confirmed = confirm_alone or bool(steal_and_send)
     # Only a MALWARE-SPECIFIC scanner (GuardDog: install hooks/exfil/typosquat;
     # YARA: malware rulesets) may solely confirm. Semgrep runs `--config auto`, a
     # general SAST pass that flags ordinary code smells (e.g. child_process.exec)
@@ -387,6 +399,7 @@ def analyze_repo(
         confirmed=confirmed,
         learned_iocs=learned,
         learned_signatures=learned_sigs,
+        confirming_findings=confirming,
     )
 
 
