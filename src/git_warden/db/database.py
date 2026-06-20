@@ -388,11 +388,18 @@ class Database:
         ).fetchall()
 
     def undelivered_gold(self) -> list[sqlite3.Row]:
-        """Confirmed findings not yet sent to Discord (gold queue)."""
-        return self.conn.execute(
+        """NOVEL confirmed findings not yet sent to Discord (gold queue).
+
+        Gold is our contribution: malicious repos OSM does NOT already report.
+        OSM-known repos (including everything from the osm_repository validation
+        vector) are excluded -- re-reporting them would just echo OSM's own intel.
+        """
+        known = self.osm_known_repos()
+        rows = self.conn.execute(
             "SELECT * FROM repo_findings WHERE status = 'confirmed' AND delivered_gold = 0 "
-            "ORDER BY score DESC"
+            "AND detection_method != 'osm_repository' ORDER BY score DESC"
         ).fetchall()
+        return [r for r in rows if r["full_name"].casefold() not in known]
 
     def mark_gold_delivered(self, full_name: str) -> None:
         with self.transaction() as c:
@@ -432,6 +439,24 @@ class Database:
                 known.add(full.casefold())
         for row in self.conn.execute("SELECT full_name FROM repo_findings"):
             known.add(row["full_name"].casefold())
+        return known
+
+    def osm_known_repos(self) -> set[str]:
+        """Repos OSM already reports (lowercased), from the repo artifacts.
+
+        Git Warden's product is NOVEL malicious repos -- ones OSM does not already
+        have -- which we contribute back. A confirmed repo already in OSM is used
+        for detection VALIDATION, not re-reported to gold (it would just echo OSM's
+        own intel back at them).
+        """
+        from ..refs import repo_full_name
+
+        known: set[str] = set()
+        for row in self.list_artifacts(artifact_type="repo"):
+            ref = json.loads(row["raw_payload"]).get("resource_identifier") or row["name"]
+            full = repo_full_name(ref)
+            if full:
+                known.add(full.casefold())
         return known
 
     def malicious_repo_owners(self) -> set[str]:
