@@ -460,6 +460,20 @@ class Database:
             )
         }
 
+    def malicious_dependency_names(self) -> frozenset[str]:
+        """OSM-flagged package names (lowercased) for manifest dependency matching.
+
+        A repo that declares one of these as a dependency installs known malware
+        on ``npm/pip install`` -- a Tier-2 confirmation. Ultra-short generic names
+        are skipped (exact-match only, so a real dep won't collide by accident).
+        """
+        names: set[str] = set()
+        for row in self.list_artifacts(artifact_type="package"):
+            name = (row["name"] or "").strip().lower()
+            if name.startswith("@") or len(name) >= 5:
+                names.add(name)
+        return frozenset(names)
+
     def malicious_package_terms(self, limit: int = 30) -> list[str]:
         """Distinctive malicious package names to code-search for (package pivot).
 

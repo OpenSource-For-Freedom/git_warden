@@ -50,6 +50,7 @@ _CATEGORY_WEIGHTS = {
     "lateral_movement": 2, "network_scan": 2, "enumeration": 1,
     # manifest / content (supply-chain malware)
     "install_hook": 5, "network_exfil": 4, "code_execution": 3, "credential_access": 3,
+    "malicious_dependency": 5,  # declares a known-OSM-malicious package
 }
 # Git Warden hunts the FULL attack surface (doc 03): hidden network attacks,
 # enumeration/recon, typosquatting, viral implants. Every category is DETECTED
@@ -76,6 +77,7 @@ _CONFIRM_ALONE_RULES = frozenset({
     ("credential_access", "env-dump"),
     ("credential_harvest", "shadow-passwd"),
     ("exfiltration", "secret-exfil"),  # curl/wget posting a secret FILE out
+    ("malicious_dependency", "osm-listed"),  # installs a known-malicious package
     ("persistence", "authorized-keys"),
     ("process_injection", "ld-preload"), ("process_injection", "ptrace-mem"),
     ("process_injection", "gdb-attach"),
@@ -323,6 +325,7 @@ def analyze_repo(
     runner=subprocess.run,
     restrict_paths: set[str] | None = None,
     confirm_categories: frozenset[str] | None = None,
+    malicious_packages: frozenset[str] = frozenset(),
 ) -> Tier2Result:
     """Run Tier-2 STATIC analysis on an already-cloned repo (never executes it).
 
@@ -333,8 +336,11 @@ def analyze_repo(
     (red-team lineage diverged files, P1); ``confirm_categories`` restricts which
     categories may count (lineage uses WEAPONIZATION_CATEGORIES so a fork only
     confirms on added malicious mechanisms, not the tool's own offensive code).
+    ``malicious_packages`` (OSM-flagged, lowercased) flags repos that declare one
+    as a dependency.
     """
-    findings = scan_repo(root) + scan_manifests(root) + scan_content(root)
+    findings = (scan_repo(root) + scan_manifests(root, malicious_packages)
+                + scan_content(root))
     if restrict_paths is not None:
         allowed = {p.replace("\\", "/") for p in restrict_paths}
         findings = [f for f in findings if f.file.replace("\\", "/") in allowed]
@@ -390,6 +396,7 @@ def scan_candidate(
     runner=subprocess.run,
     restrict_paths: set[str] | None = None,
     confirm_categories: frozenset[str] | None = None,
+    malicious_packages: frozenset[str] = frozenset(),
 ) -> Tier2Result | None:
     """Clone + STATICALLY analyze a candidate. None if the clone fails/too big.
 
@@ -409,6 +416,7 @@ def scan_candidate(
             return None
         return analyze_repo(cloned, full_name, runner=runner,
                             restrict_paths=restrict_paths,
-                            confirm_categories=confirm_categories)
+                            confirm_categories=confirm_categories,
+                            malicious_packages=malicious_packages)
     finally:
         _force_rmtree(cloned)

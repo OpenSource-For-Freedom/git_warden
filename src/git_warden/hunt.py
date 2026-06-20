@@ -273,9 +273,13 @@ def hunt(
         # Force-removed in finally so git's read-only pack files don't leave husks.
         workdir = tempfile.mkdtemp(dir=config.WORK_DIR)
         anchor_default: dict[str, str] = {}
+        # OSM-flagged packages: a repo declaring one as a dependency installs
+        # known malware (the fake-interview / crypto-task lure delivery vector).
+        mal_packages = db.malicious_dependency_names()
         try:
             for finding in screened:
                 kwargs = {"clone": clone} if clone else {}
+                kwargs["malicious_packages"] = mal_packages
                 restrict = None
                 confirm_cats = None
                 # P1: red-team forks confirm only on weaponization (added install

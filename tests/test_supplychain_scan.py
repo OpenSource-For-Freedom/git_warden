@@ -120,6 +120,37 @@ def test_legitimate_app_does_not_confirm(tmp_path):
     assert not result.confirmed
 
 
+def test_malicious_dependency_confirms(tmp_path):
+    # A lure repo's own code is benign, but it declares a known-malicious package
+    # -> installs malware on `npm install`. Tier-A confirmation.
+    (tmp_path / "package.json").write_text(
+        json.dumps({"name": "wallet-task",
+                    "dependencies": {"@evil/stealer": "1.0.0", "react": "18"}}),
+        encoding="utf-8",
+    )
+    res = analyze_repo(tmp_path, "attacker/crypto-task",
+                       malicious_packages=frozenset({"@evil/stealer"}))
+    assert res.confirmed
+    assert any(f.category == "malicious_dependency" for f in res.bash_findings)
+
+
+def test_malicious_pip_requirement_confirms(tmp_path):
+    (tmp_path / "requirements.txt").write_text(
+        "requests==2.31.0\nevil-stealer-pkg>=1.3\n", encoding="utf-8")
+    res = analyze_repo(tmp_path, "a/b", malicious_packages=frozenset({"evil-stealer-pkg"}))
+    assert res.confirmed
+
+
+def test_benign_dependencies_do_not_confirm(tmp_path):
+    (tmp_path / "package.json").write_text(
+        json.dumps({"name": "app", "dependencies": {"react": "18", "axios": "1"}}),
+        encoding="utf-8",
+    )
+    res = analyze_repo(tmp_path, "legit/app",
+                       malicious_packages=frozenset({"@evil/stealer"}))
+    assert not res.confirmed
+
+
 def test_test_fixture_files_excluded_from_confirmation(tmp_path):
     # The crewhaus FP: a prompt-injection DETECTOR's `index.test.ts` cites
     # webhook.site / telegram as fixtures. Test/fixture data is not the payload.
