@@ -372,7 +372,7 @@ def _cmd_hunt(args: argparse.Namespace) -> int:
 
     from .github import GitHubClient
     from .hunt import hunt
-    from .notify import format_finding, post_discord
+    from .notify import finding_embed, post_discord
     from .redteam import load_redteam_tools
 
     if not config.GITHUB_TOKEN:
@@ -412,7 +412,7 @@ def _cmd_hunt(args: argparse.Namespace) -> int:
             search_pace=args.pace,
             limit=args.limit,
             gold=args.gold,
-            notifier=lambda row: post_discord(format_finding(row)),
+            notifier=lambda row: post_discord(embeds=[finding_embed(row)]),
         )
     finally:
         db.close()
