@@ -25,10 +25,17 @@ _SUSPICIOUS_CMD = re.compile(
     r"powershell|invoke-|child_process|atob|fromCharCode|/dev/tcp|https?://|\.sh\b",
     re.IGNORECASE,
 )
-# Code execution inside setup.py (static regex; we do not run it).
+# FETCH-AND-RUN inside setup.py (static regex; we do not run it). A bare
+# exec()/subprocess in setup.py is NORMAL -- legit packages compile extensions
+# (subprocess -> cmake/nvcc) and read their version (exec(open('_version.py'))).
+# Malware DECODES or DOWNLOADS a payload and runs it, so we require that context:
+# exec/eval of base64/marshal/zlib/fetched content, or os.system/subprocess that
+# shells out to curl|wget|http|pipe-to-shell. (FPs: hazyresearch/m2, evo-design/evo.)
 _PY_SETUP_EXEC = re.compile(
-    r"\bos\.system\(|subprocess\.(?:Popen|call|run|check_output|check_call)|"
-    r"\b__import__\(|\beval\(|\bexec\(|\bcompile\(|\bmarshal\.loads\(",
+    r"(?:exec|eval)\s*\(\s*(?:base64|bytes\.fromhex|codecs\.decode|marshal|zlib|"
+    r"requests|urllib|urlopen|__import__\s*\(\s*['\"](?:urllib|requests))"
+    r"|(?:os\.system|subprocess\.\w+)\s*\([^)]{0,200}?"
+    r"(?:curl|wget|https?://|\|\s*(?:sh|bash)\b)",
     re.IGNORECASE,
 )
 _MAX_BYTES = 1_000_000

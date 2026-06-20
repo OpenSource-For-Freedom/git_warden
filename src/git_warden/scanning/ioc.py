@@ -60,6 +60,11 @@ BENIGN_DOMAINS = frozenset({
     "ggpolarbear.com",
     "clientbp.ggpolarbear.com",
     "sentry.io",
+    # Legit AI/inference APIs on suspicious-looking TLDs (.xyz) -- referenced by
+    # many benign ML repos (the hazyresearch/m2, evo-design/evo false positives).
+    "api.together.xyz",
+    "together.xyz",
+    "together.ai",
 })
 
 _DISCORD = re.compile(r"discord(?:app)?\.com/api/webhooks/\d+/[\w-]+")

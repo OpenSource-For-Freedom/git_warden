@@ -120,6 +120,18 @@ def test_legitimate_app_does_not_confirm(tmp_path):
     assert not result.confirmed
 
 
+def test_legit_setup_py_build_does_not_confirm(tmp_path):
+    # hazyresearch/m2 + evo-design/evo FP: a setup.py that compiles extensions
+    # and reads its version is NOT malware -- only fetch-and-run is.
+    (tmp_path / "setup.py").write_text(
+        "import subprocess\n"
+        "subprocess.check_output(['nvcc', '--version'])\n"
+        "exec(open('version.py').read())\n",
+        encoding="utf-8",
+    )
+    assert not analyze_repo(tmp_path, "legit/ml-lib").confirmed
+
+
 def test_malicious_dependency_confirms(tmp_path):
     # A lure repo's own code is benign, but it declares a known-malicious package
     # -> installs malware on `npm install`. Tier-A confirmation.
