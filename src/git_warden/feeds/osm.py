@@ -134,6 +134,40 @@ class OsmFeed(ArtifactFeed):
         self.token = token or OSM_API_KEY
         self.ecosystems = tuple(ecosystems)
 
+    def current_repo_index(self) -> dict[str, dict]:
+        """Live OSM ``repositories`` feed as {full_name.casefold(): intel}.
+
+        Used to re-check an OSM-repo lead at hunt time so a stale/delisted lead
+        from a prior ingest is dropped before we attribute it to OSM. NOTE: the
+        free API only exposes ``query-latest`` (a recent-window firehose, not a
+        per-repo lookup), so "present here" means "in OSM's current window".
+        Returns an empty dict on any failure (caller treats as 'cannot verify').
+        """
+        if not self.token:
+            return {}
+        headers = {"Authorization": f"Bearer {self.token}", "Accept": "application/json"}
+        try:
+            text = self.http.get_text(
+                osm_endpoint("query-latest"),
+                params={"ecosystem": REPOSITORY_ECOSYSTEM}, headers=headers,
+            )
+            artifacts = parse_query_latest(json.loads(text))
+        except Exception as exc:  # noqa: BLE001 -- verification is best-effort
+            log.warning("osm: live repo re-check failed",
+                        extra={"context": {"err": str(exc)}})
+            return {}
+        index: dict[str, dict] = {}
+        for art in artifacts:
+            payload = art.raw_payload or {}
+            index[art.name.casefold()] = {
+                "source": "open_source_malware",
+                "severity": payload.get("severity_level"),
+                "tags": payload.get("tags") or [],
+                "threat": payload.get("threat_description")
+                or payload.get("payload_description"),
+            }
+        return index
+
     def collect_artifacts(self, run_id: str) -> list[MaliciousArtifact]:  # noqa: ARG002
         if not self.token:
             raise RuntimeError("OSM token missing: set GW_OSM_API_KEY")

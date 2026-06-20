@@ -122,6 +122,36 @@ def test_osm_repo_ownership_never_seeds_owner_pivot(tmp_path):
     db.close()
 
 
+def test_gold_excludes_osm_known_and_osm_repository(tmp_path):
+    # Gold is NOVEL contributions only. A repo OSM already reports (or anything
+    # from the osm_repository validation vector) must not be re-reported.
+    db = Database.open(tmp_path / "g.sqlite")
+    db.start_run("r1", utcnow())
+    db.upsert_artifact(MaliciousArtifact(
+        artifact_type=ArtifactType.REPO, name="evilcorp/known-lure", ecosystem="github",
+        source=FeedSource.OPEN_SOURCE_MALWARE,
+        raw_payload={"resource_identifier": "https://github.com/evilcorp/known-lure"}), "r1")
+    # OSM-known repo confirmed via the validation vector -> NOT gold
+    db.upsert_finding(RepoFinding(full_name="evilcorp/known-lure",
+                                  detection_method=DetectionMethod.OSM_REPOSITORY,
+                                  status=RepoFindingStatus.CONFIRMED), "r1")
+    # A repo OSM knows, found another way -> still NOT gold (already reported)
+    db.upsert_finding(RepoFinding(full_name="evilcorp/known-lure-2",
+                                  detection_method=DetectionMethod.IOC_SEARCH,
+                                  status=RepoFindingStatus.CONFIRMED), "r1")
+    db.upsert_artifact(MaliciousArtifact(
+        artifact_type=ArtifactType.REPO, name="evilcorp/known-lure-2", ecosystem="github",
+        source=FeedSource.OPEN_SOURCE_MALWARE,
+        raw_payload={"resource_identifier": "https://github.com/evilcorp/known-lure-2"}), "r1")
+    # A NOVEL repo OSM does not have -> gold
+    db.upsert_finding(RepoFinding(full_name="attacker/novel-dropper",
+                                  detection_method=DetectionMethod.IOC_SEARCH,
+                                  status=RepoFindingStatus.CONFIRMED), "r1")
+    gold = {r["full_name"] for r in db.undelivered_gold()}
+    assert gold == {"attacker/novel-dropper"}
+    db.close()
+
+
 def test_is_defensive_repo_excludes_catalogs():
     from git_warden.scanning import is_defensive_repo
     assert is_defensive_repo("ossf/malicious-packages")

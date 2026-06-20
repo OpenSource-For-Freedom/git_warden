@@ -378,12 +378,26 @@ def _cmd_hunt(args: argparse.Namespace) -> int:
     if not config.GITHUB_TOKEN:
         print("warning: GW_GITHUB_TOKEN not set -> code search disabled, rate limited.")
 
+    # Live OSM re-check: pull OSM's current repo feed so we never report a repo
+    # OSM already has (we contribute NOVEL findings; OSM-known repos validate our
+    # detection only). Best-effort -- a fetch failure just falls back to the
+    # ingested OSM set already enforced by undelivered_gold().
+    osm_live_known: set[str] = set()
+    if args.gold and not args.no_osm_verify:
+        try:
+            from .feeds.osm import OsmFeed
+            osm_live_known = set(OsmFeed().current_repo_index().keys())
+            print(f"OSM live re-check: {len(osm_live_known)} repos currently in OSM feed.")
+        except Exception as exc:  # noqa: BLE001 -- verification is best-effort
+            print(f"warning: OSM live re-check failed ({exc}); using ingested OSM set.")
+
     db = Database.open(args.db)
     run_id = args.run_id or f"hunt-{datetime.now(UTC).strftime('%Y%m%dT%H%M%SZ')}"
     try:
         summary = hunt(
             db, GitHubClient(), load_redteam_tools(),
             run_id=run_id,
+            osm_live_known=osm_live_known,
             do_ioc=not args.no_ioc,
             do_lineage=not args.no_lineage,
             do_actor=not args.no_actor,
@@ -511,6 +525,8 @@ def build_parser() -> argparse.ArgumentParser:
                         help="Skip OSM enrichment (owner/package pivots).")
     hunt_p.add_argument("--no-osm", action="store_true",
                         help="Skip direct Tier-2 validation of OSM-labeled malicious repos.")
+    hunt_p.add_argument("--no-osm-verify", action="store_true",
+                        help="Skip the live OSM re-check before gold delivery (novelty gate).")
     hunt_p.add_argument("--scan", action="store_true", help="Run Tier-2 clone+scan.")
     hunt_p.add_argument("--gold", action="store_true", help="Deliver confirmed to Discord.")
     hunt_p.add_argument("--max-iocs", type=int, default=8, help="IOC terms to search.")
