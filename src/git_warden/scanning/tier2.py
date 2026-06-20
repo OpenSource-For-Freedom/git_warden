@@ -85,17 +85,19 @@ _CONFIRM_ALONE_RULES = frozenset({
     ("install_hook", "npm-postinstall"), ("install_hook", "npm-prepare"),
     ("install_hook", "npm-preuninstall"), ("install_hook", "py-setup-exec"),
 })
-# Tier B -- CORROBORATED. A plausible legitimate version exists (a project's own
-# Discord/Telegram adapter, an ops script reading cloud creds, CI writing a
-# deploy key), so one alone is NOT enough -- two DISTINCT Tier-B signatures must
-# co-occur (e.g. an exfil channel AND credential access). Score is not used to
-# corroborate: a legit Telegram adapter racks up score from ordinary code, which
-# is exactly how the crewhaus/opencode false positives slipped through.
-_CORROBORATED_RULES = frozenset({
+# Tier B -- CORROBORATED, split into two phases. Each is benign alone (a project's
+# own Discord/Telegram channel; an ops script reading creds). Confirmation needs
+# the STEAL-AND-SEND pattern: a credential-access signal AND an exfil channel.
+# Two exfil channels alone are NOT enough -- a chat platform like tiledesk-server
+# legitimately has both a Telegram connector and a leftover webhook.site URL.
+_TIERB_CRED = frozenset({
+    ("credential_harvest", "ssh-keys"), ("credential_harvest", "cloud-creds"),
+    ("credential_access", "keyfiles"),  # JS/py reading .ssh/id_ , .aws/credentials
+})
+_TIERB_EXFIL = frozenset({
     ("exfiltration", "discord-webhook"), ("exfiltration", "telegram-bot"),
     ("network_exfil", "discord-webhook"), ("network_exfil", "telegram-bot"),
     ("network_exfil", "paste-exfil"),
-    ("credential_harvest", "ssh-keys"), ("credential_harvest", "cloud-creds"),
 })
 # Generic curl/fetch is benign to a reputable host and malicious to an attacker
 # host. ``curl https://sh.rustup.rs | sh`` installs Rust; ``curl http://185.x/a.sh
@@ -325,7 +327,7 @@ def analyze_repo(
     runner=subprocess.run,
     restrict_paths: set[str] | None = None,
     confirm_categories: frozenset[str] | None = None,
-    malicious_packages: frozenset[str] = frozenset(),
+    malicious_packages: dict[str, frozenset[str]] | None = None,
 ) -> Tier2Result:
     """Run Tier-2 STATIC analysis on an already-cloned repo (never executes it).
 
@@ -354,8 +356,7 @@ def analyze_repo(
     def _ok(category: str) -> bool:
         return confirm_categories is None or category in confirm_categories
 
-    confirm_alone = False
-    corroborating: set[tuple[str, str]] = set()
+    confirm_alone = has_cred = has_exfil = False
     for f in findings:
         key = (f.category, f.rule)
         if not _ok(f.category):
@@ -363,10 +364,12 @@ def analyze_repo(
         if key in _CONFIRM_ALONE_RULES or (
                 key in _HOST_GATED_ALONE and _fetch_target_suspicious(f.snippet)):
             confirm_alone = True
-        elif key in _CORROBORATED_RULES:
-            corroborating.add(key)
-    # Tier A confirms alone; Tier B needs a SECOND distinct Tier-B signature.
-    static_confirmed = confirm_alone or len(corroborating) >= 2
+        elif key in _TIERB_CRED:
+            has_cred = True
+        elif key in _TIERB_EXFIL:
+            has_exfil = True
+    # Tier A confirms alone; Tier B confirms only as steal-AND-send.
+    static_confirmed = confirm_alone or (has_cred and has_exfil)
     # Only a MALWARE-SPECIFIC scanner (GuardDog: install hooks/exfil/typosquat;
     # YARA: malware rulesets) may solely confirm. Semgrep runs `--config auto`, a
     # general SAST pass that flags ordinary code smells (e.g. child_process.exec)
@@ -396,7 +399,7 @@ def scan_candidate(
     runner=subprocess.run,
     restrict_paths: set[str] | None = None,
     confirm_categories: frozenset[str] | None = None,
-    malicious_packages: frozenset[str] = frozenset(),
+    malicious_packages: dict[str, frozenset[str]] | None = None,
 ) -> Tier2Result | None:
     """Clone + STATICALLY analyze a candidate. None if the clone fails/too big.
 

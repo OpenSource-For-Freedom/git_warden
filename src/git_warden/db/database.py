@@ -487,19 +487,25 @@ class Database:
                 break
         return out
 
-    def malicious_dependency_names(self) -> frozenset[str]:
-        """OSM-flagged package names (lowercased) for manifest dependency matching.
+    def malicious_dependency_names(self) -> dict[str, frozenset[str]]:
+        """OSM-flagged package names per ECOSYSTEM, for manifest dependency match.
 
-        A repo that declares one of these as a dependency installs known malware
-        on ``npm/pip install`` -- a Tier-2 confirmation. Ultra-short generic names
-        are skipped (exact-match only, so a real dep won't collide by accident).
+        Keyed by ecosystem ('npm', 'pypi') so a package.json dependency is matched
+        only against npm malware and a requirements.txt only against pypi malware.
+        Cross-ecosystem matching caused a false positive: the legit npm
+        ``webpack-dev-server`` collided with a RubyGems typosquat of the same name.
+        A repo declaring a match installs known malware on install (Tier-2
+        confirmation). Ultra-short generic names are skipped (exact-match only).
         """
-        names: set[str] = set()
+        out: dict[str, set[str]] = {"npm": set(), "pypi": set()}
         for row in self.list_artifacts(artifact_type="package"):
+            eco = (row["ecosystem"] or "").strip().lower()
+            if eco not in out:
+                continue
             name = (row["name"] or "").strip().lower()
             if name.startswith("@") or len(name) >= 5:
-                names.add(name)
-        return frozenset(names)
+                out[eco].add(name)
+        return {eco: frozenset(names) for eco, names in out.items()}
 
     def malicious_package_terms(self, limit: int = 30) -> list[str]:
         """Distinctive malicious package names to code-search for (package pivot).
