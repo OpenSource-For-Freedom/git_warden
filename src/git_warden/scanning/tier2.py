@@ -34,6 +34,7 @@ from .bash_scanner import BashFinding, scan_repo
 from .content_scanner import scan_content
 from .ioc import IocSet, extract_repo_iocs, is_attacker_host
 from .manifest_scanner import scan_manifests
+from .signatures import extract_code_signatures
 
 log = logging.getLogger(__name__)
 
@@ -116,13 +117,6 @@ _PASTE_HOSTS = frozenset({
     "pastebin.com", "paste.ee", "ix.io", "sprunge.us", "0x0.st", "termbin.com",
     "transfer.sh", "file.io", "anonfiles.com", "controlc.com", "rentry.co",
 })
-_URL_HOST = re.compile(r"https?://(?:[^/@\s]*@)?([A-Za-z0-9.\-]+)", re.I)
-_IP_HOST = re.compile(r"^\d{1,3}(?:\.\d{1,3}){3}$")
-# Paste/transfer hosts with near-zero legitimate "pipe to shell" use.
-_PASTE_HOSTS = frozenset({
-    "pastebin.com", "paste.ee", "ix.io", "sprunge.us", "0x0.st", "termbin.com",
-    "transfer.sh", "file.io", "anonfiles.com", "controlc.com", "rentry.co",
-})
 
 
 def _fetch_target_suspicious(snippet: str) -> bool:
@@ -179,6 +173,7 @@ class Tier2Result:
     scanners: dict[str, str] = field(default_factory=dict)  # name -> status/summary
     confirmed: bool = False
     learned_iocs: IocSet = field(default_factory=IocSet)  # IOCs mined from the code
+    learned_signatures: list[str] = field(default_factory=list)  # code sigs mined
 
     def signal_summary(self) -> list[str]:
         cats = sorted({f.category for f in self.bash_findings})
@@ -379,8 +374,10 @@ def analyze_repo(
     # appear in provenance via signal_summary, just not as sole proof.
     oss_confirmed = any(scanners.get(n) == "flagged" for n in ("guarddog", "yara"))
     confirmed = static_confirmed or oss_confirmed
-    # Learning loop: mine IOCs only once confirmed, from trusted ground truth.
+    # Learning loop: mine IOCs and code signatures only once confirmed, from
+    # trusted ground truth -- the signatures hunt sibling repos of this campaign.
     learned = extract_repo_iocs(root) if confirmed else IocSet()
+    learned_sigs = extract_code_signatures(root) if confirmed else []
     return Tier2Result(
         full_name=full_name,
         code_hash=repo_code_hash(root),
@@ -389,6 +386,7 @@ def analyze_repo(
         scanners=scanners,
         confirmed=confirmed,
         learned_iocs=learned,
+        learned_signatures=learned_sigs,
     )
 
 

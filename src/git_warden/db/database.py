@@ -583,6 +583,19 @@ class Database:
                 (value, kind, source_repo, run_id),
             )
 
+    def learned_signatures(self) -> list[str]:
+        """Code signatures mined from confirmed repos (kind='code_sig').
+
+        These are deobfuscator-stub chunks searched on GitHub to find sibling
+        infected repos -- the novel-repo discovery loop.
+        """
+        return [
+            row["value"]
+            for row in self.conn.execute(
+                "SELECT value FROM learned_iocs WHERE kind = 'code_sig'"
+            )
+        ]
+
     def learned_search_terms(self) -> list[str]:
         """Searchable strings from learned IOCs: domains + webhook ids."""
         import re
