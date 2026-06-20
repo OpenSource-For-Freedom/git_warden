@@ -112,6 +112,7 @@ class DetectionMethod(StrEnum):
     OSM_REPOSITORY = "osm_repository"  # OSM-flagged repository artifact
     MALICIOUS_OWNER = "malicious_owner"  # other repo by a known-malicious-repo owner
     PACKAGE_REF = "package_ref"  # references a known-malicious package
+    SIGNATURE_MATCH = "signature_match"  # shares a confirmed malware code signature
 
 
 class ArtifactStatus(StrEnum):

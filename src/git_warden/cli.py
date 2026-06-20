@@ -403,10 +403,12 @@ def _cmd_hunt(args: argparse.Namespace) -> int:
             do_actor=not args.no_actor,
             do_enrich=not args.no_enrich,
             do_osm=not args.no_osm,
+            do_signature=not args.no_signature,
             do_tier2=args.scan,
             max_iocs=args.max_iocs,
             max_packages=args.max_packages,
             max_osm=args.max_osm,
+            max_signatures=args.max_signatures,
             search_pace=args.pace,
             limit=args.limit,
             gold=args.gold,
@@ -527,6 +529,10 @@ def build_parser() -> argparse.ArgumentParser:
                         help="Skip direct Tier-2 validation of OSM-labeled malicious repos.")
     hunt_p.add_argument("--no-osm-verify", action="store_true",
                         help="Skip the live OSM re-check before gold delivery (novelty gate).")
+    hunt_p.add_argument("--no-signature", action="store_true",
+                        help="Skip malware code-signature search (novel-repo discovery).")
+    hunt_p.add_argument("--max-signatures", type=int, default=8,
+                        help="Malware code signatures to code-search (novel-repo engine).")
     hunt_p.add_argument("--scan", action="store_true", help="Run Tier-2 clone+scan.")
     hunt_p.add_argument("--gold", action="store_true", help="Deliver confirmed to Discord.")
     hunt_p.add_argument("--max-iocs", type=int, default=8, help="IOC terms to search.")
