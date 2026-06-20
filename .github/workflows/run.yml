@@ -19,6 +19,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
+      # Harden the runner FIRST (before any other step) so egress is monitored
+      # from the start. This run uses tokens and clones untrusted repos, so
+      # egress visibility matters. Audit mode: observe/report, do not block yet.
+      - name: Legion Harden Runner
+        uses: OpenSource-For-Freedom/Legion_runner@v1.0.41
+        with:
+          egress-policy: audit
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
