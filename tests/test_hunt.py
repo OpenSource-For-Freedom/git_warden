@@ -49,6 +49,50 @@ def _fake_clone(full_name, dest, *, runner=None):
     return dest
 
 
+def test_hunt_signature_match_finds_novel_repo(tmp_path, monkeypatch):
+    # The novel-repo engine: a confirmed-malware code signature surfaces a sibling
+    # infected repo OSM doesn't have -> confirmed -> gold-eligible.
+    import base64
+
+    import git_warden.config as cfg
+    from git_warden.enums import DetectionMethod
+
+    sig_file = tmp_path / "sigs.json"
+    sig_file.write_text('[{"name":"x","query":"OBFUSTUB"}]', encoding="utf-8")
+    monkeypatch.setattr(cfg, "MALWARE_SIGNATURES_PATH", sig_file)
+
+    class SigClient(FakeClient):
+        def search_code(self, query, per_page=20):
+            if "OBFUSTUB" in query:
+                return [{"repository": {
+                    "full_name": "attacker/infected", "owner": {"login": "attacker"},
+                    "html_url": "https://github.com/attacker/infected"},
+                    "path": "postcss.config.js"}]
+            return []
+
+    def clone_mal(full_name, dest, *, runner=None):
+        dest.mkdir(parents=True, exist_ok=True)
+        blob = base64.b64encode(b"z" * 200).decode()
+        (dest / "postcss.config.js").write_text(
+            f"module.exports={{}};eval(atob('{blob}'))\n", encoding="utf-8")
+        return dest
+
+    db = Database.open(tmp_path / "sig.sqlite")
+    hunt(db, SigClient(), TOOLS, run_id="sig", now=utcnow(),
+         do_ioc=False, do_lineage=False, do_actor=False, do_enrich=False, do_osm=False,
+         do_signature=True, do_tier2=True, clone=clone_mal)
+    row = db.conn.execute(
+        "SELECT status, detection_method FROM repo_findings WHERE full_name = ?",
+        ("attacker/infected",)).fetchone()
+    assert row is not None
+    assert row["detection_method"] == DetectionMethod.SIGNATURE_MATCH.value
+    assert row["status"] == "confirmed"
+    assert any(r["full_name"] == "attacker/infected" for r in db.undelivered_gold())
+    # The mined signature is recorded for future hunts (the learning loop).
+    assert db.learned_signatures()
+    db.close()
+
+
 def test_hunt_osm_repo_validation_confirms(tmp_path):
     # do_osm clones OSM-labeled repos directly and confirms genuine ones.
     from git_warden.enums import ArtifactType, DetectionMethod, FeedSource

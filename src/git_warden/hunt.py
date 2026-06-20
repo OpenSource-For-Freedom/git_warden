@@ -42,6 +42,7 @@ from .scanning import (
 from .scanning.actor_search import AccountRepo
 from .scanning.discovery import RepoHit
 from .scanning.enrichment import OwnerRepo
+from .scanning.signatures import load_seed_signatures
 from .scanning.tier2 import WEAPONIZATION_CATEGORIES, _force_rmtree
 
 log = logging.getLogger(__name__)
@@ -185,10 +186,12 @@ def hunt(
     do_actor: bool = True,
     do_enrich: bool = True,
     do_osm: bool = True,
+    do_signature: bool = True,
     do_tier2: bool = False,
     max_iocs: int = 8,
     max_packages: int = 8,
     max_osm: int = 60,
+    max_signatures: int = 8,
     search_pace: float = 0.0,
     limit: int = 0,
     scan_min_score: int = 4,
@@ -250,6 +253,22 @@ def hunt(
                 continue
             candidates.setdefault(full.casefold(), _finding_from_osm_repo(full, url, intel))
 
+    if do_signature:
+        # NOVEL-repo engine: code-search GitHub for a confirmed malware's reusable
+        # signature (a deobfuscator stub mined from prior confirmations + curated
+        # seeds) to find sibling infected repos OSM never catalogued.
+        sig_terms = list(dict.fromkeys(
+            db.learned_signatures() + load_seed_signatures(config.MALWARE_SIGNATURES_PATH)
+        ))[:max_signatures]
+        for hit in search_iocs(client, sig_terms, known=known, per_term=20,
+                               pace_seconds=search_pace):
+            if classify_hit(hit) == "suspicious":
+                finding = _finding_from_hit(hit)
+                finding.detection_method = DetectionMethod.SIGNATURE_MATCH
+                finding.reasoning = (
+                    f"Shares a confirmed-malware code signature {hit.matched_iocs}")
+                candidates.setdefault(hit.full_name.casefold(), finding)
+
     # Bound the run: keep the strongest candidates before the expensive Tier-1
     # README fetches + Tier-2 clones. Ranking is method-aware (eval finding #13)
     # so high-trust actor-account leads (which carry no signals/IOCs yet) are not
@@ -259,6 +278,7 @@ def hunt(
         # candidates aren't starved by forks carrying many weak metadata signals
         # (the whole point: stop being "just red-team").
         method_base = {
+            DetectionMethod.SIGNATURE_MATCH: 7,  # shares a confirmed malware signature
             DetectionMethod.MALICIOUS_OWNER: 6,  # owner already shipped malware
             DetectionMethod.ACTOR_ACCOUNT: 6,
             DetectionMethod.PACKAGE_REF: 5,
@@ -306,7 +326,7 @@ def hunt(
         intel = finding.detection_method in (
             DetectionMethod.IOC_SEARCH, DetectionMethod.PACKAGE_REF,
             DetectionMethod.MALICIOUS_OWNER, DetectionMethod.ACTOR_ACCOUNT,
-            DetectionMethod.OSM_REPOSITORY,
+            DetectionMethod.OSM_REPOSITORY, DetectionMethod.SIGNATURE_MATCH,
         )
         to_tier2 = result.tier2 or (intel and not is_defensive_repo(finding.full_name))
         finding.status = RepoFindingStatus.SCREENED if to_tier2 else RepoFindingStatus.CANDIDATE
@@ -376,6 +396,10 @@ def hunt(
                         db.record_learned_ioc(tg, "telegram", finding.full_name, run_id)
                     for dom in li.domains:
                         db.record_learned_ioc(dom, "domain", finding.full_name, run_id)
+                    # Mine reusable code signatures so the next hunt finds this
+                    # campaign's sibling repos (the novel-discovery loop).
+                    for sig in result.learned_signatures:
+                        db.record_learned_ioc(sig, "code_sig", finding.full_name, run_id)
         finally:
             _force_rmtree(workdir)
 

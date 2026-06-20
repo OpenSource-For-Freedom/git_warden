@@ -45,6 +45,12 @@ SEED_ACTORS_PATH = Path(
     os.environ.get("GW_SEED_ACTORS", PROJECT_ROOT / "config" / "seed_actors.json")
 )
 
+# Curated malware code-signature search queries (deobfuscator stubs, injection
+# patterns) used to hunt novel sibling repos of a confirmed campaign.
+MALWARE_SIGNATURES_PATH = Path(
+    os.environ.get("GW_MALWARE_SIGNATURES", PROJECT_ROOT / "config" / "malware_signatures.json")
+)
+
 # Known-good red-team tooling registry -- the legitimate originals the scanner
 # pins to detect weaponized clones/forks (doc 02 section 5).
 REDTEAM_TOOLS_PATH = Path(
