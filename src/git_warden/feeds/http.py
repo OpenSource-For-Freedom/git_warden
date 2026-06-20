@@ -1,7 +1,7 @@
 """HTTP access for feed adapters.
 
 The network call is isolated behind a small :class:`HttpClient` protocol so feed
-*parsing* can be unit-tested against fixtures with no network -- tests inject a
+*parsing* can be unit-tested against fixtures with no network; tests inject a
 fake client, production uses :class:`RequestsHttpClient`.
 """
 

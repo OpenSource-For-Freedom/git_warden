@@ -1,8 +1,8 @@
 """Self-healing call wrapper (doc 05 section 5).
 
 "Anyone can make an API call, but not many can handle it." This classifies each
-failure via the playbook and responds per class -- backoff+retry, queue/defer,
-skip, or flag for manual intervention -- instead of one blanket retry. Error
+failure via the playbook and responds per class; backoff+retry, queue/defer,
+skip, or flag for manual intervention; instead of one blanket retry. Error
 counts are tracked against thresholds; a breach fires an alert (doc 05 5.3).
 """
 
@@ -67,7 +67,7 @@ def resilient_call(
             return fn()
         except ManualInterventionRequired:
             raise
-        except Exception as exc:  # noqa: BLE001 -- classification is the point
+        except Exception as exc:  # noqa: BLE001
             message = f"{type(exc).__name__}: {exc}"
             ec = playbook.classify(message)
             cls = ec.name if ec else "unknown"
