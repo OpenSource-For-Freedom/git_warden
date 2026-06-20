@@ -387,6 +387,7 @@ def _cmd_hunt(args: argparse.Namespace) -> int:
             do_ioc=not args.no_ioc,
             do_lineage=not args.no_lineage,
             do_actor=not args.no_actor,
+            do_enrich=not args.no_enrich,
             do_tier2=args.scan,
             max_iocs=args.max_iocs,
             limit=args.limit,
@@ -502,6 +503,8 @@ def build_parser() -> argparse.ArgumentParser:
     hunt_p.add_argument("--no-ioc", action="store_true", help="Skip IOC code-search discovery.")
     hunt_p.add_argument("--no-lineage", action="store_true", help="Skip lineage discovery.")
     hunt_p.add_argument("--no-actor", action="store_true", help="Skip actor-account discovery.")
+    hunt_p.add_argument("--no-enrich", action="store_true",
+                        help="Skip OSM enrichment (owner/package pivots).")
     hunt_p.add_argument("--scan", action="store_true", help="Run Tier-2 clone+scan.")
     hunt_p.add_argument("--gold", action="store_true", help="Deliver confirmed to Discord.")
     hunt_p.add_argument("--max-iocs", type=int, default=8, help="IOC terms to search.")
