@@ -1,7 +1,4 @@
 name: Git Warden Run
-
-# Triggering is phased (doc 05 section 2): manual first for stability, then a
-# weekly cron. Event-driven (on new threat-intel) is a later phase.
 on:
   workflow_dispatch:
   schedule:
@@ -19,15 +16,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      # Harden the runner FIRST (before any other step) so egress is monitored
-      # from the start. This run uses tokens and clones untrusted repos, so
-      # egress visibility matters. Audit mode: observe/report, do not block yet.
       - name: Legion Harden Runner
         uses: OpenSource-For-Freedom/Legion_runner@v1.0.41
         with:
           egress-policy: audit
-      # Check out with GH_TOKEN (the user's PAT) so the README registry table can
-      # be committed back and pushed with that same token later in the run.
       - uses: actions/checkout@v4
         with:
           token: ${{ secrets.GH_TOKEN }}
@@ -35,13 +27,8 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install
-        # Tier-2 OSS scanners (doc 02 3.2): GuardDog (npm/pypi malicious-package
-        # detection) + Semgrep. Both are STATIC analyzers; they read targets,
-        # never install/run them.
         run: pip install -e . semgrep guarddog
 
-      # Persist the SQLite store + caches across runs so the registry and the
-      # MITRE bundle accumulate week to week.
       - name: Restore data
         uses: actions/cache@v4
         with:
@@ -49,8 +36,6 @@ jobs:
           key: git-warden-data-${{ github.run_id }}
           restore-keys: git-warden-data-
 
-      # Repo secret names (GH_TOKEN, OSM_TOKEN, DISCORD_WEBHOOK) are mapped onto
-      # the GW_* env vars the code reads. Local .env uses the GW_* names directly.
       - name: Ingest threat-intel breadcrumbs
         env:
           GW_GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -62,14 +47,9 @@ jobs:
           GW_GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           GW_OSM_API_KEY: ${{ secrets.OSM_TOKEN }}
           GW_DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-        # --limit caps Tier-2 clones so a single weekly run stays well under the
-        # 60-min timeout; sparse clones keep even giant repos cheap. Failed clones
-        # are exported, not fatal.
+
         run: python gw.py hunt --scan --gold --limit 120
 
-      # Publish the regenerated confirmed-registry table back to the README,
-      # pushed with GH_TOKEN (checkout above persisted it as the git credential).
-      # [skip ci] keeps this auto-commit from re-triggering CI. Never fatal.
       - name: Publish registry table to README
         if: always()
         run: |
