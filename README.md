@@ -62,7 +62,7 @@ INGEST (breadcrumbs)                 HUNT (find malicious GitHub repos)
 >    stay internal (Discord, *pending validation*) and never appear here.
 
 <!-- git-warden:registry:start -->
-_0 analyst-validated malicious repositories. Regenerated each run; only findings a human reviewed and approved appear here. Each row's evidence (file, line, rule) is in the run artifacts._
+_0 analyst-validated malicious repositories. Maintained by `gw review --approve`; only findings a human approved appear here. Each row's evidence (file, line, rule) is in the run artifacts._
 
 | Repository | Detection | Score | Attribution | First seen | Why |
 |------------|-----------|-------|-------------|------------|-----|
@@ -94,7 +94,7 @@ Credentials load from `.env` automatically (real env vars win). Tokens:
 
 (No NVD key needed; free OSINT feeds + OSM cover the intel sources for now.)
 
-## ⚔️ Commands
+## Commands
 
 ```bash
 python gw.py ingest                         # feeds -> actors + OSM artifacts

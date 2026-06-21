@@ -419,7 +419,10 @@ def _cmd_hunt(args: argparse.Namespace) -> int:
         # CSV; the README shows the confirmed registry only.
         from .artifacts import update_readme_registry_table, write_findings_csv
         findings_csv = write_findings_csv(db, run_id)
-        readme_changed = update_readme_registry_table(db)
+        # Render the README wall from the COMMITTED wall_of_shame.json (not this
+        # run's DB), so a CI run publishes exactly what an analyst approved and
+        # committed rather than wiping it from an empty CI database.
+        readme_changed = update_readme_registry_table()
     finally:
         db.close()
     json.dump(summary, sys.stdout, indent=2)
@@ -448,16 +451,31 @@ def _cmd_hunt(args: argparse.Namespace) -> int:
 def _cmd_review(args: argparse.Namespace) -> int:
     """Analyst validation of confirmed findings (human-in-the-loop, PRD 3)."""
     configure_logging(json_output=False)
+    from .artifacts import add_to_wall, remove_from_wall, update_readme_registry_table
     from .enums import RepoFindingStatus
 
     db = Database.open(args.db)
     try:
         if args.approve:
             n = db.set_finding_status(args.approve, RepoFindingStatus.VALIDATED.value)
-            print(f"validated {args.approve}" if n else f"no finding {args.approve!r}")
+            if not n:
+                print(f"no finding {args.approve!r}")
+            else:
+                row = db.get_finding(args.approve)
+                if row:
+                    add_to_wall(row)
+                update_readme_registry_table()
+                print(f"validated {args.approve}; added to the Wall of Shame. "
+                      f"Commit wall_of_shame.json + README.md to publish.")
         elif args.reject:
             n = db.set_finding_status(args.reject, RepoFindingStatus.REJECTED.value)
-            print(f"rejected {args.reject}" if n else f"no finding {args.reject!r}")
+            if not n:
+                print(f"no finding {args.reject!r}")
+            else:
+                remove_from_wall(args.reject)
+                update_readme_registry_table()
+                print(f"rejected {args.reject}; removed from the Wall of Shame. "
+                      f"Commit wall_of_shame.json + README.md.")
         else:
             rows = db.findings_by_status("confirmed")
             print(f"{len(rows)} confirmed finding(s) pending validation:")
