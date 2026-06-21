@@ -60,11 +60,12 @@ steal-and-send); threat-intel leads (a malicious owner, a shared signature) only
 *seed* which repos get scanned, never confirm one alone.
 
 <!-- git-warden:registry:start -->
-_57 repositories confirmed malicious by static analysis, regenerated each run. Every row's evidence (file, line, rule) is in the run artifacts CSV. Dispute: open an issue and we will re-review._
+_64 repositories confirmed malicious by static analysis, regenerated each run. Every row's evidence (file, line, rule) is in the run artifacts CSV. Dispute: open an issue and we will re-review._
 
 | Repository | Detection | Score | Attribution | First seen | Why |
 |------------|-----------|-------|-------------|------------|-----|
 | [`anon-exploiter/sliver-cheatsheet`](https://github.com/anon-exploiter/sliver-cheatsheet) | redteam_lineage | 55 | unattributed | hunt-20260618T201449Z | name_match of pinned red-team tool Sliver \| Tier-2 confirmed (bash score 46) |
+| [`openwrt/packages`](https://github.com/openwrt/packages) | ioc_search | 37 | unattributed | hunt-20260621T214303Z | Code references OSM IOC(s) ['public-dns.info'] in ['net/banip/files/banip.feeds'] \| Tier-2 confirmed (bash score 37) |
 | [`yuxiangggg/shiver`](https://github.com/yuxiangggg/shiver) | redteam_lineage | 26 | unattributed | hunt-20260618T201449Z | fork of pinned red-team tool Sliver \| Tier-2 confirmed (bash score 21) |
 | [`investlab/malware-sliver`](https://github.com/investlab/malware-sliver) | redteam_lineage | 25 | unattributed | hunt-20260618T201449Z | fork of pinned red-team tool Sliver \| Tier-2 confirmed (bash score 21) |
 | [`joapath/pamperoc2`](https://github.com/joapath/pamperoc2) | redteam_lineage | 25 | unattributed | hunt-20260618T201449Z | fork of pinned red-team tool Sliver \| Tier-2 confirmed (bash score 21) |
@@ -109,6 +110,7 @@ _57 repositories confirmed malicious by static analysis, regenerated each run. E
 | [`icecoldjay/mercury-frontend`](https://github.com/icecoldjay/mercury-frontend) | malicious_owner | 1 | unattributed | hunt-20260621T204101Z | repository under owner icecoldjay of a known-malicious repo \| Tier-2 confirmed (bash score 0) |
 | [`icecoldjay/trading-bot-frontend`](https://github.com/icecoldjay/trading-bot-frontend) | malicious_owner | 1 | unattributed | hunt-20260621T204101Z | repository under owner icecoldjay of a known-malicious repo \| Tier-2 confirmed (bash score 0) |
 | [`icecoldjay/trading-bot-server`](https://github.com/icecoldjay/trading-bot-server) | malicious_owner | 1 | unattributed | hunt-20260621T204101Z | repository under owner icecoldjay of a known-malicious repo \| Tier-2 confirmed (bash score 0) |
+| [`usmanaliashraf/chess.com`](https://github.com/usmanaliashraf/chess.com) | malicious_owner | 1 | unattributed | hunt-20260621T214303Z | repository under owner UsmanAliAshraf of a known-malicious repo \| Tier-2 confirmed (bash score 0) |
 | [`usmanaliashraf/wheel-of-fortune`](https://github.com/usmanaliashraf/wheel-of-fortune) | malicious_owner | 1 | unattributed | hunt-20260621T204101Z | repository under owner UsmanAliAshraf of a known-malicious repo \| Tier-2 confirmed (bash score 0) |
 | [`alexsander532/nea-mutiro-site`](https://github.com/alexsander532/nea-mutiro-site) | malicious_owner | 0 | unattributed | hunt-20260621T204101Z | repository under owner Alexsander532 of a known-malicious repo \| Tier-2 confirmed (bash score 0) |
 | [`alexsander532/projeto_gerenciamentovideos_nodejs`](https://github.com/alexsander532/projeto_gerenciamentovideos_nodejs) | malicious_owner | 0 | unattributed | hunt-20260621T204101Z | repository under owner Alexsander532 of a known-malicious repo \| Tier-2 confirmed (bash score 0) |
@@ -120,7 +122,12 @@ _57 repositories confirmed malicious by static analysis, regenerated each run. E
 | [`haroontaufiq/netflix-clone`](https://github.com/haroontaufiq/netflix-clone) | malicious_owner | 0 | unattributed | hunt-20260621T204101Z | repository under owner HaroonTaufiq of a known-malicious repo \| Tier-2 confirmed (bash score 0) |
 | [`haroontaufiq/zyra-platform-feature-app`](https://github.com/haroontaufiq/zyra-platform-feature-app) | malicious_owner | 0 | unattributed | hunt-20260621T204101Z | repository under owner HaroonTaufiq of a known-malicious repo \| Tier-2 confirmed (bash score 0) |
 | [`icecoldjay/aave-flashloan`](https://github.com/icecoldjay/aave-flashloan) | malicious_owner | 0 | unattributed | hunt-20260621T204101Z | repository under owner icecoldjay of a known-malicious repo \| Tier-2 confirmed (bash score 0) |
+| [`nccgroup/featherduster`](https://github.com/nccgroup/featherduster) | ioc_search | 0 | unattributed | hunt-20260621T214303Z | Code references OSM IOC(s) ['sweet32.info'] in ['featherduster/advice.py'] \| Tier-2 confirmed (bash score 0) |
+| [`shamratdev/digitx-erc20-custom-logic-bsc-hardhat`](https://github.com/shamratdev/digitx-erc20-custom-logic-bsc-hardhat) | malicious_owner | 0 | unattributed | hunt-20260621T214303Z | repository under owner ShamratDev of a known-malicious repo \| Tier-2 confirmed (bash score 0) |
+| [`shamratdev/erc20-token-hardhat-multi-network`](https://github.com/shamratdev/erc20-token-hardhat-multi-network) | malicious_owner | 0 | unattributed | hunt-20260621T214303Z | repository under owner ShamratDev of a known-malicious repo \| Tier-2 confirmed (bash score 0) |
+| [`usmanaliashraf/landingpage`](https://github.com/usmanaliashraf/landingpage) | malicious_owner | 0 | unattributed | hunt-20260621T214303Z | repository under owner UsmanAliAshraf of a known-malicious repo \| Tier-2 confirmed (bash score 0) |
 | [`usmanaliashraf/primesol`](https://github.com/usmanaliashraf/primesol) | malicious_owner | 0 | unattributed | hunt-20260621T204101Z | repository under owner UsmanAliAshraf of a known-malicious repo \| Tier-2 confirmed (bash score 0) |
+| [`usmanaliashraf/react-project-ochie-clone-`](https://github.com/usmanaliashraf/react-project-ochie-clone-) | malicious_owner | 0 | unattributed | hunt-20260621T214303Z | repository under owner UsmanAliAshraf of a known-malicious repo \| Tier-2 confirmed (bash score 0) |
 <!-- git-warden:registry:end -->
 
 > [!NOTE]
