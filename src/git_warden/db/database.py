@@ -394,6 +394,15 @@ class Database:
             "SELECT * FROM repo_findings WHERE status = ? ORDER BY score DESC", (status,)
         ).fetchall()
 
+    def published_findings(self) -> list[sqlite3.Row]:
+        """Findings shown on the public Wall of Shame: confirmed (and any analyst-
+        kept 'validated'), never rejected/screened/candidate. Highest score first.
+        """
+        return self.conn.execute(
+            "SELECT * FROM repo_findings WHERE status IN ('confirmed', 'validated') "
+            "ORDER BY score DESC, full_name"
+        ).fetchall()
+
     def findings_for_run(self, run_id: str) -> list[sqlite3.Row]:
         """Every repo this run touched (newly discovered or re-seen).
 
