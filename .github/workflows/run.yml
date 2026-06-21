@@ -60,10 +60,32 @@ jobs:
           git config user.email "git-warden@users.noreply.github.com"
           if git diff --quiet -- README.md; then
             echo "README registry unchanged; nothing to push."
-          else
-            git add README.md
-            git commit -m "Auto-update malicious-repo registry table [skip ci]"
-            git push origin HEAD:${GITHUB_REF_NAME}
+            exit 0
+          fi
+          git add README.md
+          git commit -m "Auto-update malicious-repo registry table [skip ci]"
+          # The hunt step runs ~45 min, so main may have advanced since checkout
+          # (or this is a re-run pinned to an older SHA). Rebase our commit onto
+          # the live tip FIRST and only push if the rebase is clean; loop to
+          # absorb a push that races with another update.
+          pushed=false
+          for attempt in 1 2 3 4 5; do
+            git fetch origin "${GITHUB_REF_NAME}"
+            if ! git rebase --autostash "origin/${GITHUB_REF_NAME}"; then
+              git rebase --abort 2>/dev/null || true
+              echo "::error::README registry rebase conflicted with origin/${GITHUB_REF_NAME}; manual merge needed."
+              exit 1
+            fi
+            if git push origin HEAD:"${GITHUB_REF_NAME}"; then
+              echo "Registry update pushed (attempt ${attempt})."
+              pushed=true
+              break
+            fi
+            echo "Push raced with another update; refetching and rebasing (attempt ${attempt})."
+          done
+          if [ "$pushed" != true ]; then
+            echo "::error::Could not push README registry update after 5 attempts."
+            exit 1
           fi
 
       - name: Upload run artifacts (full transparency)
