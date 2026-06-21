@@ -58,7 +58,10 @@ jobs:
           GW_GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           GW_OSM_API_KEY: ${{ secrets.OSM_TOKEN }}
           GW_DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-        run: python gw.py hunt --scan --gold
+        # --limit caps Tier-2 clones so a single weekly run stays well under the
+        # 60-min timeout; sparse clones keep even giant repos cheap. Failed clones
+        # are exported, not fatal.
+        run: python gw.py hunt --scan --gold --limit 120
 
       - name: Upload run artifacts (full transparency)
         if: always()

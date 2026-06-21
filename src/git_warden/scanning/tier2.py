@@ -243,32 +243,55 @@ def _within_bounds(root: Path) -> bool:
     return True
 
 
+# Sparse-checkout patterns: ONLY the file types our scanners read. A SPARSE
+# PARTIAL clone fetches just these blobs, so a 1.35 GB three.js fork (owner-pivot)
+# downloads in ~3s / ~41 MB instead of timing the runner out -- we keep big repos
+# instead of skipping them. Large binaries (models, media, archives) we never scan
+# are not downloaded. Covers content/bash/manifest/signature scanners + common
+# extensionless shell scripts.
+_SPARSE_PATTERNS = (
+    "*.js", "*.mjs", "*.cjs", "*.ts", "*.tsx", "*.jsx", "*.vue", "*.astro",
+    "*.py", "*.rb", "*.php", "*.go", "*.rs", "*.ps1", "*.bat",
+    "*.sh", "*.bash", "*.ksh", "*.zsh",
+    "*.json", "*.yml", "*.yaml", "*.toml", "*.cfg", "*.ini", "*.env", "*.html", "*.ipynb",
+    "Dockerfile", "Makefile", "requirements*.txt",
+    "install", "configure", "bootstrap", "entrypoint", "preinstall", "postinstall",
+)
+
+
 def clone_repo(
     full_name: str, dest: Path, *, runner=subprocess.run, timeout: int = 120
 ) -> Path | None:
-    """Shallow-clone a public repo for STATIC reading. Path, or None on failure.
+    """Sparse partial shallow-clone a public repo for STATIC reading.
 
-    Static analysis only: the target is never executed; ``--depth 1`` fetches
-    a single commit to read, nothing more. Validates the untrusted ``full_name``
-    against a strict allowlist and passes ``--`` before the URL so a crafted
-    value cannot become a path traversal or a git flag (eval finding #16). A
+    Static analysis only: the target is never executed; ``--depth 1`` fetches a
+    single commit (default branch, no history) and ``--filter=blob:none`` +
+    sparse-checkout download ONLY scannable file types (source, configs,
+    manifests) -- so huge repos cost little and are kept, not skipped. Validates
+    the untrusted ``full_name`` and passes ``--`` before the URL so a crafted
+    value cannot become a path traversal or git flag (eval finding #16). A
     failed/partial clone is force-removed (handles git's read-only pack files).
     """
     if not _VALID_FULL_NAME.fullmatch(full_name) or ".." in full_name:
         log.warning("clone rejected: invalid full_name", extra={"context": {"repo": full_name}})
         return None
     url = f"https://github.com/{full_name}.git"
+    dest_s = str(dest)
+    steps = (
+        ["git", "clone", "--depth", "1", "--filter=blob:none", "--no-checkout",
+         "--single-branch", "--quiet", "--", url, dest_s],
+        ["git", "-C", dest_s, "sparse-checkout", "set", "--no-cone", *_SPARSE_PATTERNS],
+        ["git", "-C", dest_s, "checkout", "--quiet"],
+    )
     try:
-        result = runner(
-            ["git", "clone", "--depth", "1", "--quiet", "--", url, str(dest)],
-            capture_output=True, text=True, timeout=timeout,
-        )
+        for cmd in steps:
+            result = runner(cmd, capture_output=True, text=True, timeout=timeout)
+            if result.returncode != 0:
+                log.warning("clone non-zero", extra={"context": {"repo": full_name}})
+                _force_rmtree(dest)
+                return None
     except (OSError, subprocess.SubprocessError) as exc:
         log.warning("clone failed", extra={"context": {"repo": full_name, "err": str(exc)}})
-        _force_rmtree(dest)
-        return None
-    if result.returncode != 0:
-        log.warning("clone non-zero", extra={"context": {"repo": full_name}})
         _force_rmtree(dest)
         return None
     return dest
