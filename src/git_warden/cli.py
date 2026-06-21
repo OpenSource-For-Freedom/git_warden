@@ -418,6 +418,21 @@ def _cmd_hunt(args: argparse.Namespace) -> int:
         db.close()
     json.dump(summary, sys.stdout, indent=2)
     sys.stdout.write("\n")
+
+    # Export run artifacts (full transparency, PRD 13.1): the summary, and a
+    # dedicated failed-clones CSV so a reviewer sees repos we could not scan and
+    # why -- the run never fails on a bad clone, it reports it.
+    config.ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
+    (config.ARTIFACTS_DIR / f"{run_id}_hunt.json").write_text(
+        json.dumps(summary, indent=2), encoding="utf-8")
+    failed = summary.get("failed_clones") or []
+    rows = ["repo,reason,size_mb"] + [
+        f"{f.get('repo','')},{f.get('reason','')},{f.get('size_mb','')}" for f in failed]
+    (config.ARTIFACTS_DIR / f"{run_id}_failed_clones.csv").write_text(
+        "\n".join(rows) + "\n", encoding="utf-8")
+    if failed:
+        print(f"{len(failed)} clone(s) could not be scanned; "
+              f"see artifacts/{run_id}_failed_clones.csv")
     return 0
 
 
