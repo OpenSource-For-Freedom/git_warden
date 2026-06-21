@@ -1,6 +1,6 @@
 """Minimal, read-only GitHub REST client for the scanning layer (doc 02).
 
-Scope for the first slice: the calls Tier-1 metadata screening needs --
+Scope for the first slice: the calls Tier-1 metadata screening needs;
 repository metadata, README/front-facing content, and repository search. Uses
 the configured PAT for the 5,000 req/hr limit; all calls are read-only.
 
