@@ -3,8 +3,6 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/OpenSource-For-Freedom/git_warden/actions/workflows/run.yml"><img src="https://github.com/OpenSource-For-Freedom/git_warden/actions/workflows/run.yml/badge.svg" alt="The Warden"></a>
-  <a href="https://github.com/OpenSource-For-Freedom/git_warden/actions/workflows/ci.yml"><img src="https://github.com/OpenSource-For-Freedom/git_warden/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <img src="https://img.shields.io/badge/version-0.1.0-5fa8ff?style=for-the-badge&labelColor=0a0e13" alt="Version 0.1.0">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-5fa8ff?style=for-the-badge&labelColor=0a0e13" alt="MIT License"></a>
   <a href="https://www.python.org"><img src="https://img.shields.io/badge/python-3.12+-5fa8ff?style=for-the-badge&labelColor=0a0e13&logo=python&logoColor=white" alt="Python 3.12+"></a>
