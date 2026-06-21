@@ -206,10 +206,12 @@ def test_lone_discord_webhook_needs_corroboration(tmp_path):
 
 
 def test_semgrep_flag_alone_does_not_confirm(monkeypatch, tmp_path):
-    # Semgrep --config auto flags ordinary code smells; on its own it must NOT
-    # confirm a clean repo (would re-introduce the tiledesk FP in CI).
+    # Semgrep --config auto flags ordinary code smells; even when it runs it must
+    # NOT confirm on its own (would re-introduce the tiledesk FP in CI). It runs
+    # only when the fast scanner already found a signal -- here a reputable-host
+    # `curl | sh`, which scores but is host-gated and does not confirm.
     import git_warden.scanning.tier2 as t2
-    (tmp_path / "app.js").write_text("export const add = (a, b) => a + b;\n", encoding="utf-8")
+    (tmp_path / "install.sh").write_text("curl https://sh.rustup.rs | sh\n", encoding="utf-8")
     monkeypatch.setattr(t2.shutil, "which", lambda n: "/usr/bin/" + n)
 
     def runner(cmd, **k):
@@ -221,8 +223,29 @@ def test_semgrep_flag_alone_does_not_confirm(monkeypatch, tmp_path):
         return R()
 
     result = analyze_repo(tmp_path, "legit/app", runner=runner)
-    assert result.scanners["semgrep"] == "flagged"
-    assert not result.confirmed  # semgrep smell != malware
+    assert result.scanners["semgrep"] == "flagged"  # ran: there was a static signal
+    assert not result.confirmed  # reputable-host curl + semgrep smell != malware
+
+
+def test_semgrep_skipped_on_clean_repo(monkeypatch, tmp_path):
+    # The timeout fix: Semgrep (slow, enrichment-only) is skipped when the fast
+    # scanner found nothing, so a clean clone costs ~zero scanner time.
+    import git_warden.scanning.tier2 as t2
+    (tmp_path / "app.js").write_text("export const add = (a, b) => a + b;\n", encoding="utf-8")
+    monkeypatch.setattr(t2.shutil, "which", lambda n: "/usr/bin/" + n)
+    ran = []
+
+    def runner(cmd, **k):
+        ran.append(cmd[0])
+
+        class R:
+            returncode, stdout, stderr = 0, "{}", ""
+        return R()
+
+    result = analyze_repo(tmp_path, "legit/app", runner=runner)
+    assert result.scanners["semgrep"].startswith("skipped")
+    assert "semgrep" not in ran  # never invoked on a clean repo
+    assert not result.confirmed
 
 
 def test_guarddog_flag_confirms(monkeypatch, tmp_path):

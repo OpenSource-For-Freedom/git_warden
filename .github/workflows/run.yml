@@ -48,7 +48,10 @@ jobs:
           GW_OSM_API_KEY: ${{ secrets.OSM_TOKEN }}
           GW_DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
 
-        run: python gw.py hunt --scan --gold --limit 120
+        # Top 75 candidates per weekly run (ranked by signature/owner/signal
+        # priority), not every possible repo. Keeps the run well inside the
+        # timeout; each week surfaces the next batch of new finds.
+        run: python gw.py hunt --scan --gold --limit 75
 
       - name: Publish registry table to README
         if: always()
