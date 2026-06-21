@@ -7,6 +7,14 @@
   <a href="https://github.com/OpenSource-For-Freedom/git_warden/actions/workflows/ci.yml"><img src="https://github.com/OpenSource-For-Freedom/git_warden/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
 </p>
 
+<p align="center">
+  <img src="https://img.shields.io/badge/DEFENSIVE-OSINT-22e0d6?style=for-the-badge&labelColor=0a0e13" alt="Defensive OSINT">
+  <img src="https://img.shields.io/badge/SCAN-STATIC--ONLY-22e0d6?style=for-the-badge&labelColor=0a0e13" alt="Static only">
+  <img src="https://img.shields.io/badge/RUNNER-EGRESS--AUDITED-5fa8ff?style=for-the-badge&labelColor=0a0e13" alt="Egress audited">
+  <img src="https://img.shields.io/badge/REGISTRY-HUMAN--VALIDATED-39d98a?style=for-the-badge&labelColor=0a0e13" alt="Human validated">
+  <img src="https://img.shields.io/badge/PYTHON-3.12+-869cb2?style=for-the-badge&labelColor=0a0e13" alt="Python 3.12+">
+</p>
+
 > **The Warden cannot see. It listens for what code *does*.**
 > Git Warden never executes a target; it reads the code statically and senses the
 > behaviors that betray malice, the way the Warden senses vibration in the dark.
