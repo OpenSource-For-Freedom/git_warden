@@ -1,20 +1,30 @@
 <p align="center">
-  <img src="docs/warden-card.png" alt="Git Warden" width="640">
+  <img src="docs/hero.png" alt="Git Warden" width="820">
 </p>
 
-# Git Warden
+<p align="center">
+  <img src="https://img.shields.io/badge/DEFENSIVE-OSINT-22e0d6?style=for-the-badge&labelColor=0a0e13" alt="Defensive OSINT">
+  <img src="https://img.shields.io/badge/SCAN-STATIC--ONLY-22e0d6?style=for-the-badge&labelColor=0a0e13" alt="Static only">
+  <img src="https://img.shields.io/badge/RUNNER-EGRESS--AUDITED-5fa8ff?style=for-the-badge&labelColor=0a0e13" alt="Egress audited">
+  <img src="https://img.shields.io/badge/REGISTRY-HUMAN--VALIDATED-39d98a?style=for-the-badge&labelColor=0a0e13" alt="Human validated">
+  <img src="https://img.shields.io/badge/PYTHON-3.12+-869cb2?style=for-the-badge&labelColor=0a0e13" alt="Python 3.12+">
+</p>
 
-**The warden of malicious repositories and code.**
+> **The Warden cannot see. It listens for what code *does*.**
+> Git Warden never executes a target; it reads the code statically and senses the
+> behaviors that betray malice, the way the Warden senses vibration in the dark.
 
 A defensive threat-intelligence engine that discovers, analyzes, and catalogs
 **malicious GitHub repositories**. Threat-intel feeds (MITRE ATT&CK, Google
-News, CISA, OpenSourceMalware) are *provenance breadcrumbs* they help find and
+News, CISA, OpenSourceMalware) are *provenance breadcrumbs*; they help find and
 attribute the repos. The product is the registry of malicious repos.
 
 See [docs/](docs/) for the design and [docs/IMPLEMENTATION.md](docs/IMPLEMENTATION.md)
 for what's built vs. planned. Guiding principle: **accuracy over volume.**
 
-## How it works
+<p align="center"><img src="docs/sculk-divider.png" alt="" width="900"></p>
+
+## 🟦 How it works
 
 ```
 INGEST (breadcrumbs)                 HUNT (find malicious GitHub repos)
@@ -28,27 +38,28 @@ INGEST (breadcrumbs)                 HUNT (find malicious GitHub repos)
                                         Tier-2 (clone + bash scanner + OSS
                                           scanners + code-hash dedup)
                                                           ▼
-                                        malicious-repo registry ─► Discord gold
+                                        Wall of Shame ─► Discord gold
 ```
 
-## Malicious-repo registry
+<p align="center"><img src="docs/sculk-divider.png" alt="" width="900"></p>
 
-The product: repositories a human analyst has **validated** as malicious. A
-detection reaching this table is a two-stage process, because a public list is
-an accusation and a false positive is a real harm:
+## 💀 Wall of Shame
 
-1. **Machine-confirm.** A repo confirms only on intrinsically malicious static
-   evidence (e.g. `eval(atob(...))` injected into a build config, a reverse
-   shell, a credential-steal-and-send). Threat-intel leads (a malicious owner,
-   a shared signature) only *seed* which repos get scanned; they never confirm a
-   repo on their own.
-2. **Analyst-validate.** A person reviews the evidence and runs
-   `gw review --approve owner/repo` before it appears below. Machine-confirmed
-   but unreviewed findings stay internal (Discord, marked *pending validation*).
+<p align="center">
+  <img src="docs/wall-of-shame.png" alt="Wall of Shame" width="900">
+</p>
 
-Every row's evidence (file, line, and the rule that fired) is recorded in the
-per-run artifacts, so each listing is falsifiable. **Dispute a listing:** open an
-issue with the repository name and we will re-review and remove false positives.
+> [!CAUTION]
+> A public list is an accusation, and a false positive is a real harm. So a repo
+> reaches the wall in **two stages**:
+>
+> 1. **Machine-confirm.** It confirms only on intrinsically malicious static
+>    evidence (`eval(atob(...))` injected into a build config, a reverse shell, a
+>    credential steal-and-send). Intel leads (a malicious owner, a shared
+>    signature) only *seed* which repos get scanned; they never confirm alone.
+> 2. **Analyst-validate.** A human reviews the evidence and runs
+>    `gw review --approve owner/repo`. Machine-confirmed but unreviewed findings
+>    stay internal (Discord, *pending validation*) and never appear here.
 
 <!-- git-warden:registry:start -->
 _0 analyst-validated malicious repositories. Regenerated each run; only findings a human reviewed and approved appear here. Each row's evidence (file, line, rule) is in the run artifacts._
@@ -58,7 +69,15 @@ _0 analyst-validated malicious repositories. Regenerated each run; only findings
 | _none yet_ |  |  |  |  |  |
 <!-- git-warden:registry:end -->
 
-## Quick start
+> [!NOTE]
+> Every row's evidence (file, line, and the rule that fired) is recorded in the
+> per-run artifacts, so each listing is falsifiable. **Dispute a listing:** open
+> an issue with the repository name and we will re-review and remove false
+> positives.
+
+<p align="center"><img src="docs/sculk-divider.png" alt="" width="900"></p>
+
+## ⚡ Quick start
 
 ```bash
 pip install -e ".[dev]"          # or run without install: python gw.py <cmd>
@@ -73,9 +92,9 @@ Credentials load from `.env` automatically (real env vars win). Tokens:
 | `GW_OSM_API_KEY` | OpenSourceMalware token (`osm_…`) | Bearer auth |
 | `GW_DISCORD_WEBHOOK` | gold/alert channel | confirmed findings only |
 
-(No NVD key needed — free OSINT feeds + OSM cover the intel sources for now.)
+(No NVD key needed; free OSINT feeds + OSM cover the intel sources for now.)
 
-## Commands
+## ⚔️ Commands
 
 ```bash
 python gw.py ingest                         # feeds -> actors + OSM artifacts
@@ -83,16 +102,18 @@ python gw.py iocs                            # IOC pivot set mined from OSM
 python gw.py discover                        # IOC code search -> new repos
 python gw.py lineage --tool Sliver --screen 12   # red-team clones + Tier-1
 python gw.py screen-artifacts                # Tier-1 over OSM repo scan-list
-python gw.py hunt --scan --gold              # full pipeline -> registry -> Discord
+python gw.py hunt --scan --gold              # full pipeline -> Wall of Shame -> Discord
+python gw.py review --approve owner/repo     # analyst-validate a confirmed repo
 python gw.py probe --feed github --term lazarus  # probe any feed live
 ```
 
-## Deployment
+## 🛡️ Deployment
 
 GitHub Actions ([.github/workflows/](.github/workflows/)): `ci.yml` runs
-lint+tests; `run.yml` runs ingest→hunt weekly (manual first, per doc 05).
+lint+tests; `run.yml` runs ingest→hunt weekly (manual first, per doc 05). Every
+workflow hardens the runner first (Legion egress audit).
 
-Add these **repo Actions secrets** — the workflow maps them onto the `GW_*` env
+Add these **repo Actions secrets**; the workflow maps them onto the `GW_*` env
 vars the code reads (local `.env` uses the `GW_*` names directly):
 
 | Repo secret | Maps to env var.  |
@@ -104,7 +125,7 @@ vars the code reads (local `.env` uses the `GW_*` names directly):
 Orchestration knobs live in [config/settings.yaml](config/settings.yaml) and
 [config/trigger.yaml](config/trigger.yaml).
 
-## Development
+## 🧪 Development
 
 ```bash
 ruff check src tests gw.py
