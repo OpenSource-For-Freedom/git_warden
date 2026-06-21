@@ -95,6 +95,24 @@ def test_readme_empty_when_no_confirmed(tmp_path, db):
     assert "0 repositories confirmed malicious" in out
 
 
+def test_readme_caps_to_top_ten_most_dangerous(tmp_path, db):
+    # Public wall shows only the 10 highest-severity confirmed repos; the rest
+    # live in the CSV artifact + Discord, not the README.
+    for i in range(15):
+        db.upsert_finding(
+            _finding(f"evil/repo{i:02d}", status=RepoFindingStatus.CONFIRMED, score=i),
+            "run-1")
+    readme = _readme(tmp_path)
+    assert update_readme_registry_table(db, readme_path=readme) is True
+    out = readme.read_text(encoding="utf-8")
+
+    body = out.split("registry:start -->")[1].split("registry:end")[0]
+    assert body.count("](https://github.com/evil/repo") == 10  # exactly 10 rows
+    assert "Top 10 of 15 repositories confirmed malicious" in out
+    assert "evil/repo14" in out and "evil/repo05" in out  # highest scores kept
+    assert "evil/repo04" not in out and "evil/repo00" not in out  # lowest dropped
+
+
 def test_update_readme_idempotent(tmp_path, db):
     db.upsert_finding(_finding("evil/repo", status=RepoFindingStatus.CONFIRMED), "run-1")
     readme = _readme(tmp_path)
