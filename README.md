@@ -9,25 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/posture-defensive-22e0d6?style=for-the-badge&labelColor=0a0e13" alt="Defensive">
-  <img src="https://img.shields.io/badge/analysis-static_only-22e0d6?style=for-the-badge&labelColor=0a0e13" alt="Static only">
-  <img src="https://img.shields.io/badge/targets-never_executed-22e0d6?style=for-the-badge&labelColor=0a0e13" alt="Targets never executed">
-  <a href="https://github.com/OpenSource-For-Freedom/Legion_runner"><img src="https://img.shields.io/badge/runner-egress_audited-5fa8ff?style=for-the-badge&labelColor=0a0e13" alt="Egress audited"></a>
-  <a href="#wall-of-shame"><img src="https://img.shields.io/badge/wall_of_shame-live-ff5d6c?style=for-the-badge&labelColor=0a0e13" alt="Wall of Shame"></a>
-</p>
-
-<p align="center">
-  <a href="https://opensourcemalware.com"><img src="https://img.shields.io/badge/malware-OpenSourceMalware-ff5d6c?style=for-the-badge&labelColor=0a0e13" alt="OpenSourceMalware"></a>
-  <a href="https://attack.mitre.org"><img src="https://img.shields.io/badge/TTPs-MITRE_ATT%26CK-ff5d6c?style=for-the-badge&labelColor=0a0e13" alt="MITRE ATT&CK"></a>
-  <a href="https://www.cisa.gov"><img src="https://img.shields.io/badge/advisories-CISA-ff5d6c?style=for-the-badge&labelColor=0a0e13" alt="CISA"></a>
-  <a href="https://news.google.com"><img src="https://img.shields.io/badge/OSINT-Google_News-ff5d6c?style=for-the-badge&labelColor=0a0e13" alt="Google News"></a>
-</p>
-
-<p align="center">
-  <a href="https://semgrep.dev"><img src="https://img.shields.io/badge/SAST-Semgrep-39d98a?style=for-the-badge&labelColor=0a0e13&logo=semgrep&logoColor=white" alt="Semgrep"></a>
-  <a href="https://github.com/DataDog/guarddog"><img src="https://img.shields.io/badge/supply_chain-GuardDog-39d98a?style=for-the-badge&labelColor=0a0e13" alt="GuardDog"></a>
-  <a href="https://docs.astral.sh/ruff/"><img src="https://img.shields.io/badge/lint-Ruff-39d98a?style=for-the-badge&labelColor=0a0e13&logo=ruff&logoColor=white" alt="Ruff"></a>
-  <a href="https://docs.pytest.org/"><img src="https://img.shields.io/badge/tests-pytest-39d98a?style=for-the-badge&labelColor=0a0e13&logo=pytest&logoColor=white" alt="pytest"></a>
+  <img src="docs/warden-board.png" alt="Intel feeds, static scanners, guarantees" width="900">
 </p>
 
 > **The Warden cannot see. It listens for what code *does*.**
@@ -35,9 +17,11 @@
 > behaviors that betray malice, the way the Warden senses vibration in the dark.
 
 A defensive threat-intelligence engine that discovers, analyzes, and catalogs
-**malicious GitHub repositories**. Threat-intel feeds (MITRE ATT&CK, Google
-News, CISA, OpenSourceMalware) are *provenance breadcrumbs*; they help find and
-attribute the repos. The product is the registry of malicious repos.
+**malicious GitHub repositories**. Threat-intel feeds
+([MITRE ATT&CK](https://attack.mitre.org), [Google News](https://news.google.com),
+[CISA](https://www.cisa.gov), [OpenSourceMalware](https://opensourcemalware.com))
+are *provenance breadcrumbs*; they help find and attribute the repos. The product
+is the registry of malicious repos.
 
 See [docs/](docs/) for the design and [docs/IMPLEMENTATION.md](docs/IMPLEMENTATION.md)
 for what's built vs. planned. Guiding principle: **accuracy over volume.**
