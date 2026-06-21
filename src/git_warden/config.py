@@ -21,6 +21,10 @@ load_env_file(PROJECT_ROOT / ".env")
 
 DATA_DIR = PROJECT_ROOT / "data"
 ARTIFACTS_DIR = PROJECT_ROOT / "artifacts"
+# Committed source of truth for the public Wall of Shame: the analyst-approved
+# findings. Version-controlled (unlike the gitignored DB) so CI can render the
+# README from it. Maintained by `gw review --approve/--reject`.
+WALL_OF_SHAME_PATH = PROJECT_ROOT / "wall_of_shame.json"
 
 # Tier-2 clone scratch. Set GW_WORK_DIR to keep large, ephemeral clones off a
 # near-full system drive (the operator points it at e.g. F:\gw-work on the host).

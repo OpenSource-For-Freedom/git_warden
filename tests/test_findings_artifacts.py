@@ -6,6 +6,9 @@ import pytest
 from conftest import utcnow
 
 from git_warden.artifacts import (
+    add_to_wall,
+    load_wall,
+    remove_from_wall,
     update_readme_registry_table,
     write_findings_csv,
 )
@@ -61,38 +64,60 @@ def test_write_findings_csv_always_written_even_when_empty(tmp_path, db):
     assert path.read_text(encoding="utf-8").splitlines()[0].startswith("full_name,")
 
 
-def test_update_readme_registry_table_publishes_validated_only(tmp_path, db):
-    # Public-safety invariant: ONLY analyst-validated findings reach the public
-    # README. Machine-confirmed-but-unreviewed must never leak out.
-    db.upsert_finding(_finding("good/validated", status=RepoFindingStatus.VALIDATED,
-                               score=8, reasoning="malicious obfuscator"), "run-1")
-    db.upsert_finding(_finding("machine/confirmed", status=RepoFindingStatus.CONFIRMED), "run-1")
-    db.upsert_finding(_finding("noisy/screened", status=RepoFindingStatus.SCREENED), "run-1")
-    readme = tmp_path / "README.md"
-    readme.write_text(
+def _readme(tmp_path):
+    p = tmp_path / "README.md"
+    p.write_text(
         "# X\n\n<!-- git-warden:registry:start -->\nold\n<!-- git-warden:registry:end -->\nend\n",
         encoding="utf-8",
     )
-    changed = update_readme_registry_table(db, readme_path=readme)
-    assert changed is True
+    return p
+
+
+def test_update_readme_renders_committed_wall(tmp_path, db):
+    # The README is rendered from the COMMITTED wall, not the DB: this is what
+    # lets a CI run (empty DB) publish exactly what an analyst approved.
+    db.upsert_finding(_finding("good/validated", status=RepoFindingStatus.VALIDATED,
+                               score=8, reasoning="malicious obfuscator"), "run-1")
+    db.upsert_finding(_finding("machine/confirmed", status=RepoFindingStatus.CONFIRMED), "run-1")
+    wall = tmp_path / "wall.json"
+    add_to_wall(db.get_finding("good/validated"), path=wall)  # only this one approved
+
+    readme = _readme(tmp_path)
+    assert update_readme_registry_table(readme_path=readme, wall_path=wall) is True
     out = readme.read_text(encoding="utf-8")
-    assert "good/validated" in out           # analyst-approved is published
-    assert "machine/confirmed" not in out    # machine-confirmed, unreviewed -> internal only
-    assert "noisy/screened" not in out       # screened never public
-    assert out.endswith("end\n")             # content outside the markers preserved
+    assert "good/validated" in out            # on the committed wall -> published
+    assert "machine/confirmed" not in out     # never approved -> never on the wall
+    assert out.endswith("end\n")              # content outside the markers preserved
     assert "1 analyst-validated malicious repositories" in out
 
 
-def test_update_readme_registry_table_idempotent(tmp_path, db):
-    db.upsert_finding(_finding("good/confirmed", status=RepoFindingStatus.CONFIRMED), "run-1")
-    readme = tmp_path / "README.md"
-    readme.write_text(
-        "<!-- git-warden:registry:start -->\n<!-- git-warden:registry:end -->\n",
-        encoding="utf-8",
-    )
-    assert update_readme_registry_table(db, readme_path=readme) is True
-    assert update_readme_registry_table(db, readme_path=readme) is False  # no churn
+def test_empty_or_missing_wall_renders_none_yet(tmp_path):
+    readme = _readme(tmp_path)
+    assert update_readme_registry_table(readme_path=readme, wall_path=tmp_path / "nope.json")
+    out = readme.read_text(encoding="utf-8")
+    assert "_none yet_" in out
+    assert "0 analyst-validated malicious repositories" in out
 
 
-def test_update_readme_registry_table_missing_file_is_noop(tmp_path, db):
-    assert update_readme_registry_table(db, readme_path=tmp_path / "nope.md") is False
+def test_remove_from_wall_clears_the_listing(tmp_path, db):
+    db.upsert_finding(_finding("evil/repo", status=RepoFindingStatus.VALIDATED, score=9), "run-1")
+    wall = tmp_path / "wall.json"
+    add_to_wall(db.get_finding("evil/repo"), path=wall)
+    assert any(e["full_name"] == "evil/repo" for e in load_wall(wall))
+
+    assert remove_from_wall("evil/repo", path=wall) is True
+    assert load_wall(wall) == []
+    assert remove_from_wall("evil/repo", path=wall) is False  # already gone
+
+
+def test_update_readme_idempotent(tmp_path, db):
+    db.upsert_finding(_finding("good/repo", status=RepoFindingStatus.VALIDATED), "run-1")
+    wall = tmp_path / "wall.json"
+    add_to_wall(db.get_finding("good/repo"), path=wall)
+    readme = _readme(tmp_path)
+    assert update_readme_registry_table(readme_path=readme, wall_path=wall) is True
+    assert update_readme_registry_table(readme_path=readme, wall_path=wall) is False  # no churn
+
+
+def test_update_readme_missing_file_is_noop(tmp_path):
+    assert update_readme_registry_table(readme_path=tmp_path / "nope.md") is False
