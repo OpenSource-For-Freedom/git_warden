@@ -373,6 +373,13 @@ class Database:
                 ),
             )
 
+    def get_finding(self, full_name: str) -> sqlite3.Row | None:
+        """Fetch a single repo finding by (normalized) full_name, or None."""
+        return self.conn.execute(
+            "SELECT * FROM repo_findings WHERE full_name = ?",
+            (full_name.strip().strip("/").casefold(),),
+        ).fetchone()
+
     def set_finding_status(self, full_name: str, status: str) -> int:
         """Analyst override of a finding's status (PRD 3). Returns rows changed."""
         with self.transaction() as c:
