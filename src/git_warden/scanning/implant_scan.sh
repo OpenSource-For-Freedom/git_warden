@@ -40,7 +40,7 @@ EXCLUDES=(--exclude-dir=.git --exclude-dir=.svn --exclude-dir=.hg)
 
 cd "$REPO" || exit 2
 
-# rule CATEGORY RULE WEIGHT 'ERE' -- grep the whole tree, record file/line/snippet.
+# rule CATEGORY RULE WEIGHT 'ERE': grep the whole tree, record file/line/snippet.
 # (single-quote the pattern; backslashes are passed through to grep -E verbatim)
 rule() {
   local cat="$1" name="$2" weight="$3" pat="$4" m file rest line snip
@@ -73,7 +73,7 @@ rule exfiltration curl-post-data    4 '\bcurl\b[^\n]*([[:space:]]-[dFT]\b|--data
 rule exfiltration archive-then-send 4 '(tar|zip|gzip)\b[^\n]*\|[[:space:]]*(curl|nc|wget)'
 rule exfiltration env-pipe-out      4 '(env|printenv)\b[^\n]*\|[[:space:]]*(curl|nc|wget)'
 
-# --- supply-chain / install-time implants (4) -- runs on victim install -----
+# --- supply-chain / install-time implants (4); runs on victim install -----
 rule supply_chain npm-install-hook  4 '\"(pre|post)install\"[[:space:]]*:[^\n]*(curl|wget|node[[:space:]]+-e|child_process|eval|http|base64|powershell)'
 rule supply_chain npm-prepare-hook  4 '\"prepare\"[[:space:]]*:[^\n]*(curl|wget|node[[:space:]]+-e|child_process|http)'
 rule supply_chain gh-secrets-exfil  4 '\$\{\{[[:space:]]*secrets\.[^\n]*\}\}[^\n]*(curl|wget|http)'

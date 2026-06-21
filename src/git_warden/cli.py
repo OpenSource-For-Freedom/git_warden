@@ -430,7 +430,7 @@ def _cmd_hunt(args: argparse.Namespace) -> int:
 
     # Export run artifacts (full transparency, PRD 13.1): the summary, and a
     # dedicated failed-clones CSV so a reviewer sees repos we could not scan and
-    # why -- the run never fails on a bad clone, it reports it.
+    # why; the run never fails on a bad clone, it reports it.
     config.ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
     (config.ARTIFACTS_DIR / f"{run_id}_hunt.json").write_text(
         json.dumps(summary, indent=2), encoding="utf-8")

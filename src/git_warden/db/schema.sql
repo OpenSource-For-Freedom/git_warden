@@ -1,9 +1,9 @@
 -- Git Warden ingestion store (Week 1).
 --
 -- Two layers, mirroring models.py:
---   * source_observations -- append-only audit layer. One row per (feed, actor,
+--   * source_observations: append-only audit layer. One row per (feed, actor,
 --     run) claim. Never updated, never deleted (PRD 11, "Retain everything").
---   * threat_actors + actor_identifiers + campaigns -- normalized entities that
+--   * threat_actors + actor_identifiers + campaigns: normalized entities that
 --     observations roll up into via the validator.
 --
 -- The actor_sources table is the corroboration ledger: distinct feeds per
