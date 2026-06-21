@@ -5,14 +5,31 @@
 <p align="center">
   <a href="https://github.com/OpenSource-For-Freedom/git_warden/actions/workflows/run.yml"><img src="https://github.com/OpenSource-For-Freedom/git_warden/actions/workflows/run.yml/badge.svg" alt="The Warden"></a>
   <a href="https://github.com/OpenSource-For-Freedom/git_warden/actions/workflows/ci.yml"><img src="https://github.com/OpenSource-For-Freedom/git_warden/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <img src="https://img.shields.io/badge/version-0.1.0-5fa8ff?style=for-the-badge&labelColor=0a0e13" alt="Version 0.1.0">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-5fa8ff?style=for-the-badge&labelColor=0a0e13" alt="MIT License"></a>
+  <a href="https://www.python.org"><img src="https://img.shields.io/badge/python-3.12+-5fa8ff?style=for-the-badge&labelColor=0a0e13&logo=python&logoColor=white" alt="Python 3.12+"></a>
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/DEFENSIVE-OSINT-22e0d6?style=for-the-badge&labelColor=0a0e13" alt="Defensive OSINT">
   <img src="https://img.shields.io/badge/SCAN-STATIC--ONLY-22e0d6?style=for-the-badge&labelColor=0a0e13" alt="Static only">
-  <img src="https://img.shields.io/badge/RUNNER-EGRESS--AUDITED-5fa8ff?style=for-the-badge&labelColor=0a0e13" alt="Egress audited">
-  <img src="https://img.shields.io/badge/REGISTRY-HUMAN--VALIDATED-39d98a?style=for-the-badge&labelColor=0a0e13" alt="Human validated">
-  <img src="https://img.shields.io/badge/PYTHON-3.12+-869cb2?style=for-the-badge&labelColor=0a0e13" alt="Python 3.12+">
+  <img src="https://img.shields.io/badge/TARGETS-NEVER_EXECUTED-22e0d6?style=for-the-badge&labelColor=0a0e13" alt="Targets never executed">
+  <a href="https://github.com/OpenSource-For-Freedom/Legion_runner"><img src="https://img.shields.io/badge/RUNNER-EGRESS--AUDITED-5fa8ff?style=for-the-badge&labelColor=0a0e13" alt="Egress audited"></a>
+  <a href="#wall-of-shame"><img src="https://img.shields.io/badge/WALL_OF_SHAME-live-ff5d6c?style=for-the-badge&labelColor=0a0e13" alt="Wall of Shame"></a>
+</p>
+
+<p align="center">
+  <a href="https://opensourcemalware.com"><img src="https://img.shields.io/badge/feed-OpenSourceMalware-ff5d6c?style=for-the-badge&labelColor=0a0e13" alt="OpenSourceMalware"></a>
+  <a href="https://attack.mitre.org"><img src="https://img.shields.io/badge/feed-MITRE_ATT%26CK-ff5d6c?style=for-the-badge&labelColor=0a0e13" alt="MITRE ATT&CK"></a>
+  <a href="https://www.cisa.gov"><img src="https://img.shields.io/badge/feed-CISA-ff5d6c?style=for-the-badge&labelColor=0a0e13" alt="CISA"></a>
+  <a href="https://news.google.com"><img src="https://img.shields.io/badge/feed-Google_News-ff5d6c?style=for-the-badge&labelColor=0a0e13" alt="Google News"></a>
+</p>
+
+<p align="center">
+  <a href="https://semgrep.dev"><img src="https://img.shields.io/badge/scanner-Semgrep-39d98a?style=for-the-badge&labelColor=0a0e13&logo=semgrep&logoColor=white" alt="Semgrep"></a>
+  <a href="https://github.com/DataDog/guarddog"><img src="https://img.shields.io/badge/scanner-GuardDog-39d98a?style=for-the-badge&labelColor=0a0e13" alt="GuardDog"></a>
+  <a href="https://docs.astral.sh/ruff/"><img src="https://img.shields.io/badge/lint-Ruff-39d98a?style=for-the-badge&labelColor=0a0e13&logo=ruff&logoColor=black" alt="Ruff"></a>
+  <a href="https://docs.pytest.org/"><img src="https://img.shields.io/badge/tests-pytest-39d98a?style=for-the-badge&labelColor=0a0e13&logo=pytest&logoColor=white" alt="pytest"></a>
 </p>
 
 > **The Warden cannot see. It listens for what code *does*.**
