@@ -336,6 +336,7 @@ def hunt(
         db.upsert_finding(finding, run_id)
 
     confirmed = 0
+    failed_clones: list[dict] = []  # repos we could not Tier-2 scan, with reasons
     if do_tier2:
         screened = [f for f in candidates.values()
                     if f.score >= scan_min_score or f.status is RepoFindingStatus.SCREENED]
@@ -370,6 +371,9 @@ def hunt(
                 result = scan_candidate(finding.full_name, workdir,
                                         restrict_paths=restrict, confirm_categories=confirm_cats,
                                         **kwargs)
+                if result is None:  # clone failed (404/taken down) or exceeded bounds
+                    failed_clones.append({"repo": finding.full_name,
+                                          "reason": "clone_failed_or_bounds"})
                 if result and result.confirmed:
                     finding.status = RepoFindingStatus.CONFIRMED
                     finding.score += result.bash_score
@@ -428,9 +432,10 @@ def hunt(
         "confirmed": confirmed,
         "confirmed_by_method": dict(confirmed_by_method),
         "rejected_mirrors": rejected_mirrors,  # unmodified red-team forks dropped
+        "clones_failed": len(failed_clones),   # could not Tier-2 scan (continued)
         "gold_delivered": delivered,
     }
     db.finish_run(run_id, datetime.now(UTC), RunStatus.COMPLETED, counts)
-    summary = {"run_id": run_id, "counts": counts}
-    log.info("hunt finished", extra={"context": summary})
+    summary = {"run_id": run_id, "counts": counts, "failed_clones": failed_clones}
+    log.info("hunt finished", extra={"context": {"run_id": run_id, "counts": counts}})
     return summary

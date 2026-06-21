@@ -275,6 +275,41 @@ def test_clone_rejects_trailing_newline_in_full_name(tmp_path):
     assert clone_repo("owner/repo\n", tmp_path / "d") is None  # fullmatch, not $
 
 
+def test_clone_repo_is_sparse_partial_clone(tmp_path):
+    # Big repos are kept, not skipped: a sparse partial shallow clone downloads
+    # only scannable files (1.35 GB three.js -> ~41 MB). Verify the git flow.
+    from git_warden.scanning.tier2 import clone_repo
+    cmds = []
+
+    class R:
+        returncode = 0
+        stdout = stderr = ""
+
+    def runner(cmd, **k):
+        cmds.append(cmd)
+        (tmp_path / "d").mkdir(exist_ok=True)
+        return R()
+
+    assert clone_repo("owner/repo", tmp_path / "d", runner=runner) == tmp_path / "d"
+    assert len(cmds) == 3
+    assert "--filter=blob:none" in cmds[0] and "--no-checkout" in cmds[0]
+    assert "sparse-checkout" in cmds[1]
+    assert cmds[2][-2:] == ["checkout", "--quiet"]  # final materialize
+
+
+def test_clone_repo_force_removes_on_git_failure(tmp_path):
+    from git_warden.scanning.tier2 import clone_repo
+    dest = tmp_path / "d"
+    dest.mkdir()
+
+    class R:
+        returncode = 128
+        stdout = stderr = "fatal"
+
+    assert clone_repo("owner/repo", dest, runner=lambda *a, **k: R()) is None
+    assert not dest.exists()  # partial clone force-removed
+
+
 def test_force_rmtree_removes_readonly_files(tmp_path):
     import os
     import stat
