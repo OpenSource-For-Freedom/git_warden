@@ -26,7 +26,11 @@ jobs:
         uses: OpenSource-For-Freedom/Legion_runner@v1.0.41
         with:
           egress-policy: audit
+      # Check out with GH_TOKEN (the user's PAT) so the README registry table can
+      # be committed back and pushed with that same token later in the run.
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_TOKEN }}
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -62,6 +66,22 @@ jobs:
         # 60-min timeout; sparse clones keep even giant repos cheap. Failed clones
         # are exported, not fatal.
         run: python gw.py hunt --scan --gold --limit 120
+
+      # Publish the regenerated confirmed-registry table back to the README,
+      # pushed with GH_TOKEN (checkout above persisted it as the git credential).
+      # [skip ci] keeps this auto-commit from re-triggering CI. Never fatal.
+      - name: Publish registry table to README
+        if: always()
+        run: |
+          git config user.name "git-warden[bot]"
+          git config user.email "git-warden@users.noreply.github.com"
+          if git diff --quiet -- README.md; then
+            echo "README registry unchanged; nothing to push."
+          else
+            git add README.md
+            git commit -m "Auto-update malicious-repo registry table [skip ci]"
+            git push origin HEAD:${GITHUB_REF_NAME}
+          fi
 
       - name: Upload run artifacts (full transparency)
         if: always()

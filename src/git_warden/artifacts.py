@@ -19,6 +19,32 @@ from .db import Database
 
 log = logging.getLogger(__name__)
 
+# Full column set for the per-run findings CSV (everything an analyst needs to
+# triage without opening the DB). Stable even when a run finds nothing.
+_FINDINGS_COLUMNS = [
+    "full_name",
+    "owner",
+    "platform",
+    "status",
+    "detection_method",
+    "score",
+    "novel",          # not already reported by OSM (our own contribution)
+    "delivered_gold",  # 1 once sent to Discord
+    "attribution",
+    "url",
+    "code_hash",
+    "top_indicator",   # first file:line -> category/rule that fired
+    "signals",
+    "matched_iocs",
+    "reasoning",
+    "first_seen_run",
+    "last_seen_run",
+]
+
+# README registry table is regenerated in place between these markers.
+_README_START = "<!-- git-warden:registry:start -->"
+_README_END = "<!-- git-warden:registry:end -->"
+
 
 def write_run_artifacts(
     db: Database,
@@ -65,3 +91,126 @@ def write_run_artifacts(
         extra={"context": {"csv": str(csv_path), "summary": str(json_path)}},
     )
     return {"csv": csv_path, "summary": json_path}
+
+
+def _top_indicator(raw_payload: str) -> str:
+    """First file:line -> category/rule from a finding's static-scan payload."""
+    bash = (json.loads(raw_payload or "{}") or {}).get("bash_findings") or []
+    if not bash:
+        return ""
+    b = bash[0]
+    return f"{b.get('file', '')}:{b.get('line', '')} {b.get('category', '')}/{b.get('rule', '')}"
+
+
+def _finding_row(row) -> dict:
+    """Flatten a repo_findings row into the CSV column set."""
+    full = row["full_name"]
+    return {
+        "full_name": full,
+        "owner": full.split("/", 1)[0],
+        "platform": row["platform"],
+        "status": row["status"],
+        "detection_method": row["detection_method"],
+        "score": row["score"],
+        "novel": row["detection_method"] != "osm_repository",
+        "delivered_gold": row["delivered_gold"],
+        "attribution": row["actor_key"] or "",
+        "url": row["url"] or f"https://github.com/{full}",
+        "code_hash": (row["code_hash"] or "")[:16],
+        "top_indicator": _top_indicator(row["raw_payload"]),
+        "signals": " | ".join(json.loads(row["signals"] or "[]")),
+        "matched_iocs": " | ".join(json.loads(row["matched_iocs"] or "[]")),
+        "reasoning": (row["reasoning"] or "").replace("\n", " ")[:500],
+        "first_seen_run": row["first_seen_run"],
+        "last_seen_run": row["last_seen_run"],
+    }
+
+
+def write_findings_csv(
+    db: Database,
+    run_id: str,
+    artifacts_dir: Path = ARTIFACTS_DIR,
+) -> Path:
+    """Write a CSV of every repo this run touched, with the full column set.
+
+    Full transparency (PRD 13.1): newly discovered AND re-seen repos across all
+    statuses (candidate, screened, confirmed, rejected). Columns are stable even
+    when the run found nothing, so the artifact always exists.
+    """
+    artifacts_dir.mkdir(parents=True, exist_ok=True)
+    rows = [_finding_row(r) for r in db.findings_for_run(run_id)]
+    csv_path = artifacts_dir / f"{run_id}_findings.csv"
+    pd.DataFrame(rows, columns=_FINDINGS_COLUMNS).to_csv(csv_path, index=False)
+    log.info(
+        "wrote findings CSV",
+        extra={"context": {"csv": str(csv_path), "rows": len(rows)}},
+    )
+    return csv_path
+
+
+def _md_cell(value) -> str:
+    """Sanitize a value for a single Markdown table cell (no row/col breakout)."""
+    text = str(value if value is not None else "").replace("\n", " ").replace("\r", " ")
+    return text.replace("|", "\\|").replace("`", "'")
+
+
+def render_registry_table(rows: list) -> str:
+    """Render confirmed malicious repos as a Markdown table (newest first)."""
+    header = (
+        "| Repository | Detection | Score | Attribution | First seen | Why |\n"
+        "|------------|-----------|-------|-------------|------------|-----|"
+    )
+    if not rows:
+        return header + "\n| _none yet_ |  |  |  |  |  |"
+    lines = [header]
+    for r in rows:
+        full = r["full_name"]
+        repo = f"[`{_md_cell(full)}`](https://github.com/{_md_cell(full)})"
+        why = _md_cell((r["reasoning"] or "")[:140])
+        lines.append(
+            f"| {repo} | {_md_cell(r['detection_method'])} | {r['score']} | "
+            f"{_md_cell(r['actor_key'] or 'unattributed')} | "
+            f"{_md_cell(r['first_seen_run'] or '')} | {why} |"
+        )
+    return "\n".join(lines)
+
+
+def update_readme_registry_table(
+    db: Database,
+    readme_path: Path = Path("README.md"),
+) -> bool:
+    """Regenerate the confirmed-registry table in README between the markers.
+
+    Returns True if the file content changed. The README lists CONFIRMED repos
+    only (the product); screened/rejected candidates stay in the audit CSV, not
+    published publicly. Cumulative, so the README always shows the live registry.
+    """
+    if not readme_path.exists():
+        log.warning("README not found; skipping registry table", extra={
+            "context": {"path": str(readme_path)}})
+        return False
+    rows = db.findings_by_status("confirmed")
+    table = render_registry_table(rows)
+    block = (
+        f"{_README_START}\n"
+        f"_{len(rows)} confirmed malicious repositories - regenerated each run._\n\n"
+        f"{table}\n"
+        f"{_README_END}"
+    )
+    original = readme_path.read_text(encoding="utf-8")
+    if _README_START in original and _README_END in original:
+        head, _, rest = original.partition(_README_START)
+        _, _, tail = rest.partition(_README_END)
+        updated = head + block + tail
+    else:
+        sep = "" if original.endswith("\n") else "\n"
+        updated = (
+            f"{original}{sep}\n## Confirmed malicious-repo registry\n\n"
+            f"Auto-generated from the live registry. The full per-run audit "
+            f"(all candidates) is in the run artifacts.\n\n{block}\n"
+        )
+    if updated == original:
+        return False
+    readme_path.write_text(updated, encoding="utf-8")
+    log.info("updated README registry table", extra={"context": {"rows": len(rows)}})
+    return True

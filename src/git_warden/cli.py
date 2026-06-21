@@ -414,10 +414,19 @@ def _cmd_hunt(args: argparse.Namespace) -> int:
             gold=args.gold,
             notifier=lambda cluster: post_discord(embeds=[cluster_embed(cluster)]),
         )
+        # Findings CSV + README registry table need the DB open, so write them
+        # before close. Every repo this run touched (full columns) goes to the
+        # CSV; the README shows the confirmed registry only.
+        from .artifacts import update_readme_registry_table, write_findings_csv
+        findings_csv = write_findings_csv(db, run_id)
+        readme_changed = update_readme_registry_table(db)
     finally:
         db.close()
     json.dump(summary, sys.stdout, indent=2)
     sys.stdout.write("\n")
+    print(f"findings CSV: artifacts/{findings_csv.name}")
+    if readme_changed:
+        print("README registry table updated.")
 
     # Export run artifacts (full transparency, PRD 13.1): the summary, and a
     # dedicated failed-clones CSV so a reviewer sees repos we could not scan and
