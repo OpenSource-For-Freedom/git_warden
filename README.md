@@ -11,24 +11,24 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/DEFENSIVE-OSINT-22e0d6?style=for-the-badge&labelColor=0a0e13" alt="Defensive OSINT">
-  <img src="https://img.shields.io/badge/SCAN-STATIC--ONLY-22e0d6?style=for-the-badge&labelColor=0a0e13" alt="Static only">
-  <img src="https://img.shields.io/badge/TARGETS-NEVER_EXECUTED-22e0d6?style=for-the-badge&labelColor=0a0e13" alt="Targets never executed">
-  <a href="https://github.com/OpenSource-For-Freedom/Legion_runner"><img src="https://img.shields.io/badge/RUNNER-EGRESS--AUDITED-5fa8ff?style=for-the-badge&labelColor=0a0e13" alt="Egress audited"></a>
-  <a href="#wall-of-shame"><img src="https://img.shields.io/badge/WALL_OF_SHAME-live-ff5d6c?style=for-the-badge&labelColor=0a0e13" alt="Wall of Shame"></a>
+  <img src="https://img.shields.io/badge/posture-defensive-22e0d6?style=for-the-badge&labelColor=0a0e13" alt="Defensive">
+  <img src="https://img.shields.io/badge/analysis-static_only-22e0d6?style=for-the-badge&labelColor=0a0e13" alt="Static only">
+  <img src="https://img.shields.io/badge/targets-never_executed-22e0d6?style=for-the-badge&labelColor=0a0e13" alt="Targets never executed">
+  <a href="https://github.com/OpenSource-For-Freedom/Legion_runner"><img src="https://img.shields.io/badge/runner-egress_audited-5fa8ff?style=for-the-badge&labelColor=0a0e13" alt="Egress audited"></a>
+  <a href="#wall-of-shame"><img src="https://img.shields.io/badge/wall_of_shame-live-ff5d6c?style=for-the-badge&labelColor=0a0e13" alt="Wall of Shame"></a>
 </p>
 
 <p align="center">
-  <a href="https://opensourcemalware.com"><img src="https://img.shields.io/badge/feed-OpenSourceMalware-ff5d6c?style=for-the-badge&labelColor=0a0e13" alt="OpenSourceMalware"></a>
-  <a href="https://attack.mitre.org"><img src="https://img.shields.io/badge/feed-MITRE_ATT%26CK-ff5d6c?style=for-the-badge&labelColor=0a0e13" alt="MITRE ATT&CK"></a>
-  <a href="https://www.cisa.gov"><img src="https://img.shields.io/badge/feed-CISA-ff5d6c?style=for-the-badge&labelColor=0a0e13" alt="CISA"></a>
-  <a href="https://news.google.com"><img src="https://img.shields.io/badge/feed-Google_News-ff5d6c?style=for-the-badge&labelColor=0a0e13" alt="Google News"></a>
+  <a href="https://opensourcemalware.com"><img src="https://img.shields.io/badge/malware-OpenSourceMalware-ff5d6c?style=for-the-badge&labelColor=0a0e13" alt="OpenSourceMalware"></a>
+  <a href="https://attack.mitre.org"><img src="https://img.shields.io/badge/TTPs-MITRE_ATT%26CK-ff5d6c?style=for-the-badge&labelColor=0a0e13" alt="MITRE ATT&CK"></a>
+  <a href="https://www.cisa.gov"><img src="https://img.shields.io/badge/advisories-CISA-ff5d6c?style=for-the-badge&labelColor=0a0e13" alt="CISA"></a>
+  <a href="https://news.google.com"><img src="https://img.shields.io/badge/OSINT-Google_News-ff5d6c?style=for-the-badge&labelColor=0a0e13" alt="Google News"></a>
 </p>
 
 <p align="center">
-  <a href="https://semgrep.dev"><img src="https://img.shields.io/badge/scanner-Semgrep-39d98a?style=for-the-badge&labelColor=0a0e13&logo=semgrep&logoColor=white" alt="Semgrep"></a>
-  <a href="https://github.com/DataDog/guarddog"><img src="https://img.shields.io/badge/scanner-GuardDog-39d98a?style=for-the-badge&labelColor=0a0e13" alt="GuardDog"></a>
-  <a href="https://docs.astral.sh/ruff/"><img src="https://img.shields.io/badge/lint-Ruff-39d98a?style=for-the-badge&labelColor=0a0e13&logo=ruff&logoColor=black" alt="Ruff"></a>
+  <a href="https://semgrep.dev"><img src="https://img.shields.io/badge/SAST-Semgrep-39d98a?style=for-the-badge&labelColor=0a0e13&logo=semgrep&logoColor=white" alt="Semgrep"></a>
+  <a href="https://github.com/DataDog/guarddog"><img src="https://img.shields.io/badge/supply_chain-GuardDog-39d98a?style=for-the-badge&labelColor=0a0e13" alt="GuardDog"></a>
+  <a href="https://docs.astral.sh/ruff/"><img src="https://img.shields.io/badge/lint-Ruff-39d98a?style=for-the-badge&labelColor=0a0e13&logo=ruff&logoColor=white" alt="Ruff"></a>
   <a href="https://docs.pytest.org/"><img src="https://img.shields.io/badge/tests-pytest-39d98a?style=for-the-badge&labelColor=0a0e13&logo=pytest&logoColor=white" alt="pytest"></a>
 </p>
 
