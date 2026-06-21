@@ -36,6 +36,7 @@ from .scanning import (
     find_lineage_candidates,
     find_owner_repos,
     is_defensive_repo,
+    matches_known_tool,
     scan_candidate,
     score_repo,
     search_iocs,
@@ -305,6 +306,7 @@ def hunt(
     screened_count = 0
     confirmed_by_method: Counter = Counter()
     rejected_mirrors = 0
+    redteam_breadcrumbs = 0  # red-team tooling kept as a breadcrumb, not confirmed
     for finding in candidates.values():
         owner, _, name = finding.full_name.partition("/")
         readme = None
@@ -367,6 +369,23 @@ def hunt(
                             " | unmodified fork of red-team tool (no intent change)"
                         db.upsert_finding(finding, run_id)
                         rejected_mirrors += 1
+                        continue
+                else:
+                    # A red-team tool surfaced by a NON-lineage pivot (owner /
+                    # signature / IOC) is a research breadcrumb, not a finding. We
+                    # have no upstream to diff, so we cannot prove weaponization was
+                    # ADDED; the tool's own offensive code (reverse shells, cred
+                    # dumping, obfuscation) is its purpose, not malice. Keep it
+                    # screened so legitimate red-team tooling is never pinned to the
+                    # registry. A genuinely weaponized fork still confirms via the
+                    # lineage path above (which diffs against the upstream tool).
+                    tool = matches_known_tool(finding.full_name, all_terms)
+                    if tool:
+                        finding.status = RepoFindingStatus.SCREENED
+                        finding.reasoning = (finding.reasoning or "") + \
+                            f" | matches pinned red-team tool '{tool}'; breadcrumb, not confirmed"
+                        db.upsert_finding(finding, run_id)
+                        redteam_breadcrumbs += 1
                         continue
                 result = scan_candidate(finding.full_name, workdir,
                                         restrict_paths=restrict, confirm_categories=confirm_cats,
@@ -432,6 +451,7 @@ def hunt(
         "confirmed": confirmed,
         "confirmed_by_method": dict(confirmed_by_method),
         "rejected_mirrors": rejected_mirrors,  # unmodified red-team forks dropped
+        "redteam_breadcrumbs": redteam_breadcrumbs,  # red-team tooling kept as lead
         "clones_failed": len(failed_clones),   # could not Tier-2 scan (continued)
         "gold_delivered": delivered,
     }

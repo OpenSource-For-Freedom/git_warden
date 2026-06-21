@@ -2,9 +2,27 @@
 
 from __future__ import annotations
 
-from git_warden.scanning.screening import DEFAULT_TIER2_THRESHOLD, score_repo
+from git_warden.scanning.screening import (
+    DEFAULT_TIER2_THRESHOLD,
+    matches_known_tool,
+    score_repo,
+)
 
 KNOWN = ["Sliver", "sliver", "Cobalt Strike", "Mythic", "Havoc"]
+
+
+def test_matches_known_tool_exact_and_embedded():
+    assert matches_known_tool("mallory/sliver", KNOWN) == "Sliver"
+    assert matches_known_tool("acme/my-sliver-c2", KNOWN) == "Sliver"
+    assert matches_known_tool("team/havoc", KNOWN) == "Havoc"
+
+
+def test_matches_known_tool_skips_lookalikes_and_unrelated():
+    # Typosquat/homoglyph differ on the RAW name -> NOT whitelisted (still scanned).
+    assert matches_known_tool("mallory/sl1ver", KNOWN) is None
+    assert matches_known_tool("mallory/ѕliver", KNOWN) is None  # Cyrillic 'ѕ'
+    # Unrelated project names do not match.
+    assert matches_known_tool("alexsander532/portfolio-pessoal", KNOWN) is None
 
 
 def test_typosquat_name_is_strong_signal():

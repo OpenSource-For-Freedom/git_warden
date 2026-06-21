@@ -155,6 +155,26 @@ def _name_signals(
     return signals
 
 
+def matches_known_tool(name: str, known_terms) -> str | None:
+    """Return the pinned red-team tool term this repo NAME *is*, else None.
+
+    Matches when the repo's short name equals a tool term or embeds it
+    (e.g. ``sliver``, ``my-sliver-c2``). Used to keep red-team tooling a research
+    breadcrumb: a repo that IS such a tool, surfaced by a NON-lineage pivot
+    (owner / signature / IOC), confirms only via the lineage path's
+    weaponization diff, never on its own offensive code. Matches on the RAW
+    casefolded name, NOT the confusable skeleton, so a homoglyph/typosquat
+    impersonation (``sl1ver``, ``ѕliver``) is left to be scrutinized, not
+    whitelisted. Terms shorter than 4 chars are ignored to avoid noise.
+    """
+    short = _short_name(name)
+    for term in known_terms:
+        t = (term or "").casefold().strip()
+        if len(t) >= 4 and (t == short or t in short):
+            return term
+    return None
+
+
 def score_repo(
     *,
     name: str,
