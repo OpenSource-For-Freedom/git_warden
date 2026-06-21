@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/warden-card.png" alt="Git Warden" width="640">
+</p>
+
 # Git Warden
 
 **The warden of malicious repositories and code.**
