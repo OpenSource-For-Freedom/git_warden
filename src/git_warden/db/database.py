@@ -387,6 +387,19 @@ class Database:
             "SELECT * FROM repo_findings WHERE status = ? ORDER BY score DESC", (status,)
         ).fetchall()
 
+    def findings_for_run(self, run_id: str) -> list[sqlite3.Row]:
+        """Every repo this run touched (newly discovered or re-seen).
+
+        Used by the findings artifact: all candidates are retained for audit,
+        including screened and rejected ones (PRD section 13.1), so nothing is
+        silently dropped. first_seen_run == run_id marks the genuinely new ones.
+        """
+        return self.conn.execute(
+            "SELECT * FROM repo_findings WHERE last_seen_run = ? "
+            "ORDER BY status, score DESC, full_name",
+            (run_id,),
+        ).fetchall()
+
     def undelivered_gold(self) -> list[sqlite3.Row]:
         """NOVEL confirmed findings not yet sent to Discord (gold queue).
 

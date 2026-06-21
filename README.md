@@ -27,6 +27,31 @@ INGEST (breadcrumbs)                 HUNT (find malicious GitHub repos)
                                         malicious-repo registry ─► Discord gold
 ```
 
+## Confirmed malicious-repo registry
+
+The product: repositories Git Warden has confirmed malicious. This table is
+regenerated automatically on every run (the full per-run audit of all
+candidates, including screened and rejected ones, lives in the run artifacts).
+
+<!-- git-warden:registry:start -->
+_12 confirmed malicious repositories - regenerated each run._
+
+| Repository | Detection | Score | Attribution | First seen | Why |
+|------------|-----------|-------|-------------|------------|-----|
+| [`alexsander532/projeto_dashboard_versao1`](https://github.com/alexsander532/projeto_dashboard_versao1) | malicious_owner | 14 | unattributed | hunt-20260620T053126Z | repository under owner Alexsander532 of a known-malicious repo \| Tier-2 confirmed (bash score 14) |
+| [`usmanaliashraf/portfolio`](https://github.com/usmanaliashraf/portfolio) | signature_match | 12 | unattributed | hunt-20260620T052811Z | Shares a confirmed-malware code signature ['Jzt2YXIgXyRfMWU0Mj0oZnVuY3Rpb24obCxlKXt2YXIgaD1sLm'] \| Tier-2 confirmed (bash score 12) |
+| [`icecoldjay/bri`](https://github.com/icecoldjay/bri) | signature_match | 11 | unattributed | hunt-20260620T052811Z | Shares a confirmed-malware code signature ['eval atob filename:tailwind.config.js'] \| Tier-2 confirmed (bash score 11) |
+| [`alexsander532/atlas_landingpage`](https://github.com/alexsander532/atlas_landingpage) | signature_match | 9 | unattributed | hunt-20260620T052811Z | Shares a confirmed-malware code signature ['Jzt2YXIgXyRfMWU0Mj0oZnVuY3Rpb24obCxlKXt2YXIgaD1sLm'] \| Tier-2 confirmed (bash score 8) |
+| [`alexsander532/synapseai_landingpage`](https://github.com/alexsander532/synapseai_landingpage) | signature_match | 9 | unattributed | hunt-20260620T052811Z | Shares a confirmed-malware code signature ['Jzt2YXIgXyRfMWU0Mj0oZnVuY3Rpb24obCxlKXt2YXIgaD1sLm'] \| Tier-2 confirmed (bash score 8) |
+| [`alexsander532/mvp_wain_group130`](https://github.com/alexsander532/mvp_wain_group130) | signature_match | 9 | unattributed | hunt-20260620T052811Z | Shares a confirmed-malware code signature ['Jzt2YXIgXyRfMWU0Mj0oZnVuY3Rpb24obCxlKXt2YXIgaD1sLm'] \| Tier-2 confirmed (bash score 8) |
+| [`agrawalchirag/corex`](https://github.com/agrawalchirag/corex) | osm_repository | 8 | DPRK (North Korea) (per OSM) | hunt-20260620T043523Z | Obfuscated eval(atob(...)) payload injected into postcss.config.js after the legit tailwind config (Tier-2 static detection). Lead: OSM quer |
+| [`haroontaufiq/cosmic-questionnaire`](https://github.com/haroontaufiq/cosmic-questionnaire) | signature_match | 8 | unattributed | hunt-20260620T052811Z | Shares a confirmed-malware code signature ['Jzt2YXIgXyRfMWU0Mj0oZnVuY3Rpb24obCxlKXt2YXIgaD1sLm'] \| Tier-2 confirmed (bash score 8) |
+| [`alexsander532/synapseai`](https://github.com/alexsander532/synapseai) | signature_match | 8 | unattributed | hunt-20260620T052811Z | Shares a confirmed-malware code signature ['Jzt2YXIgXyRfMWU0Mj0oZnVuY3Rpb24obCxlKXt2YXIgaD1sLm'] \| Tier-2 confirmed (bash score 8) |
+| [`alexsander532/synapse_ai`](https://github.com/alexsander532/synapse_ai) | malicious_owner | 8 | unattributed | hunt-20260620T053126Z | repository under owner Alexsander532 of a known-malicious repo \| Tier-2 confirmed (bash score 8) |
+| [`alexsander532/portfolio-pessoal`](https://github.com/alexsander532/portfolio-pessoal) | malicious_owner | 8 | unattributed | hunt-20260620T053126Z | repository under owner Alexsander532 of a known-malicious repo \| Tier-2 confirmed (bash score 8) |
+| [`usmanaliashraf/rag-bot-uet-science-society`](https://github.com/usmanaliashraf/rag-bot-uet-science-society) | malicious_owner | 8 | unattributed | hunt-20260620T053126Z | repository under owner UsmanAliAshraf of a known-malicious repo \| Tier-2 confirmed (bash score 8) |
+<!-- git-warden:registry:end -->
+
 ## Quick start
 
 ```bash
