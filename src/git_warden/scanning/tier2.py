@@ -309,7 +309,7 @@ def _run_external(name: str, root: Path, runner) -> str:
     if name == "semgrep":
         try:
             result = runner(["semgrep", "--json", "--quiet", "--config", "auto", str(root)],
-                            capture_output=True, text=True, timeout=300)
+                            capture_output=True, text=True, timeout=120)
             payload = json.loads(result.stdout or "{}")
         except (OSError, subprocess.SubprocessError):
             return "error"
@@ -369,7 +369,17 @@ def analyze_repo(
         findings = [f for f in findings if f.file.replace("\\", "/") in allowed]
 
     score = _score_static(findings)
-    scanners = {name: _run_external(name, root, runner) for name in _SCANNER_NAMES}
+    # Semgrep (`--config auto`) is a slow general SAST pass that NEVER confirms a
+    # finding on its own (only guarddog/yara do, below); it is enrichment. Running
+    # it on every clone is what blew past the CI timeout, so skip it on repos where
+    # the fast static scan found nothing (the bulk of candidates). GuardDog/YARA
+    # can confirm independently, so they always run.
+    scanners: dict[str, str] = {}
+    for name in _SCANNER_NAMES:
+        if name == "semgrep" and score == 0:
+            scanners[name] = "skipped (no static signal)"
+            continue
+        scanners[name] = _run_external(name, root, runner)
     # Two-tier signature gate. Tier A confirms alone; Tier B confirms only with a
     # second signal (score >= threshold). Host-gated curl/fetch rules count only
     # against an attacker host. For red-team lineage, confirm_categories restricts
