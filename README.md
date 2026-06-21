@@ -24,7 +24,7 @@ for what's built vs. planned. Guiding principle: **accuracy over volume.**
 
 <p align="center"><img src="docs/sculk-divider.png" alt="" width="900"></p>
 
-## 🟦 How it works
+## How it works
 
 ```
 INGEST (breadcrumbs)                 HUNT (find malicious GitHub repos)
@@ -43,7 +43,7 @@ INGEST (breadcrumbs)                 HUNT (find malicious GitHub repos)
 
 <p align="center"><img src="docs/sculk-divider.png" alt="" width="900"></p>
 
-## 💀 Wall of Shame
+## Wall of Shame
 
 <p align="center">
   <img src="docs/wall-of-shame.png" alt="Wall of Shame" width="900">
@@ -77,7 +77,7 @@ _0 analyst-validated malicious repositories. Regenerated each run; only findings
 
 <p align="center"><img src="docs/sculk-divider.png" alt="" width="900"></p>
 
-## ⚡ Quick start
+## Quick start
 
 ```bash
 pip install -e ".[dev]"          # or run without install: python gw.py <cmd>
@@ -107,7 +107,7 @@ python gw.py review --approve owner/repo     # analyst-validate a confirmed repo
 python gw.py probe --feed github --term lazarus  # probe any feed live
 ```
 
-## 🛡️ Deployment
+## Deployment
 
 GitHub Actions ([.github/workflows/](.github/workflows/)): `ci.yml` runs
 lint+tests; `run.yml` runs ingest→hunt weekly (manual first, per doc 05). Every
@@ -125,7 +125,7 @@ vars the code reads (local `.env` uses the `GW_*` names directly):
 Orchestration knobs live in [config/settings.yaml](config/settings.yaml) and
 [config/trigger.yaml](config/trigger.yaml).
 
-## 🧪 Development
+## Development
 
 ```bash
 ruff check src tests gw.py
