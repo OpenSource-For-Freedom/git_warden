@@ -419,10 +419,9 @@ def _cmd_hunt(args: argparse.Namespace) -> int:
         # CSV; the README shows the confirmed registry only.
         from .artifacts import update_readme_registry_table, write_findings_csv
         findings_csv = write_findings_csv(db, run_id)
-        # Render the README wall from the COMMITTED wall_of_shame.json (not this
-        # run's DB), so a CI run publishes exactly what an analyst approved and
-        # committed rather than wiping it from an empty CI database.
-        readme_changed = update_readme_registry_table()
+        # Render the README Wall of Shame from this run's confirmed findings and
+        # write the per-run findings CSV artifact. CI pushes the README each run.
+        readme_changed = update_readme_registry_table(db)
     finally:
         db.close()
     json.dump(summary, sys.stdout, indent=2)
@@ -449,36 +448,27 @@ def _cmd_hunt(args: argparse.Namespace) -> int:
 
 
 def _cmd_review(args: argparse.Namespace) -> int:
-    """Analyst validation of confirmed findings (human-in-the-loop, PRD 3)."""
+    """Analyst override of a confirmed finding: --reject pulls a false positive
+    off the Wall of Shame; --approve marks one kept. Both refresh the README."""
     configure_logging(json_output=False)
-    from .artifacts import add_to_wall, remove_from_wall, update_readme_registry_table
+    from .artifacts import update_readme_registry_table
     from .enums import RepoFindingStatus
 
     db = Database.open(args.db)
     try:
         if args.approve:
             n = db.set_finding_status(args.approve, RepoFindingStatus.VALIDATED.value)
-            if not n:
-                print(f"no finding {args.approve!r}")
-            else:
-                row = db.get_finding(args.approve)
-                if row:
-                    add_to_wall(row)
-                update_readme_registry_table()
-                print(f"validated {args.approve}; added to the Wall of Shame. "
-                      f"Commit wall_of_shame.json + README.md to publish.")
+            update_readme_registry_table(db)
+            print(f"kept {args.approve}; commit README.md." if n
+                  else f"no finding {args.approve!r}")
         elif args.reject:
             n = db.set_finding_status(args.reject, RepoFindingStatus.REJECTED.value)
-            if not n:
-                print(f"no finding {args.reject!r}")
-            else:
-                remove_from_wall(args.reject)
-                update_readme_registry_table()
-                print(f"rejected {args.reject}; removed from the Wall of Shame. "
-                      f"Commit wall_of_shame.json + README.md.")
+            update_readme_registry_table(db)
+            print(f"rejected {args.reject}; removed from the Wall of Shame, commit README.md."
+                  if n else f"no finding {args.reject!r}")
         else:
-            rows = db.findings_by_status("confirmed")
-            print(f"{len(rows)} confirmed finding(s) pending validation:")
+            rows = db.published_findings()
+            print(f"{len(rows)} repo(s) on the Wall of Shame:")
             for r in rows:
                 print(f"- {r['full_name']}  ({r['detection_method']})  score={r['score']}")
     finally:

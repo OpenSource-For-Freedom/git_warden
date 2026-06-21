@@ -3,11 +3,8 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/DEFENSIVE-OSINT-22e0d6?style=for-the-badge&labelColor=0a0e13" alt="Defensive OSINT">
-  <img src="https://img.shields.io/badge/SCAN-STATIC--ONLY-22e0d6?style=for-the-badge&labelColor=0a0e13" alt="Static only">
-  <img src="https://img.shields.io/badge/RUNNER-EGRESS--AUDITED-5fa8ff?style=for-the-badge&labelColor=0a0e13" alt="Egress audited">
-  <img src="https://img.shields.io/badge/REGISTRY-HUMAN--VALIDATED-39d98a?style=for-the-badge&labelColor=0a0e13" alt="Human validated">
-  <img src="https://img.shields.io/badge/PYTHON-3.12+-869cb2?style=for-the-badge&labelColor=0a0e13" alt="Python 3.12+">
+  <a href="https://github.com/OpenSource-For-Freedom/git_warden/actions/workflows/run.yml"><img src="https://github.com/OpenSource-For-Freedom/git_warden/actions/workflows/run.yml/badge.svg" alt="The Warden"></a>
+  <a href="https://github.com/OpenSource-For-Freedom/git_warden/actions/workflows/ci.yml"><img src="https://github.com/OpenSource-For-Freedom/git_warden/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
 </p>
 
 > **The Warden cannot see. It listens for what code *does*.**
@@ -49,31 +46,35 @@ INGEST (breadcrumbs)                 HUNT (find malicious GitHub repos)
   <img src="docs/wall-of-shame.png" alt="Wall of Shame" width="900">
 </p>
 
-> [!CAUTION]
-> A public list is an accusation, and a false positive is a real harm. So a repo
-> reaches the wall in **two stages**:
->
-> 1. **Machine-confirm.** It confirms only on intrinsically malicious static
->    evidence (`eval(atob(...))` injected into a build config, a reverse shell, a
->    credential steal-and-send). Intel leads (a malicious owner, a shared
->    signature) only *seed* which repos get scanned; they never confirm alone.
-> 2. **Analyst-validate.** A human reviews the evidence and runs
->    `gw review --approve owner/repo`. Machine-confirmed but unreviewed findings
->    stay internal (Discord, *pending validation*) and never appear here.
+Repositories Git Warden confirmed malicious by static analysis, refreshed on
+every run. A repo confirms only on intrinsically malicious evidence
+(`eval(atob(...))` injected into a build config, a reverse shell, a credential
+steal-and-send); threat-intel leads (a malicious owner, a shared signature) only
+*seed* which repos get scanned, never confirm one alone.
 
 <!-- git-warden:registry:start -->
-_0 analyst-validated malicious repositories. Maintained by `gw review --approve`; only findings a human approved appear here. Each row's evidence (file, line, rule) is in the run artifacts._
+_12 repositories confirmed malicious by static analysis, regenerated each run. Every row's evidence (file, line, rule) is in the run artifacts CSV. Dispute: open an issue and we will re-review._
 
 | Repository | Detection | Score | Attribution | First seen | Why |
 |------------|-----------|-------|-------------|------------|-----|
-| _none yet_ |  |  |  |  |  |
+| [`alexsander532/projeto_dashboard_versao1`](https://github.com/alexsander532/projeto_dashboard_versao1) | malicious_owner | 14 | unattributed | hunt-20260620T053126Z | repository under owner Alexsander532 of a known-malicious repo \| Tier-2 confirmed (bash score 14) |
+| [`usmanaliashraf/portfolio`](https://github.com/usmanaliashraf/portfolio) | signature_match | 12 | unattributed | hunt-20260620T052811Z | Shares a confirmed-malware code signature ['Jzt2YXIgXyRfMWU0Mj0oZnVuY3Rpb24obCxlKXt2YXIgaD1sLm'] \| Tier-2 confirmed (bash score 12) |
+| [`icecoldjay/bri`](https://github.com/icecoldjay/bri) | signature_match | 11 | unattributed | hunt-20260620T052811Z | Shares a confirmed-malware code signature ['eval atob filename:tailwind.config.js'] \| Tier-2 confirmed (bash score 11) |
+| [`alexsander532/atlas_landingpage`](https://github.com/alexsander532/atlas_landingpage) | signature_match | 9 | unattributed | hunt-20260620T052811Z | Shares a confirmed-malware code signature ['Jzt2YXIgXyRfMWU0Mj0oZnVuY3Rpb24obCxlKXt2YXIgaD1sLm'] \| Tier-2 confirmed (bash score 8) |
+| [`alexsander532/mvp_wain_group130`](https://github.com/alexsander532/mvp_wain_group130) | signature_match | 9 | unattributed | hunt-20260620T052811Z | Shares a confirmed-malware code signature ['Jzt2YXIgXyRfMWU0Mj0oZnVuY3Rpb24obCxlKXt2YXIgaD1sLm'] \| Tier-2 confirmed (bash score 8) |
+| [`alexsander532/synapseai_landingpage`](https://github.com/alexsander532/synapseai_landingpage) | signature_match | 9 | unattributed | hunt-20260620T052811Z | Shares a confirmed-malware code signature ['Jzt2YXIgXyRfMWU0Mj0oZnVuY3Rpb24obCxlKXt2YXIgaD1sLm'] \| Tier-2 confirmed (bash score 8) |
+| [`agrawalchirag/corex`](https://github.com/agrawalchirag/corex) | osm_repository | 8 | DPRK (North Korea) (per OSM) | hunt-20260620T043523Z | Obfuscated eval(atob(...)) payload injected into postcss.config.js after the legit tailwind config (Tier-2 static detection). Lead: OSM quer |
+| [`alexsander532/portfolio-pessoal`](https://github.com/alexsander532/portfolio-pessoal) | malicious_owner | 8 | unattributed | hunt-20260620T053126Z | repository under owner Alexsander532 of a known-malicious repo \| Tier-2 confirmed (bash score 8) |
+| [`alexsander532/synapse_ai`](https://github.com/alexsander532/synapse_ai) | malicious_owner | 8 | unattributed | hunt-20260620T053126Z | repository under owner Alexsander532 of a known-malicious repo \| Tier-2 confirmed (bash score 8) |
+| [`alexsander532/synapseai`](https://github.com/alexsander532/synapseai) | signature_match | 8 | unattributed | hunt-20260620T052811Z | Shares a confirmed-malware code signature ['Jzt2YXIgXyRfMWU0Mj0oZnVuY3Rpb24obCxlKXt2YXIgaD1sLm'] \| Tier-2 confirmed (bash score 8) |
+| [`haroontaufiq/cosmic-questionnaire`](https://github.com/haroontaufiq/cosmic-questionnaire) | signature_match | 8 | unattributed | hunt-20260620T052811Z | Shares a confirmed-malware code signature ['Jzt2YXIgXyRfMWU0Mj0oZnVuY3Rpb24obCxlKXt2YXIgaD1sLm'] \| Tier-2 confirmed (bash score 8) |
+| [`usmanaliashraf/rag-bot-uet-science-society`](https://github.com/usmanaliashraf/rag-bot-uet-science-society) | malicious_owner | 8 | unattributed | hunt-20260620T053126Z | repository under owner UsmanAliAshraf of a known-malicious repo \| Tier-2 confirmed (bash score 8) |
 <!-- git-warden:registry:end -->
 
 > [!NOTE]
-> Every row's evidence (file, line, and the rule that fired) is recorded in the
-> per-run artifacts, so each listing is falsifiable. **Dispute a listing:** open
-> an issue with the repository name and we will re-review and remove false
-> positives.
+> Every row's evidence (file, line, and the rule that fired) is in the per-run
+> artifacts, so each listing is falsifiable. **Dispute a listing:** open an issue
+> with the repository name and we will re-review and remove false positives.
 
 <p align="center"><img src="docs/sculk-divider.png" alt="" width="900"></p>
 

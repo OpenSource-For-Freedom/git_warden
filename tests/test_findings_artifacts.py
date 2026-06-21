@@ -6,9 +6,6 @@ import pytest
 from conftest import utcnow
 
 from git_warden.artifacts import (
-    add_to_wall,
-    load_wall,
-    remove_from_wall,
     update_readme_registry_table,
     write_findings_csv,
 )
@@ -73,51 +70,37 @@ def _readme(tmp_path):
     return p
 
 
-def test_update_readme_renders_committed_wall(tmp_path, db):
-    # The README is rendered from the COMMITTED wall, not the DB: this is what
-    # lets a CI run (empty DB) publish exactly what an analyst approved.
-    db.upsert_finding(_finding("good/validated", status=RepoFindingStatus.VALIDATED,
-                               score=8, reasoning="malicious obfuscator"), "run-1")
-    db.upsert_finding(_finding("machine/confirmed", status=RepoFindingStatus.CONFIRMED), "run-1")
-    wall = tmp_path / "wall.json"
-    add_to_wall(db.get_finding("good/validated"), path=wall)  # only this one approved
+def test_readme_lists_confirmed_repos(tmp_path, db):
+    # Every confirmed repo is posted each run; screened/rejected never appear.
+    db.upsert_finding(_finding("evil/repo", status=RepoFindingStatus.CONFIRMED,
+                               score=8, reasoning="eval(atob()) in postcss.config.js"), "run-1")
+    db.upsert_finding(_finding("noisy/screened", status=RepoFindingStatus.SCREENED), "run-1")
+    db.upsert_finding(_finding("clean/rejected", status=RepoFindingStatus.REJECTED), "run-1")
 
     readme = _readme(tmp_path)
-    assert update_readme_registry_table(readme_path=readme, wall_path=wall) is True
+    assert update_readme_registry_table(db, readme_path=readme) is True
     out = readme.read_text(encoding="utf-8")
-    assert "good/validated" in out            # on the committed wall -> published
-    assert "machine/confirmed" not in out     # never approved -> never on the wall
+    assert "evil/repo" in out                 # confirmed -> posted
+    assert "noisy/screened" not in out        # screened -> not posted
+    assert "clean/rejected" not in out        # rejected (false positive) -> dropped
     assert out.endswith("end\n")              # content outside the markers preserved
-    assert "1 analyst-validated malicious repositories" in out
+    assert "1 repositories confirmed malicious" in out
 
 
-def test_empty_or_missing_wall_renders_none_yet(tmp_path):
+def test_readme_empty_when_no_confirmed(tmp_path, db):
     readme = _readme(tmp_path)
-    assert update_readme_registry_table(readme_path=readme, wall_path=tmp_path / "nope.json")
+    assert update_readme_registry_table(db, readme_path=readme) is True
     out = readme.read_text(encoding="utf-8")
     assert "_none yet_" in out
-    assert "0 analyst-validated malicious repositories" in out
-
-
-def test_remove_from_wall_clears_the_listing(tmp_path, db):
-    db.upsert_finding(_finding("evil/repo", status=RepoFindingStatus.VALIDATED, score=9), "run-1")
-    wall = tmp_path / "wall.json"
-    add_to_wall(db.get_finding("evil/repo"), path=wall)
-    assert any(e["full_name"] == "evil/repo" for e in load_wall(wall))
-
-    assert remove_from_wall("evil/repo", path=wall) is True
-    assert load_wall(wall) == []
-    assert remove_from_wall("evil/repo", path=wall) is False  # already gone
+    assert "0 repositories confirmed malicious" in out
 
 
 def test_update_readme_idempotent(tmp_path, db):
-    db.upsert_finding(_finding("good/repo", status=RepoFindingStatus.VALIDATED), "run-1")
-    wall = tmp_path / "wall.json"
-    add_to_wall(db.get_finding("good/repo"), path=wall)
+    db.upsert_finding(_finding("evil/repo", status=RepoFindingStatus.CONFIRMED), "run-1")
     readme = _readme(tmp_path)
-    assert update_readme_registry_table(readme_path=readme, wall_path=wall) is True
-    assert update_readme_registry_table(readme_path=readme, wall_path=wall) is False  # no churn
+    assert update_readme_registry_table(db, readme_path=readme) is True
+    assert update_readme_registry_table(db, readme_path=readme) is False  # no churn
 
 
-def test_update_readme_missing_file_is_noop(tmp_path):
-    assert update_readme_registry_table(readme_path=tmp_path / "nope.md") is False
+def test_update_readme_missing_file_is_noop(tmp_path, db):
+    assert update_readme_registry_table(db, readme_path=tmp_path / "nope.md") is False

@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from .config import ARTIFACTS_DIR, WALL_OF_SHAME_PATH
+from .config import ARTIFACTS_DIR
 from .db import Database
 
 log = logging.getLogger(__name__)
@@ -154,104 +154,51 @@ def _md_cell(value) -> str:
     return text.replace("|", "\\|").replace("`", "'")
 
 
-def _wall_entry(row) -> dict:
-    """Build a committed Wall-of-Shame record from a validated finding row."""
-    return {
-        "full_name": row["full_name"],
-        "detection_method": row["detection_method"],
-        "score": row["score"],
-        "attribution": row["actor_key"] or "unattributed",
-        "first_seen_run": row["first_seen_run"] or "",
-        "reasoning": (row["reasoning"] or "").replace("\n", " ")[:300],
-        "evidence": _top_indicator(row["raw_payload"]),
-    }
-
-
-def load_wall(path: Path = WALL_OF_SHAME_PATH) -> list[dict]:
-    """Read the committed analyst-approved Wall of Shame (or [] if absent)."""
-    p = Path(path)
-    if not p.exists():
-        return []
-    try:
-        data = json.loads(p.read_text(encoding="utf-8") or "[]")
-        return data if isinstance(data, list) else []
-    except (json.JSONDecodeError, OSError):
-        log.warning("wall_of_shame.json unreadable; treating as empty")
-        return []
-
-
-def save_wall(entries: list[dict], path: Path = WALL_OF_SHAME_PATH) -> None:
-    ordered = sorted(entries, key=lambda e: (-int(e.get("score", 0) or 0),
-                                             e.get("full_name", "")))
-    Path(path).write_text(json.dumps(ordered, indent=2) + "\n", encoding="utf-8")
-
-
-def add_to_wall(row, path: Path = WALL_OF_SHAME_PATH) -> list[dict]:
-    """Add (or refresh) one validated finding on the committed Wall of Shame."""
-    entry = _wall_entry(row)
-    key = entry["full_name"].casefold()
-    entries = [e for e in load_wall(path) if (e.get("full_name") or "").casefold() != key]
-    entries.append(entry)
-    save_wall(entries, path)
-    return entries
-
-
-def remove_from_wall(full_name: str, path: Path = WALL_OF_SHAME_PATH) -> bool:
-    """Drop a finding from the Wall of Shame (analyst reject). True if removed."""
-    key = full_name.strip().strip("/").casefold()
-    entries = load_wall(path)
-    kept = [e for e in entries if (e.get("full_name") or "").casefold() != key]
-    if len(kept) == len(entries):
-        return False
-    save_wall(kept, path)
-    return True
-
-
-def render_registry_table(entries: list) -> str:
-    """Render the Wall of Shame records as a Markdown table (highest score first)."""
+def render_registry_table(rows: list) -> str:
+    """Render confirmed malicious repos as a Markdown table (highest score first)."""
     header = (
         "| Repository | Detection | Score | Attribution | First seen | Why |\n"
         "|------------|-----------|-------|-------------|------------|-----|"
     )
-    if not entries:
+    if not rows:
         return header + "\n| _none yet_ |  |  |  |  |  |"
     lines = [header]
-    for e in entries:
-        full = e["full_name"]
+    for r in rows:
+        full = r["full_name"]
         repo = f"[`{_md_cell(full)}`](https://github.com/{_md_cell(full)})"
-        why = _md_cell((e.get("reasoning") or "")[:140])
+        why = _md_cell((r["reasoning"] or "")[:140])
         lines.append(
-            f"| {repo} | {_md_cell(e.get('detection_method'))} | {e.get('score')} | "
-            f"{_md_cell(e.get('attribution') or 'unattributed')} | "
-            f"{_md_cell(e.get('first_seen_run') or '')} | {why} |"
+            f"| {repo} | {_md_cell(r['detection_method'])} | {r['score']} | "
+            f"{_md_cell(r['actor_key'] or 'unattributed')} | "
+            f"{_md_cell(r['first_seen_run'] or '')} | {why} |"
         )
     return "\n".join(lines)
 
 
 def update_readme_registry_table(
+    db: Database,
     readme_path: Path = Path("README.md"),
-    wall_path: Path = WALL_OF_SHAME_PATH,
 ) -> bool:
     """Regenerate the Wall of Shame table in README between the markers.
 
-    Returns True if the file content changed. The table is rendered from the
-    COMMITTED wall_of_shame.json (the analyst-approved set), never from the
-    gitignored DB, so a CI run renders exactly what was approved and committed,
-    rather than wiping the wall from an empty CI database. Findings reach the
-    file only via ``gw review --approve``; a public list is an accusation, so a
-    human approves each repo. Cumulative.
+    Returns True if the file content changed. Rendered from the run's DB each
+    run: every repo Git Warden confirmed malicious by static analysis. A CI run
+    confirms findings into its own DB, then renders + pushes the README, so the
+    public wall reflects the latest run. ``gw review --reject owner/repo`` drops
+    a false positive. The full per-run audit (all candidates) is in the run
+    artifacts CSV.
     """
     if not readme_path.exists():
         log.warning("README not found; skipping registry table", extra={
             "context": {"path": str(readme_path)}})
         return False
-    entries = load_wall(wall_path)
-    table = render_registry_table(entries)
+    rows = db.published_findings()
+    table = render_registry_table(rows)
     block = (
         f"{_README_START}\n"
-        f"_{len(entries)} analyst-validated malicious repositories. Maintained by "
-        f"`gw review --approve`; only findings a human approved appear here. Each "
-        f"row's evidence (file, line, rule) is in the run artifacts._\n\n"
+        f"_{len(rows)} repositories confirmed malicious by static analysis, "
+        f"regenerated each run. Every row's evidence (file, line, rule) is in the "
+        f"run artifacts CSV. Dispute: open an issue and we will re-review._\n\n"
         f"{table}\n"
         f"{_README_END}"
     )
@@ -264,11 +211,11 @@ def update_readme_registry_table(
         sep = "" if original.endswith("\n") else "\n"
         updated = (
             f"{original}{sep}\n## Wall of Shame\n\n"
-            f"Auto-generated from the approved registry. The full per-run audit "
+            f"Auto-generated from the registry. The full per-run audit "
             f"(all candidates) is in the run artifacts.\n\n{block}\n"
         )
     if updated == original:
         return False
     readme_path.write_text(updated, encoding="utf-8")
-    log.info("updated README registry table", extra={"context": {"rows": len(entries)}})
+    log.info("updated README registry table", extra={"context": {"rows": len(rows)}})
     return True
