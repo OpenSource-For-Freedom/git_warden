@@ -179,21 +179,26 @@ def update_readme_registry_table(
     db: Database,
     readme_path: Path = Path("README.md"),
 ) -> bool:
-    """Regenerate the confirmed-registry table in README between the markers.
+    """Regenerate the registry table in README between the markers.
 
-    Returns True if the file content changed. The README lists CONFIRMED repos
-    only (the product); screened/rejected candidates stay in the audit CSV, not
-    published publicly. Cumulative, so the README always shows the live registry.
+    Returns True if the file content changed. The README lists ANALYST-VALIDATED
+    repos only (status 'validated'), never raw machine 'confirmed' findings: a
+    public list is an accusation, so a human approves each repo via
+    ``gw review --approve`` before it appears here. Machine-confirmed but
+    unreviewed findings stay in Discord ('pending validation') and the audit CSV.
+    Screened/rejected candidates are never published. Cumulative.
     """
     if not readme_path.exists():
         log.warning("README not found; skipping registry table", extra={
             "context": {"path": str(readme_path)}})
         return False
-    rows = db.findings_by_status("confirmed")
+    rows = db.findings_by_status("validated")
     table = render_registry_table(rows)
     block = (
         f"{_README_START}\n"
-        f"_{len(rows)} confirmed malicious repositories - regenerated each run._\n\n"
+        f"_{len(rows)} analyst-validated malicious repositories. Regenerated each "
+        f"run; only findings a human reviewed and approved appear here. Each row's "
+        f"evidence (file, line, rule) is in the run artifacts._\n\n"
         f"{table}\n"
         f"{_README_END}"
     )

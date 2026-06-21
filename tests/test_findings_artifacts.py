@@ -61,9 +61,12 @@ def test_write_findings_csv_always_written_even_when_empty(tmp_path, db):
     assert path.read_text(encoding="utf-8").splitlines()[0].startswith("full_name,")
 
 
-def test_update_readme_registry_table_lists_confirmed_only(tmp_path, db):
-    db.upsert_finding(_finding("good/confirmed", status=RepoFindingStatus.CONFIRMED,
+def test_update_readme_registry_table_publishes_validated_only(tmp_path, db):
+    # Public-safety invariant: ONLY analyst-validated findings reach the public
+    # README. Machine-confirmed-but-unreviewed must never leak out.
+    db.upsert_finding(_finding("good/validated", status=RepoFindingStatus.VALIDATED,
                                score=8, reasoning="malicious obfuscator"), "run-1")
+    db.upsert_finding(_finding("machine/confirmed", status=RepoFindingStatus.CONFIRMED), "run-1")
     db.upsert_finding(_finding("noisy/screened", status=RepoFindingStatus.SCREENED), "run-1")
     readme = tmp_path / "README.md"
     readme.write_text(
@@ -73,10 +76,11 @@ def test_update_readme_registry_table_lists_confirmed_only(tmp_path, db):
     changed = update_readme_registry_table(db, readme_path=readme)
     assert changed is True
     out = readme.read_text(encoding="utf-8")
-    assert "good/confirmed" in out          # confirmed published
-    assert "noisy/screened" not in out      # screened stays out of the public README
-    assert out.endswith("end\n")            # content outside the markers preserved
-    assert "1 confirmed malicious repositories" in out
+    assert "good/validated" in out           # analyst-approved is published
+    assert "machine/confirmed" not in out    # machine-confirmed, unreviewed -> internal only
+    assert "noisy/screened" not in out       # screened never public
+    assert out.endswith("end\n")             # content outside the markers preserved
+    assert "1 analyst-validated malicious repositories" in out
 
 
 def test_update_readme_registry_table_idempotent(tmp_path, db):
