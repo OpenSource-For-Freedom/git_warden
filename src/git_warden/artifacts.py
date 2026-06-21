@@ -210,7 +210,7 @@ def update_readme_registry_table(
     else:
         sep = "" if original.endswith("\n") else "\n"
         updated = (
-            f"{original}{sep}\n## Confirmed malicious-repo registry\n\n"
+            f"{original}{sep}\n## 💀 Wall of Shame\n\n"
             f"Auto-generated from the live registry. The full per-run audit "
             f"(all candidates) is in the run artifacts.\n\n{block}\n"
         )
