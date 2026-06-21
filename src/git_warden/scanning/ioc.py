@@ -15,7 +15,7 @@ import re
 from collections import Counter
 from dataclasses import dataclass, field
 
-# Infrastructure/doc domains that show up in threat text but are not IOCs --
+# Infrastructure/doc domains that show up in threat text but are not IOCs;
 # excluded so they don't pollute the search pivot set.
 BENIGN_DOMAINS = frozenset({
     "github.com",
@@ -102,7 +102,7 @@ class IocSet:
 
 
 # Disposable hosting where attackers stand up throwaway C2/exfil endpoints.
-# NOTE: *.github.io / *.gitlab.io deliberately EXCLUDED (eval finding #10) --
+# NOTE: *.github.io / *.gitlab.io deliberately EXCLUDED (eval finding #10);
 # Pages domains host millions of benign sites and flooded discovery; they are
 # not throwaway C2 like the entries below.
 _EPHEMERAL_SUFFIXES = (

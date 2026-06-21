@@ -245,7 +245,7 @@ def _within_bounds(root: Path) -> bool:
 
 # Sparse-checkout patterns: ONLY the file types our scanners read. A SPARSE
 # PARTIAL clone fetches just these blobs, so a 1.35 GB three.js fork (owner-pivot)
-# downloads in ~3s / ~41 MB instead of timing the runner out -- we keep big repos
+# downloads in ~3s / ~41 MB instead of timing the runner out; we keep big repos
 # instead of skipping them. Large binaries (models, media, archives) we never scan
 # are not downloaded. Covers content/bash/manifest/signature scanners + common
 # extensionless shell scripts.
@@ -267,7 +267,7 @@ def clone_repo(
     Static analysis only: the target is never executed; ``--depth 1`` fetches a
     single commit (default branch, no history) and ``--filter=blob:none`` +
     sparse-checkout download ONLY scannable file types (source, configs,
-    manifests) -- so huge repos cost little and are kept, not skipped. Validates
+    manifests), so huge repos cost little and are kept, not skipped. Validates
     the untrusted ``full_name`` and passes ``--`` before the URL so a crafted
     value cannot become a path traversal or git flag (eval finding #16). A
     failed/partial clone is force-removed (handles git's read-only pack files).

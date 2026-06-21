@@ -6,8 +6,8 @@ bland name is a hiding technique and "cannot, by itself, justify a flag"), so we
 score the name and README *jointly* and require corroborating evidence before
 promoting to Tier-2.
 
-Note the distinction: promoting to Tier-2 means "worth investigating by cloning"
--- it is not a confirmed finding. Confirmation comes from the Tier-2 scanners.
+Note the distinction: promoting to Tier-2 means "worth investigating by cloning";
+it is not a confirmed finding. Confirmation comes from the Tier-2 scanners.
 So name-driven promotion is acceptable here; the strict bar applies to gold.
 
 ``score_repo`` is pure (name/description/readme in, result out) so thresholds
@@ -144,7 +144,7 @@ def _name_signals(
         # expected (it forked that tool), so we don't double-count it there.
         signals.append((f"wraps-known-tool:{wrapped}", MEDIUM))
     elif renamed_fork and not wrapped:
-        # A fork renamed to drop the tool name entirely is hiding its lineage --
+        # A fork renamed to drop the tool name entirely is hiding its lineage;
         # more suspicious than one that kept the name.
         signals.append(("lineage-obscured-rename", MEDIUM))
 
