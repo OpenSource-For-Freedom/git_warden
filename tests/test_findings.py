@@ -52,6 +52,20 @@ def test_rejected_is_sticky(db):
     assert len(db.findings_by_status("rejected")) == 1
 
 
+def test_upsert_coerces_unknown_actor_key_to_null(db):
+    # An external attribution label (e.g. OSM "DPRK (per OSM)") is not a registered
+    # threat actor; it must NOT crash the run on the actor_key FK -- coerce to NULL
+    # and keep the run alive (the label lives on in the reasoning).
+    db.upsert_finding(RepoFinding(
+        full_name="lure/wallet-task", detection_method=DetectionMethod.OSM_REPOSITORY,
+        status=RepoFindingStatus.CONFIRMED, actor_key="DPRK (North Korea) (per OSM)",
+        reasoning="OSM-flagged [DPRK (North Korea) (per OSM)]"), "run-1")
+    row = db.get_finding("lure/wallet-task")
+    assert row is not None
+    assert row["actor_key"] is None                       # coerced, no FK crash
+    assert "DPRK" in (row["reasoning"] or "")             # attribution preserved
+
+
 def test_association_methods_never_published_or_gold(db):
     # Only INTRINSIC-evidence discovery publishes. The three association methods
     # (clone/owner/actor) are breadcrumbs, excluded from the wall and the gold

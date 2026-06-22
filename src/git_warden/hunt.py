@@ -170,16 +170,22 @@ def _finding_from_osm_repo(full_name: str, url: str, intel: dict) -> RepoFinding
     severity = (intel.get("severity") or "").upper()
     threat = (intel.get("threat") or "").strip()
     tags = intel.get("tags") or []
+    attribution = _osm_attribution(tags)
     reason = "OSM-flagged malicious repository"
     if severity:
         reason += f" (severity {severity})"
+    if attribution:
+        # Carry the attribution in the reasoning too: actor_key is an actor-
+        # registry FK and this OSM label is not a registered actor, so it gets
+        # nulled at upsert -- the text must survive somewhere visible.
+        reason += f" [{attribution}]"
     if threat:
         reason += f": {threat[:160]}"
     return RepoFinding(
         full_name=full_name,
         url=url or None,
         detection_method=DetectionMethod.OSM_REPOSITORY,
-        actor_key=_osm_attribution(tags),
+        actor_key=attribution,
         reasoning=reason,
         raw_payload={"osm": {"source": intel.get("source") or "open_source_malware",
                              "severity": intel.get("severity"), "tags": tags}},
