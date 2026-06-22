@@ -60,20 +60,19 @@ steal-and-send); threat-intel leads (a malicious owner, a shared signature) only
 *seed* which repos get scanned, never confirm one alone.
 
 <!-- git-warden:registry:start -->
-_Top 10 of 32 repositories confirmed malicious by static analysis this run, ranked by severity. The full list ships as the run's CSV artifact and to the Discord feed; every row's evidence (file, line, rule) is in that CSV. Dispute: open an issue and we will re-review._
+_9 repositories confirmed malicious by static analysis, regenerated each run. Every row's evidence (file, line, rule) is in the run artifacts CSV. Dispute: open an issue and we will re-review._
 
 | Repository | Detection | Score | Attribution | Proof (file:line rule) |
 |------------|-----------|-------|-------------|------------------------|
-| [`icecoldjay/infin8solution`](https://github.com/icecoldjay/infin8solution) | malicious_owner | 18 | unattributed | pay/wp-includes/ID3/module.audio-video.quicktime.php:1511 obfuscation/hex-blob  (+19 more) |
-| [`nccgroup/gitpwnd`](https://github.com/nccgroup/gitpwnd) | malicious_owner | 18 | unattributed | setup.py:345 install_hook/py-setup-exec  (+5 more) |
-| [`alexsander532/projeto_dashboard_versao1`](https://github.com/alexsander532/projeto_dashboard_versao1) | malicious_owner | 14 | unattributed | frontend/vite.config.js:36 obfuscation/eval-decoded  (+3 more) |
 | [`usmanaliashraf/portfolio`](https://github.com/usmanaliashraf/portfolio) | signature_match | 12 | unattributed | postcss.config.mjs:12 obfuscation/eval-decoded  (+8 more) |
 | [`icecoldjay/bri`](https://github.com/icecoldjay/bri) | signature_match | 11 | unattributed | client/tailwind.config.js:61 obfuscation/eval-decoded  (+3 more) |
-| [`nccgroup/redsnarf`](https://github.com/nccgroup/redsnarf) | malicious_owner | 11 | unattributed | bits_and_bobs/setup.py:30 install_hook/py-setup-exec  (+19 more) |
-| [`nccgroup/triforceafl`](https://github.com/nccgroup/triforceafl) | malicious_owner | 11 | unattributed | qemu_mode/qemu/scripts/qemu-binfmt-conf.sh:34 obfuscation/hex-escapes  (+19 more) |
-| [`nccgroup/depthcharge`](https://github.com/nccgroup/depthcharge) | malicious_owner | 10 | unattributed | python/depthcharge/builtin_payloads.py:9 obfuscation/hex-blob  (+19 more) |
 | [`alexsander532/atlas_landingpage`](https://github.com/alexsander532/atlas_landingpage) | signature_match | 9 | unattributed | astro.config.mjs:7 obfuscation/eval-decoded  (+1 more) |
 | [`alexsander532/mvp_wain_group130`](https://github.com/alexsander532/mvp_wain_group130) | signature_match | 9 | unattributed | frontend/postcss.config.mjs:9 obfuscation/eval-decoded  (+1 more) |
+| [`alexsander532/synapseai_landingpage`](https://github.com/alexsander532/synapseai_landingpage) | signature_match | 9 | unattributed | postcss.config.mjs:12 obfuscation/eval-decoded  (+1 more) |
+| [`alexsander532/synapseai`](https://github.com/alexsander532/synapseai) | signature_match | 8 | unattributed | postcss.config.mjs:11 obfuscation/eval-decoded  (+1 more) |
+| [`bambao1-lang/bambao1-lang.github.io`](https://github.com/bambao1-lang/bambao1-lang.github.io) | signature_match | 8 | unattributed | package.json:49 enumeration/host-recon  (+2 more) |
+| [`haroontaufiq/cosmic-questionnaire`](https://github.com/haroontaufiq/cosmic-questionnaire) | signature_match | 8 | unattributed | postcss.config.mjs:9 obfuscation/eval-decoded  (+3 more) |
+| [`shamratdev/ai-banking`](https://github.com/shamratdev/ai-banking) | signature_match | 4 | unattributed | frontend/tailwind.config.js:15 obfuscation/atob  (+2 more) |
 <!-- git-warden:registry:end -->
 
 > [!NOTE]
