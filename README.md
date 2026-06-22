@@ -60,7 +60,7 @@ steal-and-send); threat-intel leads (a malicious owner, a shared signature) only
 *seed* which repos get scanned, never confirm one alone.
 
 <!-- git-warden:registry:start -->
-_9 repositories confirmed malicious by static analysis, regenerated each run. Every row's evidence (file, line, rule) is in the run artifacts CSV. Dispute: open an issue and we will re-review._
+_9 repositories confirmed malicious by static analysis, regenerated each run. Every row's evidence (file, line, rule) is in the run artifacts CSV._
 
 | Repository | Detection | Score | Attribution | Proof (file:line rule) |
 |------------|-----------|-------|-------------|------------------------|
