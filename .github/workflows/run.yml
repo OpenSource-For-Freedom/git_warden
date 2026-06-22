@@ -69,12 +69,17 @@ jobs:
         run: |
           git config user.name "git-warden[bot]"
           git config user.email "git-warden@users.noreply.github.com"
-          if git diff --quiet -- README.md; then
-            echo "README registry unchanged; nothing to push."
+          # Persist BOTH the public registry AND the warden DB (the system of
+          # record). The DB is version-controlled (PRD 9), so state is durable --
+          # it survives Actions cache eviction, and a local `git pull` gives you
+          # the latest DB to run `gw ingest/hunt` against offline.
+          git add README.md
+          [ -f data/git_warden.sqlite ] && git add -f data/git_warden.sqlite || true
+          if git diff --cached --quiet; then
+            echo "Registry + DB unchanged; nothing to push."
             exit 0
           fi
-          git add README.md
-          git commit -m "Auto-update malicious-repo registry table [skip ci]"
+          git commit -m "Auto-update malicious-repo registry + warden DB [skip ci]"
           # The hunt step runs ~45 min, so main may have advanced since checkout
           # (or this is a re-run pinned to an older SHA). Rebase our commit onto
           # the live tip FIRST and only push if the rebase is clean; loop to

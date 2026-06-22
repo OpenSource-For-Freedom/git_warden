@@ -334,6 +334,16 @@ class Database:
         actor attribution. Re-run safe.
         """
         with self.transaction() as c:
+            # actor_key is a strict FK to threat_actors. An EXTERNAL attribution
+            # label (e.g. OSM's "DPRK (North Korea) (per OSM)") is not a registered
+            # actor, so coerce an unknown key to NULL rather than crash the whole
+            # run on a FOREIGN KEY violation. The human-readable attribution is
+            # preserved in the finding's reasoning.
+            actor_key = finding.actor_key
+            if actor_key and not c.execute(
+                "SELECT 1 FROM threat_actors WHERE actor_key = ?", (actor_key,)
+            ).fetchone():
+                actor_key = None
             c.execute(
                 """
                 INSERT INTO repo_findings
@@ -363,7 +373,7 @@ class Database:
                     finding.status.value,
                     finding.score,
                     finding.code_hash,
-                    finding.actor_key,
+                    actor_key,
                     finding.reasoning,
                     json.dumps(finding.signals),
                     json.dumps(finding.matched_iocs),
