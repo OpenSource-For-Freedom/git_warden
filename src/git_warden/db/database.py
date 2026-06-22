@@ -443,10 +443,13 @@ class Database:
           pins whole legit security firms (e.g. NCC Group's published pen-test
           tools) and OSS orgs. Owner association seeds WHICH repos to scan and
           feeds the IOC learning loop, but never confirms one on the wall.
+        * actor_account: "repo under a known threat-actor account" is the account
+          being suspect, not this repo's code. Same breadcrumb treatment.
         """
         return self.conn.execute(
             "SELECT * FROM repo_findings WHERE status IN ('confirmed', 'validated') "
-            "AND detection_method NOT IN ('redteam_lineage', 'malicious_owner') "
+            "AND detection_method NOT IN "
+            "('redteam_lineage', 'malicious_owner', 'actor_account') "
             "ORDER BY score DESC, full_name"
         ).fetchall()
 
@@ -473,7 +476,8 @@ class Database:
         known = self.osm_known_repos()
         rows = self.conn.execute(
             "SELECT * FROM repo_findings WHERE status = 'confirmed' AND delivered_gold = 0 "
-            "AND detection_method NOT IN ('osm_repository', 'redteam_lineage', 'malicious_owner') "
+            "AND detection_method NOT IN "
+            "('osm_repository', 'redteam_lineage', 'malicious_owner', 'actor_account') "
             "ORDER BY score DESC"
         ).fetchall()
         return [r for r in rows if r["full_name"].casefold() not in known]

@@ -52,6 +52,25 @@ def test_rejected_is_sticky(db):
     assert len(db.findings_by_status("rejected")) == 1
 
 
+def test_association_methods_never_published_or_gold(db):
+    # Only INTRINSIC-evidence discovery publishes. The three association methods
+    # (clone/owner/actor) are breadcrumbs, excluded from the wall and the gold
+    # feed even when confirmed with evidence.
+    ev = {"bash_findings": [
+        {"file": "x.py", "line": 1, "category": "reverse_shell", "rule": "nc-exec"}]}
+    for method in (DetectionMethod.REDTEAM_LINEAGE, DetectionMethod.MALICIOUS_OWNER,
+                   DetectionMethod.ACTOR_ACCOUNT):
+        db.upsert_finding(RepoFinding(
+            full_name=f"assoc/{method.value}", detection_method=method,
+            status=RepoFindingStatus.CONFIRMED, raw_payload=ev), "run-1")
+    db.upsert_finding(RepoFinding(
+        full_name="attacker/real", detection_method=DetectionMethod.SIGNATURE_MATCH,
+        status=RepoFindingStatus.CONFIRMED, raw_payload=ev), "run-1")
+
+    assert {r["full_name"] for r in db.published_findings()} == {"attacker/real"}
+    assert {r["full_name"] for r in db.undelivered_gold()} == {"attacker/real"}
+
+
 def test_reconcile_registry_prunes_unproven_and_known_good(db):
     # Real static evidence -> stays on the wall.
     db.upsert_finding(RepoFinding(
