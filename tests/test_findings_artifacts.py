@@ -95,6 +95,42 @@ def test_readme_empty_when_no_confirmed(tmp_path, db):
     assert "0 repositories confirmed malicious" in out
 
 
+def test_redteam_lineage_never_published_or_gold(tmp_path, db):
+    # A cloned/forked red-team tool is a breadcrumb, never compromise provenance:
+    # excluded from the Wall of Shame AND the gold feed even when confirmed.
+    db.upsert_finding(_finding("evil/sliver-fork", status=RepoFindingStatus.CONFIRMED,
+                               detection_method=DetectionMethod.REDTEAM_LINEAGE,
+                               score=99, reasoning="fork of pinned red-team tool Sliver"), "run-1")
+    db.upsert_finding(_finding("attacker/dropper", status=RepoFindingStatus.CONFIRMED,
+                               score=8, reasoning="references confirmed IOC"), "run-1")
+
+    assert {r["full_name"] for r in db.published_findings()} == {"attacker/dropper"}
+    assert all(r["full_name"] != "evil/sliver-fork" for r in db.undelivered_gold())
+
+    readme = _readme(tmp_path)
+    update_readme_registry_table(db, readme_path=readme)
+    out = readme.read_text(encoding="utf-8")
+    assert "evil/sliver-fork" not in out      # red-team clone kept off the wall
+    assert "attacker/dropper" in out
+
+
+def test_readme_why_shows_proven_evidence_not_association(tmp_path, db):
+    # The "Why" leads with the PROVEN confirming signature (file:line + rule),
+    # not the discovery breadcrumb (owner/clone/IOC association).
+    f = _finding("attacker/dropper", status=RepoFindingStatus.CONFIRMED, score=8,
+                 detection_method=DetectionMethod.MALICIOUS_OWNER,
+                 reasoning="repository under owner attacker of a known-malicious repo")
+    f.raw_payload = {"bash_findings": [
+        {"file": "setup.py", "line": 42, "category": "exfiltration", "rule": "secret-exfil"}]}
+    db.upsert_finding(f, "run-1")
+
+    readme = _readme(tmp_path)
+    update_readme_registry_table(db, readme_path=readme)
+    out = readme.read_text(encoding="utf-8")
+    assert "setup.py:42 exfiltration/secret-exfil" in out   # proof is the headline
+    assert "under owner attacker" not in out                # association is NOT
+
+
 def test_readme_caps_to_top_ten_most_dangerous(tmp_path, db):
     # Public wall shows only the 10 highest-severity confirmed repos; the rest
     # live in the CSV artifact + Discord, not the README.

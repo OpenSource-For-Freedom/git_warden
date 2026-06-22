@@ -130,7 +130,10 @@ def test_hunt_osm_repo_validation_confirms(tmp_path):
     db.close()
 
 
-def test_hunt_lineage_to_confirmed_gold(tmp_path):
+def test_hunt_lineage_weaponized_fork_confirmed_but_not_published(tmp_path):
+    # A diverged fork that ADDED weaponization is verified internally (confirmed,
+    # so its added-malware IOCs feed the learning loop) -- but a red-team clone is
+    # ONLY a breadcrumb: it is NEVER published to the Wall of Shame or gold feed.
     db = Database.open(tmp_path / "h.sqlite")
     delivered = []
 
@@ -143,21 +146,16 @@ def test_hunt_lineage_to_confirmed_gold(tmp_path):
     )
 
     assert summary["counts"]["candidates"] == 1
-    assert summary["counts"]["screened"] == 1   # malware token + renamed fork
-    assert summary["counts"]["confirmed"] == 1  # Tier-2 bash scan confirmed
-    assert summary["counts"]["gold_delivered"] == 1
-    assert "evil/malware-sliver" in delivered
+    assert summary["counts"]["confirmed"] == 1     # verified (for IOC mining)
+    assert summary["counts"]["gold_delivered"] == 0  # breadcrumb: never delivered
+    assert delivered == []
+    assert db.published_findings() == []           # never on the Wall of Shame
 
     row = db.findings_by_status("confirmed")[0]
     assert row["full_name"] == "evil/malware-sliver"
     payload = json.loads(row["raw_payload"])
-    assert "code_hash" in payload
-    assert row["code_hash"]  # promoted to a column for cross-platform dedup
-    # eval #18: validate WHY it confirmed, not just the count.
-    assert any(s.startswith("static:") for s in json.loads(row["signals"]))
-    assert row["score"] >= 5  # Tier-1 + accumulated bash_score
-    assert "Tier-2 confirmed" in (row["reasoning"] or "")
-    assert payload.get("bash_findings")  # provenance for the gold message
+    assert row["code_hash"]                        # still fingerprinted for dedup
+    assert payload.get("bash_findings")            # evidence retained internally
     db.close()
 
 

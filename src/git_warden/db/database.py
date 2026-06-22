@@ -389,6 +389,40 @@ class Database:
             )
             return cur.rowcount
 
+    def reconcile_registry(self, known_good_owners: frozenset[str] = frozenset()) -> dict:
+        """Precision sweep over CONFIRMED findings so the wall self-heals when the
+        rules tighten. Rejects (sticky) a confirmed/validated finding when:
+
+        * it has NO intrinsic static evidence (empty raw_payload['bash_findings'])
+          -- an OSS-scanner-only or association-only confirmation, no file:line
+          proof; or
+        * its owner is in the known-good allowlist (a legit OSS org).
+
+        redteam_lineage is left untouched: it is already excluded from publish (a
+        breadcrumb that still feeds the IOC learning loop). Returns counts.
+        """
+        rows = self.conn.execute(
+            "SELECT full_name, detection_method, raw_payload FROM repo_findings "
+            "WHERE status IN ('confirmed', 'validated')"
+        ).fetchall()
+        unproven, known_good = [], []
+        for r in rows:
+            if r["full_name"].split("/", 1)[0].casefold() in known_good_owners:
+                known_good.append(r["full_name"])
+                continue
+            if r["detection_method"] == "redteam_lineage":
+                continue  # breadcrumb; never published, kept for IOC mining
+            bash = (json.loads(r["raw_payload"] or "{}") or {}).get("bash_findings") or []
+            if not bash:
+                unproven.append(r["full_name"])
+        with self.transaction() as c:
+            for fn in unproven + known_good:
+                c.execute(
+                    "UPDATE repo_findings SET status = 'rejected' WHERE full_name = ?", (fn,)
+                )
+        return {"rejected_unproven": len(unproven),
+                "rejected_known_good": len(known_good)}
+
     def findings_by_status(self, status: str) -> list[sqlite3.Row]:
         return self.conn.execute(
             "SELECT * FROM repo_findings WHERE status = ? ORDER BY score DESC", (status,)
@@ -397,9 +431,15 @@ class Database:
     def published_findings(self) -> list[sqlite3.Row]:
         """Findings shown on the public Wall of Shame: confirmed (and any analyst-
         kept 'validated'), never rejected/screened/candidate. Highest score first.
+
+        redteam_lineage is EXCLUDED: a cloned/forked red-team tool is only a
+        breadcrumb (it seeds the search for weaponized siblings and feeds the IOC
+        learning loop), never compromise provenance in its own right. A genuine
+        attack surfaces via the evidence-bearing methods (signature/ioc/package).
         """
         return self.conn.execute(
             "SELECT * FROM repo_findings WHERE status IN ('confirmed', 'validated') "
+            "AND detection_method != 'redteam_lineage' "
             "ORDER BY score DESC, full_name"
         ).fetchall()
 
@@ -426,7 +466,8 @@ class Database:
         known = self.osm_known_repos()
         rows = self.conn.execute(
             "SELECT * FROM repo_findings WHERE status = 'confirmed' AND delivered_gold = 0 "
-            "AND detection_method != 'osm_repository' ORDER BY score DESC"
+            "AND detection_method NOT IN ('osm_repository', 'redteam_lineage') "
+            "ORDER BY score DESC"
         ).fetchall()
         return [r for r in rows if r["full_name"].casefold() not in known]
 

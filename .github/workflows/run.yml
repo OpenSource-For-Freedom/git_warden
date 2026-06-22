@@ -1,6 +1,11 @@
 name: The Warden
 on:
   workflow_dispatch:
+    inputs:
+      reconcile:
+        description: "Prune the registry before publishing: reject confirmed findings lacking static evidence or under a known-good org"
+        type: boolean
+        default: false
   schedule:
     - cron: "0 13 * * 1" # Mondays 13:00 UTC (~9am US-Eastern); weekly batch (PRD 8)
 
@@ -35,6 +40,10 @@ jobs:
           path: data
           key: git-warden-data-${{ github.run_id }}
           restore-keys: git-warden-data-
+
+      - name: Reconcile registry (prune unproven / known-good before this run)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.reconcile }}
+        run: python gw.py review --reconcile
 
       - name: Ingest threat-intel breadcrumbs
         env:

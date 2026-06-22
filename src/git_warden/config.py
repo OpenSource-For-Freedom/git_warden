@@ -57,6 +57,16 @@ REDTEAM_TOOLS_PATH = Path(
     os.environ.get("GW_REDTEAM_TOOLS", PROJECT_ROOT / "config" / "redteam_tools.json")
 )
 
+# Allowlist of well-known legitimate orgs whose repos must never reach the public
+# Wall of Shame even if a pivot/scanner trips on them (e.g. large OSS build
+# systems whose scripts legitimately fetch+run during builds). Used by the
+# `review --reconcile` precision sweep. Comma-separated owners, case-insensitive.
+KNOWN_GOOD_OWNERS = frozenset(
+    o.strip().casefold()
+    for o in os.environ.get("GW_KNOWN_GOOD_OWNERS", "openwrt").split(",")
+    if o.strip()
+)
+
 # --- Credentials (from environment / Actions secrets; never hard-coded) -----
 # Reads only; see docs and .env.example for the required scopes per token.
 GITHUB_TOKEN = os.environ.get("GW_GITHUB_TOKEN")

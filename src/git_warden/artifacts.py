@@ -157,23 +157,43 @@ def _md_cell(value) -> str:
     return text.replace("|", "\\|").replace("`", "'")
 
 
+def _proven_why(row) -> str:
+    """The PROVEN reason a repo is on the wall: the confirming static signature
+    (file:line + category/rule), not the discovery breadcrumb (owner/clone/IOC).
+
+    hunt.py orders the confirming findings first in raw_payload["bash_findings"],
+    so bash_findings[0] is the evidence that actually drove confirmation. Falls
+    back to the reasoning text only if a row somehow lacks static evidence.
+    """
+    bash = (json.loads(row["raw_payload"] or "{}") or {}).get("bash_findings") or []
+    if bash:
+        b = bash[0]
+        ev = f"{b.get('file', '?')}:{b.get('line', '?')} {b.get('category', '')}/{b.get('rule', '')}"
+        more = f"  (+{len(bash) - 1} more)" if len(bash) > 1 else ""
+        return ev + more
+    return (row["reasoning"] or "")[:140]
+
+
 def render_registry_table(rows: list) -> str:
-    """Render confirmed malicious repos as a Markdown table (highest score first)."""
+    """Render confirmed malicious repos as a Markdown table (highest score first).
+
+    The "Why" column shows the PROVEN confirming signature (file:line + rule), so
+    every row is justified by intrinsic malware evidence, not by association.
+    """
     header = (
-        "| Repository | Detection | Score | Attribution | First seen | Why |\n"
-        "|------------|-----------|-------|-------------|------------|-----|"
+        "| Repository | Detection | Score | Attribution | Proof (file:line rule) |\n"
+        "|------------|-----------|-------|-------------|------------------------|"
     )
     if not rows:
-        return header + "\n| _none yet_ |  |  |  |  |  |"
+        return header + "\n| _none yet_ |  |  |  |  |"
     lines = [header]
     for r in rows:
         full = r["full_name"]
         repo = f"[`{_md_cell(full)}`](https://github.com/{_md_cell(full)})"
-        why = _md_cell((r["reasoning"] or "")[:140])
+        proof = _md_cell(_proven_why(r))
         lines.append(
             f"| {repo} | {_md_cell(r['detection_method'])} | {r['score']} | "
-            f"{_md_cell(r['actor_key'] or 'unattributed')} | "
-            f"{_md_cell(r['first_seen_run'] or '')} | {why} |"
+            f"{_md_cell(r['actor_key'] or 'unattributed')} | {proof} |"
         )
     return "\n".join(lines)
 
