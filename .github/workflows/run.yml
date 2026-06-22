@@ -1,13 +1,16 @@
 name: The Warden
 on:
+  # On-demand ONLY -- no automatic schedule. Trigger via "Run workflow" in the
+  # Actions tab when you want a fresh scan, or run it locally:
+  #   gw ingest && gw hunt --scan --gold        (uses a local data/git_warden.sqlite)
+  # The DB for these dispatch runs persists in the Actions cache between runs
+  # (best-effort: GitHub evicts a cache after ~7 idle days).
   workflow_dispatch:
     inputs:
       reconcile:
         description: "Prune the registry before publishing: reject confirmed findings lacking static evidence or under a known-good org"
         type: boolean
         default: false
-  schedule:
-    - cron: "0 13 * * 1" # Mondays 13:00 UTC (~9am US-Eastern); weekly batch (PRD 8)
 
 permissions:
   contents: read
