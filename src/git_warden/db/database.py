@@ -432,14 +432,21 @@ class Database:
         """Findings shown on the public Wall of Shame: confirmed (and any analyst-
         kept 'validated'), never rejected/screened/candidate. Highest score first.
 
-        redteam_lineage is EXCLUDED: a cloned/forked red-team tool is only a
-        breadcrumb (it seeds the search for weaponized siblings and feeds the IOC
-        learning loop), never compromise provenance in its own right. A genuine
-        attack surfaces via the evidence-bearing methods (signature/ioc/package).
+        ASSOCIATION methods are EXCLUDED -- a repo is published only when it was
+        DISCOVERED by intrinsic malware evidence (signature/ioc/package/osm),
+        never by who owns it or what it forks:
+
+        * redteam_lineage: a cloned/forked red-team tool is a breadcrumb, never
+          provenance.
+        * malicious_owner: guilt-by-association. The owner pivot enumerates a
+          flagged owner's OTHER repos and confirms them on their own code, which
+          pins whole legit security firms (e.g. NCC Group's published pen-test
+          tools) and OSS orgs. Owner association seeds WHICH repos to scan and
+          feeds the IOC learning loop, but never confirms one on the wall.
         """
         return self.conn.execute(
             "SELECT * FROM repo_findings WHERE status IN ('confirmed', 'validated') "
-            "AND detection_method != 'redteam_lineage' "
+            "AND detection_method NOT IN ('redteam_lineage', 'malicious_owner') "
             "ORDER BY score DESC, full_name"
         ).fetchall()
 
@@ -466,7 +473,7 @@ class Database:
         known = self.osm_known_repos()
         rows = self.conn.execute(
             "SELECT * FROM repo_findings WHERE status = 'confirmed' AND delivered_gold = 0 "
-            "AND detection_method NOT IN ('osm_repository', 'redteam_lineage') "
+            "AND detection_method NOT IN ('osm_repository', 'redteam_lineage', 'malicious_owner') "
             "ORDER BY score DESC"
         ).fetchall()
         return [r for r in rows if r["full_name"].casefold() not in known]
@@ -545,13 +552,18 @@ class Database:
         pivot enumerate researchers' benign clones (opencode, PentestGPT). Only an
         owner of a repo confirmed via a malware-discovery method seeds the pivot.
         OSM's package names drive expansion via :meth:`malicious_package_terms`.
+
+        We also EXCLUDE owner-pivot (malicious_owner) confirmations from seeding,
+        so the pivot cannot chain: an owner is "malicious" only when they own a
+        repo confirmed by an INTRINSIC malware-discovery method, never merely
+        because a sibling was itself owner-pivoted in.
         """
         return {
             row["full_name"].split("/", 1)[0]
             for row in self.conn.execute(
                 "SELECT full_name FROM repo_findings "
                 "WHERE status IN ('confirmed', 'validated') "
-                "AND detection_method != 'redteam_lineage'"
+                "AND detection_method NOT IN ('redteam_lineage', 'malicious_owner')"
             )
         }
 
