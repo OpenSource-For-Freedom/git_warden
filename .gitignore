@@ -8,17 +8,18 @@ dist/
 .venv/
 venv/
 env/
-
+docs/plans*
 # Tooling
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
 
 # Git Warden runtime data (never commit live registry / artifacts)
+
+data/cache/
 data/*.sqlite
 data/*.sqlite-journal
-data/*.db
-data/cache/
+data/*.sqlite-wal
 artifacts/
 *.parquet
 
