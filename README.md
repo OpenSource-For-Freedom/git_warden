@@ -60,20 +60,20 @@ steal-and-send); threat-intel leads (a malicious owner, a shared signature) only
 *seed* which repos get scanned, never confirm one alone.
 
 <!-- git-warden:registry:start -->
-_Top 10 of 82 repositories confirmed malicious by static analysis this run, ranked by severity. The full list ships as the run's CSV artifact and to the Discord feed; every row's evidence (file, line, rule) is in that CSV. Dispute: open an issue and we will re-review._
+_Top 10 of 32 repositories confirmed malicious by static analysis this run, ranked by severity. The full list ships as the run's CSV artifact and to the Discord feed; every row's evidence (file, line, rule) is in that CSV. Dispute: open an issue and we will re-review._
 
-| Repository | Detection | Score | Attribution | First seen | Why |
-|------------|-----------|-------|-------------|------------|-----|
-| [`anon-exploiter/sliver-cheatsheet`](https://github.com/anon-exploiter/sliver-cheatsheet) | redteam_lineage | 55 | unattributed | hunt-20260618T201449Z | name_match of pinned red-team tool Sliver \| Tier-2 confirmed (bash score 46) |
-| [`openwrt/packages`](https://github.com/openwrt/packages) | ioc_search | 37 | unattributed | hunt-20260621T214303Z | Code references OSM IOC(s) ['public-dns.info'] in ['net/banip/files/banip.feeds'] \| Tier-2 confirmed (bash score 37) |
-| [`openwrt/openwrt`](https://github.com/openwrt/openwrt) | malicious_owner | 26 | unattributed | hunt-20260621T220813Z | repository under owner openwrt of a known-malicious repo \| Tier-2 confirmed (bash score 26) |
-| [`yuxiangggg/shiver`](https://github.com/yuxiangggg/shiver) | redteam_lineage | 26 | unattributed | hunt-20260618T201449Z | fork of pinned red-team tool Sliver \| Tier-2 confirmed (bash score 21) |
-| [`investlab/malware-sliver`](https://github.com/investlab/malware-sliver) | redteam_lineage | 25 | unattributed | hunt-20260618T201449Z | fork of pinned red-team tool Sliver \| Tier-2 confirmed (bash score 21) |
-| [`joapath/pamperoc2`](https://github.com/joapath/pamperoc2) | redteam_lineage | 25 | unattributed | hunt-20260618T201449Z | fork of pinned red-team tool Sliver \| Tier-2 confirmed (bash score 21) |
-| [`kaluabd/watchsliv`](https://github.com/kaluabd/watchsliv) | redteam_lineage | 25 | unattributed | hunt-20260618T201449Z | fork of pinned red-team tool Sliver \| Tier-2 confirmed (bash score 21) |
-| [`lishizhendep/hacccck`](https://github.com/lishizhendep/hacccck) | redteam_lineage | 25 | unattributed | hunt-20260618T201449Z | fork of pinned red-team tool Sliver \| Tier-2 confirmed (bash score 21) |
-| [`icecoldjay/infin8solution`](https://github.com/icecoldjay/infin8solution) | malicious_owner | 18 | unattributed | hunt-20260621T204101Z | repository under owner icecoldjay of a known-malicious repo \| Tier-2 confirmed (bash score 18) |
-| [`openwrt/archive`](https://github.com/openwrt/archive) | malicious_owner | 18 | unattributed | hunt-20260621T220813Z | repository under owner openwrt of a known-malicious repo \| Tier-2 confirmed (bash score 18) |
+| Repository | Detection | Score | Attribution | Proof (file:line rule) |
+|------------|-----------|-------|-------------|------------------------|
+| [`icecoldjay/infin8solution`](https://github.com/icecoldjay/infin8solution) | malicious_owner | 18 | unattributed | pay/wp-includes/ID3/module.audio-video.quicktime.php:1511 obfuscation/hex-blob  (+19 more) |
+| [`nccgroup/gitpwnd`](https://github.com/nccgroup/gitpwnd) | malicious_owner | 18 | unattributed | setup.py:345 install_hook/py-setup-exec  (+5 more) |
+| [`alexsander532/projeto_dashboard_versao1`](https://github.com/alexsander532/projeto_dashboard_versao1) | malicious_owner | 14 | unattributed | frontend/vite.config.js:36 obfuscation/eval-decoded  (+3 more) |
+| [`usmanaliashraf/portfolio`](https://github.com/usmanaliashraf/portfolio) | signature_match | 12 | unattributed | postcss.config.mjs:12 obfuscation/eval-decoded  (+8 more) |
+| [`icecoldjay/bri`](https://github.com/icecoldjay/bri) | signature_match | 11 | unattributed | client/tailwind.config.js:61 obfuscation/eval-decoded  (+3 more) |
+| [`nccgroup/redsnarf`](https://github.com/nccgroup/redsnarf) | malicious_owner | 11 | unattributed | bits_and_bobs/setup.py:30 install_hook/py-setup-exec  (+19 more) |
+| [`nccgroup/triforceafl`](https://github.com/nccgroup/triforceafl) | malicious_owner | 11 | unattributed | qemu_mode/qemu/scripts/qemu-binfmt-conf.sh:34 obfuscation/hex-escapes  (+19 more) |
+| [`nccgroup/depthcharge`](https://github.com/nccgroup/depthcharge) | malicious_owner | 10 | unattributed | python/depthcharge/builtin_payloads.py:9 obfuscation/hex-blob  (+19 more) |
+| [`alexsander532/atlas_landingpage`](https://github.com/alexsander532/atlas_landingpage) | signature_match | 9 | unattributed | astro.config.mjs:7 obfuscation/eval-decoded  (+1 more) |
+| [`alexsander532/mvp_wain_group130`](https://github.com/alexsander532/mvp_wain_group130) | signature_match | 9 | unattributed | frontend/postcss.config.mjs:9 obfuscation/eval-decoded  (+1 more) |
 <!-- git-warden:registry:end -->
 
 > [!NOTE]
