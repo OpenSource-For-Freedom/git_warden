@@ -466,6 +466,11 @@ def _cmd_review(args: argparse.Namespace) -> int:
             update_readme_registry_table(db)
             print(f"rejected {args.reject}; removed from the Wall of Shame, commit README.md."
                   if n else f"no finding {args.reject!r}")
+        elif args.reconcile:
+            counts = db.reconcile_registry(config.KNOWN_GOOD_OWNERS)
+            update_readme_registry_table(db)
+            print(f"reconciled: rejected {counts['rejected_unproven']} unproven + "
+                  f"{counts['rejected_known_good']} known-good-owner finding(s); commit README.md.")
         else:
             rows = db.published_findings()
             print(f"{len(rows)} repo(s) on the Wall of Shame:")
@@ -541,6 +546,9 @@ def build_parser() -> argparse.ArgumentParser:
     review.add_argument("--db", type=Path, default=config.DB_PATH, help="SQLite path.")
     review.add_argument("--approve", metavar="OWNER/REPO", help="Mark a finding validated.")
     review.add_argument("--reject", metavar="OWNER/REPO", help="Mark a finding rejected.")
+    review.add_argument("--reconcile", action="store_true",
+                        help="Reject confirmed findings lacking static evidence or under a "
+                             "known-good owner (precision sweep over the back-catalog).")
     review.set_defaults(func=_cmd_review)
 
     serve = sub.add_parser("serve", help="Serve the live threat-telemetry dashboard (PRD 6).")
