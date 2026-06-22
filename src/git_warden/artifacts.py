@@ -168,7 +168,8 @@ def _proven_why(row) -> str:
     bash = (json.loads(row["raw_payload"] or "{}") or {}).get("bash_findings") or []
     if bash:
         b = bash[0]
-        ev = f"{b.get('file', '?')}:{b.get('line', '?')} {b.get('category', '')}/{b.get('rule', '')}"
+        loc = f"{b.get('file', '?')}:{b.get('line', '?')}"
+        ev = f"{loc} {b.get('category', '')}/{b.get('rule', '')}"
         more = f"  (+{len(bash) - 1} more)" if len(bash) > 1 else ""
         return ev + more
     return (row["reasoning"] or "")[:140]
