@@ -39,6 +39,11 @@ def _cmd_ingest(args: argparse.Namespace) -> int:
             playbook=load_playbook(),
             on_alert=lambda m: post_discord(m),
         )
+        # Keep the DB lean: prune the append-only observation audit layer (its
+        # durable rollup lives in actor_sources/threat_actors) and reclaim space,
+        # so the file does not grow by megabytes every run.
+        summary["observations_pruned"] = db.prune_observations()
+        db.vacuum()
     finally:
         db.close()
 
