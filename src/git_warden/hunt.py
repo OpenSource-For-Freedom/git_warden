@@ -88,7 +88,9 @@ def _finding_from_lineage(cand, tool: RedTeamTool) -> RepoFinding:
     )
 
 
-def _intent_gate(client, finding: RepoFinding, anchor_default: dict) -> tuple[bool, set | None, bool]:
+def _intent_gate(
+    client, finding: RepoFinding, anchor_default: dict
+) -> tuple[bool, set | None, bool]:
     """Red-team lineage intent check (P1, doc 02 5).
 
     Red-team tooling is a breadcrumb: we flag a derivative only when it ADDED an
@@ -385,7 +387,7 @@ def hunt(
                         # Keep it a research breadcrumb, not a confirmed finding.
                         finding.status = RepoFindingStatus.SCREENED
                         finding.reasoning = (finding.reasoning or "") + \
-                            " | red-team tooling with no diffable intent change; breadcrumb, not confirmed"
+                            " | red-team tooling; no diffable intent delta -> breadcrumb"
                         db.upsert_finding(finding, run_id)
                         redteam_breadcrumbs += 1
                         continue

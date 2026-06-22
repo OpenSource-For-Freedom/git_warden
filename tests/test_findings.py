@@ -57,8 +57,9 @@ def test_reconcile_registry_prunes_unproven_and_known_good(db):
     db.upsert_finding(RepoFinding(
         full_name="attacker/dropper", detection_method=DetectionMethod.IOC_SEARCH,
         status=RepoFindingStatus.CONFIRMED,
-        raw_payload={"bash_findings": [{"file": "x.py", "line": 1,
-                                        "category": "exfiltration", "rule": "secret-exfil"}]}), "run-1")
+        raw_payload={"bash_findings": [
+            {"file": "x.py", "line": 1, "category": "exfiltration", "rule": "secret-exfil"}]}),
+        "run-1")
     # No static evidence (OSS-only / association-only) -> rejected as unproven.
     db.upsert_finding(RepoFinding(
         full_name="weak/owner-pivot", detection_method=DetectionMethod.MALICIOUS_OWNER,
@@ -67,8 +68,9 @@ def test_reconcile_registry_prunes_unproven_and_known_good(db):
     db.upsert_finding(RepoFinding(
         full_name="openwrt/packages", detection_method=DetectionMethod.IOC_SEARCH,
         status=RepoFindingStatus.CONFIRMED,
-        raw_payload={"bash_findings": [{"file": "b.sh", "line": 2,
-                                        "category": "download_exec", "rule": "curl-pipe-shell"}]}), "run-1")
+        raw_payload={"bash_findings": [
+            {"file": "b.sh", "line": 2, "category": "download_exec", "rule": "curl-pipe-shell"}]}),
+        "run-1")
     # Red-team clone -> untouched breadcrumb (already excluded from publish).
     db.upsert_finding(RepoFinding(
         full_name="evil/sliver-fork", detection_method=DetectionMethod.REDTEAM_LINEAGE,

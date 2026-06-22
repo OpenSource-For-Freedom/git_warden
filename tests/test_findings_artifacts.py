@@ -116,10 +116,10 @@ def test_redteam_lineage_never_published_or_gold(tmp_path, db):
 
 def test_readme_why_shows_proven_evidence_not_association(tmp_path, db):
     # The "Why" leads with the PROVEN confirming signature (file:line + rule),
-    # not the discovery breadcrumb (owner/clone/IOC association).
+    # not the discovery breadcrumb (the IOC/association reasoning text).
     f = _finding("attacker/dropper", status=RepoFindingStatus.CONFIRMED, score=8,
-                 detection_method=DetectionMethod.MALICIOUS_OWNER,
-                 reasoning="repository under owner attacker of a known-malicious repo")
+                 detection_method=DetectionMethod.IOC_SEARCH,
+                 reasoning="Code references OSM IOC(s) ['evil.tld'] in ['x.py']")
     f.raw_payload = {"bash_findings": [
         {"file": "setup.py", "line": 42, "category": "exfiltration", "rule": "secret-exfil"}]}
     db.upsert_finding(f, "run-1")
@@ -128,7 +128,7 @@ def test_readme_why_shows_proven_evidence_not_association(tmp_path, db):
     update_readme_registry_table(db, readme_path=readme)
     out = readme.read_text(encoding="utf-8")
     assert "setup.py:42 exfiltration/secret-exfil" in out   # proof is the headline
-    assert "under owner attacker" not in out                # association is NOT
+    assert "references OSM IOC" not in out                  # discovery breadcrumb is NOT
 
 
 def test_readme_caps_to_top_ten_most_dangerous(tmp_path, db):
