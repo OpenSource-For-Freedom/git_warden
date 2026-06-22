@@ -742,3 +742,37 @@ class Database:
             (run_id,),
         ).fetchall()
         return {row["source"]: int(row["n"]) for row in rows}
+
+    def prune_observations(self, keep_recent_runs: int = 1) -> int:
+        """Delete raw source_observations older than the most recent N ingest runs.
+
+        source_observations is an append-only AUDIT layer that grows by megabytes
+        every ingest. The DURABLE state it rolls up into -- actor_sources (the
+        corroboration ledger), threat_actors and actor_identifiers -- is written
+        incrementally during ingest (pipeline.run_ingestion), and the validator
+        reads ONLY actor_sources, so old observations are disposable. Nulls the
+        actor_sources.first_observation_id provenance pointer for any soon-deleted
+        row first (its FK has no ON DELETE). Returns rows deleted; call
+        :meth:`vacuum` afterwards to reclaim the freed file space.
+        """
+        with self.transaction() as c:
+            keep = [r[0] for r in c.execute(
+                "SELECT DISTINCT run_id FROM source_observations "
+                "ORDER BY run_id DESC LIMIT ?", (max(1, keep_recent_runs),)
+            ).fetchall()]
+            if not keep:
+                return 0
+            ph = ",".join("?" for _ in keep)
+            c.execute(
+                "UPDATE actor_sources SET first_observation_id = NULL "
+                "WHERE first_observation_id IN "
+                f"(SELECT id FROM source_observations WHERE run_id NOT IN ({ph}))",
+                keep)
+            cur = c.execute(
+                f"DELETE FROM source_observations WHERE run_id NOT IN ({ph})", keep)
+            return cur.rowcount
+
+    def vacuum(self) -> None:
+        """Reclaim free pages so the DB file shrinks (e.g. after prune_observations)."""
+        self.conn.commit()
+        self.conn.execute("VACUUM")
