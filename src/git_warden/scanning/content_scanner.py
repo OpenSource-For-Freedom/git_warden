@@ -11,6 +11,7 @@ Findings reuse :class:`~git_warden.scanning.bash_scanner.BashFinding`.
 
 from __future__ import annotations
 
+import base64
 import re
 from pathlib import Path
 
@@ -60,6 +61,54 @@ _RULES: dict[str, list[tuple[str, str, re.Pattern]]] = {
 }
 
 
+# Decode-and-EXECUTE rules confirm a repo on their own, so we VERIFY the payload
+# rather than trusting the syntax: decode the encoded literal and require concrete
+# malicious indicators in the decoded content. A literal that decodes to benign
+# text (e.g. eval(atob('aGVsbG8=')) -> "hello") is dropped; a dynamic loader
+# (eval(atob(varName))) has no static payload but also no benign use, so it holds.
+_DECODE_EXEC_RULES = {"eval-decoded", "py-decode-exec"}
+# Capture EVERYTHING between the quotes: malware sprinkles junk (e.g. '-') into
+# the blob to defeat naive base64 parsers, relying on Node's atob/Buffer to
+# ignore it. We sanitize to standard base64 before decoding, mimicking that.
+_ENCODED_LITERAL = re.compile(
+    r"(?:atob|Buffer\.from|b64decode|base64\.b64decode)\s*\(\s*['\"]([^'\"]{16,})['\"]")
+_NON_B64 = re.compile(r"[^A-Za-z0-9+/]")
+_DECODED_INDICATORS: list[tuple[str, re.Pattern]] = [
+    ("require/module hijack", re.compile(r"\brequire\b|\bmodule\b")),
+    ("child_process/exec", re.compile(r"child_process|\bexec(?:Sync)?\s*\(|\bspawn", re.I)),
+    ("env access", re.compile(r"process\.env|os\.environ", re.I)),
+    ("network host", re.compile(r"https?://", re.I)),
+    ("fetch/XHR", re.compile(r"\bfetch\s*\(|XMLHttpRequest|http\.request", re.I)),
+    ("second-stage decode",
+     re.compile(r"\beval\s*\(|\batob\s*\(|Function\s*\(|fromCharCode", re.I)),
+    ("crypto/wallet theft", re.compile(r"wallet|mnemonic|private[_ ]?key|seed\s*phrase", re.I)),
+]
+
+
+def _verify_decode_exec(line: str) -> tuple[bool, str]:
+    """Decide whether a decode-and-exec LINE is genuinely malicious.
+
+    Returns (is_malicious, evidence_note). Decodes the encoded LITERAL argument
+    and checks the decoded payload for malicious indicators; a dynamic loader
+    (no static literal to decode) has no benign use and holds on its own.
+    """
+    m = _ENCODED_LITERAL.search(line)
+    if not m:
+        # No quoted literal: a dynamic loader (eval(atob(varName / process.env.X)))
+        # -- no static payload to decode, but no benign use either.
+        return True, "evals a runtime-decoded payload (dynamic stager)"
+    blob = _NON_B64.sub("", m.group(1))  # standard base64 only (drops junk + padding)
+    try:
+        decoded = base64.b64decode(blob + "=" * (-len(blob) % 4),
+                                   validate=False).decode("utf-8", "ignore")
+    except Exception:  # noqa: BLE001
+        return False, ""  # cannot verify the payload -> do not confirm on this alone
+    hits = [name for name, pat in _DECODED_INDICATORS if pat.search(decoded)]
+    if hits:
+        return True, "decoded payload -> " + ", ".join(hits[:4])
+    return False, ""  # decodes to benign content -> not malware
+
+
 def _lang_for(suffix: str) -> str:
     if suffix in _JS_EXT:
         return "js"
@@ -97,7 +146,11 @@ def scan_content(root) -> list[BashFinding]:
                     if rule_lang != "any" and rule_lang != lang:
                         continue
                     if pattern.search(line):
-                        findings.append(
-                            BashFinding(rel, lineno, category, rule_name, line.strip()[:200])
-                        )
+                        snippet = line.strip()[:200]
+                        if rule_name in _DECODE_EXEC_RULES:
+                            malicious, note = _verify_decode_exec(line)
+                            if not malicious:
+                                continue  # decodes to benign content -> not malware
+                            snippet = f"{note} | {snippet}"[:200]
+                        findings.append(BashFinding(rel, lineno, category, rule_name, snippet))
     return findings

