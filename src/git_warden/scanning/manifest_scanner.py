@@ -118,6 +118,10 @@ def scan_manifests(root, malicious_packages=None) -> list[BashFinding]:
                     findings.append(
                         BashFinding(rel, 0, "install_hook", f"npm-{hook}", str(cmd)[:200])
                     )
+            # A VS Code tasks[] array can also be embedded in package.json (not
+            # just .vscode/tasks.json); icecoldjay/bri hid its folder-open
+            # auto-run there, so scan it the same way.
+            findings.extend(_scan_vscode_tasks(text, rel))
         elif name == "setup.py":
             for match in _PY_SETUP_EXEC.finditer(text):
                 line = text[: match.start()].count("\n") + 1
@@ -132,6 +136,27 @@ def scan_manifests(root, malicious_packages=None) -> list[BashFinding]:
     return findings
 
 
+def _task_command_blob(task: dict) -> str:
+    """All command/arg text in a VS Code task, INCLUDING per-OS overrides.
+
+    A task's command can live at the top level OR under ``osx`` / ``linux`` /
+    ``windows`` blocks, which malware uses to ship a ``curl | sh`` for Unix and a
+    ``curl | cmd`` for Windows in one task (icecoldjay/bri). Reading only the
+    top-level ``command`` misses all of it, so collect every source.
+    """
+    parts: list[str] = []
+    for src in (task, task.get("osx"), task.get("linux"), task.get("windows")):
+        if not isinstance(src, dict):
+            continue
+        cmd = src.get("command")
+        if isinstance(cmd, str):
+            parts.append(cmd)
+        elif isinstance(cmd, list):
+            parts += [str(p) for p in cmd]
+        parts += [str(a) for a in (src.get("args") or [])]
+    return " ".join(parts)
+
+
 def _scan_vscode_tasks(text: str, rel: str) -> list[BashFinding]:
     try:
         tasks = (json.loads(text or "{}") or {}).get("tasks") or []
@@ -142,10 +167,7 @@ def _scan_vscode_tasks(text: str, rel: str) -> list[BashFinding]:
         if not isinstance(task, dict):
             continue
         run_on = ((task.get("runOptions") or {}).get("runOn") or "").lower()
-        cmd = task.get("command")
-        parts = [cmd] if isinstance(cmd, str) else (cmd if isinstance(cmd, list) else [])
-        parts += task.get("args") or []
-        blob = " ".join(str(p) for p in parts)
+        blob = _task_command_blob(task)
         if run_on == "folderopen" and _SUSPICIOUS_CMD.search(blob):
             out.append(BashFinding(rel, 0, "install_hook", "vscode-autorun", blob[:200]))
     return out
