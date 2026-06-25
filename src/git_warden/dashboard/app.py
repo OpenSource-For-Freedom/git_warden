@@ -62,6 +62,10 @@ def create_app(db_path=DB_PATH):
             raise HTTPException(status_code=404, detail="finding not found")
         return detail
 
+    @app.get("/api/bad-owners")
+    def api_bad_owners():
+        return _q(queries.bad_owners)
+
     @app.get("/api/campaigns")
     def api_campaigns():
         return _q(queries.campaign_clusters)

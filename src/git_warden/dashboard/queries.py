@@ -42,6 +42,9 @@ def summary(db: Database) -> dict[str, Any]:
         "osm_known_confirmed": len(confirmed) - novel,
         "gold_delivered": c.execute(
             "SELECT count(*) FROM repo_findings WHERE delivered_gold = 1").fetchone()[0],
+        # The split the wall enforces: evidence-only published vs owner-association.
+        "published": len(db.published_findings()),
+        "bad_owners": len(db.bad_owner_findings()),
         "by_method": {
             r["detection_method"]: r["n"] for r in c.execute(
                 "SELECT detection_method, count(*) n FROM repo_findings "
@@ -100,6 +103,16 @@ def finding_detail(db: Database, full_name: str) -> dict[str, Any] | None:
         "gold": bool(r["delivered_gold"]),
         "novel": r["full_name"].casefold() not in db.osm_known_repos(),
     }
+
+
+def bad_owners(db: Database) -> list[dict[str, Any]]:
+    """Owner-association repos (no own evidence) with owner provenance.
+
+    The dashboard mirror of the README's Bad Owners section: these never reach the
+    wall (no per-repo evidence) and surface only because the owner ships malware
+    elsewhere; each row carries the owner's evidence-confirmed repos as provenance.
+    """
+    return db.bad_owner_findings()
 
 
 def campaign_clusters(db: Database) -> dict[str, Any]:
