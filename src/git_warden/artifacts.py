@@ -44,6 +44,9 @@ _FINDINGS_COLUMNS = [
 # README registry table is regenerated in place between these markers.
 _README_START = "<!-- git-warden:registry:start -->"
 _README_END = "<!-- git-warden:registry:end -->"
+# The Bad Owners (owner-provenance) table has its own marker pair.
+_BADOWNERS_START = "<!-- git-warden:badowners:start -->"
+_BADOWNERS_END = "<!-- git-warden:badowners:end -->"
 # The public wall shows only the most dangerous handful; the FULL confirmed list
 # ships as the run's CSV artifact and to the Discord feed.
 _README_MAX_ROWS = 10
@@ -258,4 +261,71 @@ def update_readme_registry_table(
     readme_path.write_text(updated, encoding="utf-8")
     log.info("updated README registry table",
              extra={"context": {"rows": len(top), "total": total}})
+    return True
+
+
+def render_bad_owners_table(rows: list) -> str:
+    """Render owner-association repos (no per-repo evidence) with owner provenance.
+
+    The "Owner provenance" column links the sibling repos under the same owner that
+    ARE confirmed by intrinsic evidence, making explicit that the owner, not this
+    repo's code, is the basis for the listing.
+    """
+    header = (
+        "| Repository | Owner | Owner provenance (repos confirmed on evidence) | Score |\n"
+        "|------------|-------|------------------------------------------------|-------|"
+    )
+    if not rows:
+        return header + "\n| _none_ |  |  |  |"
+    lines = [header]
+    for r in rows:
+        full = r["full_name"]
+        repo = f"[`{_md_cell(full)}`](https://github.com/{_md_cell(full)})"
+        prov = r.get("provenance") or []
+        shown = ", ".join(
+            f"[`{_md_cell(p)}`](https://github.com/{_md_cell(p)})" for p in prov[:3]
+        )
+        if len(prov) > 3:
+            shown += f"  (+{len(prov) - 3} more)"
+        if not shown:
+            shown = "_known-malicious owner_"
+        lines.append(f"| {repo} | {_md_cell(r['owner'])} | {shown} | {r['score']} |")
+    return "\n".join(lines)
+
+
+def update_readme_bad_owners(
+    db: Database,
+    readme_path: Path = Path("README.md"),
+) -> bool:
+    """Regenerate the Bad Owners table in README between its markers.
+
+    The deliberate complement of the Wall of Shame: repos that carry NO malicious
+    evidence in their own code and only surface because their owner ships malware
+    elsewhere. Listed for provenance, never as confirmed malware. Returns True if
+    the file content changed. No-op (returns False) if the markers are absent, so
+    a README without the section is never auto-mangled.
+    """
+    if not readme_path.exists():
+        return False
+    original = readme_path.read_text(encoding="utf-8")
+    if _BADOWNERS_START not in original or _BADOWNERS_END not in original:
+        return False
+    rows = db.bad_owner_findings()
+    table = render_bad_owners_table(rows[:_README_MAX_ROWS])
+    caption = (
+        "_These repositories are NOT confirmed malicious on their own code. They appear "
+        "only because their OWNER also publishes repositories we confirmed by static "
+        "evidence (linked below, and on the Wall of Shame). Owner reputation is a "
+        "provenance breadcrumb, not proof, so these never enter the registry or the "
+        "report queue; treat them as elevated risk pending their own review._"
+    )
+    block = f"{_BADOWNERS_START}\n{caption}\n\n{table}\n{_BADOWNERS_END}"
+    head, _, rest = original.partition(_BADOWNERS_START)
+    _, _, tail = rest.partition(_BADOWNERS_END)
+    updated = head + block + tail
+    if updated == original:
+        return False
+    readme_path.write_text(updated, encoding="utf-8")
+    log.info("updated README bad-owners table",
+             extra={"context": {"rows": min(len(rows), _README_MAX_ROWS), "total": len(rows)}})
     return True

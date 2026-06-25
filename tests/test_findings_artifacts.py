@@ -6,6 +6,8 @@ import pytest
 from conftest import utcnow
 
 from git_warden.artifacts import (
+    render_bad_owners_table,
+    update_readme_bad_owners,
     update_readme_registry_table,
     write_findings_csv,
 )
@@ -112,6 +114,41 @@ def test_redteam_lineage_never_published_or_gold(tmp_path, db):
     out = readme.read_text(encoding="utf-8")
     assert "evil/sliver-fork" not in out      # red-team clone kept off the wall
     assert "attacker/dropper" in out
+
+
+def test_bad_owners_table_renders_owner_provenance(tmp_path, db):
+    # The Bad Owners section lists association-only repos with the owner's
+    # evidence-confirmed siblings as provenance, never as confirmed malware.
+    ev = {"bash_findings": [
+        {"file": "x.js", "line": 1, "category": "obfuscation", "rule": "eval-decoded"}]}
+    db.upsert_finding(RepoFinding(
+        full_name="badguy/proven", detection_method=DetectionMethod.SIGNATURE_MATCH,
+        status=RepoFindingStatus.CONFIRMED, raw_payload=ev), "run-1")
+    db.upsert_finding(RepoFinding(
+        full_name="badguy/just-owned", detection_method=DetectionMethod.MALICIOUS_OWNER,
+        status=RepoFindingStatus.CONFIRMED, raw_payload={}), "run-1")
+
+    table = render_bad_owners_table(db.bad_owner_findings())
+    assert "badguy/just-owned" in table          # association repo listed
+    assert "badguy/proven" in table              # owner provenance linked
+    assert "Owner provenance" in table
+
+    readme = tmp_path / "README.md"
+    readme.write_text(
+        "# X\n\n<!-- git-warden:badowners:start -->\nold\n"
+        "<!-- git-warden:badowners:end -->\nend\n", encoding="utf-8")
+    assert update_readme_bad_owners(db, readme_path=readme) is True
+    out = readme.read_text(encoding="utf-8")
+    assert "badguy/just-owned" in out
+    assert out.endswith("end\n")                 # content outside the markers untouched
+
+
+def test_bad_owners_update_is_noop_without_markers(tmp_path, db):
+    # A README without the markers is never auto-mangled.
+    readme = tmp_path / "README.md"
+    readme.write_text("# X\nno markers here\n", encoding="utf-8")
+    assert update_readme_bad_owners(db, readme_path=readme) is False
+    assert readme.read_text(encoding="utf-8") == "# X\nno markers here\n"
 
 
 def test_readme_why_shows_proven_evidence_not_association(tmp_path, db):
