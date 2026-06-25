@@ -1,8 +1,16 @@
 name: The Warden
 on:
+  # On-demand ONLY -- no automatic schedule. Trigger via "Run workflow" in the
+  # Actions tab when you want a fresh scan, or run it locally:
+  #   gw ingest && gw hunt --scan --gold        (uses a local data/git_warden.sqlite)
+  # The DB for these dispatch runs persists in the Actions cache between runs
+  # (best-effort: GitHub evicts a cache after ~7 idle days).
   workflow_dispatch:
-  schedule:
-    - cron: "0 13 * * 1" # Mondays 13:00 UTC (~9am US-Eastern); weekly batch (PRD 8)
+    inputs:
+      reconcile:
+        description: "Prune the registry before publishing: reject confirmed findings lacking static evidence or under a known-good org"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -36,16 +44,22 @@ jobs:
           key: git-warden-data-${{ github.run_id }}
           restore-keys: git-warden-data-
 
+      - name: Reconcile registry (prune unproven / known-good before this run)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.reconcile }}
+        run: python gw.py review --reconcile
+
       - name: Ingest threat-intel breadcrumbs
         env:
           GW_GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-          GW_OSM_API_KEY: ${{ secrets.OSM_TOKEN }}
+          GW_OSM_API_KEY: ${{ secrets.OSM_KEY }}
+          GW_OSM_BASE_URL: ${{ secrets.GW_OSM_BASE_URL }}
         run: python gw.py ingest
 
       - name: Hunt malicious repositories (Tier-2 + gold)
         env:
           GW_GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-          GW_OSM_API_KEY: ${{ secrets.OSM_TOKEN }}
+          GW_OSM_API_KEY: ${{ secrets.OSM_KEY }}
+          GW_OSM_BASE_URL: ${{ secrets.GW_OSM_BASE_URL }}
           GW_DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
 
         # Top 75 candidates per weekly run (ranked by signature/owner/signal
@@ -60,10 +74,32 @@ jobs:
           git config user.email "git-warden@users.noreply.github.com"
           if git diff --quiet -- README.md; then
             echo "README registry unchanged; nothing to push."
-          else
-            git add README.md
-            git commit -m "Auto-update malicious-repo registry table [skip ci]"
-            git push origin HEAD:${GITHUB_REF_NAME}
+            exit 0
+          fi
+          git add README.md
+          git commit -m "Auto-update malicious-repo registry table [skip ci]"
+          # The hunt step runs ~45 min, so main may have advanced since checkout
+          # (or this is a re-run pinned to an older SHA). Rebase our commit onto
+          # the live tip FIRST and only push if the rebase is clean; loop to
+          # absorb a push that races with another update.
+          pushed=false
+          for attempt in 1 2 3 4 5; do
+            git fetch origin "${GITHUB_REF_NAME}"
+            if ! git rebase --autostash "origin/${GITHUB_REF_NAME}"; then
+              git rebase --abort 2>/dev/null || true
+              echo "::error::README registry rebase conflicted with origin/${GITHUB_REF_NAME}; manual merge needed."
+              exit 1
+            fi
+            if git push origin HEAD:"${GITHUB_REF_NAME}"; then
+              echo "Registry update pushed (attempt ${attempt})."
+              pushed=true
+              break
+            fi
+            echo "Push raced with another update; refetching and rebasing (attempt ${attempt})."
+          done
+          if [ "$pushed" != true ]; then
+            echo "::error::Could not push README registry update after 5 attempts."
+            exit 1
           fi
 
       - name: Upload run artifacts (full transparency)
