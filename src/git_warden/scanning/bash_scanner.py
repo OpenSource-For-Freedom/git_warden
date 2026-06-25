@@ -129,14 +129,42 @@ _IGNORE_DIRS = frozenset({
 # Test-file name markers (a test file can live anywhere, e.g. `src/x.test.ts`).
 _TEST_FILE_MARKERS = (".test.", ".spec.", ".stories.", ".fixture.", ".mock.")
 
+# Security-DATA files: a malware scanner / advisory feed carries attack strings and
+# known-bad package names as DATA, not as a payload it runs. The pkgward-oss FP
+# confirmed on `analyze/malware_patterns.py`; the aeon FP on a
+# `.../adv_malware_raw.json` advisory cache. Like a test fixture, such a file must
+# never CONFIRM a repo malicious. High-signal, security-specific filename markers
+# only, so a genuine payload file is never skipped by accident.
+_SECURITY_DATA_MARKERS = (
+    "malware_pattern", "malware-pattern", "malware_signature", "malware-signature",
+    "malware_raw", "malware_sample", "malware_db", "malwaredb",
+    "attack_pattern", "attack-pattern", "attack_signature", "threat_signature",
+    "yara", "ruleset", "detection_rule", "detection-rule", "_signatures.",
+    "ioc_list", "ioc-list", "blocklist", "blacklist", "denylist",
+)
+
+
+def is_security_data_file(name: str) -> bool:
+    """True if a filename is a malware/detection SIGNATURE or advisory DATA file.
+
+    Such a file lists attack strings and known-bad names as reference data (a
+    scanner's rule set, an advisory cache), so a match inside it is the tool doing
+    its job, not the repo being malicious. Compared case-insensitively.
+    """
+    low = name.lower()
+    return any(marker in low for marker in _SECURITY_DATA_MARKERS)
+
 
 def is_ignored_path(path: Path) -> bool:
-    """True if a path is vendored/generated or a test/fixture (skip for scanning)."""
+    """True if a path is vendored/generated, a test/fixture, or a security-data
+    file (skip for scanning so only first-party PAYLOAD code can confirm)."""
     parts = {p.lower() for p in path.parts}
     if _IGNORE_DIRS & parts:
         return True
     name = path.name.lower()
-    return any(marker in name for marker in _TEST_FILE_MARKERS)
+    if any(marker in name for marker in _TEST_FILE_MARKERS):
+        return True
+    return is_security_data_file(name)
 
 
 @dataclass
