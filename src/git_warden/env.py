@@ -15,14 +15,25 @@ def load_env_file(path: Path | str) -> dict[str, str]:
     """Load KEY=VALUE pairs from ``path`` into os.environ. Returns what was set.
 
     Ignores blank lines and ``#`` comments, tolerates a leading ``export``, and
-    strips one layer of surrounding single/double quotes from values.
+    strips one layer of surrounding single/double quotes from values. Decodes
+    UTF-8, UTF-8-with-BOM, and UTF-16 (what PowerShell's Out-File / redirection
+    writes), so a .env created on Windows still loads. The BOM is stripped by the
+    decode step.
     """
     p = Path(path)
     if not p.exists():
         return {}
 
+    data = p.read_bytes()
+    if data[:2] in (b"\xff\xfe", b"\xfe\xff"):
+        text = data.decode("utf-16", errors="ignore")
+    elif data[:3] == b"\xef\xbb\xbf":
+        text = data.decode("utf-8-sig", errors="ignore")
+    else:
+        text = data.decode("utf-8-sig", errors="ignore")  # utf-8, BOM-tolerant
+
     loaded: dict[str, str] = {}
-    for raw in p.read_text(encoding="utf-8").splitlines():
+    for raw in text.splitlines():
         line = raw.strip()
         if not line or line.startswith("#") or "=" not in line:
             continue

