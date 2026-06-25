@@ -28,6 +28,8 @@
   .legend{position:absolute;top:8px;left:10px;font-size:11px;color:var(--mut);
     background:rgba(10,14,19,.7);padding:6px 8px;border:1px solid var(--line);border-radius:6px}
   .legend b{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:middle}
+  .scope{cursor:pointer;border-bottom:1px dashed transparent;margin:0 2px}
+  .scope:hover{color:var(--ink)} .scope.on{color:var(--accent);border-bottom-color:var(--accent)}
   .hint{position:absolute;bottom:8px;left:10px;font-size:11px;color:var(--mut)}
   #detail{padding:12px 14px;overflow:auto}
   #detail h2{font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.8px;margin:0 0 10px}
@@ -57,9 +59,17 @@
   <div id="graphwrap">
     <svg id="graph"></svg>
     <div class="legend">
-      <div><b style="background:#c792ea"></b>novel repo <b style="background:#869cb2;margin-left:8px"></b>OSM-known</div>
-      <div><b style="background:#5fa8ff"></b>owner <b style="background:#ffb23e;margin-left:8px"></b>signature</div>
-      <div class="muted" style="margin-top:3px">orange=shared sig · green=shared code-hash</div>
+      <div><b style="background:#c792ea"></b>novel <b style="background:#869cb2;margin-left:8px"></b>OSM-known
+        <b style="background:#5fa8ff;margin-left:8px"></b>owner
+        <b style="background:#ffb23e;margin-left:8px"></b>signature
+        <b style="background:#ff5d6c;margin-left:8px"></b>actor</div>
+      <div class="muted" style="margin-top:3px">orange=shared sig · green=code-hash · red=attributed</div>
+      <div style="margin-top:5px">scope:
+        <span class="scope on" data-s="confirmed">confirmed</span>
+        <span class="scope" data-s="active">+candidates</span>
+        <span class="scope" data-s="all">all</span>
+        <span class="muted" id="gcount"></span></div>
+      <div class="muted" id="funnel" style="margin-top:3px"></div>
     </div>
     <div class="hint">drag nodes · click a repo → payload &amp; flags →</div>
   </div>
@@ -79,8 +89,9 @@
 const $=id=>document.getElementById(id);
 const j=u=>fetch(u).then(r=>r.json());
 const esc=s=>String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-const NCOLOR={owner:'#5fa8ff',signature:'#ffb23e'};
-const ECOLOR={owns:'#33415560',signature:'#ffb23e88',codehash:'#39d98a88'};
+const NCOLOR={owner:'#5fa8ff',signature:'#ffb23e',actor:'#ff5d6c'};
+const ECOLOR={owns:'#33415560',signature:'#ffb23e88',codehash:'#39d98a88',actor:'#ff5d6c99'};
+let SCOPE='confirmed';
 
 function bar(label,val,max,cls){const w=max?Math.max(4,Math.round(val/max*120)):4;
   return `<div class="bar ${cls||''}"><span title="${esc(label)}">${esc(label)}</span><i style="width:${w}px"></i><small>${val}</small></div>`;}
@@ -111,7 +122,8 @@ let RAF, NODES=[], EDGES=[], BYID={};
 const SVG=$('graph'), NS='http://www.w3.org/2000/svg';
 function size(){return [SVG.clientWidth||800, SVG.clientHeight||500];}
 async function loadGraph(){
-  const g=await j('/api/graph'); NODES=g.nodes; EDGES=g.edges; BYID={};
+  const g=await j('/api/graph?scope='+SCOPE); NODES=g.nodes; EDGES=g.edges; BYID={};
+  $('gcount').textContent='· '+g.repos+' repos';
   const [W,H]=size();
   NODES.forEach((n,i)=>{n.x=W/2+Math.cos(i*1.7)*Math.min(W,H)*0.3;
     n.y=H/2+Math.sin(i*1.7)*Math.min(W,H)*0.3;n.vx=0;n.vy=0;BYID[n.id]=n;});
@@ -129,19 +141,26 @@ function tick(){
     if(!n.fix){n.x=Math.max(20,Math.min(W-20,n.x+n.vx));n.y=Math.max(20,Math.min(H-20,n.y+n.vy));}});
   position(); RAF=requestAnimationFrame(tick);
 }
-function nodeR(n){return n.type==='repo'?Math.max(7,Math.min(16,5+(n.score||4))):n.type==='owner'?10:8;}
+function nodeR(n){return n.type==='repo'?Math.max(6,Math.min(16,5+(n.score||4))):n.type==='actor'?12:n.type==='owner'?10:8;}
 function nodeFill(n){return n.type==='repo'?(n.novel?'#c792ea':'#869cb2'):NCOLOR[n.type];}
 function draw(){
   SVG.innerHTML='';
   EDGES.forEach(e=>{const l=document.createElementNS(NS,'line');l.setAttribute('stroke',ECOLOR[e.kind]||'#334155');
-    l.setAttribute('stroke-width',e.kind==='codehash'?2:1);if(e.kind==='signature')l.setAttribute('stroke-dasharray','3 3');
+    l.setAttribute('stroke-width',e.kind==='codehash'?2:1);
+    if(e.kind==='signature'||e.kind==='actor')l.setAttribute('stroke-dasharray','3 3');
     e._l=l;SVG.appendChild(l);});
+  // Label every hub (owner/signature/actor); label individual repos only when the
+  // graph is small, so the wide +candidates / all scopes stay readable.
+  const showRepoLabels=NODES.length<70;
   NODES.forEach(n=>{const g=document.createElementNS(NS,'g');g.style.cursor='pointer';
     const c=document.createElementNS(NS,'circle');c.setAttribute('r',nodeR(n));
     c.setAttribute('fill',nodeFill(n));c.setAttribute('stroke','#0a0e13');c.setAttribute('stroke-width',1.5);
-    const t=document.createElementNS(NS,'text');t.textContent=n.label;t.setAttribute('fill','#cdd9e5');
-    t.setAttribute('font-size',n.type==='owner'?11:10);t.setAttribute('x',nodeR(n)+3);t.setAttribute('y',3);
-    g.appendChild(c);g.appendChild(t);n._g=g;n._c=c;
+    g.appendChild(c);
+    if(n.type!=='repo'||showRepoLabels){
+      const t=document.createElementNS(NS,'text');t.textContent=n.label;t.setAttribute('fill','#cdd9e5');
+      t.setAttribute('font-size',n.type==='owner'||n.type==='actor'?11:10);
+      t.setAttribute('x',nodeR(n)+3);t.setAttribute('y',3);g.appendChild(t);}
+    n._g=g;n._c=c;
     g.addEventListener('mousedown',ev=>{drag=n;n.fix=true;ev.preventDefault();});
     g.addEventListener('click',()=>{if(n.type==='repo')showRepo(n.repo);});
     SVG.appendChild(g);});
@@ -175,8 +194,20 @@ async function showRepo(repo){
     <div style="margin-top:6px">Flags &amp; code:</div>${flags||'<span class="muted">none</span>'}`;
 }
 
-loadMeta(); loadGraph();
-setInterval(()=>{loadMeta();}, 15000);
+document.querySelectorAll('.scope').forEach(el=>el.addEventListener('click',()=>{
+  if(SCOPE===el.dataset.s)return;
+  SCOPE=el.dataset.s;
+  document.querySelectorAll('.scope').forEach(x=>x.classList.toggle('on',x===el));
+  loadGraph();
+}));
+async function loadFunnel(){
+  const f=await j('/api/funnel');
+  $('funnel').textContent='captured: '+f.candidate+' candidate · '+f.screened+' screened · '
+    +f.confirmed+' confirmed · '+f.rejected+' rejected';
+}
+
+loadMeta(); loadGraph(); loadFunnel();
+setInterval(()=>{loadMeta(); loadFunnel();}, 15000);
 window.addEventListener('resize',()=>{const[W,H]=size();});
 </script>
 </body>

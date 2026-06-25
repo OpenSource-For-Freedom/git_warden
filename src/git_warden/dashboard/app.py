@@ -74,8 +74,12 @@ def create_app(db_path=DB_PATH):
         return _q(queries.campaign_clusters)
 
     @app.get("/api/graph")
-    def api_graph():
-        return _q(queries.graph)
+    def api_graph(scope: str = "confirmed"):
+        return _q(queries.graph, scope)
+
+    @app.get("/api/funnel")
+    def api_funnel():
+        return _q(queries.funnel)
 
     @app.get("/api/telemetry")
     def api_telemetry():
