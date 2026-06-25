@@ -463,6 +463,44 @@ class Database:
             "ORDER BY score DESC, full_name"
         ).fetchall()
 
+    def bad_owner_findings(self) -> list[dict]:
+        """Repos flagged ONLY by owner association (malicious_owner), each paired
+        with its owner PROVENANCE: the sibling repos under the same owner that ARE
+        confirmed by intrinsic malware evidence.
+
+        These are the deliberate complement of :meth:`published_findings`. A repo
+        here carries NO malicious evidence in its own code; it surfaces only because
+        its owner ships malware elsewhere. Owner reputation is provenance, not proof,
+        so these never enter the Wall of Shame or the OSM submit queue, but the link
+        is real intel, so we list it separately. Highest score first.
+        """
+        # owner (casefold) -> the evidence-confirmed repos that brand the owner bad.
+        by_owner: dict[str, list[str]] = {}
+        for r in self.conn.execute(
+            "SELECT full_name FROM repo_findings WHERE status IN ('confirmed', 'validated') "
+            "AND detection_method NOT IN "
+            "('redteam_lineage', 'malicious_owner', 'actor_account')"
+        ):
+            owner = r["full_name"].split("/", 1)[0].casefold()
+            by_owner.setdefault(owner, []).append(r["full_name"])
+
+        out: list[dict] = []
+        for r in self.conn.execute(
+            "SELECT full_name, score, actor_key, reasoning FROM repo_findings "
+            "WHERE status IN ('confirmed', 'validated') AND detection_method = 'malicious_owner' "
+            "ORDER BY score DESC, full_name"
+        ):
+            owner = r["full_name"].split("/", 1)[0]
+            out.append({
+                "full_name": r["full_name"],
+                "owner": owner,
+                "score": r["score"],
+                "actor_key": r["actor_key"],
+                "reasoning": r["reasoning"],
+                "provenance": sorted(by_owner.get(owner.casefold(), [])),
+            })
+        return out
+
     def findings_for_run(self, run_id: str) -> list[sqlite3.Row]:
         """Every repo this run touched (newly discovered or re-seen).
 

@@ -83,6 +83,27 @@ _Top 10 of 23 repositories confirmed malicious by static analysis this run, rank
 
 <p align="center"><img src="docs/sculk-divider.png" alt="" width="900"></p>
 
+## Bad Owners
+
+Repositories whose **owner** ships malware we confirmed elsewhere, but which carry
+no malicious evidence in their *own* code. Owner reputation is a provenance
+breadcrumb, not proof, so these never reach the Wall of Shame above or the report
+queue. They are listed here as elevated risk, with the owner's evidence-confirmed
+repos as the provenance.
+
+<!-- git-warden:badowners:start -->
+_These repositories are NOT confirmed malicious on their own code. They appear only because their OWNER also publishes repositories we confirmed by static evidence (linked below, and on the Wall of Shame). Owner reputation is a provenance breadcrumb, not proof, so these never enter the registry or the report queue; treat them as elevated risk pending their own review._
+
+| Repository | Owner | Owner provenance (repos confirmed on evidence) | Score |
+|------------|-------|------------------------------------------------|-------|
+| [`alexsander532/projeto_dashboard_versao1`](https://github.com/alexsander532/projeto_dashboard_versao1) | alexsander532 | [`alexsander532/atlas_landingpage`](https://github.com/alexsander532/atlas_landingpage), [`alexsander532/mvp_wain_group130`](https://github.com/alexsander532/mvp_wain_group130), [`alexsander532/synapseai`](https://github.com/alexsander532/synapseai)  (+1 more) | 14 |
+| [`alexsander532/portfolio-pessoal`](https://github.com/alexsander532/portfolio-pessoal) | alexsander532 | [`alexsander532/atlas_landingpage`](https://github.com/alexsander532/atlas_landingpage), [`alexsander532/mvp_wain_group130`](https://github.com/alexsander532/mvp_wain_group130), [`alexsander532/synapseai`](https://github.com/alexsander532/synapseai)  (+1 more) | 8 |
+| [`alexsander532/synapse_ai`](https://github.com/alexsander532/synapse_ai) | alexsander532 | [`alexsander532/atlas_landingpage`](https://github.com/alexsander532/atlas_landingpage), [`alexsander532/mvp_wain_group130`](https://github.com/alexsander532/mvp_wain_group130), [`alexsander532/synapseai`](https://github.com/alexsander532/synapseai)  (+1 more) | 8 |
+| [`usmanaliashraf/rag-bot-uet-science-society`](https://github.com/usmanaliashraf/rag-bot-uet-science-society) | usmanaliashraf | [`usmanaliashraf/portfolio`](https://github.com/usmanaliashraf/portfolio) | 8 |
+<!-- git-warden:badowners:end -->
+
+<p align="center"><img src="docs/sculk-divider.png" alt="" width="900"></p>
+
 ## Quick start
 
 ```bash
