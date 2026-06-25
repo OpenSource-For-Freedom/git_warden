@@ -79,6 +79,33 @@ def test_corroboration_counts_distinct_feeds_only(db):
     assert db.corroborating_source_count("apt-x") == 2
 
 
+def test_prune_observations_keeps_recent_and_preserves_corroboration(db):
+    # Observations are disposable audit data; pruning old ones must NOT touch the
+    # corroboration ledger (actor_sources) and must reclaim space.
+    old, new = "run-20260101T000000Z", "run-20260601T000000Z"
+    db.start_run(old, _now())
+    db.start_run(new, _now())
+    db.upsert_actor(ThreatActor(actor_key="apt-x", canonical_name="APT-X",
+                                category=ActorCategory.APT))
+    oid = db.record_observation(_observation(FeedSource.GOOGLE_RSS, run_id=old))
+    db.link_actor_source("apt-x", FeedSource.GOOGLE_RSS.value, oid)  # first_obs -> oid
+    nid = db.record_observation(_observation(FeedSource.NVD, run_id=new))
+    db.link_actor_source("apt-x", FeedSource.NVD.value, nid)
+    assert db.corroborating_source_count("apt-x") == 2
+
+    deleted = db.prune_observations(keep_recent_runs=1)
+    db.vacuum()
+
+    assert deleted == 1
+    runs_left = {r["run_id"] for r in db.conn.execute(
+        "SELECT DISTINCT run_id FROM source_observations").fetchall()}
+    assert runs_left == {new}                              # only the recent run kept
+    assert db.corroborating_source_count("apt-x") == 2     # corroboration intact
+    fobs = {r[0] for r in db.conn.execute(
+        "SELECT first_observation_id FROM actor_sources WHERE actor_key='apt-x'").fetchall()}
+    assert fobs == {None, nid}                             # dangling pointer nulled
+
+
 def test_upsert_actor_updates_status(db):
     db.start_run("run-1", _now())
     db.upsert_actor(ThreatActor(actor_key="apt-x", canonical_name="APT-X"))

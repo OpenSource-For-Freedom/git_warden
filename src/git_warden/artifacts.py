@@ -44,6 +44,9 @@ _FINDINGS_COLUMNS = [
 # README registry table is regenerated in place between these markers.
 _README_START = "<!-- git-warden:registry:start -->"
 _README_END = "<!-- git-warden:registry:end -->"
+# The public wall shows only the most dangerous handful; the FULL confirmed list
+# ships as the run's CSV artifact and to the Discord feed.
+_README_MAX_ROWS = 10
 
 
 def write_run_artifacts(
@@ -154,23 +157,44 @@ def _md_cell(value) -> str:
     return text.replace("|", "\\|").replace("`", "'")
 
 
+def _proven_why(row) -> str:
+    """The PROVEN reason a repo is on the wall: the confirming static signature
+    (file:line + category/rule), not the discovery breadcrumb (owner/clone/IOC).
+
+    hunt.py orders the confirming findings first in raw_payload["bash_findings"],
+    so bash_findings[0] is the evidence that actually drove confirmation. Falls
+    back to the reasoning text only if a row somehow lacks static evidence.
+    """
+    bash = (json.loads(row["raw_payload"] or "{}") or {}).get("bash_findings") or []
+    if bash:
+        b = bash[0]
+        loc = f"{b.get('file', '?')}:{b.get('line', '?')}"
+        ev = f"{loc} {b.get('category', '')}/{b.get('rule', '')}"
+        more = f"  (+{len(bash) - 1} more)" if len(bash) > 1 else ""
+        return ev + more
+    return (row["reasoning"] or "")[:140]
+
+
 def render_registry_table(rows: list) -> str:
-    """Render confirmed malicious repos as a Markdown table (highest score first)."""
+    """Render confirmed malicious repos as a Markdown table (highest score first).
+
+    The "Why" column shows the PROVEN confirming signature (file:line + rule), so
+    every row is justified by intrinsic malware evidence, not by association.
+    """
     header = (
-        "| Repository | Detection | Score | Attribution | First seen | Why |\n"
-        "|------------|-----------|-------|-------------|------------|-----|"
+        "| Repository | Detection | Score | Attribution | Proof (file:line rule) |\n"
+        "|------------|-----------|-------|-------------|------------------------|"
     )
     if not rows:
-        return header + "\n| _none yet_ |  |  |  |  |  |"
+        return header + "\n| _none yet_ |  |  |  |  |"
     lines = [header]
     for r in rows:
         full = r["full_name"]
         repo = f"[`{_md_cell(full)}`](https://github.com/{_md_cell(full)})"
-        why = _md_cell((r["reasoning"] or "")[:140])
+        proof = _md_cell(_proven_why(r))
         lines.append(
             f"| {repo} | {_md_cell(r['detection_method'])} | {r['score']} | "
-            f"{_md_cell(r['actor_key'] or 'unattributed')} | "
-            f"{_md_cell(r['first_seen_run'] or '')} | {why} |"
+            f"{_md_cell(r['actor_key'] or 'unattributed')} | {proof} |"
         )
     return "\n".join(lines)
 
@@ -193,12 +217,27 @@ def update_readme_registry_table(
             "context": {"path": str(readme_path)}})
         return False
     rows = db.published_findings()
-    table = render_registry_table(rows)
+    total = len(rows)
+    # Public wall = the most dangerous handful (top score first). The full list is
+    # not dumped here; it ships as the CSV artifact and to the Discord feed.
+    top = sorted(rows, key=lambda r: r["score"] or 0, reverse=True)[:_README_MAX_ROWS]
+    table = render_registry_table(top)
+    if total > len(top):
+        caption = (
+            f"_Top {len(top)} of {total} repositories confirmed malicious by static "
+            f"analysis this run, ranked by severity. The full list ships as the run's "
+            f"CSV artifact and to the Discord feed; every row's evidence (file, line, "
+            f"rule) is in that CSV. Dispute: open an issue and we will re-review._"
+        )
+    else:
+        caption = (
+            f"_{total} repositories confirmed malicious by static analysis, regenerated "
+            f"each run. Every row's evidence (file, line, rule) is in the run artifacts "
+            f"CSV. Dispute: open an issue and we will re-review._"
+        )
     block = (
         f"{_README_START}\n"
-        f"_{len(rows)} repositories confirmed malicious by static analysis, "
-        f"regenerated each run. Every row's evidence (file, line, rule) is in the "
-        f"run artifacts CSV. Dispute: open an issue and we will re-review._\n\n"
+        f"{caption}\n\n"
         f"{table}\n"
         f"{_README_END}"
     )
@@ -217,5 +256,6 @@ def update_readme_registry_table(
     if updated == original:
         return False
     readme_path.write_text(updated, encoding="utf-8")
-    log.info("updated README registry table", extra={"context": {"rows": len(rows)}})
+    log.info("updated README registry table",
+             extra={"context": {"rows": len(top), "total": total}})
     return True

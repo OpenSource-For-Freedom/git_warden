@@ -3,6 +3,7 @@ malicious npm/PyPI-style repo now CONFIRMS in Tier-2 (the recall fix, P2)."""
 
 from __future__ import annotations
 
+import base64
 import json
 
 from git_warden.scanning.content_scanner import scan_content
@@ -65,6 +66,26 @@ def test_malicious_npm_repo_confirms_in_tier2(tmp_path):
     assert result.confirmed
     assert result.bash_score >= 5
     assert any(f.category == "network_exfil" for f in result.bash_findings)
+
+
+def test_eval_decoded_confirms_only_when_payload_is_malicious(tmp_path):
+    # The confirm-alone eval-decoded rule now DECODES the payload and requires
+    # malicious indicators, so it confirms a real injected stealer...
+    mal = base64.b64encode(b"global['_']=require;require('child_process').exec(0)").decode()
+    (tmp_path / "postcss.config.js").write_text(f"e={{}};eval(atob('{mal}'))\n", encoding="utf-8")
+    res = analyze_repo(tmp_path, "evil/a")
+    assert res.confirmed
+    assert any(f.rule == "eval-decoded" for f in res.bash_findings)
+
+
+def test_eval_decoded_dropped_when_payload_is_benign(tmp_path):
+    # ...but a benign decoded payload (eval(atob('hello world ...'))) is NOT
+    # treated as malware -- no false-positive confirmation.
+    benign = base64.b64encode(b"hello world, just a harmless string").decode()
+    (tmp_path / "config.js").write_text(f"x=eval(atob('{benign}'))\n", encoding="utf-8")
+    res = analyze_repo(tmp_path, "ok/b")
+    assert not res.confirmed
+    assert not any(f.rule == "eval-decoded" for f in res.bash_findings)
 
 
 def test_clean_js_repo_not_confirmed(tmp_path):

@@ -14,7 +14,7 @@ from .enrichment import OwnerRepo, find_owner_repos
 from .ioc import IocSet, extract_iocs, is_attacker_host
 from .lineage import LineageCandidate, find_lineage_candidates
 from .manifest_scanner import scan_manifests
-from .screening import ScreeningResult, score_repo
+from .screening import ScreeningResult, matches_known_tool, score_repo
 from .tier2 import Tier2Result, analyze_repo, scan_candidate
 
 __all__ = [
@@ -22,6 +22,7 @@ __all__ = [
     "find_lineage_candidates",
     "ScreeningResult",
     "score_repo",
+    "matches_known_tool",
     "IocSet",
     "extract_iocs",
     "is_attacker_host",

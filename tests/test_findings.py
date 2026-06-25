@@ -52,6 +52,71 @@ def test_rejected_is_sticky(db):
     assert len(db.findings_by_status("rejected")) == 1
 
 
+def test_upsert_coerces_unknown_actor_key_to_null(db):
+    # An external attribution label (e.g. OSM "DPRK (per OSM)") is not a registered
+    # threat actor; it must NOT crash the run on the actor_key FK -- coerce to NULL
+    # and keep the run alive (the label lives on in the reasoning).
+    db.upsert_finding(RepoFinding(
+        full_name="lure/wallet-task", detection_method=DetectionMethod.OSM_REPOSITORY,
+        status=RepoFindingStatus.CONFIRMED, actor_key="DPRK (North Korea) (per OSM)",
+        reasoning="OSM-flagged [DPRK (North Korea) (per OSM)]"), "run-1")
+    row = db.get_finding("lure/wallet-task")
+    assert row is not None
+    assert row["actor_key"] is None                       # coerced, no FK crash
+    assert "DPRK" in (row["reasoning"] or "")             # attribution preserved
+
+
+def test_association_methods_never_published_or_gold(db):
+    # Only INTRINSIC-evidence discovery publishes. The three association methods
+    # (clone/owner/actor) are breadcrumbs, excluded from the wall and the gold
+    # feed even when confirmed with evidence.
+    ev = {"bash_findings": [
+        {"file": "x.py", "line": 1, "category": "reverse_shell", "rule": "nc-exec"}]}
+    for method in (DetectionMethod.REDTEAM_LINEAGE, DetectionMethod.MALICIOUS_OWNER,
+                   DetectionMethod.ACTOR_ACCOUNT):
+        db.upsert_finding(RepoFinding(
+            full_name=f"assoc/{method.value}", detection_method=method,
+            status=RepoFindingStatus.CONFIRMED, raw_payload=ev), "run-1")
+    db.upsert_finding(RepoFinding(
+        full_name="attacker/real", detection_method=DetectionMethod.SIGNATURE_MATCH,
+        status=RepoFindingStatus.CONFIRMED, raw_payload=ev), "run-1")
+
+    assert {r["full_name"] for r in db.published_findings()} == {"attacker/real"}
+    assert {r["full_name"] for r in db.undelivered_gold()} == {"attacker/real"}
+
+
+def test_reconcile_registry_prunes_unproven_and_known_good(db):
+    # Real static evidence -> stays on the wall.
+    db.upsert_finding(RepoFinding(
+        full_name="attacker/dropper", detection_method=DetectionMethod.IOC_SEARCH,
+        status=RepoFindingStatus.CONFIRMED,
+        raw_payload={"bash_findings": [
+            {"file": "x.py", "line": 1, "category": "exfiltration", "rule": "secret-exfil"}]}),
+        "run-1")
+    # No static evidence (OSS-only / association-only) -> rejected as unproven.
+    db.upsert_finding(RepoFinding(
+        full_name="weak/owner-pivot", detection_method=DetectionMethod.MALICIOUS_OWNER,
+        status=RepoFindingStatus.CONFIRMED, raw_payload={}), "run-1")
+    # Under a known-good org -> rejected even with evidence (legit build scripts).
+    db.upsert_finding(RepoFinding(
+        full_name="openwrt/packages", detection_method=DetectionMethod.IOC_SEARCH,
+        status=RepoFindingStatus.CONFIRMED,
+        raw_payload={"bash_findings": [
+            {"file": "b.sh", "line": 2, "category": "download_exec", "rule": "curl-pipe-shell"}]}),
+        "run-1")
+    # Red-team clone -> untouched breadcrumb (already excluded from publish).
+    db.upsert_finding(RepoFinding(
+        full_name="evil/sliver-fork", detection_method=DetectionMethod.REDTEAM_LINEAGE,
+        status=RepoFindingStatus.CONFIRMED, raw_payload={}), "run-1")
+
+    counts = db.reconcile_registry(frozenset({"openwrt"}))
+    assert counts == {"rejected_unproven": 1, "rejected_known_good": 1}
+    assert {r["full_name"] for r in db.published_findings()} == {"attacker/dropper"}
+    confirmed = {r["full_name"] for r in db.findings_by_status("confirmed")}
+    assert "evil/sliver-fork" in confirmed  # breadcrumb kept (for IOC mining)
+    assert "weak/owner-pivot" not in confirmed and "openwrt/packages" not in confirmed
+
+
 def test_gold_delivery_queue(db):
     db.upsert_finding(_finding(status=RepoFindingStatus.CONFIRMED), "run-1")
     assert len(db.undelivered_gold()) == 1
