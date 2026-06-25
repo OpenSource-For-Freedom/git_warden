@@ -334,6 +334,16 @@ class Database:
         actor attribution. Re-run safe.
         """
         with self.transaction() as c:
+            # actor_key is a strict FK to threat_actors. An EXTERNAL attribution
+            # label (e.g. OSM's "DPRK (North Korea) (per OSM)") is not a registered
+            # actor, so coerce an unknown key to NULL rather than crash the whole
+            # run on a FOREIGN KEY violation. The human-readable attribution is
+            # preserved in the finding's reasoning.
+            actor_key = finding.actor_key
+            if actor_key and not c.execute(
+                "SELECT 1 FROM threat_actors WHERE actor_key = ?", (actor_key,)
+            ).fetchone():
+                actor_key = None
             c.execute(
                 """
                 INSERT INTO repo_findings
@@ -363,7 +373,7 @@ class Database:
                     finding.status.value,
                     finding.score,
                     finding.code_hash,
-                    finding.actor_key,
+                    actor_key,
                     finding.reasoning,
                     json.dumps(finding.signals),
                     json.dumps(finding.matched_iocs),
@@ -389,6 +399,40 @@ class Database:
             )
             return cur.rowcount
 
+    def reconcile_registry(self, known_good_owners: frozenset[str] = frozenset()) -> dict:
+        """Precision sweep over CONFIRMED findings so the wall self-heals when the
+        rules tighten. Rejects (sticky) a confirmed/validated finding when:
+
+        * it has NO intrinsic static evidence (empty raw_payload['bash_findings'])
+          -- an OSS-scanner-only or association-only confirmation, no file:line
+          proof; or
+        * its owner is in the known-good allowlist (a legit OSS org).
+
+        redteam_lineage is left untouched: it is already excluded from publish (a
+        breadcrumb that still feeds the IOC learning loop). Returns counts.
+        """
+        rows = self.conn.execute(
+            "SELECT full_name, detection_method, raw_payload FROM repo_findings "
+            "WHERE status IN ('confirmed', 'validated')"
+        ).fetchall()
+        unproven, known_good = [], []
+        for r in rows:
+            if r["full_name"].split("/", 1)[0].casefold() in known_good_owners:
+                known_good.append(r["full_name"])
+                continue
+            if r["detection_method"] == "redteam_lineage":
+                continue  # breadcrumb; never published, kept for IOC mining
+            bash = (json.loads(r["raw_payload"] or "{}") or {}).get("bash_findings") or []
+            if not bash:
+                unproven.append(r["full_name"])
+        with self.transaction() as c:
+            for fn in unproven + known_good:
+                c.execute(
+                    "UPDATE repo_findings SET status = 'rejected' WHERE full_name = ?", (fn,)
+                )
+        return {"rejected_unproven": len(unproven),
+                "rejected_known_good": len(known_good)}
+
     def findings_by_status(self, status: str) -> list[sqlite3.Row]:
         return self.conn.execute(
             "SELECT * FROM repo_findings WHERE status = ? ORDER BY score DESC", (status,)
@@ -397,9 +441,25 @@ class Database:
     def published_findings(self) -> list[sqlite3.Row]:
         """Findings shown on the public Wall of Shame: confirmed (and any analyst-
         kept 'validated'), never rejected/screened/candidate. Highest score first.
+
+        ASSOCIATION methods are EXCLUDED -- a repo is published only when it was
+        DISCOVERED by intrinsic malware evidence (signature/ioc/package/osm),
+        never by who owns it or what it forks:
+
+        * redteam_lineage: a cloned/forked red-team tool is a breadcrumb, never
+          provenance.
+        * malicious_owner: guilt-by-association. The owner pivot enumerates a
+          flagged owner's OTHER repos and confirms them on their own code, which
+          pins whole legit security firms (e.g. NCC Group's published pen-test
+          tools) and OSS orgs. Owner association seeds WHICH repos to scan and
+          feeds the IOC learning loop, but never confirms one on the wall.
+        * actor_account: "repo under a known threat-actor account" is the account
+          being suspect, not this repo's code. Same breadcrumb treatment.
         """
         return self.conn.execute(
             "SELECT * FROM repo_findings WHERE status IN ('confirmed', 'validated') "
+            "AND detection_method NOT IN "
+            "('redteam_lineage', 'malicious_owner', 'actor_account') "
             "ORDER BY score DESC, full_name"
         ).fetchall()
 
@@ -426,7 +486,9 @@ class Database:
         known = self.osm_known_repos()
         rows = self.conn.execute(
             "SELECT * FROM repo_findings WHERE status = 'confirmed' AND delivered_gold = 0 "
-            "AND detection_method != 'osm_repository' ORDER BY score DESC"
+            "AND detection_method NOT IN "
+            "('osm_repository', 'redteam_lineage', 'malicious_owner', 'actor_account') "
+            "ORDER BY score DESC"
         ).fetchall()
         return [r for r in rows if r["full_name"].casefold() not in known]
 
@@ -504,13 +566,18 @@ class Database:
         pivot enumerate researchers' benign clones (opencode, PentestGPT). Only an
         owner of a repo confirmed via a malware-discovery method seeds the pivot.
         OSM's package names drive expansion via :meth:`malicious_package_terms`.
+
+        We also EXCLUDE owner-pivot (malicious_owner) confirmations from seeding,
+        so the pivot cannot chain: an owner is "malicious" only when they own a
+        repo confirmed by an INTRINSIC malware-discovery method, never merely
+        because a sibling was itself owner-pivoted in.
         """
         return {
             row["full_name"].split("/", 1)[0]
             for row in self.conn.execute(
                 "SELECT full_name FROM repo_findings "
                 "WHERE status IN ('confirmed', 'validated') "
-                "AND detection_method != 'redteam_lineage'"
+                "AND detection_method NOT IN ('redteam_lineage', 'malicious_owner')"
             )
         }
 
@@ -675,3 +742,37 @@ class Database:
             (run_id,),
         ).fetchall()
         return {row["source"]: int(row["n"]) for row in rows}
+
+    def prune_observations(self, keep_recent_runs: int = 1) -> int:
+        """Delete raw source_observations older than the most recent N ingest runs.
+
+        source_observations is an append-only AUDIT layer that grows by megabytes
+        every ingest. The DURABLE state it rolls up into -- actor_sources (the
+        corroboration ledger), threat_actors and actor_identifiers -- is written
+        incrementally during ingest (pipeline.run_ingestion), and the validator
+        reads ONLY actor_sources, so old observations are disposable. Nulls the
+        actor_sources.first_observation_id provenance pointer for any soon-deleted
+        row first (its FK has no ON DELETE). Returns rows deleted; call
+        :meth:`vacuum` afterwards to reclaim the freed file space.
+        """
+        with self.transaction() as c:
+            keep = [r[0] for r in c.execute(
+                "SELECT DISTINCT run_id FROM source_observations "
+                "ORDER BY run_id DESC LIMIT ?", (max(1, keep_recent_runs),)
+            ).fetchall()]
+            if not keep:
+                return 0
+            ph = ",".join("?" for _ in keep)
+            c.execute(
+                "UPDATE actor_sources SET first_observation_id = NULL "
+                "WHERE first_observation_id IN "
+                f"(SELECT id FROM source_observations WHERE run_id NOT IN ({ph}))",
+                keep)
+            cur = c.execute(
+                f"DELETE FROM source_observations WHERE run_id NOT IN ({ph})", keep)
+            return cur.rowcount
+
+    def vacuum(self) -> None:
+        """Reclaim free pages so the DB file shrinks (e.g. after prune_observations)."""
+        self.conn.commit()
+        self.conn.execute("VACUUM")

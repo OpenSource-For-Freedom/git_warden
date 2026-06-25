@@ -36,6 +36,7 @@ from .scanning import (
     find_lineage_candidates,
     find_owner_repos,
     is_defensive_repo,
+    matches_known_tool,
     scan_candidate,
     score_repo,
     search_iocs,
@@ -87,17 +88,27 @@ def _finding_from_lineage(cand, tool: RedTeamTool) -> RepoFinding:
     )
 
 
-def _intent_gate(client, finding: RepoFinding, anchor_default: dict) -> tuple[bool, set | None]:
+def _intent_gate(
+    client, finding: RepoFinding, anchor_default: dict
+) -> tuple[bool, set | None, bool]:
     """Red-team lineage intent check (P1, doc 02 5).
 
-    Returns (proceed, restrict_paths). An unmodified fork (ahead_by == 0) is a
-    benign mirror -> (False, None) drops it. A diverged fork -> (True, changed
-    files) so Tier-2 only weighs the fork's additions. Best-effort: if compare
-    can't be made, proceed without restriction.
+    Red-team tooling is a breadcrumb: we flag a derivative only when it ADDED an
+    attack vector that hurts a user / pushes supply-chain or machine attacks, not
+    for the tool's own offensive purpose. That judgement needs the intent DELTA --
+    the fork's diff against its upstream.
+
+    Returns (proceed, restrict_paths, compared). ``compared`` is True only when we
+    successfully diffed the fork against its upstream. A name_match (shares the
+    tool's NAME, not a fork) has no upstream, and a fork whose compare fails has
+    no obtainable diff: both yield compared=False, and the caller keeps them as
+    breadcrumbs (no delta to judge). An unmodified fork (ahead_by == 0) is a
+    benign mirror -> (False, None, True) drops it. A diverged fork ->
+    (True, changed files, True) so Tier-2 weighs only the fork's additions.
     """
     rp = finding.raw_payload
     if rp.get("relation") != "fork" or not rp.get("anchor_repo"):
-        return True, None  # name_match has no upstream to diff; categories gate it
+        return True, None, False  # name_match: no upstream to diff
     anchor = rp["anchor_repo"]
     if anchor not in anchor_default:
         owner, _, name = anchor.partition("/")
@@ -112,10 +123,10 @@ def _intent_gate(client, finding: RepoFinding, anchor_default: dict) -> tuple[bo
     except Exception:  # noqa: BLE001
         cmp = None
     if cmp is None:
-        return True, None
+        return True, None, False  # compare failed: no obtainable delta
     if cmp.get("ahead_by", 0) == 0:
-        return False, None  # unmodified mirror of the red-team tool
-    return True, set(cmp.get("files") or []) or None
+        return False, None, True  # unmodified mirror of the red-team tool
+    return True, set(cmp.get("files") or []) or None, True
 
 
 def _finding_from_account(ar: AccountRepo) -> RepoFinding:
@@ -159,16 +170,22 @@ def _finding_from_osm_repo(full_name: str, url: str, intel: dict) -> RepoFinding
     severity = (intel.get("severity") or "").upper()
     threat = (intel.get("threat") or "").strip()
     tags = intel.get("tags") or []
+    attribution = _osm_attribution(tags)
     reason = "OSM-flagged malicious repository"
     if severity:
         reason += f" (severity {severity})"
+    if attribution:
+        # Carry the attribution in the reasoning too: actor_key is an actor-
+        # registry FK and this OSM label is not a registered actor, so it gets
+        # nulled at upsert -- the text must survive somewhere visible.
+        reason += f" [{attribution}]"
     if threat:
         reason += f": {threat[:160]}"
     return RepoFinding(
         full_name=full_name,
         url=url or None,
         detection_method=DetectionMethod.OSM_REPOSITORY,
-        actor_key=_osm_attribution(tags),
+        actor_key=attribution,
         reasoning=reason,
         raw_payload={"osm": {"source": intel.get("source") or "open_source_malware",
                              "severity": intel.get("severity"), "tags": tags}},
@@ -305,6 +322,7 @@ def hunt(
     screened_count = 0
     confirmed_by_method: Counter = Counter()
     rejected_mirrors = 0
+    redteam_breadcrumbs = 0  # red-team tooling kept as a breadcrumb, not confirmed
     for finding in candidates.values():
         owner, _, name = finding.full_name.partition("/")
         readme = None
@@ -360,13 +378,41 @@ def hunt(
                 # unmodified mirror is dropped outright.
                 if finding.detection_method is DetectionMethod.REDTEAM_LINEAGE:
                     confirm_cats = WEAPONIZATION_CATEGORIES
-                    proceed, restrict = _intent_gate(client, finding, anchor_default)
+                    proceed, restrict, compared = _intent_gate(client, finding, anchor_default)
                     if not proceed:
                         finding.status = RepoFindingStatus.REJECTED
                         finding.reasoning = (finding.reasoning or "") + \
                             " | unmodified fork of red-team tool (no intent change)"
                         db.upsert_finding(finding, run_id)
                         rejected_mirrors += 1
+                        continue
+                    if not compared:
+                        # No diffable upstream (a name_match, or a fork we could not
+                        # compare): there is no intent DELTA to judge, and the
+                        # tool's own offensive purpose is never grounds to flag it.
+                        # Keep it a research breadcrumb, not a confirmed finding.
+                        finding.status = RepoFindingStatus.SCREENED
+                        finding.reasoning = (finding.reasoning or "") + \
+                            " | red-team tooling; no diffable intent delta -> breadcrumb"
+                        db.upsert_finding(finding, run_id)
+                        redteam_breadcrumbs += 1
+                        continue
+                else:
+                    # A red-team tool surfaced by a NON-lineage pivot (owner /
+                    # signature / IOC) is a research breadcrumb, not a finding. We
+                    # have no upstream to diff, so we cannot prove weaponization was
+                    # ADDED; the tool's own offensive code (reverse shells, cred
+                    # dumping, obfuscation) is its purpose, not malice. Keep it
+                    # screened so legitimate red-team tooling is never pinned to the
+                    # registry. A genuinely weaponized fork still confirms via the
+                    # lineage path above (which diffs against the upstream tool).
+                    tool = matches_known_tool(finding.full_name, all_terms)
+                    if tool:
+                        finding.status = RepoFindingStatus.SCREENED
+                        finding.reasoning = (finding.reasoning or "") + \
+                            f" | matches pinned red-team tool '{tool}'; breadcrumb, not confirmed"
+                        db.upsert_finding(finding, run_id)
+                        redteam_breadcrumbs += 1
                         continue
                 result = scan_candidate(finding.full_name, workdir,
                                         restrict_paths=restrict, confirm_categories=confirm_cats,
@@ -432,6 +478,7 @@ def hunt(
         "confirmed": confirmed,
         "confirmed_by_method": dict(confirmed_by_method),
         "rejected_mirrors": rejected_mirrors,  # unmodified red-team forks dropped
+        "redteam_breadcrumbs": redteam_breadcrumbs,  # red-team tooling kept as lead
         "clones_failed": len(failed_clones),   # could not Tier-2 scan (continued)
         "gold_delivered": delivered,
     }
