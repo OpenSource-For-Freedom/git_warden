@@ -161,13 +161,26 @@ def signature_yield(db: Database) -> list[dict[str, Any]]:
     ]
 
 
-def graph(db: Database) -> dict[str, Any]:
-    """Force-graph nodes/edges correlating confirmed repos, owners, signatures.
+# Graph scope widens the funnel shown: confirmed only (the product), confirmed +
+# the actively-suspected candidates, or everything that was scanned (+ screened).
+_GRAPH_SCOPES = {
+    "confirmed": ("confirmed",),
+    "active": ("confirmed", "candidate"),
+    "all": ("confirmed", "candidate", "screened"),
+}
 
-    Nodes: repo (novel/method/score), owner, signature. Edges: owner-owns-repo,
-    signature-matched-repo, repo-repo (shared code-hash = same core).
+
+def graph(db: Database, scope: str = "confirmed") -> dict[str, Any]:
+    """Force-graph correlating repos with their OWNERS, SIGNATURES, and ACTORS.
+
+    Nodes: repo (novel/method/score/status), owner, signature, actor. Edges:
+    owner-owns-repo, signature-matched-repo, actor-attributed-repo, repo-repo
+    (shared code-hash = same core). ``scope`` widens the funnel beyond confirmed:
+    'confirmed' (default) -> 'active' (+candidate) -> 'all' (+screened), so the
+    owner/signature/actor clusters of the full capture surface become visible.
     """
     c = db.conn
+    statuses = _GRAPH_SCOPES.get(scope, _GRAPH_SCOPES["confirmed"])
     known = db.osm_known_repos()
     nodes: dict[str, dict] = {}
     edges: list[dict] = []
@@ -176,24 +189,38 @@ def graph(db: Database) -> dict[str, Any]:
         if node_id not in nodes:
             nodes[node_id] = {"id": node_id, "type": ntype, "label": label, **kw}
 
+    ph = ",".join("?" for _ in statuses)
     by_hash: dict[str, list[str]] = {}
-    for r in c.execute("SELECT full_name, detection_method, matched_iocs, code_hash, score "
-                       "FROM repo_findings WHERE status = 'confirmed'"):
+    for r in c.execute(
+        "SELECT full_name, detection_method, matched_iocs, code_hash, score, status, "
+        f"actor_key FROM repo_findings WHERE status IN ({ph})", statuses):
         repo, owner = r["full_name"], _owner(r["full_name"])
         add(f"repo:{repo}", "repo", repo.split("/", 1)[-1],
             repo=repo, novel=repo.casefold() not in known,
-            method=r["detection_method"], score=r["score"])
+            method=r["detection_method"], score=r["score"], status=r["status"])
         add(f"owner:{owner}", "owner", owner)
         edges.append({"s": f"owner:{owner}", "t": f"repo:{repo}", "kind": "owns"})
         for sig in json.loads(r["matched_iocs"] or "[]"):
             add(f"sig:{sig[:40]}", "signature", sig[:18] + "…")
             edges.append({"s": f"sig:{sig[:40]}", "t": f"repo:{repo}", "kind": "signature"})
+        if r["actor_key"]:
+            add(f"actor:{r['actor_key']}", "actor", r["actor_key"])
+            edges.append({"s": f"actor:{r['actor_key']}", "t": f"repo:{repo}", "kind": "actor"})
         if r["code_hash"]:
             by_hash.setdefault(r["code_hash"], []).append(repo)
     for reps in by_hash.values():
         for a, b in zip(reps, reps[1:], strict=False):
             edges.append({"s": f"repo:{a}", "t": f"repo:{b}", "kind": "codehash"})
-    return {"nodes": list(nodes.values()), "edges": edges}
+    repo_n = sum(1 for n in nodes.values() if n["type"] == "repo")
+    return {"nodes": list(nodes.values()), "edges": edges, "scope": scope, "repos": repo_n}
+
+
+def funnel(db: Database) -> dict[str, int]:
+    """Discovery-pipeline counts across the WHOLE DB (candidate -> screened ->
+    confirmed -> rejected): the full capture volume behind the confirmed graph."""
+    counts = {r["status"]: r["n"] for r in db.conn.execute(
+        "SELECT status, count(*) n FROM repo_findings GROUP BY status")}
+    return {k: counts.get(k, 0) for k in ("candidate", "screened", "confirmed", "rejected")}
 
 
 def runs_timeline(db: Database) -> list[dict[str, Any]]:
