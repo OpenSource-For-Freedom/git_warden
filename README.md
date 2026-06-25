@@ -60,22 +60,18 @@ steal-and-send); threat-intel leads (a malicious owner, a shared signature) only
 *seed* which repos get scanned, never confirm one alone.
 
 <!-- git-warden:registry:start -->
-_12 repositories confirmed malicious by static analysis, regenerated each run. Every row's evidence (file, line, rule) is in the run artifacts CSV. Dispute: open an issue and we will re-review._
+_8 repositories confirmed malicious by static analysis, regenerated each run. Every row's evidence (file, line, rule) is in the run artifacts CSV. Dispute: open an issue and we will re-review._
 
-| Repository | Detection | Score | Attribution | First seen | Why |
-|------------|-----------|-------|-------------|------------|-----|
-| [`alexsander532/projeto_dashboard_versao1`](https://github.com/alexsander532/projeto_dashboard_versao1) | malicious_owner | 14 | unattributed | hunt-20260620T053126Z | repository under owner Alexsander532 of a known-malicious repo \| Tier-2 confirmed (bash score 14) |
-| [`usmanaliashraf/portfolio`](https://github.com/usmanaliashraf/portfolio) | signature_match | 12 | unattributed | hunt-20260620T052811Z | Shares a confirmed-malware code signature ['Jzt2YXIgXyRfMWU0Mj0oZnVuY3Rpb24obCxlKXt2YXIgaD1sLm'] \| Tier-2 confirmed (bash score 12) |
-| [`icecoldjay/bri`](https://github.com/icecoldjay/bri) | signature_match | 11 | unattributed | hunt-20260620T052811Z | Shares a confirmed-malware code signature ['eval atob filename:tailwind.config.js'] \| Tier-2 confirmed (bash score 11) |
-| [`alexsander532/atlas_landingpage`](https://github.com/alexsander532/atlas_landingpage) | signature_match | 9 | unattributed | hunt-20260620T052811Z | Shares a confirmed-malware code signature ['Jzt2YXIgXyRfMWU0Mj0oZnVuY3Rpb24obCxlKXt2YXIgaD1sLm'] \| Tier-2 confirmed (bash score 8) |
-| [`alexsander532/mvp_wain_group130`](https://github.com/alexsander532/mvp_wain_group130) | signature_match | 9 | unattributed | hunt-20260620T052811Z | Shares a confirmed-malware code signature ['Jzt2YXIgXyRfMWU0Mj0oZnVuY3Rpb24obCxlKXt2YXIgaD1sLm'] \| Tier-2 confirmed (bash score 8) |
-| [`alexsander532/synapseai_landingpage`](https://github.com/alexsander532/synapseai_landingpage) | signature_match | 9 | unattributed | hunt-20260620T052811Z | Shares a confirmed-malware code signature ['Jzt2YXIgXyRfMWU0Mj0oZnVuY3Rpb24obCxlKXt2YXIgaD1sLm'] \| Tier-2 confirmed (bash score 8) |
-| [`agrawalchirag/corex`](https://github.com/agrawalchirag/corex) | osm_repository | 8 | DPRK (North Korea) (per OSM) | hunt-20260620T043523Z | Obfuscated eval(atob(...)) payload injected into postcss.config.js after the legit tailwind config (Tier-2 static detection). Lead: OSM quer |
-| [`alexsander532/portfolio-pessoal`](https://github.com/alexsander532/portfolio-pessoal) | malicious_owner | 8 | unattributed | hunt-20260620T053126Z | repository under owner Alexsander532 of a known-malicious repo \| Tier-2 confirmed (bash score 8) |
-| [`alexsander532/synapse_ai`](https://github.com/alexsander532/synapse_ai) | malicious_owner | 8 | unattributed | hunt-20260620T053126Z | repository under owner Alexsander532 of a known-malicious repo \| Tier-2 confirmed (bash score 8) |
-| [`alexsander532/synapseai`](https://github.com/alexsander532/synapseai) | signature_match | 8 | unattributed | hunt-20260620T052811Z | Shares a confirmed-malware code signature ['Jzt2YXIgXyRfMWU0Mj0oZnVuY3Rpb24obCxlKXt2YXIgaD1sLm'] \| Tier-2 confirmed (bash score 8) |
-| [`haroontaufiq/cosmic-questionnaire`](https://github.com/haroontaufiq/cosmic-questionnaire) | signature_match | 8 | unattributed | hunt-20260620T052811Z | Shares a confirmed-malware code signature ['Jzt2YXIgXyRfMWU0Mj0oZnVuY3Rpb24obCxlKXt2YXIgaD1sLm'] \| Tier-2 confirmed (bash score 8) |
-| [`usmanaliashraf/rag-bot-uet-science-society`](https://github.com/usmanaliashraf/rag-bot-uet-science-society) | malicious_owner | 8 | unattributed | hunt-20260620T053126Z | repository under owner UsmanAliAshraf of a known-malicious repo \| Tier-2 confirmed (bash score 8) |
+| Repository | Detection | Score | Attribution | Proof (file:line rule) |
+|------------|-----------|-------|-------------|------------------------|
+| [`usmanaliashraf/portfolio`](https://github.com/usmanaliashraf/portfolio) | signature_match | 12 | unattributed | postcss.config.mjs:12 obfuscation/eval-decoded  (+8 more) |
+| [`icecoldjay/bri`](https://github.com/icecoldjay/bri) | signature_match | 11 | unattributed | client/tailwind.config.js:61 obfuscation/eval-decoded  (+3 more) |
+| [`alexsander532/atlas_landingpage`](https://github.com/alexsander532/atlas_landingpage) | signature_match | 9 | unattributed | astro.config.mjs:7 obfuscation/eval-decoded  (+1 more) |
+| [`alexsander532/mvp_wain_group130`](https://github.com/alexsander532/mvp_wain_group130) | signature_match | 9 | unattributed | frontend/postcss.config.mjs:9 obfuscation/eval-decoded  (+1 more) |
+| [`alexsander532/synapseai_landingpage`](https://github.com/alexsander532/synapseai_landingpage) | signature_match | 9 | unattributed | postcss.config.mjs:12 obfuscation/eval-decoded  (+1 more) |
+| [`agrawalchirag/corex`](https://github.com/agrawalchirag/corex) | osm_repository | 8 | DPRK (North Korea) (per OSM) | postcss.config.js:6 obfuscation/eval-decoded  (+1 more) |
+| [`alexsander532/synapseai`](https://github.com/alexsander532/synapseai) | signature_match | 8 | unattributed | postcss.config.mjs:11 obfuscation/eval-decoded  (+1 more) |
+| [`haroontaufiq/cosmic-questionnaire`](https://github.com/haroontaufiq/cosmic-questionnaire) | signature_match | 8 | unattributed | postcss.config.mjs:9 obfuscation/eval-decoded  (+3 more) |
 <!-- git-warden:registry:end -->
 
 > [!NOTE]
@@ -88,7 +84,7 @@ _12 repositories confirmed malicious by static analysis, regenerated each run. E
 ## Quick start
 
 ```bash
-pip install -e ".[dev]"          # or run without install: python gw.py <cmd>
+make install                     # pip install -e ".[dev]"  (or skip it: python gw.py <cmd>)
 cp .env.example .env             # add GW_GITHUB_TOKEN, GW_OSM_API_KEY, ...
 ```
 
@@ -104,6 +100,23 @@ Credentials load from `.env` automatically (real env vars win). Tokens:
 
 ## Commands
 
+A `Makefile` wraps the common flow (`make help` lists every target). It runs the
+same on Linux and Windows, shelling out only to Python so there is no
+bash-vs-cmd dependency (on Windows: Git Bash, scoop, or `choco install make`):
+
+```bash
+make ingest                      # feeds -> actors + OSM artifacts
+make iocs                        # IOC pivot set mined from OSM
+make discover                    # IOC code search -> new repos
+make hunt                        # full pipeline -> Wall of Shame -> Discord (LIMIT=N caps it)
+make review                      # list confirmed repos (ARGS="--approve owner/repo")
+make serve                       # live telemetry dashboard
+make check                       # lint + tests, run before pushing
+```
+
+Each target is a thin wrapper over the CLI, so without make you run it directly
+(`python gw.py <cmd>`, or the installed `git-warden <cmd>`):
+
 ```bash
 python gw.py ingest                         # feeds -> actors + OSM artifacts
 python gw.py iocs                            # IOC pivot set mined from OSM
@@ -118,7 +131,8 @@ python gw.py probe --feed github --term lazarus  # probe any feed live
 ## Deployment
 
 GitHub Actions ([.github/workflows/](.github/workflows/)): `ci.yml` runs
-lint+tests; `run.yml` runs ingest→hunt weekly (manual first, per doc 05). Every
+lint+tests; `run.yml` runs ingest then hunt on demand (workflow_dispatch only,
+no schedule), with an optional registry reconcile before publishing. Every
 workflow hardens the runner first (Legion egress audit).
 
 Add these **repo Actions secrets**; the workflow maps them onto the `GW_*` env
@@ -127,7 +141,8 @@ vars the code reads (local `.env` uses the `GW_*` names directly):
 | Repo secret | Maps to env var.  |
 |-------------|-----------------  |
 | `GH_TOKEN`  | `GW_GITHUB_TOKEN` |
-| `OSM_TOKEN` | `GW_OSM_API_KEY`  |
+| `OSM_KEY`   | `GW_OSM_API_KEY`  |
+| `GW_OSM_BASE_URL` | `GW_OSM_BASE_URL` (optional; overrides the default OSM host) |
 | `DISCORD_WEBHOOK` | `GW_DISCORD_WEBHOOK` |
 
 Orchestration knobs live in [config/settings.yaml](config/settings.yaml) and
@@ -136,6 +151,8 @@ Orchestration knobs live in [config/settings.yaml](config/settings.yaml) and
 ## Development
 
 ```bash
-ruff check src tests gw.py
-pytest -q
+make check                       # ruff + pytest (run before pushing)
+make fmt                         # auto-fix lint findings
 ```
+
+Or invoke the tools directly: `ruff check src tests gw.py` and `pytest -q`.
