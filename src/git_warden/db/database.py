@@ -406,11 +406,17 @@ class Database:
         * it has NO intrinsic static evidence (empty raw_payload['bash_findings'])
           -- an OSS-scanner-only or association-only confirmation, no file:line
           proof; or
+        * all its evidence sits in security-DATA files (a malware scanner's own
+          rule set / advisory cache), which is reference data, not a payload --
+          the boredchilada/pkgward-oss FP (matches in analyze/malware_patterns.py);
+          or
         * its owner is in the known-good allowlist (a legit OSS org).
 
         redteam_lineage is left untouched: it is already excluded from publish (a
         breadcrumb that still feeds the IOC learning loop). Returns counts.
         """
+        from ..scanning.bash_scanner import is_security_data_file
+
         rows = self.conn.execute(
             "SELECT full_name, detection_method, raw_payload FROM repo_findings "
             "WHERE status IN ('confirmed', 'validated')"
@@ -423,7 +429,9 @@ class Database:
             if r["detection_method"] == "redteam_lineage":
                 continue  # breadcrumb; never published, kept for IOC mining
             bash = (json.loads(r["raw_payload"] or "{}") or {}).get("bash_findings") or []
-            if not bash:
+            # No evidence, or ALL of it is in security-data files -> no real payload
+            # proof, so the confirmation does not stand.
+            if not [b for b in bash if not is_security_data_file(b.get("file", ""))]:
                 unproven.append(r["full_name"])
         with self.transaction() as c:
             for fn in unproven + known_good:

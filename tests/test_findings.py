@@ -113,6 +113,28 @@ def test_bad_owner_findings_split_with_provenance(db):
     assert by_name["cleanguy/some-repo"]["provenance"] == []
 
 
+def test_reconcile_rejects_security_data_only_evidence(db):
+    # The boredchilada/pkgward-oss FP: a scanner confirmed only on matches inside
+    # its own malware_patterns.py is data, not a payload -> reconcile drops it.
+    db.upsert_finding(RepoFinding(
+        full_name="boredchilada/pkgward-oss", detection_method=DetectionMethod.PACKAGE_REF,
+        status=RepoFindingStatus.CONFIRMED,
+        raw_payload={"bash_findings": [
+            {"file": "pkgward/analyze/malware_patterns.py", "line": 390,
+             "category": "credential_access", "rule": "env-dump"}]}), "run-1")
+    # A real payload in an ordinary file survives the sweep.
+    db.upsert_finding(RepoFinding(
+        full_name="evil/dropper", detection_method=DetectionMethod.IOC_SEARCH,
+        status=RepoFindingStatus.CONFIRMED,
+        raw_payload={"bash_findings": [
+            {"file": "postinstall.js", "line": 1, "category": "download_exec",
+             "rule": "curl-pipe-shell"}]}), "run-1")
+    db.reconcile_registry()
+    names = {r["full_name"] for r in db.published_findings()}
+    assert "boredchilada/pkgward-oss" not in names      # data-only evidence -> dropped
+    assert "evil/dropper" in names                       # real payload -> kept
+
+
 def test_reconcile_registry_prunes_unproven_and_known_good(db):
     # Real static evidence -> stays on the wall.
     db.upsert_finding(RepoFinding(
