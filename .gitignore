@@ -8,17 +8,18 @@ dist/
 .venv/
 venv/
 env/
-
+docs/plans*
 # Tooling
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
 
 # Git Warden runtime data (never commit live registry / artifacts)
+
+data/cache/
 data/*.sqlite
 data/*.sqlite-journal
-data/*.db
-data/cache/
+data/*.sqlite-wal
 artifacts/
 *.parquet
 
@@ -31,3 +32,13 @@ artifacts/
 Thumbs.db
 .idea/
 .vscode/
+
+# Local-only OSM submit feature -- the write side stays out of the public repo
+# (forward slashes: git uses them on Windows and Linux alike).
+docs/submit.md
+src/git_warden/osm_submit.py
+tests/test_osm_submit.py
+osm_reports.md
+
+# Scratch logs
+*.log
