@@ -84,6 +84,34 @@ def test_graph_nodes_and_edges(tmp_path):
     db.close()
 
 
+def test_bad_owners_query_endpoint_and_summary_split(tmp_path):
+    db = Database.open(tmp_path / "bo.sqlite")
+    db.start_run("r1", utcnow())
+    # evidence-confirmed repo -> brands its owner "bad"
+    db.upsert_finding(RepoFinding(
+        full_name="badguy/proven", detection_method=DetectionMethod.SIGNATURE_MATCH,
+        status=RepoFindingStatus.CONFIRMED, score=8,
+        raw_payload={"bash_findings": [
+            {"file": "x.js", "line": 1, "category": "obfuscation", "rule": "eval-decoded"}]}), "r1")
+    # owner-association repo, no evidence of its own -> Bad Owners, never the wall
+    db.upsert_finding(RepoFinding(
+        full_name="badguy/just-owned", detection_method=DetectionMethod.MALICIOUS_OWNER,
+        status=RepoFindingStatus.CONFIRMED, score=6), "r1")
+
+    bo = queries.bad_owners(db)
+    assert [b["full_name"] for b in bo] == ["badguy/just-owned"]
+    assert bo[0]["provenance"] == ["badguy/proven"]
+    s = queries.summary(db)
+    assert s["published"] == 1 and s["bad_owners"] == 1     # evidence-only vs association
+    db.close()
+
+    from fastapi.testclient import TestClient
+
+    from git_warden.dashboard.app import create_app
+    client = TestClient(create_app(tmp_path / "bo.sqlite"))
+    assert client.get("/api/bad-owners").json()[0]["full_name"] == "badguy/just-owned"
+
+
 def test_fastapi_endpoints_smoke(tmp_path):
     _seed(tmp_path).close()
     from fastapi.testclient import TestClient

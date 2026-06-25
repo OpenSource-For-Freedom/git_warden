@@ -31,7 +31,7 @@
     max-height:240px;color:#cfe3c0;white-space:pre-wrap;word-break:break-all;font-size:12px;margin:4px 0}
   .flag{margin:6px 0;padding:6px 8px;border:1px solid var(--line);border-radius:6px}
   .flag .r{color:var(--bad)} .muted{color:var(--mut)} a{color:var(--accent)}
-  footer{border-top:1px solid var(--line);display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;padding:8px 14px;
+  footer{border-top:1px solid var(--line);display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;padding:8px 14px;
     max-height:150px;overflow:auto}
   footer h3{font-size:11px;color:var(--mut);text-transform:uppercase;margin:0 0 5px;letter-spacing:.6px}
   .bar{display:flex;align-items:center;gap:7px;margin:2px 0}
@@ -65,6 +65,7 @@
   <div><h3>Flags (by code)</h3><div id="flags"></div></div>
   <div><h3>Signature yield</h3><div id="yield"></div></div>
   <div><h3>Detection methods</h3><div id="methods"></div></div>
+  <div><h3>Bad owners (no own evidence)</h3><div id="badowners"></div></div>
 </footer>
 
 <script>
@@ -79,8 +80,9 @@ function bar(label,val,max,cls){const w=max?Math.max(4,Math.round(val/max*120)):
 
 async function loadMeta(){
   const s=await j('/api/summary');
-  $('metrics').innerHTML=[['confirmed',s.confirmed,'good'],['novel',s.novel,'novel'],
-    ['gold',s.gold_delivered,'gold'],['rejected (FP)',s.rejected,'bad'],['runs',s.runs,'']]
+  $('metrics').innerHTML=[['wall',s.published,'good'],['novel',s.novel,'novel'],
+    ['bad owners',s.bad_owners,'accent'],['gold',s.gold_delivered,'gold'],
+    ['rejected (FP)',s.rejected,'bad'],['runs',s.runs,'']]
     .map(([k,v,c])=>`<div class="metric"><b class="${c}">${v}</b><span>${k}</span></div>`).join('');
   const t=await j('/api/telemetry');
   const fm=Math.max(1,...t.flags.map(x=>x.count));
@@ -89,6 +91,12 @@ async function loadMeta(){
   $('yield').innerHTML=t.signature_yield.map(x=>bar(x.signature,x.repos,ym)).join('')||'<span class="muted">—</span>';
   const meth=Object.entries(s.by_method).sort((a,b)=>b[1]-a[1]);const mm=Math.max(1,...meth.map(m=>m[1]));
   $('methods').innerHTML=meth.map(([k,v])=>bar(k,v,mm,'good')).join('');
+  const bo=await j('/api/bad-owners');
+  $('badowners').innerHTML=bo.length?bo.slice(0,12).map(b=>
+    `<div class="bar"><span title="${esc(b.full_name)} — owner ships malware in ${(b.provenance||[]).join(', ')}">`
+    +`<a href="https://github.com/${esc(b.full_name)}" target="_blank">${esc(b.full_name)}</a></span>`
+    +`<small>${(b.provenance||[]).length}◆ proven</small></div>`).join('')
+    :'<span class="muted">none</span>';
 }
 
 // ---- force-directed graph (vanilla, no deps) ----
