@@ -124,3 +124,4 @@ def test_fastapi_endpoints_smoke(tmp_path):
     assert client.get("/api/finding/evil/a").json()["novel"] is True
     assert client.get("/api/finding/nope/nope").status_code == 404
     assert client.get("/").status_code == 200  # serves the dashboard HTML
+    assert client.get("/static/hero.png").status_code == 200  # watermark asset
