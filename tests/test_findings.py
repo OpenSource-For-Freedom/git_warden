@@ -85,6 +85,34 @@ def test_association_methods_never_published_or_gold(db):
     assert {r["full_name"] for r in db.undelivered_gold()} == {"attacker/real"}
 
 
+def test_bad_owner_findings_split_with_provenance(db):
+    # An owner with an evidence-confirmed repo is a "bad owner". Their OTHER repo,
+    # flagged only by owner association (no evidence of its own), is NOT on the wall
+    # but surfaces in Bad Owners, carrying the evidence repo as provenance.
+    ev = {"bash_findings": [
+        {"file": "x.js", "line": 1, "category": "obfuscation", "rule": "eval-decoded"}]}
+    db.upsert_finding(RepoFinding(
+        full_name="badguy/proven", detection_method=DetectionMethod.SIGNATURE_MATCH,
+        status=RepoFindingStatus.CONFIRMED, raw_payload=ev), "run-1")
+    db.upsert_finding(RepoFinding(
+        full_name="badguy/just-owned", detection_method=DetectionMethod.MALICIOUS_OWNER,
+        status=RepoFindingStatus.CONFIRMED, raw_payload={}), "run-1")
+    # A clean owner's association-only repo has no provenance and is not bad-owner.
+    db.upsert_finding(RepoFinding(
+        full_name="cleanguy/some-repo", detection_method=DetectionMethod.MALICIOUS_OWNER,
+        status=RepoFindingStatus.CONFIRMED, raw_payload={}), "run-1")
+
+    bad = db.bad_owner_findings()
+    by_name = {r["full_name"]: r for r in bad}
+    assert "badguy/just-owned" in by_name                       # association-only -> listed
+    assert by_name["badguy/just-owned"]["owner"] == "badguy"
+    assert by_name["badguy/just-owned"]["provenance"] == ["badguy/proven"]
+    assert "badguy/proven" not in by_name                       # evidence repo stays on wall
+    assert "badguy/proven" in {r["full_name"] for r in db.published_findings()}
+    # cleanguy has no evidence-confirmed sibling -> empty provenance.
+    assert by_name["cleanguy/some-repo"]["provenance"] == []
+
+
 def test_reconcile_registry_prunes_unproven_and_known_good(db):
     # Real static evidence -> stays on the wall.
     db.upsert_finding(RepoFinding(

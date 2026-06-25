@@ -422,11 +422,17 @@ def _cmd_hunt(args: argparse.Namespace) -> int:
         # Findings CSV + README registry table need the DB open, so write them
         # before close. Every repo this run touched (full columns) goes to the
         # CSV; the README shows the confirmed registry only.
-        from .artifacts import update_readme_registry_table, write_findings_csv
+        from .artifacts import (
+            update_readme_bad_owners,
+            update_readme_registry_table,
+            write_findings_csv,
+        )
         findings_csv = write_findings_csv(db, run_id)
-        # Render the README Wall of Shame from this run's confirmed findings and
-        # write the per-run findings CSV artifact. CI pushes the README each run.
+        # Render the README Wall of Shame (evidence-confirmed) plus the Bad Owners
+        # provenance table (association-only) from this run, and write the per-run
+        # findings CSV artifact. CI pushes the README each run.
         readme_changed = update_readme_registry_table(db)
+        readme_changed = update_readme_bad_owners(db) or readme_changed
     finally:
         db.close()
     json.dump(summary, sys.stdout, indent=2)
@@ -456,24 +462,30 @@ def _cmd_review(args: argparse.Namespace) -> int:
     """Analyst override of a confirmed finding: --reject pulls a false positive
     off the Wall of Shame; --approve marks one kept. Both refresh the README."""
     configure_logging(json_output=False)
-    from .artifacts import update_readme_registry_table
+    from .artifacts import update_readme_bad_owners, update_readme_registry_table
     from .enums import RepoFindingStatus
+
+    def _refresh_readme() -> None:
+        # Both tables can shift on an analyst override: rejecting an evidence repo
+        # can also un-brand its owner (dropping Bad Owners rows / provenance).
+        update_readme_registry_table(db)
+        update_readme_bad_owners(db)
 
     db = Database.open(args.db)
     try:
         if args.approve:
             n = db.set_finding_status(args.approve, RepoFindingStatus.VALIDATED.value)
-            update_readme_registry_table(db)
+            _refresh_readme()
             print(f"kept {args.approve}; commit README.md." if n
                   else f"no finding {args.approve!r}")
         elif args.reject:
             n = db.set_finding_status(args.reject, RepoFindingStatus.REJECTED.value)
-            update_readme_registry_table(db)
+            _refresh_readme()
             print(f"rejected {args.reject}; removed from the Wall of Shame, commit README.md."
                   if n else f"no finding {args.reject!r}")
         elif args.reconcile:
             counts = db.reconcile_registry(config.KNOWN_GOOD_OWNERS)
-            update_readme_registry_table(db)
+            _refresh_readme()
             print(f"reconciled: rejected {counts['rejected_unproven']} unproven + "
                   f"{counts['rejected_known_good']} known-good-owner finding(s); commit README.md.")
         else:
