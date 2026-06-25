@@ -6,11 +6,6 @@ on:
   # The DB for these dispatch runs persists in the Actions cache between runs
   # (best-effort: GitHub evicts a cache after ~7 idle days).
   workflow_dispatch:
-    inputs:
-      reconcile:
-        description: "Prune the registry before publishing: reject confirmed findings lacking static evidence or under a known-good org"
-        type: boolean
-        default: false
 
 permissions:
   contents: read
@@ -44,8 +39,10 @@ jobs:
           key: git-warden-data-${{ github.run_id }}
           restore-keys: git-warden-data-
 
-      - name: Reconcile registry (prune unproven / known-good before this run)
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.reconcile }}
+      - name: Reconcile registry (self-heal before publishing)
+        # Always runs: drops confirmed findings with no static evidence, evidence
+        # only in security-data files (a scanner's own rule set / advisory cache),
+        # or under a known-good org. Keeps the wall evidence-only every run.
         run: python gw.py review --reconcile
 
       - name: Ingest threat-intel breadcrumbs
