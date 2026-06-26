@@ -40,5 +40,8 @@ src/git_warden/osm_submit.py
 tests/test_osm_submit.py
 osm_reports.md
 
+# Local scheduled-task runners (Task Scheduler .cmd scripts + their logs)
+local/
+
 # Scratch logs
 *.log
