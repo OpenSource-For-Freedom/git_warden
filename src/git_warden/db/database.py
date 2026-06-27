@@ -215,6 +215,19 @@ class Database:
                 (actor_key, canonical_name, category, run_id, run_id),
             )
 
+    def set_attribution(self, full_name: str, actor_key: str) -> None:
+        """Stamp a threat-actor attribution onto a finding (campaign propagation).
+
+        The actor_key FK must already exist (call :meth:`ensure_actor` first). The
+        attribution is sticky: upsert_finding COALESCEs the existing actor_key, so
+        a re-seen repo keeps it. ``full_name`` must be the stored (normalized) key.
+        """
+        with self.transaction() as c:
+            c.execute(
+                "UPDATE repo_findings SET actor_key = ? WHERE full_name = ?",
+                (actor_key, full_name),
+            )
+
     def set_actor_status(self, actor_key: str, status: str) -> None:
         """Update only an actor's status (the validator's single write)."""
         with self.transaction() as c:

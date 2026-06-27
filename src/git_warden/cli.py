@@ -419,6 +419,11 @@ def _cmd_hunt(args: argparse.Namespace) -> int:
             gold=args.gold,
             notifier=lambda cluster: post_discord(embeds=[cluster_embed(cluster)]),
         )
+        # Spread threat-actor attribution across each shared-payload campaign: one
+        # OSM-tagged repo (e.g. corex -> DPRK) lights up every repo injecting the
+        # same eval(atob) payload, so the wall + report queue carry the attribution.
+        from .correlate import propagate_campaign_attribution
+        summary["campaign_attribution"] = propagate_campaign_attribution(db, run_id)
         # Findings CSV + README registry table need the DB open, so write them
         # before close. Every repo this run touched (full columns) goes to the
         # CSV; the README shows the confirmed registry only.
