@@ -466,10 +466,15 @@ def hunt(
         rows = [r for r in db.undelivered_gold() if r["full_name"].casefold() not in osm_live]
         # ONE report per connected cluster (campaign), never duplicated per-repo.
         for cluster in cluster_findings(rows):
+            names = [r["full_name"] for r in cluster]
+            # CLAIM the cluster (atomic) BEFORE posting, so a crash or a concurrent
+            # run can never repost it; RELEASE it only if the post fails so it
+            # retries next run. At-most-once: prefer a missed ping over a double one.
+            db.set_gold_delivered(names, True)
             if notifier(cluster):
-                for r in cluster:
-                    db.mark_gold_delivered(r["full_name"])
-                    delivered += 1
+                delivered += len(names)
+            else:
+                db.set_gold_delivered(names, False)
 
     counts = {
         "candidates": len(candidates),
