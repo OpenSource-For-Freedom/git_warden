@@ -71,8 +71,9 @@
       <div><b style="background:#c792ea"></b>novel <b style="background:#869cb2;margin-left:8px"></b>OSM-known
         <b style="background:#5fa8ff;margin-left:8px"></b>owner
         <b style="background:#ffb23e;margin-left:8px"></b>signature
-        <b style="background:#ff5d6c;margin-left:8px"></b>actor</div>
-      <div class="muted" style="margin-top:3px">orange=shared sig · green=code-hash · red=attributed</div>
+        <b style="background:#ff5d6c;margin-left:8px"></b>actor
+        <b style="background:#ffd93b;margin-left:8px"></b>campaign</div>
+      <div class="muted" style="margin-top:3px">gold=shared payload · red=attributed · green=code-hash</div>
       <div style="margin-top:5px">scope:
         <span class="scope on" data-s="confirmed">confirmed</span>
         <span class="scope" data-s="active">+candidates</span>
@@ -98,8 +99,9 @@
 const $=id=>document.getElementById(id);
 const j=u=>fetch(u).then(r=>r.json());
 const esc=s=>String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-const NCOLOR={owner:'#5fa8ff',signature:'#ffb23e',actor:'#ff5d6c'};
-const ECOLOR={owns:'#33415560',signature:'#ffb23e88',codehash:'#39d98a88',actor:'#ff5d6c99'};
+const NCOLOR={owner:'#5fa8ff',signature:'#ffb23e',actor:'#ff5d6c',campaign:'#ffd93b'};
+const ECOLOR={owns:'#33415560',signature:'#ffb23e88',codehash:'#39d98a88',actor:'#ff5d6c99',
+              campaign:'#ffd93b99',attributed:'#ff5d6ccc'};
 let SCOPE='confirmed';
 
 function bar(label,val,max,cls){const w=max?Math.max(4,Math.round(val/max*120)):4;
@@ -159,7 +161,7 @@ function tick(){
     if(!n.fix){n.x=Math.max(20,Math.min(W-20,n.x+n.vx));n.y=Math.max(20,Math.min(H-20,n.y+n.vy));}});
   position(); RAF=requestAnimationFrame(tick);
 }
-function nodeR(n){return n.type==='repo'?Math.max(6,Math.min(16,5+(n.score||4))):n.type==='actor'?12:n.type==='owner'?10:8;}
+function nodeR(n){return n.type==='repo'?Math.max(6,Math.min(16,5+(n.score||4))):n.type==='campaign'?14:n.type==='actor'?12:n.type==='owner'?10:8;}
 function nodeFill(n){return n.type==='repo'?(n.novel?'#c792ea':'#869cb2'):NCOLOR[n.type];}
 function draw(){
   SVG.innerHTML='';
