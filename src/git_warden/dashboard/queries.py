@@ -11,6 +11,7 @@ import json
 from collections import Counter
 from typing import Any
 
+from ..correlate import payload_key as _payload_key
 from ..db import Database
 
 
@@ -191,9 +192,11 @@ def graph(db: Database, scope: str = "confirmed") -> dict[str, Any]:
 
     ph = ",".join("?" for _ in statuses)
     by_hash: dict[str, list[str]] = {}
+    camp_members: dict[str, list[str]] = {}   # payload fingerprint -> repos
+    camp_actors: dict[str, set[str]] = {}     # payload fingerprint -> attributed actors
     for r in c.execute(
         "SELECT full_name, detection_method, matched_iocs, code_hash, score, status, "
-        f"actor_key FROM repo_findings WHERE status IN ({ph})", statuses):
+        f"actor_key, raw_payload FROM repo_findings WHERE status IN ({ph})", statuses):
         repo, owner = r["full_name"], _owner(r["full_name"])
         add(f"repo:{repo}", "repo", repo.split("/", 1)[-1],
             repo=repo, novel=repo.casefold() not in known,
@@ -208,9 +211,28 @@ def graph(db: Database, scope: str = "confirmed") -> dict[str, Any]:
             edges.append({"s": f"actor:{r['actor_key']}", "t": f"repo:{repo}", "kind": "actor"})
         if r["code_hash"]:
             by_hash.setdefault(r["code_hash"], []).append(repo)
+        pk = _payload_key(r["raw_payload"])
+        if pk:
+            camp_members.setdefault(pk, []).append(repo)
+            if r["actor_key"]:
+                camp_actors.setdefault(pk, set()).add(r["actor_key"])
     for reps in by_hash.values():
         for a, b in zip(reps, reps[1:], strict=False):
             edges.append({"s": f"repo:{a}", "t": f"repo:{b}", "kind": "codehash"})
+    # Payload campaigns: repos sharing one eval(atob) payload are one campaign by
+    # the same actor (across owners + signature labels). Wire any actor seen on a
+    # member to the WHOLE campaign, so one OSM attribution (corex -> DPRK) lights up
+    # every repo in the cluster.
+    for pk, members in camp_members.items():
+        if len(members) < 2:
+            continue
+        cid = f"camp:{pk}"
+        add(cid, "campaign", f"payload {pk[:6]}", repos=len(members))
+        for m in members:
+            edges.append({"s": cid, "t": f"repo:{m}", "kind": "campaign"})
+        for actor in camp_actors.get(pk, ()):
+            add(f"actor:{actor}", "actor", actor)
+            edges.append({"s": f"actor:{actor}", "t": cid, "kind": "attributed"})
     repo_n = sum(1 for n in nodes.values() if n["type"] == "repo")
     return {"nodes": list(nodes.values()), "edges": edges, "scope": scope, "repos": repo_n}
 
