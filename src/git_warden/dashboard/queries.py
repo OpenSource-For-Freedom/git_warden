@@ -223,6 +223,32 @@ def funnel(db: Database) -> dict[str, int]:
     return {k: counts.get(k, 0) for k in ("candidate", "screened", "confirmed", "rejected")}
 
 
+def recent_runs(db: Database, limit: int = 8) -> dict[str, Any]:
+    """Recent ingest/hunt runs, newest first, for the live activity feed.
+
+    A run is ``live`` while status is 'running' (finish_run stamps finished_at and
+    a terminal status). The dashboard pulses when any run is live and shows each
+    run's confirmed count so new inclusions are visible the moment they land.
+    """
+    runs = []
+    for r in db.conn.execute(
+        "SELECT run_id, status, started_at, finished_at, counts FROM runs "
+        "ORDER BY started_at DESC LIMIT ?", (limit,)
+    ):
+        counts = json.loads(r["counts"] or "{}")
+        runs.append({
+            "run_id": r["run_id"],
+            "status": r["status"],
+            "started_at": r["started_at"],
+            "finished_at": r["finished_at"],
+            "live": r["status"] == "running" and not r["finished_at"],
+            "confirmed": counts.get("confirmed", 0),
+            "candidates": counts.get("candidates", 0),
+            "gold_delivered": counts.get("gold_delivered", 0),
+        })
+    return {"runs": runs, "live": any(x["live"] for x in runs)}
+
+
 def runs_timeline(db: Database) -> list[dict[str, Any]]:
     """Per-run confirmed/candidate counts, oldest first (telemetry over time)."""
     out = []

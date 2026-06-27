@@ -14,6 +14,14 @@
   header h1{font-size:14px;margin:0;letter-spacing:.6px}
   .metrics{display:flex;gap:16px;flex-wrap:wrap;margin-left:auto}
   .metric b{font-size:17px}.metric span{color:var(--mut);font-size:11px;margin-left:5px}
+  .activity{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--mut)}
+  .activity b{font-size:11px}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--mut);display:inline-block;flex:0 0 auto}
+  .dot.on{background:var(--good);animation:pulse 1.3s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(57,217,138,.6)}70%{box-shadow:0 0 0 7px rgba(57,217,138,0)}100%{box-shadow:0 0 0 0 rgba(57,217,138,0)}}
+  /* New nodes light up like a bulb the moment they land in the mapping. */
+  @keyframes lightup{0%{filter:drop-shadow(0 0 0 #ffe9a8)}18%{filter:drop-shadow(0 0 17px #ffe9a8) drop-shadow(0 0 7px #fff3c4)}100%{filter:none}}
+  .pop{animation:lightup 1.8s ease-out}
   .good{color:var(--good)}.bad{color:var(--bad)}.novel{color:var(--novel)}.gold{color:var(--warn)}.accent{color:var(--accent)}
   main{flex:1;display:grid;grid-template-columns:1.55fr 1fr;gap:0;min-height:0}
   #graphwrap{position:relative;border-right:1px solid var(--line);overflow:hidden}
@@ -52,6 +60,7 @@
 <body>
 <header>
   <h1>GIT WARDEN — THREAT TELEMETRY</h1>
+  <div class="activity" id="activity"></div>
   <div class="metrics" id="metrics"></div>
 </header>
 
@@ -121,13 +130,22 @@ async function loadMeta(){
 let RAF, NODES=[], EDGES=[], BYID={};
 const SVG=$('graph'), NS='http://www.w3.org/2000/svg';
 function size(){return [SVG.clientWidth||800, SVG.clientHeight||500];}
-async function loadGraph(){
-  const g=await j('/api/graph?scope='+SCOPE); NODES=g.nodes; EDGES=g.edges; BYID={};
+async function loadGraph(animate){
+  // Live refresh: keep existing node positions, drop in new ones, and on a live
+  // poll flag the new arrivals so they pop like a bulb when they land.
+  const g=await j('/api/graph?scope='+SCOPE);
   $('gcount').textContent='· '+g.repos+' repos';
-  const [W,H]=size();
-  NODES.forEach((n,i)=>{n.x=W/2+Math.cos(i*1.7)*Math.min(W,H)*0.3;
-    n.y=H/2+Math.sin(i*1.7)*Math.min(W,H)*0.3;n.vx=0;n.vy=0;BYID[n.id]=n;});
-  draw(); if(RAF)cancelAnimationFrame(RAF); tick();
+  const [W,H]=size(), prev=BYID;
+  let changed = g.nodes.length!==NODES.length;
+  g.nodes.forEach((n,i)=>{
+    const old=prev[n.id];
+    if(old){n.x=old.x;n.y=old.y;n.vx=old.vx;n.vy=old.vy;n.fix=old.fix;}
+    else{n.x=W/2+Math.cos(i*1.7)*Math.min(W,H)*0.28;n.y=H/2+Math.sin(i*1.7)*Math.min(W,H)*0.28;
+      n.vx=0;n.vy=0;changed=true;if(animate)n._pop=1;}
+  });
+  if(animate&&!changed)return;     // nothing new this poll -> leave the sim running
+  NODES=g.nodes;EDGES=g.edges;BYID={};NODES.forEach(n=>BYID[n.id]=n);
+  draw(); if(!RAF)tick();
 }
 function tick(){
   const [W,H]=size();
@@ -153,6 +171,7 @@ function draw(){
   // graph is small, so the wide +candidates / all scopes stay readable.
   const showRepoLabels=NODES.length<70;
   NODES.forEach(n=>{const g=document.createElementNS(NS,'g');g.style.cursor='pointer';
+    if(n._pop){g.setAttribute('class','pop');n._pop=0;}   // light-bulb burst on a fresh landing
     const c=document.createElementNS(NS,'circle');c.setAttribute('r',nodeR(n));
     c.setAttribute('fill',nodeFill(n));c.setAttribute('stroke','#0a0e13');c.setAttribute('stroke-width',1.5);
     g.appendChild(c);
@@ -198,16 +217,25 @@ document.querySelectorAll('.scope').forEach(el=>el.addEventListener('click',()=>
   if(SCOPE===el.dataset.s)return;
   SCOPE=el.dataset.s;
   document.querySelectorAll('.scope').forEach(x=>x.classList.toggle('on',x===el));
-  loadGraph();
+  loadGraph(false);            // scope switch: full reload, no pop storm
 }));
 async function loadFunnel(){
   const f=await j('/api/funnel');
   $('funnel').textContent='captured: '+f.candidate+' candidate · '+f.screened+' screened · '
     +f.confirmed+' confirmed · '+f.rejected+' rejected';
 }
+async function loadRuns(){
+  const d=await j('/api/runs'); const r=(d.runs||[])[0];
+  if(!r){$('activity').innerHTML='';return;}
+  $('activity').innerHTML=`<span class="dot ${d.live?'on':''}"></span>`
+    +(d.live?'<span class="good">scanning</span>':'<span class="muted">idle</span>')
+    +` · last <span class="muted">${esc(r.run_id.slice(0,17))}</span>`
+    +` · <b class="good">${r.confirmed}</b> confirmed`;
+}
 
-loadMeta(); loadGraph(); loadFunnel();
-setInterval(()=>{loadMeta(); loadFunnel();}, 15000);
+loadMeta(); loadFunnel(); loadRuns(); loadGraph(false);
+setInterval(()=>{loadMeta(); loadFunnel(); loadRuns();}, 15000);
+setInterval(()=>loadGraph(true), 12000);   // live mapping: new inclusions pop in
 window.addEventListener('resize',()=>{const[W,H]=size();});
 </script>
 </body>

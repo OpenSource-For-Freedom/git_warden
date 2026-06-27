@@ -69,6 +69,10 @@ def create_app(db_path=DB_PATH):
     def api_bad_owners():
         return _q(queries.bad_owners)
 
+    @app.get("/api/runs")
+    def api_runs():
+        return _q(queries.recent_runs)
+
     @app.get("/api/campaigns")
     def api_campaigns():
         return _q(queries.campaign_clusters)

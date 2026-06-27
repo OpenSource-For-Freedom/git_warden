@@ -122,6 +122,14 @@ def test_graph_scope_and_funnel(tmp_path):
     db.close()
 
 
+def test_recent_runs_marks_unfinished_as_live(tmp_path):
+    db = _seed(tmp_path)                      # _seed starts "r1" and never finishes it
+    rr = queries.recent_runs(db)
+    assert rr["runs"][0]["run_id"] == "r1"
+    assert rr["runs"][0]["live"] is True and rr["live"] is True
+    db.close()
+
+
 def test_fastapi_endpoints_smoke(tmp_path):
     _seed(tmp_path).close()
     from fastapi.testclient import TestClient
@@ -133,6 +141,7 @@ def test_fastapi_endpoints_smoke(tmp_path):
     assert client.get("/api/graph").json()["nodes"]
     assert client.get("/api/graph?scope=all").json()["scope"] == "all"
     assert client.get("/api/funnel").json()["confirmed"] == 3
+    assert client.get("/api/runs").json()["runs"][0]["run_id"] == "r1"
     assert client.get("/api/finding/evil/a").json()["novel"] is True
     assert client.get("/api/finding/nope/nope").status_code == 404
     assert client.get("/").status_code == 200  # serves the dashboard HTML
