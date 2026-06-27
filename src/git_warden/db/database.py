@@ -38,10 +38,20 @@ _SCHEMA_PATH = Path(__file__).with_name("schema.sql")
 
 
 def connect(db_path: Path | str = DB_PATH) -> sqlite3.Connection:
-    """Open a connection with foreign keys enforced and row access by name."""
-    conn = sqlite3.connect(db_path)
+    """Open a connection with foreign keys, row access by name, and concurrency-safe
+    settings.
+
+    A 30s busy timeout + WAL journaling keep concurrent processes solid: the
+    scheduled submit (every 6h) and the daily pipeline can overlap without a
+    ``database is locked`` error, so a write (e.g. marking a finding submitted)
+    never fails on a transient lock and force a re-send. WAL also lets readers
+    proceed while one writer holds the DB.
+    """
+    conn = sqlite3.connect(db_path, timeout=30)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
+    conn.execute("PRAGMA busy_timeout = 30000")
+    conn.execute("PRAGMA journal_mode = WAL")
     return conn
 
 
@@ -542,6 +552,25 @@ class Database:
         with self.transaction() as c:
             c.execute(
                 "UPDATE repo_findings SET delivered_gold = 1 WHERE full_name = ?", (full_name,)
+            )
+
+    def set_gold_delivered(self, full_names: list[str], delivered: bool) -> None:
+        """Set delivered_gold for a whole cluster in ONE transaction (atomic).
+
+        Used to CLAIM a cluster (delivered=True) before posting to Discord and to
+        RELEASE it (delivered=False) if the post fails -- so a cluster is never
+        partially marked and a crash after claim drops a notification rather than
+        sending it twice. ``undelivered_gold`` excludes delivered rows, so a claimed
+        cluster cannot be re-selected by a concurrent run.
+        """
+        if not full_names:
+            return
+        flag = 1 if delivered else 0
+        ph = ",".join("?" for _ in full_names)
+        with self.transaction() as c:
+            c.execute(
+                f"UPDATE repo_findings SET delivered_gold = ? WHERE full_name IN ({ph})",
+                [flag, *full_names],
             )
 
     def actor_github_logins(self) -> list[tuple[str, str]]:

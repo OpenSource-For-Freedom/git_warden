@@ -135,6 +135,26 @@ def test_reconcile_rejects_security_data_only_evidence(db):
     assert "evil/dropper" in names                       # real payload -> kept
 
 
+def test_set_gold_delivered_claims_and_releases_atomically(db):
+    # The Discord no-duplicate guarantee: claiming a cluster removes it from
+    # undelivered_gold (so a crash/concurrent run can't repost), and releasing it
+    # (failed post) puts it back for retry. Atomic over the whole cluster.
+    ev = {"bash_findings": [
+        {"file": "x.js", "line": 1, "category": "obfuscation", "rule": "eval-decoded"}]}
+    for n in ("camp/one", "camp/two"):
+        db.upsert_finding(RepoFinding(
+            full_name=n, detection_method=DetectionMethod.SIGNATURE_MATCH,
+            status=RepoFindingStatus.CONFIRMED, raw_payload=ev), "run-1")
+    pending = {r["full_name"] for r in db.undelivered_gold()}
+    assert {"camp/one", "camp/two"} <= pending
+
+    db.set_gold_delivered(["camp/one", "camp/two"], True)        # claim before posting
+    assert {"camp/one", "camp/two"}.isdisjoint({r["full_name"] for r in db.undelivered_gold()})
+
+    db.set_gold_delivered(["camp/one", "camp/two"], False)       # release on post failure
+    assert {"camp/one", "camp/two"} <= {r["full_name"] for r in db.undelivered_gold()}
+
+
 def test_reconcile_registry_prunes_unproven_and_known_good(db):
     # Real static evidence -> stays on the wall.
     db.upsert_finding(RepoFinding(
