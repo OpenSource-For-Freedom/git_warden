@@ -78,8 +78,12 @@ GITHUB_API_VERSION = "2022-11-28"
 # appended to the base URL, e.g. "query-latest" (100 most recent verified
 # reports; the free ingestion endpoint).
 OSM_API_KEY = os.environ.get("GW_OSM_API_KEY")
-OSM_BASE_URL = os.environ.get(
-    "GW_OSM_BASE_URL", "https://api.opensourcemalware.com/functions/v1/"
+# Use `or` (not get's default arg): an Actions secret that isn't set expands to
+# an empty string, so the var is present-but-empty and the two-arg default would
+# never apply, collapsing the URL to "" and every OSM call to a hostless path.
+OSM_BASE_URL = (
+    os.environ.get("GW_OSM_BASE_URL")
+    or "https://api.opensourcemalware.com/functions/v1/"
 )
 # NVD is descoped (free OSINT + OSM cover the sources); no key required.
 DISCORD_WEBHOOK = os.environ.get("GW_DISCORD_WEBHOOK")

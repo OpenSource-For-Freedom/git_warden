@@ -49,14 +49,12 @@ jobs:
         env:
           GW_GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           GW_OSM_API_KEY: ${{ secrets.OSM_KEY }}
-          GW_OSM_BASE_URL: ${{ secrets.GW_OSM_BASE_URL }}
         run: python gw.py ingest
 
       - name: Hunt malicious repositories (Tier-2 + gold)
         env:
           GW_GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           GW_OSM_API_KEY: ${{ secrets.OSM_KEY }}
-          GW_OSM_BASE_URL: ${{ secrets.GW_OSM_BASE_URL }}
           GW_DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
 
         # Top 75 candidates per weekly run (ranked by signature/owner/signal
