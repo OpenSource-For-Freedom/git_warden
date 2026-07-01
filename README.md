@@ -60,10 +60,11 @@ steal-and-send); threat-intel leads (a malicious owner, a shared signature) only
 *seed* which repos get scanned, never confirm one alone.
 
 <!-- git-warden:registry:start -->
-_Top 9 of 22 repositories confirmed malicious by static analysis this run, ranked by severity. The full list ships as the run's CSV artifact and to the Discord feed; every row's evidence (file, line, rule) is in that CSV. Dispute: open an issue and we will re-review._
+_Top 10 of 13 repositories confirmed malicious by static analysis this run, ranked by severity. The full list ships as the run's CSV artifact and to the Discord feed; every row's evidence (file, line, rule) is in that CSV. Dispute: open an issue and we will re-review._
 
 | Repository | Detection | Score | Attribution | Proof (file:line rule) |
 |------------|-----------|-------|-------------|------------------------|
+| [`boredchilada/pkgward-oss`](https://github.com/boredchilada/pkgward-oss) | package_ref | 46 | unattributed | pkgward/analyze/malware_patterns.py:390 credential_access/env-dump  (+19 more) |
 | [`usmanaliashraf/portfolio`](https://github.com/usmanaliashraf/portfolio) | signature_match | 12 | unattributed | postcss.config.mjs:12 obfuscation/eval-decoded  (+8 more) |
 | [`icecoldjay/bri`](https://github.com/icecoldjay/bri) | signature_match | 11 | unattributed | client/tailwind.config.js:61 obfuscation/eval-decoded  (+3 more) |
 | [`dawit212119/prismamonorepoplugin`](https://github.com/dawit212119/prismamonorepoplugin) | osm_repository | 10 | unattributed | src/index.ts:3 code_execution/node-child-process  (+2 more) |
@@ -95,10 +96,16 @@ _These repositories are NOT confirmed malicious on their own code. They appear o
 
 | Repository | Owner | Owner provenance (repos confirmed on evidence) | Score |
 |------------|-------|------------------------------------------------|-------|
+| [`cs-joy/odysseus`](https://github.com/cs-joy/odysseus) | cs-joy | _known-malicious owner_ | 25 |
+| [`cs-joy/model-viewer`](https://github.com/cs-joy/model-viewer) | cs-joy | _known-malicious owner_ | 19 |
+| [`cs-joy/tauri`](https://github.com/cs-joy/tauri) | cs-joy | _known-malicious owner_ | 19 |
+| [`cs-joy/whatsapp-evo`](https://github.com/cs-joy/whatsapp-evo) | cs-joy | _known-malicious owner_ | 19 |
+| [`cs-joy/stellar-core`](https://github.com/cs-joy/stellar-core) | cs-joy | _known-malicious owner_ | 18 |
+| [`icecoldjay/infin8solution`](https://github.com/icecoldjay/infin8solution) | icecoldjay | [`icecoldjay/bri`](https://github.com/icecoldjay/bri) | 18 |
+| [`nccgroup/gitpwnd`](https://github.com/nccgroup/gitpwnd) | nccgroup | _known-malicious owner_ | 18 |
+| [`cs-joy/aider`](https://github.com/cs-joy/aider) | cs-joy | _known-malicious owner_ | 17 |
 | [`alexsander532/projeto_dashboard_versao1`](https://github.com/alexsander532/projeto_dashboard_versao1) | alexsander532 | [`alexsander532/atlas_landingpage`](https://github.com/alexsander532/atlas_landingpage), [`alexsander532/mvp_wain_group130`](https://github.com/alexsander532/mvp_wain_group130), [`alexsander532/synapseai`](https://github.com/alexsander532/synapseai)  (+1 more) | 14 |
-| [`alexsander532/portfolio-pessoal`](https://github.com/alexsander532/portfolio-pessoal) | alexsander532 | [`alexsander532/atlas_landingpage`](https://github.com/alexsander532/atlas_landingpage), [`alexsander532/mvp_wain_group130`](https://github.com/alexsander532/mvp_wain_group130), [`alexsander532/synapseai`](https://github.com/alexsander532/synapseai)  (+1 more) | 8 |
-| [`alexsander532/synapse_ai`](https://github.com/alexsander532/synapse_ai) | alexsander532 | [`alexsander532/atlas_landingpage`](https://github.com/alexsander532/atlas_landingpage), [`alexsander532/mvp_wain_group130`](https://github.com/alexsander532/mvp_wain_group130), [`alexsander532/synapseai`](https://github.com/alexsander532/synapseai)  (+1 more) | 8 |
-| [`usmanaliashraf/rag-bot-uet-science-society`](https://github.com/usmanaliashraf/rag-bot-uet-science-society) | usmanaliashraf | [`usmanaliashraf/portfolio`](https://github.com/usmanaliashraf/portfolio) | 8 |
+| [`cs-joy/container`](https://github.com/cs-joy/container) | cs-joy | _known-malicious owner_ | 11 |
 <!-- git-warden:badowners:end -->
 
 <p align="center"><img src="docs/sculk-divider.png" alt="" width="900"></p>
