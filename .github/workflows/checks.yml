@@ -1,0 +1,50 @@
+# Pull-request gate: the same preflight operators run locally (`make check`),
+# run automatically on every PR and on pushes to main so changes are validated
+# even when they were not checked locally. Lint + tests only: no secrets, no
+# network feeds, no clone/hunt pipeline, so it is deterministic and safe to run
+# on untrusted PRs.
+name: checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Cancel superseded runs on the same branch/PR to save minutes.
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: lint + test (${{ matrix.os }}, py${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # Cross-platform (the tool ships Windows-specific path/rmtree handling)
+        # and the supported Python floor plus a current release.
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install (editable + dev tools)
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Lint (ruff)
+        run: python -m ruff check src tests gw.py
+
+      - name: Test (pytest)
+        run: python -m pytest -q
