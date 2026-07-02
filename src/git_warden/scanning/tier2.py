@@ -177,9 +177,11 @@ def _guarddog_ecosystem(root: Path) -> str | None:
     if (Path(root) / "setup.py").exists() or (Path(root) / "pyproject.toml").exists():
         return "pypi"
     return None
-# full_name is untrusted intel -> strict allowlist before any clone/path use
-# (eval finding #16).
-_VALID_FULL_NAME = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
+# full_name is untrusted intel -> strict per-segment allowlist before any clone/
+# path use (eval finding #16). Exactly one owner and one repo segment, each pure
+# [A-Za-z0-9_.-]: no shell metacharacter, no path separator, no '..', no leading
+# '-' that git could read as a flag.
+_SEGMENT = re.compile(r"[A-Za-z0-9_.-]+")
 # Bound an untrusted clone so a path/zip bomb can't exhaust the host (#9).
 _CLONE_MAX_BYTES = 500_000_000
 _CLONE_MAX_FILES = 50_000
@@ -209,7 +211,12 @@ def repo_code_hash(root: Path) -> str:
     """Stable whole-repo fingerprint over file contents (for clone dedup)."""
     root = Path(root)
     digest = hashlib.sha256()
-    for path in sorted(p for p in root.rglob("*") if p.is_file() and ".git" not in p.parts):
+    # Skip symlinks: a cloned attacker repo could plant one pointing outside the
+    # tree, and is_file()/read would follow it. Only real files in the clone.
+    for path in sorted(
+        p for p in root.rglob("*")
+        if p.is_file() and not p.is_symlink() and ".git" not in p.parts
+    ):
         rel = str(path.relative_to(root)).replace("\\", "/")
         try:
             # Bound per-file read so one giant blob can't exhaust memory (#9).
@@ -252,7 +259,7 @@ def _within_bounds(root: Path) -> bool:
     files = 0
     total = 0
     for path in Path(root).rglob("*"):
-        if not path.is_file() or ".git" in path.parts:
+        if path.is_symlink() or not path.is_file() or ".git" in path.parts:
             continue
         files += 1
         try:
@@ -293,10 +300,20 @@ def clone_repo(
     value cannot become a path traversal or git flag (eval finding #16). A
     failed/partial clone is force-removed (handles git's read-only pack files).
     """
-    if not _VALID_FULL_NAME.fullmatch(full_name) or ".." in full_name:
+    # Sanitizing barrier for the clone command, applied directly to the owner and
+    # repo variables that reach git (an explicit per-variable fullmatch, not a
+    # guard hidden in a generator, so the allowlist actually dominates the sink):
+    # exactly two segments, each pure [A-Za-z0-9_.-], no '..'. The URL is rebuilt
+    # from the validated parts and passed after '--'.
+    parts = full_name.split("/")
+    if len(parts) != 2 or ".." in full_name:
         log.warning("clone rejected: invalid full_name", extra={"context": {"repo": full_name}})
         return None
-    url = f"https://github.com/{full_name}.git"
+    owner, repo = parts
+    if not _SEGMENT.fullmatch(owner) or not _SEGMENT.fullmatch(repo):
+        log.warning("clone rejected: invalid full_name", extra={"context": {"repo": full_name}})
+        return None
+    url = f"https://github.com/{owner}/{repo}.git"
     dest_s = str(dest)
     steps = (
         ["git", "clone", "--depth", "1", "--filter=blob:none", "--no-checkout",
@@ -480,7 +497,24 @@ def scan_candidate(
     force-removed on every exit path (success, skip, or error) so scratch does
     not accumulate; important on a near-full system drive.
     """
-    dest = Path(workdir) / full_name.replace("/", "__")
+    # Validate the untrusted full_name into owner/repo and build the clone
+    # directory name from the VALIDATED parts, so the destination string carries
+    # no tainted input into later path or command use. Then confine it to workdir
+    # with the canonical containment check (is_relative_to, the form CodeQL's path
+    # sanitizer recognizes), rejecting traversal, extra segments, and the
+    # degenerate dest == workdir case.
+    parts = full_name.split("/")
+    if (len(parts) != 2 or ".." in full_name
+            or not _SEGMENT.fullmatch(parts[0]) or not _SEGMENT.fullmatch(parts[1])):
+        log.warning("scan rejected: invalid full_name", extra={"context": {"repo": full_name}})
+        return None
+    owner, repo = parts
+    base = Path(workdir).resolve()
+    dest = (base / f"{owner}__{repo}").resolve()
+    if dest == base or not dest.is_relative_to(base):
+        log.warning("clone dest escapes workdir; skipping",
+                    extra={"context": {"repo": full_name}})
+        return None
     cloned = clone(full_name, dest, runner=runner)
     if cloned is None:
         return None

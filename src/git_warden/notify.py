@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import logging
 import urllib.request
+from urllib.parse import urlparse
 
 from .config import DISCORD_WEBHOOK, USER_AGENT
 
@@ -211,6 +212,24 @@ def cluster_embed(rows: list) -> dict:
     }
 
 
+# Only Discord's own hosts are valid webhook targets. Validating the PARSED host
+# (not a substring) before the request stops a poisoned DISCORD_WEBHOOK from
+# turning the notifier into an SSRF / local-file primitive: urllib would happily
+# follow file://, ftp://, or an internal address otherwise.
+_DISCORD_HOSTS = ("discord.com", "discordapp.com")
+
+
+def _is_discord_webhook(url: str) -> bool:
+    try:
+        parsed = urlparse(url)
+    except ValueError:
+        return False
+    host = (parsed.hostname or "").lower()
+    return parsed.scheme == "https" and (
+        host in _DISCORD_HOSTS or any(host.endswith("." + h) for h in _DISCORD_HOSTS)
+    )
+
+
 def post_discord(
     content: str = "", *, embeds: list | None = None,
     webhook: str | None = None, opener=urllib.request.urlopen,
@@ -222,6 +241,9 @@ def post_discord(
     webhook = webhook or DISCORD_WEBHOOK
     if not webhook:
         log.info("discord: no webhook configured; skipping")
+        return False
+    if not _is_discord_webhook(webhook):
+        log.warning("discord: refusing a non-Discord webhook URL (SSRF guard)")
         return False
     # allowed_mentions parse:[] means no @everyone/@here/role ping can ever fire,
     # even if some markup slips through sanitization (defense in depth).

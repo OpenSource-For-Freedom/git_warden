@@ -137,7 +137,8 @@ def scan_content(root) -> list[BashFinding]:
     root = Path(root)
     findings: list[BashFinding] = []
     for path in root.rglob("*"):
-        if not path.is_file() or is_ignored_path(path):
+        # Skip symlinks: an attacker repo could point one outside the clone.
+        if path.is_symlink() or not path.is_file() or is_ignored_path(path):
             continue
         suffix = path.suffix.lower()
         if suffix not in _SOURCE_EXT or _is_minified(path.name.lower()):

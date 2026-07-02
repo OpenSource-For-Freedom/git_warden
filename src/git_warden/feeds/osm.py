@@ -28,6 +28,7 @@ from __future__ import annotations
 import json
 import logging
 from typing import Any
+from urllib.parse import urlparse
 
 from ..config import OSM_API_KEY, osm_endpoint
 from ..enums import ArtifactType, FeedSource
@@ -64,6 +65,19 @@ _TYPE_BY_REPORT = {
 }
 
 
+def _is_github_ref(ref: Any) -> bool:
+    """True if ref is a URL whose HOST is github.com (parsed, not a substring).
+
+    A substring test (``"github.com" in ref``) would also match lookalikes such
+    as ``github.com.evil.tld`` or ``evil.tld/github.com``; parse the host and
+    match it exactly instead.
+    """
+    if not isinstance(ref, str):
+        return False
+    host = (urlparse(ref).hostname or "").lower()
+    return host == "github.com" or host.endswith(".github.com")
+
+
 def _threats(payload: Any) -> list[dict]:
     """Pull the threat list out of the {count, threats} envelope (or a wrapper)."""
     if isinstance(payload, dict):
@@ -95,8 +109,8 @@ def parse_query_latest(payload: Any) -> list[MaliciousArtifact]:
             # Repos: canonical name is owner/repo parsed from the URL; the raw
             # resource_identifier is often a full https://github.com/... link.
             name = repo_full_name(ref) or threat.get("package_name")
-            ecosystem = "github" if ref and "github.com" in str(ref).lower() else "repositories"
-            url = ref if isinstance(ref, str) and ref.startswith("http") else None
+            ecosystem = "github" if _is_github_ref(ref) else "repositories"
+            url = ref if isinstance(ref, str) and ref.startswith(("http://", "https://")) else None
         else:
             name = threat.get("package_name") or ref
             ecosystem = str(threat.get("registry") or "unknown")

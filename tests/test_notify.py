@@ -60,9 +60,10 @@ def test_post_discord_posts_when_webhook_set():
         sent["body"] = req.data
         return FakeResp()
 
-    ok = post_discord("hello", webhook="https://discord.test/webhook", opener=fake_opener)
+    ok = post_discord("hello", webhook="https://discord.com/api/webhooks/123/abc",
+                      opener=fake_opener)
     assert ok
-    assert sent["url"] == "https://discord.test/webhook"
+    assert sent["url"] == "https://discord.com/api/webhooks/123/abc"
     assert b"hello" in sent["body"]
 
 
@@ -78,7 +79,7 @@ def test_post_discord_disables_mentions():
         sent["body"] = req.data
         return FakeResp()
 
-    post_discord("hi", webhook="https://discord.test/wh", opener=fake_opener)
+    post_discord("hi", webhook="https://discord.com/api/webhooks/123/abc", opener=fake_opener)
     body = json.loads(sent["body"])
     assert body["allowed_mentions"] == {"parse": []}
 
@@ -162,7 +163,7 @@ def test_post_discord_sends_embeds():
         return FakeResp()
 
     ok = post_discord(embeds=[finding_embed(_row())],
-                      webhook="https://discord.test/wh", opener=fake_opener)
+                      webhook="https://discord.com/api/webhooks/123/abc", opener=fake_opener)
     assert ok
     body = json.loads(sent["body"])
     assert body["embeds"][0]["title"] == "evil/repo"

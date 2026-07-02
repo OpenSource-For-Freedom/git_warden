@@ -185,7 +185,8 @@ def extract_repo_iocs(root) -> IocSet:
 
     agg = IocSet()
     for path in Path(root).rglob("*"):
-        if not path.is_file() or ".git" in path.parts:
+        # Skip symlinks: an attacker repo could point one outside the clone.
+        if path.is_symlink() or not path.is_file() or ".git" in path.parts:
             continue
         try:
             if path.stat().st_size > _CODE_MAX_BYTES:

@@ -20,10 +20,10 @@ def test_extract_code_iocs_keeps_attacker_domains_drops_benign():
         "also = 'https://api.anthropic.com/v1'\n"
     )
     iocs = extract_code_iocs(text)
-    assert any("webhooks/123" in w for w in iocs.webhooks)
-    assert "evil-c2.workers.dev" in iocs.domains       # attacker-host kept
-    assert "github.com" not in iocs.domains            # benign dropped
-    assert "api.anthropic.com" not in iocs.domains      # benign dropped
+    assert iocs.webhooks.get("discord.com/api/webhooks/123/abc")
+    assert iocs.domains.get("evil-c2.workers.dev")       # attacker-host kept
+    assert not iocs.domains.get("github.com")            # benign dropped
+    assert not iocs.domains.get("api.anthropic.com")      # benign dropped
 
 
 def test_extract_repo_iocs_walks_files(tmp_path):
@@ -31,7 +31,7 @@ def test_extract_repo_iocs_walks_files(tmp_path):
         "url='https://steal.rbmock.dev/x'\n", encoding="utf-8"
     )
     iocs = extract_repo_iocs(tmp_path)
-    assert "steal.rbmock.dev" in iocs.domains
+    assert iocs.domains.get("steal.rbmock.dev")
 
 
 def test_learned_ioc_persistence_and_terms(tmp_path):

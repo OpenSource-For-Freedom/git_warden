@@ -135,7 +135,8 @@ def scan_manifests(root, malicious_packages=None) -> list[BashFinding]:
     root = Path(root)
     findings: list[BashFinding] = []
     for path in root.rglob("*"):
-        if not path.is_file() or is_ignored_path(path):
+        # Skip symlinks: an attacker repo could point one outside the clone.
+        if path.is_symlink() or not path.is_file() or is_ignored_path(path):
             continue
         name = path.name.lower()
         is_reqs = name.startswith("requirements") and name.endswith(".txt")

@@ -43,7 +43,8 @@ def extract_code_signatures(root) -> list[str]:
     sigs: set[str] = set()
     root = Path(root)
     for path in root.rglob("*"):
-        if not path.is_file() or is_ignored_path(path):
+        # Skip symlinks: an attacker repo could point one outside the clone.
+        if path.is_symlink() or not path.is_file() or is_ignored_path(path):
             continue
         if path.suffix.lower() not in _SOURCE_EXT:
             continue

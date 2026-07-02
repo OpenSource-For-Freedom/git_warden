@@ -18,15 +18,15 @@ INDICATORS (IOCs)
 
 def test_extracts_webhook_domain_hash_telegram():
     iocs = extract_iocs(SAMPLE)
-    assert any("discord.com/api/webhooks/1516798168304586833" in w for w in iocs.webhooks)
-    assert "python-log.lapxa354.workers.dev" in iocs.domains
+    assert iocs.webhooks.get("discord.com/api/webhooks/1516798168304586833/OqfteyxjlBFvGTt")
+    assert iocs.domains.get("python-log.lapxa354.workers.dev")
     assert "ff1cebc61b7a24b04edcccf4642bed10e060deda15473c2e12328ea504ea2c52" in iocs.hashes
-    assert any("api.telegram.org/bot" in t for t in iocs.telegram)
+    assert iocs.telegram.get("api.telegram.org/bot12345:AAExfilToken")
 
 
 def test_benign_github_domain_filtered():
     iocs = extract_iocs(SAMPLE)
-    assert "github.com" not in iocs.domains
+    assert not iocs.domains.get("github.com")
 
 
 def test_merge_accumulates_counts():
@@ -38,8 +38,8 @@ def test_merge_accumulates_counts():
 
 def test_domain_only_extracted_in_c2_context():
     # A URL mentioned outside an exfil/C2 context is NOT treated as an IOC.
-    assert "docs.example.com" not in extract_iocs("see https://docs.example.com/guide").domains
-    assert "evil.example.com" in extract_iocs("exfil to https://evil.example.com").domains
+    assert not extract_iocs("see https://docs.example.com/guide").domains.get("docs.example.com")
+    assert extract_iocs("exfil to https://evil.example.com").domains.get("evil.example.com")
 
 
 def test_empty_text_is_safe():
