@@ -23,6 +23,7 @@ from collections import Counter
 from datetime import UTC, datetime
 
 from . import config
+from .attribution import attribution_for_tags, attribution_for_text, load_actor_terms
 from .db import Database
 from .enums import DetectionMethod, RepoFindingStatus, RunStatus
 from .models import RedTeamTool, RepoFinding
@@ -39,11 +40,14 @@ from .scanning import (
     matches_known_tool,
     scan_candidate,
     score_repo,
+    search_google_news,
+    search_hackernews,
     search_iocs,
 )
 from .scanning.actor_search import AccountRepo
 from .scanning.discovery import RepoHit
 from .scanning.enrichment import OwnerRepo
+from .scanning.newsdiscovery import DEFAULT_NEWS_TERMS, NewsHit
 from .scanning.signatures import load_seed_signatures
 from .scanning.tier2 import WEAPONIZATION_CATEGORIES, _force_rmtree
 
@@ -69,6 +73,89 @@ def _finding_from_hit(hit: RepoHit) -> RepoFinding:
         matched_iocs=list(hit.matched_iocs),
         reasoning=f"Code references OSM IOC(s) {hit.matched_iocs} in {hit.paths[:3]}",
         raw_payload={"paths": hit.paths},
+    )
+
+
+# Discovery-source rank (lower = kept first) and hard caps, by EMPIRICAL precision
+# from tonight's source_yield: signature_match ~100%, osm_repository ~43%,
+# package_ref 0% (0 confirmed / 22 rejected), redteam_lineage ~3%. The old
+# ranking summed matched_iocs, letting a package_ref hit with many name-matches
+# (mem0 matched 7) outrank a signature_match repo and devour the budget (run-4:
+# 120/120 package_ref). Rank by precision first; matched signals only break ties.
+_METHOD_RANK = {
+    DetectionMethod.SIGNATURE_MATCH: 0,
+    DetectionMethod.OSM_REPOSITORY: 1,
+    DetectionMethod.MALICIOUS_OWNER: 2,
+    DetectionMethod.ACTOR_ACCOUNT: 2,
+    DetectionMethod.IOC_SEARCH: 3,
+    DetectionMethod.NEWS_MENTION: 3,
+    DetectionMethod.PACKAGE_REF: 4,
+    DetectionMethod.REDTEAM_LINEAGE: 5,
+}
+
+
+def rank_and_cap_candidates(candidates: list[RepoFinding], limit: int) -> list[RepoFinding]:
+    """Select up to ``limit`` candidates by precision rank, capping noisy sources.
+
+    High-precision methods are kept first and are never dropped for a low-
+    precision one. package_ref / redteam_lineage are hard-capped so they cannot
+    starve signature_match / osm_repository; the capped remainder only backfills
+    if the high-precision sources left the budget unfilled (an empty slot is
+    worse than a capped-source lead).
+    """
+    if limit <= 0 or len(candidates) <= limit:
+        return candidates
+    method_cap = {
+        DetectionMethod.PACKAGE_REF: max(15, limit // 4),
+        DetectionMethod.REDTEAM_LINEAGE: max(10, limit // 6),
+    }
+    ordered = sorted(candidates, key=lambda f: (
+        _METHOD_RANK.get(f.detection_method, 3),
+        -(len(f.signals) + len(f.matched_iocs))))
+    kept: list[RepoFinding] = []
+    used: Counter = Counter()
+    for f in ordered:
+        cap = method_cap.get(f.detection_method)
+        if cap is not None and used[f.detection_method] >= cap:
+            continue
+        kept.append(f)
+        used[f.detection_method] += 1
+        if len(kept) >= limit:
+            return kept
+    keptset = {id(f) for f in kept}
+    for f in ordered:  # backfill capped remainder only to fill leftover budget
+        if id(f) not in keptset:
+            kept.append(f)
+            if len(kept) >= limit:
+                break
+    return kept
+
+
+def _finding_from_news(hit: NewsHit, actor_terms: dict[str, str], db: Database,
+                       run_id: str) -> RepoFinding:
+    # Attribute the SAME way OSM does: check the writeup's own text for a
+    # named threat actor/group first (Lazarus Group, APT28, Kimsuky, ...),
+    # falling back to a bare nation/threat-class mention (DPRK, APT). The
+    # KEY is source-agnostic (links to the one real threat_actors row); the
+    # source only appears in the display text.
+    attribution = attribution_for_text(hit.context or hit.source_title, actor_terms)
+    reason = f"Named in a news/discussion writeup: {hit.source_title!r}"
+    if attribution:
+        reason += f" [{attribution.label} (per {hit.source or 'news'})]"
+        # actor_key is a strict FK: register the actor BEFORE the finding is
+        # upserted, or a nation-level attribution with no seed_actors.json
+        # entry (and no campaign to propagate through) silently nulls out.
+        # A pre-registered real actor (e.g. ingest-promoted "Lazarus Group")
+        # is left untouched -- ensure_actor never clobbers status/category.
+        db.ensure_actor(attribution.key, attribution.label, "news-attribution", run_id)
+    return RepoFinding(
+        full_name=hit.full_name,
+        url=f"https://github.com/{hit.full_name}",
+        detection_method=DetectionMethod.NEWS_MENTION,
+        actor_key=attribution.key if attribution else None,
+        reasoning=reason,
+        raw_payload={"source_title": hit.source_title, "source_url": hit.source_url,
+                     "source": hit.source},
     )
 
 
@@ -148,44 +235,27 @@ def _finding_from_owner(ar: OwnerRepo) -> RepoFinding:
     )
 
 
-# OSM nation/actor tags we surface as attribution (OSM's own labeling, not ours).
-_OSM_ATTRIBUTION = {
-    "dprk": "DPRK (North Korea)", "north korea": "DPRK (North Korea)",
-    "lazarus": "Lazarus Group", "kimsuky": "Kimsuky", "apt": "APT",
-    "russia": "Russia", "china": "China", "iran": "Iran",
-}
-
-
-def _osm_attribution(tags: list[str]) -> str | None:
-    """Map OSM tags to an attribution string, or None."""
-    for tag in tags:
-        hit = _OSM_ATTRIBUTION.get(str(tag).strip().lower())
-        if hit:
-            return f"{hit} (per OSM)"
-    return None
-
-
-def _finding_from_osm_repo(full_name: str, url: str, intel: dict) -> RepoFinding:
+def _finding_from_osm_repo(full_name: str, url: str, intel: dict, db: Database,
+                           run_id: str) -> RepoFinding:
     intel = intel or {}
     severity = (intel.get("severity") or "").upper()
     threat = (intel.get("threat") or "").strip()
     tags = intel.get("tags") or []
-    attribution = _osm_attribution(tags)
+    attribution = attribution_for_tags(tags)
     reason = "OSM-flagged malicious repository"
     if severity:
         reason += f" (severity {severity})"
     if attribution:
-        # Carry the attribution in the reasoning too: actor_key is an actor-
-        # registry FK and this OSM label is not a registered actor, so it gets
-        # nulled at upsert -- the text must survive somewhere visible.
-        reason += f" [{attribution}]"
+        reason += f" [{attribution.label} (per OSM)]"
+        # actor_key is a strict FK: register before upsert (see _finding_from_news).
+        db.ensure_actor(attribution.key, attribution.label, "osm-attribution", run_id)
     if threat:
         reason += f": {threat[:160]}"
     return RepoFinding(
         full_name=full_name,
         url=url or None,
         detection_method=DetectionMethod.OSM_REPOSITORY,
-        actor_key=attribution,
+        actor_key=attribution.key if attribution else None,
         reasoning=reason,
         raw_payload={"osm": {"source": intel.get("source") or "open_source_malware",
                              "severity": intel.get("severity"), "tags": tags}},
@@ -205,17 +275,20 @@ def hunt(
     do_enrich: bool = True,
     do_osm: bool = True,
     do_signature: bool = True,
+    do_news: bool = True,
     do_tier2: bool = False,
     max_iocs: int = 8,
     max_packages: int = 8,
     max_osm: int = 60,
     max_signatures: int = 8,
+    max_news: int = 6,
     search_pace: float = 0.0,
     limit: int = 0,
     scan_min_score: int = 4,
     gold: bool = False,
     notifier=None,
     clone=None,
+    news_http=None,
     osm_live_known: set[str] | None = None,
 ) -> dict:
     """Run the hunt and return a summary. Persists findings into the registry."""
@@ -238,19 +311,44 @@ def hunt(
 
     if do_enrich:
         # Package pivot; dedicated budget for the strongest OSM signal: repos
-        # that reference a confirmed-malicious package.
-        for hit in search_iocs(client, db.malicious_package_terms(limit=max_packages),
+        # that reference a confirmed-malicious package. Every term tried this
+        # run is recorded so the NEXT run advances into untried names instead
+        # of re-searching the same static leading slice (eval finding,
+        # 2026-07-02).
+        pkg_terms = db.malicious_package_terms(limit=max_packages)
+        for hit in search_iocs(client, pkg_terms,
                                known=known, per_term=10, pace_seconds=search_pace):
             if classify_hit(hit) == "suspicious":
                 finding = _finding_from_hit(hit)
                 finding.detection_method = DetectionMethod.PACKAGE_REF
                 finding.reasoning = f"References known-malicious package(s) {hit.matched_iocs}"
                 candidates.setdefault(hit.full_name.casefold(), finding)
+        if pkg_terms:
+            db.record_searched_package_terms(pkg_terms, run_id)
 
         # Owner pivot; enumerate other repos of owners we PROVED malicious (a
         # confirmed Tier-2 finding), never OSM impersonation-target owners.
         for ar in find_owner_repos(client, db.malicious_repo_owners(), known=known):
             candidates.setdefault(ar.full_name.casefold(), _finding_from_owner(ar))
+
+    if do_news:
+        # News/discussion pivot: Hacker News + Google News RSS, both free and
+        # keyless. A repo NAMED in a malware writeup is real but weaker signal
+        # than a code-level IOC match (the article could name a legitimate
+        # project in passing), so these candidates are NOT added to the
+        # `intel` set below -- they go through ordinary Tier-1 scoring first,
+        # same as a cold GitHub search hit, never an automatic Tier-2 bypass.
+        news_terms = list(DEFAULT_NEWS_TERMS)[:max_news]
+        news_hits = search_hackernews(news_terms, http=news_http, known=known,
+                                      hits_per_term=20, pace_seconds=search_pace) + \
+            search_google_news(news_terms, http=news_http, known=known,
+                              pace_seconds=search_pace)
+        actor_terms = load_actor_terms()
+        for hit in news_hits:
+            if is_defensive_repo(hit.full_name):
+                continue
+            candidates.setdefault(hit.full_name.casefold(),
+                                  _finding_from_news(hit, actor_terms, db, run_id))
 
     if do_lineage:
         for tool in tools:
@@ -269,7 +367,8 @@ def hunt(
         for full, url, intel in db.osm_repo_targets(limit=max_osm):
             if is_defensive_repo(full):
                 continue
-            candidates.setdefault(full.casefold(), _finding_from_osm_repo(full, url, intel))
+            candidates.setdefault(full.casefold(),
+                                  _finding_from_osm_repo(full, url, intel, db, run_id))
 
     if do_signature:
         # NOVEL-repo engine: code-search GitHub for a confirmed malware's reusable
@@ -288,28 +387,11 @@ def hunt(
                 candidates.setdefault(hit.full_name.casefold(), finding)
 
     # Bound the run: keep the strongest candidates before the expensive Tier-1
-    # README fetches + Tier-2 clones. Ranking is method-aware (eval finding #13)
-    # so high-trust actor-account leads (which carry no signals/IOCs yet) are not
-    # starved by noisy multi-signal lineage hits.
+    # README fetches + Tier-2 clones, ordered by empirical precision and capping
+    # the noisy sources so they can't starve the good ones.
     if limit and len(candidates) > limit:
-        # Intelligence-driven methods outrank red-team lineage so enrichment
-        # candidates aren't starved by forks carrying many weak metadata signals
-        # (the whole point: stop being "just red-team").
-        method_base = {
-            DetectionMethod.SIGNATURE_MATCH: 7,  # shares a confirmed malware signature
-            DetectionMethod.MALICIOUS_OWNER: 6,  # owner already shipped malware
-            DetectionMethod.ACTOR_ACCOUNT: 6,
-            DetectionMethod.PACKAGE_REF: 5,
-            DetectionMethod.IOC_SEARCH: 4,
-            DetectionMethod.OSM_REPOSITORY: 4,
-            DetectionMethod.REDTEAM_LINEAGE: 0,
-        }
-        ranked = sorted(
-            candidates.values(),
-            key=lambda f: -(method_base.get(f.detection_method, 0)
-                            + len(f.signals) + len(f.matched_iocs)),
-        )
-        candidates = {f.full_name.casefold(): f for f in ranked[:limit]}
+        candidates = {f.full_name.casefold(): f
+                      for f in rank_and_cap_candidates(list(candidates.values()), limit)}
 
     # Observability: prove which sources are actually contributing candidates
     # (the enrichment check; not "just red-team").

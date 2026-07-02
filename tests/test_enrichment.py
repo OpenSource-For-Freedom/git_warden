@@ -58,6 +58,53 @@ def test_malicious_package_terms_filters_generic(tmp_path):
     db.close()
 
 
+def test_malicious_package_terms_rotates_past_already_searched(tmp_path):
+    # eval finding (2026-07-02): malicious_package_terms had no rotation, so
+    # every hunt run re-searched the SAME leading slice (by insertion order)
+    # regardless of --max-packages, leaving ~90% of eligible OSM package names
+    # never tried. record_searched_package_terms + the exclusion here fix that.
+    db = Database.open(tmp_path / "r.sqlite")
+    db.start_run("r1", utcnow())
+    for name in ["@scope/evil-pkg-one", "@scope/evil-pkg-two", "@scope/evil-pkg-three"]:
+        db.upsert_artifact(MaliciousArtifact(
+            artifact_type=ArtifactType.PACKAGE, name=name, ecosystem="npm",
+            source=FeedSource.OPEN_SOURCE_MALWARE), "r1")
+    first = db.malicious_package_terms(limit=2)
+    assert len(first) == 2
+    db.record_searched_package_terms(first, "r1")
+    remaining = db.malicious_package_terms(limit=10)
+    assert not (set(first) & set(remaining))          # already-searched excluded
+    assert set(first) | set(remaining) == {
+        "@scope/evil-pkg-one", "@scope/evil-pkg-two", "@scope/evil-pkg-three"}
+    db.close()
+
+
+def test_malicious_dependency_names_is_version_scoped(tmp_path):
+    # The mastra-ai/mastra + Shai-Hulud-worm FP (2026-07-02): a legitimate,
+    # widely-used package (posthog-js) had ONE release compromised via a
+    # maintainer-account takeover. Only that exact version may confirm a
+    # dependency match; a name with no parseable version data must be dropped
+    # entirely rather than falling back to matching any version.
+    db = Database.open(tmp_path / "d.sqlite")
+    db.start_run("r1", utcnow())
+    db.upsert_artifact(MaliciousArtifact(
+        artifact_type=ArtifactType.PACKAGE, name="posthog-js", ecosystem="npm",
+        source=FeedSource.OPEN_SOURCE_MALWARE,
+        raw_payload={"version_info": "1.297.3"}), "r1")
+    db.upsert_artifact(MaliciousArtifact(
+        artifact_type=ArtifactType.PACKAGE, name="posthog-node", ecosystem="npm",
+        source=FeedSource.OPEN_SOURCE_MALWARE,
+        raw_payload={"version_info": "4.18.1, 5.11.3, 5.13.3"}), "r1")
+    db.upsert_artifact(MaliciousArtifact(
+        artifact_type=ArtifactType.PACKAGE, name="no-version-pkg", ecosystem="npm",
+        source=FeedSource.OPEN_SOURCE_MALWARE, raw_payload={}), "r1")
+    deps = db.malicious_dependency_names()
+    assert deps["npm"]["posthog-js"] == frozenset({"1.297.3"})
+    assert deps["npm"]["posthog-node"] == frozenset({"4.18.1", "5.11.3", "5.13.3"})
+    assert "no-version-pkg" not in deps["npm"]  # no version data -> dropped, not any-version
+    db.close()
+
+
 def test_find_owner_repos_excludes_known():
     class C:
         def list_user_repos(self, login, per_page=100):
@@ -93,7 +140,7 @@ def test_hunt_owner_pivot_creates_candidates(tmp_path):
                                   detection_method=DetectionMethod.IOC_SEARCH,
                                   status=RepoFindingStatus.CONFIRMED), "seed")
 
-    hunt(db, _EnrichClient(), TOOLS, run_id="hunt-e", now=utcnow(),
+    hunt(db, _EnrichClient(), TOOLS, run_id="hunt-e", now=utcnow(), do_news=False,
          do_ioc=False, do_lineage=False, do_actor=False, do_enrich=True, do_tier2=False)
 
     row = db.conn.execute(
@@ -181,7 +228,7 @@ def test_intel_candidate_reaches_tier2_without_name_signal(tmp_path):
             "body:JSON.stringify(process.env)});\n", encoding="utf-8")
         return dest
 
-    hunt(db, C(), TOOLS, run_id="hunt-it", now=utcnow(),
+    hunt(db, C(), TOOLS, run_id="hunt-it", now=utcnow(), do_news=False,
          do_ioc=False, do_lineage=False, do_actor=False, do_enrich=True,
          do_tier2=True, clone=clone_mal)
     row = db.conn.execute(

