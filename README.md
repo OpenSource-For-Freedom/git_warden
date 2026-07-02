@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://opensourcemalware.com/user/OpenSource-For-Freedom"><img src="docs/osm-reports.svg" alt="OpenSourceMalware reports"></a>
+  <a href="https://opensourcemalware.com/user/OpenSource-For-Freedom"><img src="docs/osm-reports.png" alt="OpenSourceMalware reports" width="820"></a>
 </p>
 
 <p align="center">
