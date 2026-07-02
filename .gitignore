@@ -40,6 +40,11 @@ src/git_warden/osm_submit.py
 tests/test_osm_submit.py
 osm_reports.md
 
+# Local-only actor intelligence -- the actor dossier + decoded-IOC miner that
+# builds on the public campaign-attribution layer. Run: python -m git_warden.actor_intel
+src/git_warden/actor_intel.py
+tests/test_actor_intel.py
+
 # Local scheduled-task runners (Task Scheduler .cmd scripts + their logs)
 local/
 

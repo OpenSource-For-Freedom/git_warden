@@ -113,6 +113,7 @@ class DetectionMethod(StrEnum):
     MALICIOUS_OWNER = "malicious_owner"  # other repo by a known-malicious-repo owner
     PACKAGE_REF = "package_ref"  # references a known-malicious package
     SIGNATURE_MATCH = "signature_match"  # shares a confirmed malware code signature
+    NEWS_MENTION = "news_mention"  # named in a Hacker News / Google News writeup
 
 
 class ArtifactStatus(StrEnum):

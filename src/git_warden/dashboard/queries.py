@@ -8,6 +8,7 @@ unit-testable. The FastAPI layer (:mod:`.app`) just serializes these.
 from __future__ import annotations
 
 import json
+import re
 from collections import Counter
 from typing import Any
 
@@ -17,6 +18,85 @@ from ..db import Database
 
 def _owner(full_name: str) -> str:
     return full_name.split("/", 1)[0]
+
+
+# The rule that CONFIRMED a repo mapped to a plain-language ATTACK VECTOR, so the
+# dashboard says "VS Code folder-open dropper" instead of showing a raw blob.
+# Ordered by confirmation strength; the first confirming rule found on a finding
+# names its vector.
+_VECTOR_BY_RULE = {
+    "vscode-autorun": ("VS Code folder-open auto-run",
+                       "A .vscode/tasks.json runOn:folderOpen task silently fetch-and-executes "
+                       "a remote payload the moment the repo is opened in the editor."),
+    "eval-decoded": ("Obfuscated eval(atob) loader",
+                     "A base64 blob injected into a build config is decoded and executed at "
+                     "load time (verified: it hijacks require/module and unpacks a second stage)."),
+    "base64-decode-exec": ("Base64 decode-and-execute",
+                           "Shell decodes a base64 blob and pipes it straight to a shell."),
+    "py-decode-exec": ("Python decode-and-execute",
+                       "Python exec/eval of a base64/marshal/zlib-decoded payload."),
+    "npm-preinstall": ("npm install hook (preinstall)", "Fetch/decode-and-run on install."),
+    "npm-install": ("npm install hook", "Fetch/decode-and-run on install."),
+    "npm-postinstall": ("npm install hook (postinstall)", "Fetch/decode-and-run on install."),
+    "npm-prepare": ("npm install hook (prepare)", "Fetch/decode-and-run on install."),
+    "npm-preuninstall": ("npm install hook (preuninstall)", "Fetch/decode-and-run on uninstall."),
+    "py-setup-exec": ("setup.py fetch-and-run", "setup.py downloads and runs a payload."),
+    "env-dump": ("Environment / credential exfiltration",
+                 "Serializes the whole process environment (secrets, tokens) to send it out."),
+    "secret-exfil": ("Secret-file exfiltration", "curl/wget uploads a private key or creds file."),
+    "shadow-read": ("Password-hash theft", "Reads/exfiltrates /etc/shadow."),
+    "nc-exec": ("Reverse shell (netcat)", "nc -e spawns a shell back to the attacker."),
+    "bash-i-socket": ("Reverse shell (bash /dev/tcp)", "Interactive bash over a raw TCP socket."),
+    "osm-listed": ("Known-malicious dependency", "Declares a version-pinned malicious package."),
+}
+_HOST_RE = re.compile(r"https?://(?:[^/@\s]*@)?([A-Za-z0-9.\-]+)")
+# Reputable hosts that legitimately appear in a confirmed repo's build/install
+# lines (installer CDNs, package registries, the platform's own APIs) and are NOT
+# the attacker C2. `curl -fsSL https://deb.nodesource.com/setup_22.x | bash` is a
+# standard Node install, not a dropper -- filtered so the C2 list stays clean.
+_NOT_C2 = (
+    "github.com", "githubusercontent.com", "npmjs.org", "npmjs.com", "pypi.org",
+    "python.org", "nodejs.org", "microsoft.com", "vscode.dev", "google.com",
+    "nodesource.com", "rustup.rs", "bun.sh", "get.docker.com", "download.docker.com",
+    "apt.llvm.org", "packages.microsoft.com", "download.pytorch.org", "dl.google.com",
+    "deb.debian.org", "archive.ubuntu.com", "files.pythonhosted.org", "python-poetry.org",
+    "get.helm.sh", "cloudflare.com", "jsdelivr.net", "unpkg.com", "cdnjs.cloudflare.com",
+)
+# Findings whose snippet may carry the attacker C2: the confirming rule itself, or
+# a fetch/exfil signal. Avoids pulling a legit host from an unrelated line.
+_C2_CATEGORIES = ("download_exec", "network_exfil", "exfiltration")
+
+
+def _classify_vector(flags: list[dict]) -> tuple[str | None, str | None, str | None, str | None]:
+    """(vector, description, confirming rule, evidence file) from a finding's flags."""
+    for b in flags:
+        v = _VECTOR_BY_RULE.get(b.get("rule"))
+        if v:
+            return v[0], v[1], f"{b.get('category')}/{b.get('rule')}", b.get("file")
+    return None, None, None, None
+
+
+def _extract_c2(flags: list[dict]) -> list[str]:
+    """Distinct attacker C2/payload hosts from a finding's CONFIRMING / fetch /
+    exfil evidence (not every snippet), reputable installers filtered out."""
+    hosts: list[str] = []
+    seen: set[str] = set()
+    for b in flags:
+        if b.get("rule") not in _VECTOR_BY_RULE and b.get("category") not in _C2_CATEGORIES:
+            continue
+        for h in _HOST_RE.findall(b.get("snippet") or ""):
+            host = h.rstrip(".").lower()
+            # require a real TLD-ish last label (2+ alpha) so a snippet cut mid-URL
+            # (`...260120.v`) is dropped, not shown as its own host.
+            if host in seen or not re.search(r"\.[a-z]{2,}$", host):
+                continue
+            if any(host == n or host.endswith("." + n) for n in _NOT_C2):
+                continue
+            seen.add(host)
+            hosts.append(host)
+    # Drop truncated prefixes: a 280-char snippet can cut a repeated URL, yielding
+    # `x.vercel` alongside `x.vercel.app`. Keep only the fullest form of each host.
+    return [h for h in hosts if not any(o != h and o.startswith(h + ".") for o in hosts)]
 
 
 def summary(db: Database) -> dict[str, Any]:
@@ -87,6 +167,8 @@ def finding_detail(db: Database, full_name: str) -> dict[str, Any] | None:
     if r is None:
         return None
     payload = json.loads(r["raw_payload"] or "{}")
+    flags = payload.get("bash_findings") or []
+    vector, vector_desc, confirm_rule, evidence_file = _classify_vector(flags)
     return {
         "full_name": r["full_name"],
         "url": r["url"],
@@ -95,15 +177,55 @@ def finding_detail(db: Database, full_name: str) -> dict[str, Any] | None:
         "score": r["score"],
         "reasoning": r["reasoning"],
         "attribution": r["actor_key"],
+        # What the malware DOES + where + who it calls -- the human-readable core.
+        "vector": vector,
+        "vector_desc": vector_desc,
+        "confirm_rule": confirm_rule,
+        "evidence_file": evidence_file,
+        "c2_hosts": _extract_c2(flags),
         "signals": json.loads(r["signals"] or "[]"),
         "matched_iocs": json.loads(r["matched_iocs"] or "[]"),
-        "flags": payload.get("bash_findings") or [],
+        "flags": flags,
         "scanners": payload.get("scanners") or {},
         "osm": payload.get("osm"),
         "code_hash": r["code_hash"],
         "gold": bool(r["delivered_gold"]),
         "novel": r["full_name"].casefold() not in db.osm_known_repos(),
     }
+
+
+def attack_vectors(db: Database) -> list[dict[str, Any]]:
+    """Confirmed findings grouped by ATTACK VECTOR (how the payload executes)."""
+    by_vector: dict[str, dict[str, Any]] = {}
+    for r in db.conn.execute(
+        "SELECT full_name, raw_payload FROM repo_findings WHERE status = 'confirmed'"
+    ):
+        flags = (json.loads(r["raw_payload"] or "{}") or {}).get("bash_findings") or []
+        vector, desc, _, _ = _classify_vector(flags)
+        if not vector:
+            vector, desc = ("other", "Confirmed on a static signature not yet vector-classified.")
+        b = by_vector.setdefault(vector, {"vector": vector, "desc": desc, "repos": []})
+        b["repos"].append(r["full_name"])
+    out = [{"vector": v["vector"], "desc": v["desc"], "count": len(v["repos"]),
+            "sample": v["repos"][:6]} for v in by_vector.values()]
+    out.sort(key=lambda x: -x["count"])
+    return out
+
+
+def c2_infrastructure(db: Database) -> list[dict[str, Any]]:
+    """Distinct attacker C2/payload hosts across confirmed findings, with the
+    repos that call each -- the campaign's infrastructure map."""
+    by_host: dict[str, set[str]] = {}
+    for r in db.conn.execute(
+        "SELECT full_name, raw_payload FROM repo_findings WHERE status = 'confirmed'"
+    ):
+        flags = (json.loads(r["raw_payload"] or "{}") or {}).get("bash_findings") or []
+        for host in _extract_c2(flags):
+            by_host.setdefault(host, set()).add(r["full_name"])
+    out = [{"host": h, "repo_count": len(reps), "sample": sorted(reps)[:6]}
+           for h, reps in by_host.items()]
+    out.sort(key=lambda x: -x["repo_count"])
+    return out
 
 
 def bad_owners(db: Database) -> list[dict[str, Any]]:
@@ -243,6 +365,93 @@ def funnel(db: Database) -> dict[str, int]:
     counts = {r["status"]: r["n"] for r in db.conn.execute(
         "SELECT status, count(*) n FROM repo_findings GROUP BY status")}
     return {k: counts.get(k, 0) for k in ("candidate", "screened", "confirmed", "rejected")}
+
+
+def actor_contributions(db: Database) -> list[dict[str, Any]]:
+    """Confirmed findings grouped by attributed threat actor.
+
+    The highest-value breadcrumb: a repo tied to a KNOWN group (DPRK, APT28,
+    Lazarus Group, ...), not just "malware, source/method unknown". Joins
+    ``threat_actors`` for the registry status (promoted/quarantined/candidate)
+    so the panel distinguishes a corroborated actor from a one-off free-text
+    attribution; ``actor_key`` is the SAME normalized key the /api/graph actor
+    nodes use, so a panel entry and its graph node always agree.
+    """
+    rows = db.conn.execute(
+        "SELECT rf.full_name, rf.detection_method, rf.actor_key, "
+        "COALESCE(ta.canonical_name, rf.actor_key) AS label, "
+        "COALESCE(ta.status, 'unregistered') AS actor_status "
+        "FROM repo_findings rf LEFT JOIN threat_actors ta ON ta.actor_key = rf.actor_key "
+        "WHERE rf.status = 'confirmed' AND rf.actor_key IS NOT NULL AND rf.actor_key != ''"
+    ).fetchall()
+    by_actor: dict[str, dict[str, Any]] = {}
+    for r in rows:
+        bucket = by_actor.setdefault(r["actor_key"], {
+            "actor_key": r["actor_key"], "label": r["label"],
+            "actor_status": r["actor_status"], "repos": [], "methods": Counter(),
+        })
+        bucket["repos"].append(r["full_name"])
+        bucket["methods"][r["detection_method"]] += 1
+    out = []
+    for bucket in by_actor.values():
+        bucket["methods"] = dict(bucket["methods"])
+        bucket["repo_count"] = len(bucket["repos"])
+        out.append(bucket)
+    out.sort(key=lambda b: -b["repo_count"])
+    return out
+
+
+def source_yield(db: Database) -> list[dict[str, Any]]:
+    """Per discovery method: confirmed / rejected / screened / candidate counts +
+    PRECISION (confirmed / (confirmed+rejected)).
+
+    The signal that drove tonight's whole investigation: which breadcrumb source
+    actually finds malware vs. produces noise. package_ref confirming 0 while
+    rejecting 22 (0% precision) is the story a table makes obvious. ``precision``
+    is None when a method has no adjudicated (confirmed|rejected) findings yet.
+    """
+    per_method: dict[str, dict[str, int]] = {}
+    for r in db.conn.execute(
+        "SELECT detection_method, status, count(*) n FROM repo_findings "
+        "GROUP BY detection_method, status"
+    ):
+        m = per_method.setdefault(r["detection_method"],
+                                  {"confirmed": 0, "rejected": 0, "screened": 0, "candidate": 0})
+        if r["status"] in m:
+            m[r["status"]] += r["n"]
+    out = []
+    for method, counts in per_method.items():
+        adjudicated = counts["confirmed"] + counts["rejected"]
+        out.append({
+            "method": method, **counts,
+            "adjudicated": adjudicated,
+            "precision": (counts["confirmed"] / adjudicated) if adjudicated else None,
+        })
+    # Worst precision first among methods that HAVE produced findings to judge --
+    # the noisy sources are what a reviewer needs to see and tune.
+    out.sort(key=lambda x: (x["precision"] if x["precision"] is not None else 1.0,
+                            -x["rejected"]))
+    return out
+
+
+def rejected_findings(db: Database, limit: int = 20) -> list[dict[str, Any]]:
+    """Recent rejected findings: the false-positive counterpart to the wall.
+
+    Given how many FPs this tool can surface, the rejected list is as important
+    as the confirmed one -- it shows what was correctly kept OFF the wall (and,
+    read over time, whether a detection rule is still misfiring).
+    """
+    out = []
+    for r in db.conn.execute(
+        "SELECT full_name, detection_method, score, reasoning FROM repo_findings "
+        "WHERE status = 'rejected' ORDER BY last_seen_run DESC, score DESC LIMIT ?",
+        (limit,)
+    ):
+        out.append({
+            "full_name": r["full_name"], "method": r["detection_method"],
+            "score": r["score"], "reasoning": r["reasoning"],
+        })
+    return out
 
 
 def recent_runs(db: Database, limit: int = 8) -> dict[str, Any]:

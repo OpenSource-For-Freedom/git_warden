@@ -19,9 +19,10 @@
 A defensive threat-intelligence engine that discovers, analyzes, and catalogs
 **malicious GitHub repositories**. Threat-intel feeds
 ([MITRE ATT&CK](https://attack.mitre.org), [Google News](https://news.google.com),
+[Hacker News](https://news.ycombinator.com),
 [CISA](https://www.cisa.gov), [OpenSourceMalware](https://opensourcemalware.com))
 are *provenance breadcrumbs*; they help find and attribute the repos. The product
-is the registry of malicious repos.
+is the registry of malicious repos, each confirmed on its own static evidence.
 
 See [docs/](docs/) for the design and [docs/IMPLEMENTATION.md](docs/IMPLEMENTATION.md)
 for what's built vs. planned. Guiding principle: **accuracy over volume.**
@@ -44,6 +45,39 @@ INGEST (breadcrumbs)                 HUNT (find malicious GitHub repos)
                                                           ▼
                                         Wall of Shame ─► Discord gold
 ```
+
+**Discovery methods** (each breadcrumb widens the net, then Tier-2 confirms on
+the repo's own code):
+
+* **IOC search**: mirror a confirmed repo's exfil domains / webhook ids into
+  GitHub code search to surface sibling repos on the same infrastructure.
+* **Malware-signature engine**: mine a reusable code signature from a confirmed
+  payload (an `eval(atob(...))` deobfuscator stub, a `folderOpen` auto-run task)
+  and code-search it to find novel campaign members OSM never catalogued.
+* **Owner / package / actor pivots**: enumerate the other repos of an account we
+  proved malicious, repos that install a version-pinned known-malicious package,
+  and repos under a promoted threat actor.
+* **News pivot**: Hacker News and Google News writeups that name a repo as
+  malicious (free, keyless), screened like any cold search hit.
+* **Red-team lineage**: weaponized forks/renames of pinned offensive tools.
+
+**Precision (accuracy over volume).** A repo is CONFIRMED only when Tier-2 finds
+its own intrinsic evidence, and confirmation is deliberately conservative:
+
+* **Tier-A (confirm alone)** is reserved for near-zero-base-rate signatures: a
+  reverse shell, a *verified* decode-and-execute (the payload is decoded and
+  checked for malicious indicators, not just pattern-matched), a whole-env dump,
+  a fetch/decode-and-run install hook, a `.vscode/tasks.json` that auto-runs a
+  remote payload on folder-open, a secret-file exfil, or a **version-pinned**
+  known-malicious dependency.
+* **Tier-B (corroborated)** needs a steal-and-send pair in the same file.
+* **Dual-use signals never confirm alone.** Crypto keys and file magic, `gdb -p`
+  / `ptrace`, `LD_PRELOAD` of an allocator, wait-for-port `/dev/tcp` health
+  checks, `String.fromCharCode` builders, and a caret/range dependency spec are
+  scored for ranking but cannot brand a repo malicious.
+* **What is never evidence:** code in comments or docstrings, test fixtures
+  (`*.test.*`, Go `*_test.go`, `test-cases/`), a security tool's own detection
+  rules or compromised-package lists, and vendored/generated trees.
 
 <p align="center"><img src="docs/sculk-divider.png" alt="" width="900"></p>
 
@@ -157,25 +191,34 @@ python gw.py review --approve owner/repo     # analyst-validate a confirmed repo
 python gw.py probe --feed github --term lazarus  # probe any feed live
 ```
 
-## Deployment
+## Dashboard
 
-GitHub Actions ([.github/workflows/](.github/workflows/)): `ci.yml` runs
-lint+tests; `run.yml` runs ingest then hunt on demand (workflow_dispatch only,
-no schedule), with an optional registry reconcile before publishing. Every
-workflow hardens the runner first (Legion egress audit).
+`make serve` (or `python gw.py serve`) runs a live, read-only telemetry
+dashboard over the registry. It renders a force-graph of repos, owners,
+signatures, threat actors, and payload campaigns, and a click on any repo
+explains the finding in plain language: the **attack vector** (e.g. VS Code
+folder-open auto-run, obfuscated `eval(atob)` loader), the **C2 / payload
+hosts** pulled from the evidence, and the decoded payload, instead of a raw
+blob. Side panels cover the **threat actors** and their repos, **source yield
+and precision** per discovery method, the **attack-vector** and **C2
+infrastructure** breakdowns, the **rejected (false-positive)** list, and a
+per-run timeline.
 
-Add these **repo Actions secrets**; the workflow maps them onto the `GW_*` env
-vars the code reads (local `.env` uses the `GW_*` names directly):
+## Running it
 
-| Repo secret | Maps to env var.  |
-|-------------|-----------------  |
-| `GH_TOKEN`  | `GW_GITHUB_TOKEN` |
-| `OSM_KEY`   | `GW_OSM_API_KEY`  |
-| `GW_OSM_BASE_URL` | `GW_OSM_BASE_URL` (optional; overrides the default OSM host) |
-| `DISCORD_WEBHOOK` | `GW_DISCORD_WEBHOOK` |
+Git Warden runs entirely **locally**; there is no CI. It reads and writes a
+single local SQLite registry, so run the pipeline on demand or on a schedule you
+control (cron, Task Scheduler, a systemd timer):
 
-Orchestration knobs live in [config/settings.yaml](config/settings.yaml) and
-[config/trigger.yaml](config/trigger.yaml).
+```bash
+python gw.py ingest && python gw.py hunt --scan --gold
+python gw.py review --reconcile          # optional: self-heal the wall
+python gw.py serve                        # live telemetry dashboard
+```
+
+Credentials come from `.env` (see [Quick start](#quick-start)); real environment
+variables win. Orchestration knobs live in
+[config/settings.yaml](config/settings.yaml).
 
 ## Development
 

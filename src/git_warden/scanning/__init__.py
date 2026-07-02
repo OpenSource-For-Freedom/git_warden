@@ -14,6 +14,7 @@ from .enrichment import OwnerRepo, find_owner_repos
 from .ioc import IocSet, extract_iocs, is_attacker_host
 from .lineage import LineageCandidate, find_lineage_candidates
 from .manifest_scanner import scan_manifests
+from .newsdiscovery import NewsHit, search_google_news, search_hackernews
 from .screening import ScreeningResult, matches_known_tool, score_repo
 from .tier2 import Tier2Result, analyze_repo, scan_candidate
 
@@ -43,4 +44,7 @@ __all__ = [
     "scan_candidate",
     "AccountRepo",
     "find_actor_account_repos",
+    "NewsHit",
+    "search_hackernews",
+    "search_google_news",
 ]

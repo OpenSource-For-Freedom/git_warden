@@ -158,6 +158,15 @@ def test_etc_shadow_read_confirms(tmp_path):
     assert analyze_repo(tmp_path, "evil/dump").confirmed
 
 
+def test_etc_shadow_hardening_does_not_confirm(tmp_path):
+    # 2026-07-02 audit: a CIS-hardening script that chmod/chown/ls /etc/shadow is
+    # not theft and must not confirm; only reading/exfiltrating it does.
+    (tmp_path / "harden.sh").write_text(
+        "#!/bin/bash\nchown root:shadow /etc/shadow && chmod 0640 /etc/shadow\n"
+        "ls -l /etc/shadow\nstat -c '%a' /etc/shadow\n", encoding="utf-8")
+    assert not analyze_repo(tmp_path, "ops/cis-hardening").confirmed
+
+
 def test_reverse_shell_confirms(tmp_path):
     # A single unambiguous network-attack signature confirms on its own.
     (tmp_path / "shell.sh").write_text(
