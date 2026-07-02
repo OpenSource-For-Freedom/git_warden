@@ -9,6 +9,10 @@
 </p>
 
 <p align="center">
+  <a href="https://opensourcemalware.com/user/OpenSource-For-Freedom"><img src="docs/osm-reports.svg" alt="OpenSourceMalware reports"></a>
+</p>
+
+<p align="center">
   <img src="docs/warden-board.png" alt="Intel feeds, static scanners, guarantees" width="900">
 </p>
 
