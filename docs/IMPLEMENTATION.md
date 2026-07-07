@@ -52,6 +52,44 @@ adversarial multi-agent evaluation (18 findings fixed; see git history).
 - **Learning loop**: mine IOCs from confirmed repos' code → grow the search
   corpus (compounding discovery).
 
+### Threat attribution (`dprk.py`, `actors.py`)
+- **Multi-signal, country-level attribution**, generalized across the 18 seeded
+  actors → 5 origins (North Korea / Russia / China / Iran / Cybercrime). Adding a
+  country is a data entry in `ACTOR_ORIGIN`.
+- Assertion policy: attribute only on **2+ independent EVIDENCE signals**
+  (Contagious-Interview tradecraft vector, self-sourced C2-infra overlap, decoded
+  BeaverTail/InvisibleFerret family fingerprint, malicious-dependency) **or a
+  specific named-group intel tag** (APT28, Lazarus, Kimsuky, ...). A lone
+  tradecraft vector or a bare nation tag stays a lead, never an assertion, so we
+  never over-attribute a copycat.
+- Confidence tiers (confirmed / probable / possible / unattributed) each carry the
+  enumerated evidence behind them. North Korea (Contagious Interview) has full
+  evidence detectors today; other origins attribute from named intel and gain their
+  own detectors as a profile addition.
+
+### Container threats (`containers.py`)
+- A confirmed repo is also flagged a **container threat** when its Docker build
+  recipe (Dockerfile / compose) carries genuinely-malicious behavior: an
+  external-host fetch-and-run, secret exfil, or a reverse shell at build time.
+- Benign idioms never qualify — a reputable-installer `curl | bash` (nodesource,
+  rustup, ...) and a `curl -f http://localhost/health` healthcheck are excluded at
+  the scanner (installer-host allowlist + case-sensitive exfil flags), and again by
+  a host-gated classifier. Reported to OSM as a repository report, docker-tagged.
+
+### Newcomer experience (`progress.py`)
+- `hunt --progress` renders a live, TTY-aware view on stderr, kept separate from
+  the JSON audit log: per-source discovery counters, Tier-1/Tier-2 progress, and a
+  run-number + learning-corpus delta so the "yield compounds by run 3" behavior is
+  visible instead of silent. Four plain-language buckets: repos scanned, signatures
+  matched, code analysis passed, queued for review.
+
+### Telemetry dashboard (PRD §6)
+- Read-only FastAPI + force-graph over the registry (`dashboard/`). Shows the
+  DISCOVERED product only (hides `osm_repository` re-validations), each repo node
+  colored by attribution confidence and clustered under its origin-country hub;
+  click a repo for the full evidence, country attribution with signals, decoded
+  payload, and container-threat badge. Optional bearer-token gate + access logging.
+
 ### Cross-platform backbone (doc 04, architecture only)
 - `repo_findings.platform` + `code_hash` columns; `cross_platform_clusters()`
   groups the same malicious core (shared code hash) across platforms into one
@@ -77,7 +115,9 @@ adversarial multi-agent evaluation (18 findings fixed; see git history).
   promoted actors); it fires once an operator curates verified GitHub
   usernames/orgs into `config/seed_actors.json` (not fabricated). Format:
   `"identifiers": [{"identifier_type": "organization", "value": "<login>", "platform": "github"}]`.
-- **Gated web dashboard** (PRD §6).
+- **Evidence detectors for non-DPRK origins** — the attribution engine attributes
+  Russia/China/Iran from named-group intel today; their own tradecraft-vector /
+  family / infra detectors are a per-profile data addition as we build them.
 
 ## Descoped
 - **NVD** — free OSINT + OSM cover the sources; no NVD key required.

@@ -85,13 +85,30 @@ def create_app(db_path=DB_PATH):
     def api_funnel():
         return _q(queries.funnel)
 
+    @app.get("/api/actors")
+    def api_actors():
+        return _q(queries.actor_contributions)
+
     @app.get("/api/telemetry")
     def api_telemetry():
         return {
             "flags": _q(queries.flag_telemetry),
             "signature_yield": _q(queries.signature_yield),
             "runs": _q(queries.runs_timeline),
+            "source_yield": _q(queries.source_yield),
         }
+
+    @app.get("/api/rejected")
+    def api_rejected():
+        return _q(queries.rejected_findings)
+
+    @app.get("/api/vectors")
+    def api_vectors():
+        return _q(queries.attack_vectors)
+
+    @app.get("/api/c2")
+    def api_c2():
+        return _q(queries.c2_infrastructure)
 
     @app.get("/")
     def index():

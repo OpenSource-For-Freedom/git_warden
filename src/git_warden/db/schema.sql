@@ -165,3 +165,13 @@ CREATE TABLE IF NOT EXISTS learned_iocs (
     source_repo    TEXT,
     first_seen_run TEXT REFERENCES runs(run_id)
 );
+
+-- OSM-flagged package names already tried by the package pivot (do_enrich),
+-- so each hunt run advances into UNTRIED names instead of re-searching the
+-- same static leading slice every time (eval finding, 2026-07-02:
+-- malicious_package_terms had no rotation -- the same ~120 of 1,232 eligible
+-- names were searched on every run, regardless of --max-packages).
+CREATE TABLE IF NOT EXISTS searched_package_terms (
+    term               TEXT PRIMARY KEY,
+    first_searched_run TEXT REFERENCES runs(run_id)
+);

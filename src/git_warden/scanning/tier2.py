@@ -64,29 +64,36 @@ _CATEGORY_WEIGHTS = {
 # confirmed legit repos (opencode, PentestGPT) whose recon co-occurs with benign
 # actions; a genuine "recon and report" implant exfils via a real channel, which
 # is itself a signature below.
-# Tier A; CONFIRM ALONE. Intrinsically malicious even as the sole signal: a
-# reverse shell, decode-and-execute, env dump to the network, a package install
-# hook, process injection, an authorized_keys/shadow grab. Near-zero legitimate
-# base rate, so one is enough.
+# Tier A; CONFIRM ALONE. Intrinsically malicious even as the sole signal, with a
+# NEAR-ZERO legitimate base rate. The 2026-07-02 detection audit removed a large
+# set of DUAL-USE rules that used to sit here and confirmed legit code alone:
+#   - reverse_shell/dev-tcp-redirect  (wait-for-port healthchecks: echo > /dev/tcp/db/5432)
+#   - reverse_shell/mkfifo-shell      (FIFO logging/coprocess pipes)
+#   - obfuscation/eval-base64         (eval + the word base64 co-occurring)
+#   - obfuscation/hex-escapes, hex-blob (crypto keys/IVs, file magic, KATs)
+#   - obfuscation/fromcharcode-blob   (ordinary String.fromCharCode builders)
+#   - credential_harvest/shadow-passwd (CIS hardening: chmod 640 /etc/shadow)
+#   - process_injection/ld-preload, ptrace-mem, gdb-attach (allocators, seccomp,
+#     debug/backtrace tooling -- all dual-use)
+# Those are STILL detected and scored (they enrich ranking + the signal summary)
+# but no longer CONFIRM a repo by themselves; they now need corroboration. What
+# remains here is genuinely intrinsic: a real reverse shell, a VERIFIED
+# decode-and-execute, a whole-env dump, a version-pinned malicious dependency, a
+# secret-file exfil, and a fetch/decode-and-run install hook.
 _CONFIRM_ALONE_RULES = frozenset({
-    ("reverse_shell", "dev-tcp-redirect"), ("reverse_shell", "nc-exec"),
-    ("reverse_shell", "bash-i-socket"), ("reverse_shell", "mkfifo-shell"),
-    ("obfuscation", "base64-decode-exec"), ("obfuscation", "eval-base64"),
-    ("obfuscation", "hex-escapes"), ("obfuscation", "eval-decoded"),
-    ("obfuscation", "py-decode-exec"), ("obfuscation", "fromcharcode-blob"),
-    ("obfuscation", "hex-blob"),
-    ("credential_access", "env-dump"),
-    ("credential_harvest", "shadow-passwd"),  # reads /etc/shadow (password hashes)
-    ("exfiltration", "secret-exfil"),  # curl/wget posting a secret FILE out
-    ("malicious_dependency", "osm-listed"),  # installs a known-malicious package
-    # NOTE: persistence/authorized-keys is intentionally NOT Tier-A; writing
-    # authorized_keys is standard CI/container SSH provisioning (openclaw FP).
-    ("process_injection", "ld-preload"), ("process_injection", "ptrace-mem"),
-    ("process_injection", "gdb-attach"),
+    ("reverse_shell", "nc-exec"),        # nc -e /bin/sh attacker
+    ("reverse_shell", "bash-i-socket"),  # bash -i >& /dev/tcp/.../.. 0>&1
+    ("obfuscation", "base64-decode-exec"),
+    ("obfuscation", "eval-decoded"),     # verified via _verify_decode_exec
+    ("obfuscation", "py-decode-exec"),   # verified via _verify_decode_exec
+    ("credential_access", "env-dump"),   # whole process.env / os.environ dump-and-send
+    ("credential_harvest", "shadow-read"),  # cat/cp/exfil of /etc/shadow (not chmod/ls)
+    ("exfiltration", "secret-exfil"),    # curl/wget uploading a private key / creds file
+    ("malicious_dependency", "osm-listed"),  # installs a version-pinned known-malicious package
     ("install_hook", "npm-preinstall"), ("install_hook", "npm-install"),
     ("install_hook", "npm-postinstall"), ("install_hook", "npm-prepare"),
     ("install_hook", "npm-preuninstall"), ("install_hook", "py-setup-exec"),
-    ("install_hook", "vscode-autorun"),  # VS Code task auto-running on folderOpen
+    ("install_hook", "vscode-autorun"),  # VS Code task auto-running a fetch/decode on folderOpen
 })
 # Tier B; CORROBORATED, split into two phases. Each is benign alone (a project's
 # own Discord/Telegram channel; an ops script reading creds). Confirmation needs
@@ -118,6 +125,20 @@ _PASTE_HOSTS = frozenset({
     "pastebin.com", "paste.ee", "ix.io", "sprunge.us", "0x0.st", "termbin.com",
     "transfer.sh", "file.io", "anonfiles.com", "controlc.com", "rentry.co",
 })
+
+
+# Line-comment / block-comment / docstring prefixes across the languages we scan.
+# A confirming signal sitting in a comment is the code DESCRIBING an attack (docs,
+# a scanner's own rules), not executing one.
+_COMMENT_PREFIXES = ("//", "#", "/*", "*", "<!--", "--", '"""', "'''", ";;")
+
+
+def _is_comment_line(snippet: str) -> bool:
+    """True if a stripped source line is (the start of) a comment or docstring."""
+    s = (snippet or "").lstrip()
+    # A shell shebang is not a comment payload; everything else starting with a
+    # comment marker is treated as non-executable text for confirmation.
+    return s.startswith(_COMMENT_PREFIXES)
 
 
 def _fetch_target_suspicious(snippet: str) -> bool:
@@ -348,7 +369,7 @@ def analyze_repo(
     runner=subprocess.run,
     restrict_paths: set[str] | None = None,
     confirm_categories: frozenset[str] | None = None,
-    malicious_packages: dict[str, frozenset[str]] | None = None,
+    malicious_packages: dict[str, dict[str, frozenset[str]]] | None = None,
 ) -> Tier2Result:
     """Run Tier-2 STATIC analysis on an already-cloned repo (never executes it).
 
@@ -359,8 +380,8 @@ def analyze_repo(
     (red-team lineage diverged files, P1); ``confirm_categories`` restricts which
     categories may count (lineage uses WEAPONIZATION_CATEGORIES so a fork only
     confirms on added malicious mechanisms, not the tool's own offensive code).
-    ``malicious_packages`` (OSM-flagged, lowercased) flags repos that declare one
-    as a dependency.
+    ``malicious_packages`` (OSM-flagged name -> its exact compromised version(s),
+    lowercased) flags repos that declare one AT THAT VERSION as a dependency.
     """
     findings = (scan_repo(root) + scan_manifests(root, malicious_packages)
                 + scan_content(root))
@@ -394,6 +415,13 @@ def analyze_repo(
     for f in findings:
         key = (f.category, f.rule)
         if not _ok(f.category):
+            continue
+        # A match inside a COMMENT is documentation, not an executed payload: the
+        # garagon/aguara FP (2026-07-02) confirmed on `// Whole-environment exfil
+        # (JSON.stringify(process.env)` in a security scanner's own source. A
+        # comment can never confirm (precision-first); it still lands in
+        # bash_findings above for transparency.
+        if _is_comment_line(f.snippet):
             continue
         if key in _CONFIRM_ALONE_RULES or (
                 key in _HOST_GATED_ALONE and _fetch_target_suspicious(f.snippet)):
@@ -444,7 +472,7 @@ def scan_candidate(
     runner=subprocess.run,
     restrict_paths: set[str] | None = None,
     confirm_categories: frozenset[str] | None = None,
-    malicious_packages: dict[str, frozenset[str]] | None = None,
+    malicious_packages: dict[str, dict[str, frozenset[str]]] | None = None,
 ) -> Tier2Result | None:
     """Clone + STATICALLY analyze a candidate. None if the clone fails/too big.
 

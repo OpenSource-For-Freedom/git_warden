@@ -19,35 +19,77 @@ from .bash_scanner import BashFinding, is_ignored_path
 
 _LIFECYCLE = ("preinstall", "install", "postinstall", "prepare", "preuninstall")
 
-# Commands inside a lifecycle hook that indicate code execution / fetch-and-run.
+# FETCH-AND-RUN or DECODE-AND-RUN inside a lifecycle hook. The 2026-07-02 audit
+# found the old alternation (bare \bsh\b / \bbash\b / \.sh\b / https?:// / base64
+# / powershell / invoke- / child_process) confirmed a repo MALICIOUS alone on
+# ordinary tooling: `postinstall: bash ./scripts/install.sh`, `echo Docs:
+# https://...`, `invoke-build`, a script named gen-base64-assets.js. install_hook
+# is Tier-A confirm-alone, so the gate must be the ACTUAL supply-chain shape:
+# download-and-execute, decode-and-execute, or inline code exec -- not merely
+# "invokes a shell script".
+_FETCH = r"(?:curl|wget|iwr|invoke-webrequest)"
+_RUNSH = r"(?:sh|bash|zsh|python[0-9]?|perl|node|cmd|powershell|pwsh|iex)"
 _SUSPICIOUS_CMD = re.compile(
-    r"\bcurl\b|\bwget\b|\beval\b|node\s+-e|python[0-9]?\s+-c|base64|\bsh\b|\bbash\b|"
-    r"powershell|invoke-|child_process|atob|fromCharCode|/dev/tcp|https?://|\.sh\b",
+    rf"{_FETCH}\b[^\n]*\|\s*{_RUNSH}\b"                                   # curl ... | sh
+    rf"|{_FETCH}\b[^\n]*-o\b[^\n]*(?:;|&&)\s*(?:{_RUNSH}|chmod)\b"        # curl -o x; sh x
+    r"|\bnode\s+(?:-e|--eval)\b|\bpython[0-9]?\s+-c\b|\bperl\s+-e\b|\bruby\s+-e\b"  # inline code
+    r"|\beval\s*\(|\bnew\s+Function\s*\("                                 # JS eval / Function()
+    r"|(?:base64\s+(?:-d|--decode)|\batob\s*\()[^\n]*(?:\|\s*" + _RUNSH + r"|\beval\b|\bexec\b)"  # decode->run
+    r"|/dev/tcp/"                                                         # reverse shell
+    r"|\b(?:iex|invoke-expression)\b",                                    # PS download-exec
     re.IGNORECASE,
 )
 # FETCH-AND-RUN inside setup.py (static regex; we do not run it). A bare
 # exec()/subprocess in setup.py is NORMAL; legit packages compile extensions
-# (subprocess -> cmake/nvcc) and read their version (exec(open('_version.py'))).
-# Malware DECODES or DOWNLOADS a payload and runs it, so we require that context:
-# exec/eval of base64/marshal/zlib/fetched content, or os.system/subprocess that
-# shells out to curl|wget|http|pipe-to-shell. (FPs: hazyresearch/m2, evo-design/evo.)
+# (subprocess -> cmake/nvcc), read their version (exec(open('_version.py'))), and
+# shell out to `pip install --index-url https://...` (the audit's FP class).
+# Malware DECODES or DOWNLOADS-AND-RUNS a payload, so we require that context:
+# exec/eval of base64/marshal/zlib/fetched content, or a subprocess that PIPES a
+# download to a shell (curl|wget ... | sh) -- NOT merely a URL in an argument.
 _PY_SETUP_EXEC = re.compile(
     r"(?:exec|eval)\s*\(\s*(?:base64|bytes\.fromhex|codecs\.decode|marshal|zlib|"
     r"requests|urllib|urlopen|__import__\s*\(\s*['\"](?:urllib|requests))"
     r"|(?:os\.system|subprocess\.\w+)\s*\([^)]{0,200}?"
-    r"(?:curl|wget|https?://|\|\s*(?:sh|bash)\b)",
+    r"(?:curl|wget)\b[^)]{0,80}?\|\s*(?:sh|bash)\b",
     re.IGNORECASE,
 )
 _MAX_BYTES = 1_000_000
 
 
-# Python requirement lines: ``name==1.2.3`` / ``name>=1`` / bare ``name``.
-_REQ_LINE = re.compile(r"^\s*([A-Za-z0-9._-]+)\s*(?:[=<>!~;\[].*)?$")
+# Python requirement lines: ``name==1.2.3`` / ``name>=1`` / bare ``name``. Group 2
+# captures the raw version constraint (if any), not just the name.
+_REQ_LINE = re.compile(r"^\s*([A-Za-z0-9._-]+)\s*([=<>!~;\[].*)?$")
+
+# A declared specifier confirms a malicious-dependency match ONLY when it is an
+# EXACT PIN of the compromised version. The 2026-07-02 audit caught the earlier
+# _VERSION_STRIP approach stripping `^` off `^1.2.3` -> `1.2.3` and matching: a
+# caret/tilde/`>=` RANGE floats to the latest PATCHED release, not the one
+# historically-compromised version, so a range must NOT confirm (precision-first,
+# PRD 5: miss a dependency match rather than flag every user of a popular package
+# whose npm-default caret range has long since resolved past the bad release).
+# Any range/wildcard/url/workspace marker => not an exact pin => no match.
+_RANGE_MARKERS = ("^", "~", ">", "<", "*", "x", "||", " - ", "latest", "workspace:",
+                  "file:", "link:", "git", "http", "npm:", " ")
+_EXACT_PIN = re.compile(r"^=?=?\s*v?(\d[\w.\-+]*)$")
 
 
-def _declared_deps(name: str, text: str) -> set[str]:
-    """Dependency names declared by a manifest (npm package.json / pip reqs)."""
-    deps: set[str] = set()
+def _exact_pinned_version(spec: str | None) -> str:
+    """The bare version IFF ``spec`` is an exact pin (1.2.3 / =1.2.3 / ==1.2.3),
+    else "" for any range/wildcard/non-registry specifier."""
+    s = (spec or "").strip()
+    if not s:
+        return ""
+    low = s.lower()
+    if any(m in low for m in _RANGE_MARKERS):
+        return ""
+    m = _EXACT_PIN.match(s)
+    return m.group(1) if m else ""
+
+
+def _declared_deps(name: str, text: str) -> dict[str, str]:
+    """Dependency name -> its declared version specifier (npm package.json / pip
+    reqs). An unpinned/absent specifier maps to ``""``."""
+    deps: dict[str, str] = {}
     if name == "package.json":
         try:
             data = json.loads(text or "{}") or {}
@@ -57,7 +99,9 @@ def _declared_deps(name: str, text: str) -> set[str]:
                     "peerDependencies"):
             section = data.get(key)
             if isinstance(section, dict):
-                deps.update(section.keys())
+                for dep, spec in section.items():
+                    if isinstance(dep, str):
+                        deps[dep] = spec if isinstance(spec, str) else ""
     else:  # requirements*.txt
         for line in text.splitlines():
             line = line.strip()
@@ -65,23 +109,28 @@ def _declared_deps(name: str, text: str) -> set[str]:
                 continue
             m = _REQ_LINE.match(line)
             if m:
-                deps.add(m.group(1))
+                deps[m.group(1)] = m.group(2) or ""
     return deps
 
 
 def scan_manifests(root, malicious_packages=None) -> list[BashFinding]:
     """Flag malicious lifecycle hooks AND known-malicious DEPENDENCIES. Static.
 
-    ``malicious_packages`` maps ecosystem ('npm'/'pypi') -> frozenset of OSM-flagged
-    names. A repo that declares one as a dependency installs known malware on
-    ``npm/pip install``; the delivery vector behind fake-interview / crypto-task
-    lure repos, whose own code looks benign. Matching is ECOSYSTEM-SCOPED
-    (package.json vs npm, requirements/pip vs pypi) so a legit npm package does not
-    collide with a same-named typosquat on another registry. Tier-A confirmation.
+    ``malicious_packages`` maps ecosystem ('npm'/'pypi') -> {name: frozenset of
+    the EXACT version(s) OSM reported compromised}. A repo declaring one of those
+    exact versions installs known malware on ``npm/pip install``; the delivery
+    vector behind fake-interview / crypto-task lure repos, whose own code looks
+    benign. Matching is ECOSYSTEM-SCOPED (package.json vs npm, requirements/pip vs
+    pypi) so a legit npm package does not collide with a same-named typosquat on
+    another registry, AND VERSION-SCOPED: many flagged names are legitimate,
+    widely-used packages (PostHog, Mastra plugins) where an attacker compromised
+    the maintainer account for ONE release (the Shai-Hulud worm); a name-only
+    match confirmed mastra-ai/mastra, a 25k-star legitimate project, as malicious.
+    Tier-A confirmation.
     """
     malicious_packages = malicious_packages or {}
-    npm_bad = malicious_packages.get("npm", frozenset())
-    pypi_bad = malicious_packages.get("pypi", frozenset())
+    npm_bad = malicious_packages.get("npm", {})
+    pypi_bad = malicious_packages.get("pypi", {})
     root = Path(root)
     findings: list[BashFinding] = []
     for path in root.rglob("*"):
@@ -99,13 +148,18 @@ def scan_manifests(root, malicious_packages=None) -> list[BashFinding]:
             continue
         rel = str(path.relative_to(root)).replace("\\", "/")
 
-        bad = npm_bad if name == "package.json" else (pypi_bad if is_reqs else frozenset())
+        bad = npm_bad if name == "package.json" else (pypi_bad if is_reqs else {})
         if bad:
             manifest_kind = "package.json" if name == "package.json" else name
-            for dep in _declared_deps(manifest_kind, text):
-                if dep.lower() in bad:
+            for dep, spec in _declared_deps(manifest_kind, text).items():
+                compromised = bad.get(dep.lower())
+                if not compromised:
+                    continue
+                declared = _exact_pinned_version(spec)
+                if declared and declared in compromised:
                     findings.append(BashFinding(
-                        rel, 0, "malicious_dependency", "osm-listed", dep[:120]))
+                        rel, 0, "malicious_dependency", "osm-listed",
+                        f"{dep}@{declared} (OSM-compromised release)"[:120]))
 
         if name == "package.json":
             try:

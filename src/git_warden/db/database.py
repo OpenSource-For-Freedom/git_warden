@@ -17,6 +17,7 @@ which reads from here; this module only persists facts.
 from __future__ import annotations
 
 import json
+import re
 import sqlite3
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -35,6 +36,23 @@ from ..models import (
 )
 
 _SCHEMA_PATH = Path(__file__).with_name("schema.sql")
+
+# OSM's version_info is free text: a single version ("1.297.3") or a
+# comma/whitespace separated list ("4.18.1, 5.11.3, 5.13.3"). A leading "v" is
+# stripped ("v1.2.3" -> "1.2.3"); non-version tokens (empty, prose) are dropped.
+_VERSION_TOKEN = re.compile(r"^v?(\d[\w.\-+]*)$", re.IGNORECASE)
+
+
+def _parse_osm_versions(raw: str | None) -> set[str]:
+    """Parse OSM's ``version_info`` field into a set of exact version strings."""
+    if not raw or not isinstance(raw, str):
+        return set()
+    out: set[str] = set()
+    for tok in re.split(r"[,\s]+", raw.strip()):
+        m = _VERSION_TOKEN.match(tok)
+        if m:
+            out.add(m.group(1))
+    return out
 
 
 def connect(db_path: Path | str = DB_PATH) -> sqlite3.Connection:
@@ -706,38 +724,70 @@ class Database:
                 break
         return out
 
-    def malicious_dependency_names(self) -> dict[str, frozenset[str]]:
-        """OSM-flagged package names per ECOSYSTEM, for manifest dependency match.
+    def malicious_dependency_names(self) -> dict[str, dict[str, frozenset[str]]]:
+        """OSM-flagged package NAME -> its COMPROMISED VERSION(S), per ecosystem.
 
         Keyed by ecosystem ('npm', 'pypi') so a package.json dependency is matched
         only against npm malware and a requirements.txt only against pypi malware.
         Cross-ecosystem matching caused a false positive: the legit npm
         ``webpack-dev-server`` collided with a RubyGems typosquat of the same name.
-        A repo declaring a match installs known malware on install (Tier-2
-        confirmation). Ultra-short generic names are skipped (exact-match only).
+
+        Many OSM-flagged names are legitimate, widely-used packages where an
+        attacker compromised the maintainer account and pushed ONE bad release
+        (the Shai-Hulud worm hit ``posthog-js``, ``posthog-node`` and others this
+        way); matching on the NAME ALONE flags every user of the package at any
+        version, which confirmed mastra-ai/mastra (25k-star legitimate project) as
+        malicious. OSM's ``version_info`` records exactly which release(s) were
+        compromised, so this keeps that and the manifest scanner only confirms an
+        EXACT version match. A name with no parseable version data is dropped
+        entirely (a name-only match is not Tier-A confirm-alone precision, PRD 5).
+        Ultra-short generic names are skipped (exact-match only).
         """
-        out: dict[str, set[str]] = {"npm": set(), "pypi": set()}
+        out: dict[str, dict[str, set[str]]] = {"npm": {}, "pypi": {}}
         for row in self.list_artifacts(artifact_type="package"):
             eco = (row["ecosystem"] or "").strip().lower()
             if eco not in out:
                 continue
             name = (row["name"] or "").strip().lower()
-            if name.startswith("@") or len(name) >= 5:
-                out[eco].add(name)
-        return {eco: frozenset(names) for eco, names in out.items()}
+            if not (name.startswith("@") or len(name) >= 5):
+                continue
+            payload = json.loads(row["raw_payload"] or "{}") or {}
+            versions = _parse_osm_versions(payload.get("version_info"))
+            if not versions:
+                continue
+            out[eco].setdefault(name, set()).update(versions)
+        return {eco: {n: frozenset(v) for n, v in names.items()}
+                for eco, names in out.items()}
 
     def malicious_package_terms(self, limit: int = 30) -> list[str]:
         """Distinctive malicious package names to code-search for (package pivot).
 
         Searching a malicious package name in code finds repos that install /
         distribute / depend on it. Generic short names are skipped to avoid noise.
+        ALREADY-SEARCHED terms are excluded (see ``record_searched_package_terms``)
+        so each run advances into untried names instead of re-searching the same
+        static leading slice forever (eval finding, 2026-07-02).
         """
+        searched = {
+            row["term"] for row in self.conn.execute("SELECT term FROM searched_package_terms")
+        }
         terms: list[str] = []
         for row in self.list_artifacts(artifact_type="package"):
             name = (row["name"] or "").strip()
+            if name in searched:
+                continue
             if name.startswith("@") or len(name) >= 8:  # scoped or non-trivial
                 terms.append(name)
         return list(dict.fromkeys(terms))[:limit]
+
+    def record_searched_package_terms(self, terms: list[str], run_id: str) -> None:
+        """Mark package terms as searched so future runs do not repeat them."""
+        with self.transaction() as c:
+            c.executemany(
+                "INSERT OR IGNORE INTO searched_package_terms (term, first_searched_run) "
+                "VALUES (?, ?)",
+                [(t, run_id) for t in terms],
+            )
 
     def cross_platform_clusters(self) -> dict[str, list[dict]]:
         """Confirmed findings grouped by code_hash (doc 04 section 6).
@@ -793,6 +843,66 @@ class Database:
                 if m:
                     terms.append(m.group(1))
         return list(dict.fromkeys(terms))
+
+    def corpus_snapshot(self) -> dict[str, int]:
+        """Sizes of the persisted learning corpus + run history.
+
+        The hunt compounds across runs: confirmed repos mine IOCs and code
+        signatures into ``learned_iocs``, which seed the NEXT run's searches
+        (see ``learned_search_terms`` / ``learned_signatures``). The CLI
+        snapshots this before and after a run and shows the delta, so a newcomer
+        sees the tool actually learning rather than just re-scanning. Display
+        only -- it never gates a finding.
+        """
+        def _n(sql: str) -> int:
+            return int(self.conn.execute(sql).fetchone()[0])
+
+        return {
+            "runs_completed": _n("SELECT COUNT(*) FROM runs WHERE status = 'completed'"),
+            "confirmations": _n(
+                "SELECT COUNT(*) FROM repo_findings "
+                "WHERE status IN ('confirmed', 'validated')"),
+            "learned_iocs": _n("SELECT COUNT(*) FROM learned_iocs"),
+            "code_signatures": _n(
+                "SELECT COUNT(*) FROM learned_iocs WHERE kind = 'code_sig'"),
+            "search_terms": len(self.learned_search_terms()),
+        }
+
+    def dprk_infra_hosts(self, exclude: str | None = None) -> set[str]:
+        """Self-sourced DPRK C2 infrastructure: attacker hosts extracted from every
+        confirmed repo that is DPRK-attributed OR carries Contagious-Interview
+        tradecraft. A NEW repo whose payload host lands in this set corroborates
+        DPRK attribution (see :mod:`~git_warden.dprk`).
+
+        ``exclude`` drops one repo (the one being assessed) so a repo can never
+        self-corroborate off its own C2. Stays fresh with the learning loop; no
+        external feed.
+        """
+        from ..dprk import c2_hosts_from_flags, campaign_vectors, is_dprk_actor_key
+
+        skip = (exclude or "").strip().casefold()
+        hosts: set[str] = set()
+        for r in self.conn.execute(
+            "SELECT full_name, actor_key, raw_payload FROM repo_findings "
+            "WHERE status IN ('confirmed', 'validated')"
+        ):
+            if r["full_name"].casefold() == skip:
+                continue
+            flags = (json.loads(r["raw_payload"] or "{}") or {}).get("bash_findings") or []
+            if is_dprk_actor_key(r["actor_key"]) or campaign_vectors(flags):
+                hosts.update(c2_hosts_from_flags(flags))
+        return hosts
+
+    def iocs_for_repo(self, full_name: str) -> list[sqlite3.Row]:
+        """Learned IOCs (value, kind) mined from ONE repo's confirmed code.
+
+        These are the C2 webhooks/telegram/domains recorded at confirm time
+        (``record_learned_ioc`` with ``source_repo``); the submit path turns the
+        domains into linked OSM domain reports."""
+        return self.conn.execute(
+            "SELECT value, kind FROM learned_iocs WHERE source_repo = ? ORDER BY kind, value",
+            (full_name,),
+        ).fetchall()
 
     def get_run(self, run_id: str) -> sqlite3.Row | None:
         return self.conn.execute(

@@ -16,7 +16,7 @@ export PYTHONPATH := src
 GW := $(PY) -m git_warden.cli
 
 .DEFAULT_GOAL := help
-.PHONY: help install test lint fmt check ingest hunt discover iocs review serve clean
+.PHONY: help install test lint fmt check ingest hunt discover iocs review serve submit clean
 
 help: ## List the available commands
 	@$(PY) -c "import re,glob; [print(f'  {m.group(1):14}{m.group(2)}') for f in ['Makefile']+glob.glob('Makefile.local') for l in open(f) for m in [re.match(r'([a-zA-Z_-]+):.*?## (.*)', l)] if m]"
@@ -58,6 +58,8 @@ serve: ## Serve the telemetry dashboard on http://127.0.0.1:8787
 clean: ## Remove caches and scratch logs
 	$(PY) -c "import shutil,glob,os; [shutil.rmtree(p,ignore_errors=True) for p in glob.glob('**/__pycache__',recursive=True)+['.pytest_cache','.ruff_cache']]; [os.remove(f) for f in glob.glob('*.log')]"
 
-# Local-only targets (e.g. OSM submit) live in an untracked Makefile.local that
-# is .gitignored, so the public Makefile never references the submit feature.
+submit: ## Report confirmed findings to OSM (dry run; ARGS="--confirm" or "--wizard")
+	$(PY) -m git_warden.osm_submit $(ARGS)
+
+# Extra operator-local targets can live in an untracked, .gitignored Makefile.local.
 -include Makefile.local

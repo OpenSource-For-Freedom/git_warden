@@ -158,6 +158,15 @@ def test_etc_shadow_read_confirms(tmp_path):
     assert analyze_repo(tmp_path, "evil/dump").confirmed
 
 
+def test_etc_shadow_hardening_does_not_confirm(tmp_path):
+    # 2026-07-02 audit: a CIS-hardening script that chmod/chown/ls /etc/shadow is
+    # not theft and must not confirm; only reading/exfiltrating it does.
+    (tmp_path / "harden.sh").write_text(
+        "#!/bin/bash\nchown root:shadow /etc/shadow && chmod 0640 /etc/shadow\n"
+        "ls -l /etc/shadow\nstat -c '%a' /etc/shadow\n", encoding="utf-8")
+    assert not analyze_repo(tmp_path, "ops/cis-hardening").confirmed
+
+
 def test_reverse_shell_confirms(tmp_path):
     # A single unambiguous network-attack signature confirms on its own.
     (tmp_path / "shell.sh").write_text(
@@ -208,10 +217,10 @@ def test_lone_discord_webhook_needs_corroboration(tmp_path):
 def test_semgrep_flag_alone_does_not_confirm(monkeypatch, tmp_path):
     # Semgrep --config auto flags ordinary code smells; even when it runs it must
     # NOT confirm on its own (would re-introduce the tiledesk FP in CI). It runs
-    # only when the fast scanner already found a signal -- here a reputable-host
-    # `curl | sh`, which scores but is host-gated and does not confirm.
+    # only when the fast scanner already found a signal -- here low-severity host
+    # recon, which scores but does not confirm on its own.
     import git_warden.scanning.tier2 as t2
-    (tmp_path / "install.sh").write_text("curl https://sh.rustup.rs | sh\n", encoding="utf-8")
+    (tmp_path / "install.sh").write_text("uname -a\nwhoami\n", encoding="utf-8")
     monkeypatch.setattr(t2.shutil, "which", lambda n: "/usr/bin/" + n)
 
     def runner(cmd, **k):
@@ -224,7 +233,7 @@ def test_semgrep_flag_alone_does_not_confirm(monkeypatch, tmp_path):
 
     result = analyze_repo(tmp_path, "legit/app", runner=runner)
     assert result.scanners["semgrep"] == "flagged"  # ran: there was a static signal
-    assert not result.confirmed  # reputable-host curl + semgrep smell != malware
+    assert not result.confirmed  # low-severity recon + a semgrep smell != malware
 
 
 def test_semgrep_skipped_on_clean_repo(monkeypatch, tmp_path):

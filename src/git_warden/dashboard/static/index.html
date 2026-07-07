@@ -48,11 +48,25 @@
     max-height:240px;color:#cfe3c0;white-space:pre-wrap;word-break:break-all;font-size:12px;margin:4px 0}
   .flag{margin:6px 0;padding:6px 8px;border:1px solid var(--line);border-radius:6px}
   .flag .r{color:var(--bad)} .muted{color:var(--mut)} a{color:var(--accent)}
-  footer{border-top:1px solid var(--line);display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;padding:8px 14px;
-    max-height:150px;overflow:auto}
+  footer{border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px 18px;padding:8px 14px;
+    max-height:230px;overflow:auto}
+  table.yield{width:100%;border-collapse:collapse;font-size:11px}
+  table.yield th{color:var(--mut);text-align:right;font-weight:normal;padding:1px 4px}
+  table.yield th:first-child{text-align:left}
+  table.yield td{text-align:right;padding:1px 4px;white-space:nowrap}
+  table.yield td:first-child{text-align:left;color:var(--ink)}
+  .prec-good{color:var(--good)}.prec-mid{color:var(--warn)}.prec-bad{color:var(--bad)}
   footer h3{font-size:11px;color:var(--mut);text-transform:uppercase;margin:0 0 5px;letter-spacing:.6px}
   .bar{display:flex;align-items:center;gap:7px;margin:2px 0}
   .bar i{height:9px;background:var(--accent);border-radius:3px}.bar.bad i{background:var(--bad)}.bar.good i{background:var(--good)}
+  .bar.actor{cursor:pointer} .bar.actor:hover span{color:var(--ink)}
+  .bar.actor.reg i{background:var(--bad)} .bar.actor.cand i{background:var(--mut)}
+  .vbox{margin:9px 0;padding:8px 10px;border:1px solid var(--bad);border-radius:7px;background:rgba(255,93,108,.07)}
+  .vhdr{color:var(--bad);font-weight:bold;font-size:13px}
+  .vdesc{margin:3px 0 5px;color:var(--ink)}
+  .vmeta{color:var(--mut);font-size:11px;margin-top:3px}
+  .c2{display:inline-block;background:#2a1114;border:1px solid var(--bad);color:#ffb0b8;padding:0 6px;border-radius:4px;margin:1px 2px}
+  .vecrow{margin:3px 0} .vecrow b{color:var(--bad)} .vecrow small{color:var(--mut)}
   .bar span{min-width:120px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .bar small{color:var(--mut)}
 </style>
@@ -68,12 +82,16 @@
   <div id="graphwrap">
     <svg id="graph"></svg>
     <div class="legend">
-      <div><b style="background:#c792ea"></b>novel <b style="background:#869cb2;margin-left:8px"></b>OSM-known
-        <b style="background:#5fa8ff;margin-left:8px"></b>owner
+      <div>attribution:
+        <b style="background:#ff4d4d"></b>confirmed
+        <b style="background:#ff9d3c;margin-left:8px"></b>probable
+        <b style="background:#ffd23c;margin-left:8px"></b>possible
+        <b style="background:#c792ea;margin-left:8px"></b>unattributed</div>
+      <div style="margin-top:3px"><b style="background:#5fa8ff"></b>owner
         <b style="background:#ffb23e;margin-left:8px"></b>signature
-        <b style="background:#ff5d6c;margin-left:8px"></b>actor
+        <b style="background:#ff5d6c;margin-left:8px"></b>country hub
         <b style="background:#ffd93b;margin-left:8px"></b>campaign</div>
-      <div class="muted" style="margin-top:3px">gold=shared payload · red=attributed · green=code-hash</div>
+      <div class="muted" style="margin-top:3px">repo colour = attribution confidence · red hubs = country · click a repo for the signals</div>
       <div style="margin-top:5px">scope:
         <span class="scope on" data-s="confirmed">confirmed</span>
         <span class="scope" data-s="active">+candidates</span>
@@ -93,6 +111,12 @@
   <div><h3>Signature yield</h3><div id="yield"></div></div>
   <div><h3>Detection methods</h3><div id="methods"></div></div>
   <div><h3>Bad owners (no own evidence)</h3><div id="badowners"></div></div>
+  <div><h3>Threat actors <span class="muted" style="text-transform:none">(click → highlight)</span></h3><div id="actors"></div></div>
+  <div style="grid-column:span 2"><h3>Source yield &amp; precision</h3><div id="sourceyield"></div></div>
+  <div><h3>Run timeline</h3><div id="runtimeline"></div></div>
+  <div style="grid-column:span 2"><h3>Rejected (false positives)</h3><div id="rejected"></div></div>
+  <div style="grid-column:span 2"><h3>Attack vectors (how the payload runs)</h3><div id="vectors"></div></div>
+  <div style="grid-column:span 2"><h3>C2 / payload infrastructure</h3><div id="c2infra"></div></div>
 </footer>
 
 <script>
@@ -107,6 +131,31 @@ let SCOPE='confirmed';
 function bar(label,val,max,cls){const w=max?Math.max(4,Math.round(val/max*120)):4;
   return `<div class="bar ${cls||''}"><span title="${esc(label)}">${esc(label)}</span><i style="width:${w}px"></i><small>${val}</small></div>`;}
 
+function renderSourceYield(rows){
+  if(!rows.length){$('sourceyield').innerHTML='<span class="muted">—</span>';return;}
+  const pcls=p=>p==null?'muted':p>=0.7?'prec-good':p>=0.3?'prec-mid':'prec-bad';
+  const pct=p=>p==null?'—':Math.round(p*100)+'%';
+  $('sourceyield').innerHTML='<table class="yield"><tr><th>method</th><th>conf</th>'
+    +'<th>rej</th><th>scrn</th><th>precision</th></tr>'
+    +rows.map(r=>`<tr><td title="${esc(r.method)}">${esc(r.method)}</td>`
+      +`<td class="good">${r.confirmed}</td><td class="bad">${r.rejected}</td>`
+      +`<td class="muted">${r.screened}</td>`
+      +`<td class="${pcls(r.precision)}">${pct(r.precision)}</td></tr>`).join('')
+    +'</table>';
+}
+function renderRunTimeline(runs){
+  const hunts=runs.filter(r=>/^hunt-/.test(r.run_id)).slice(-10);
+  if(!hunts.length){$('runtimeline').innerHTML='<span class="muted">—</span>';return;}
+  const mx=Math.max(1,...hunts.map(r=>r.candidates||0));
+  $('runtimeline').innerHTML=hunts.map(r=>{
+    const lbl=r.run_id.replace('hunt-','').slice(0,13);
+    return `<div class="bar" title="${esc(r.run_id)} — ${r.candidates} candidates, `
+      +`${r.confirmed} confirmed, ${r.gold_delivered} gold">`
+      +`<span>${esc(lbl)}</span><i style="width:${Math.max(4,Math.round((r.candidates||0)/mx*90))}px"></i>`
+      +`<small><span class="good">${r.confirmed}</span>/${r.candidates}</small></div>`;
+  }).join('');
+}
+
 async function loadMeta(){
   const s=await j('/api/summary');
   $('metrics').innerHTML=[['wall',s.published,'good'],['novel',s.novel,'novel'],
@@ -120,12 +169,56 @@ async function loadMeta(){
   $('yield').innerHTML=t.signature_yield.map(x=>bar(x.signature,x.repos,ym)).join('')||'<span class="muted">—</span>';
   const meth=Object.entries(s.by_method).sort((a,b)=>b[1]-a[1]);const mm=Math.max(1,...meth.map(m=>m[1]));
   $('methods').innerHTML=meth.map(([k,v])=>bar(k,v,mm,'good')).join('');
+  renderSourceYield(t.source_yield||[]);
+  renderRunTimeline(t.runs||[]);
+  const rej=await j('/api/rejected');
+  $('rejected').innerHTML=rej.length?rej.slice(0,14).map(r=>
+    `<div class="bar"><span title="${esc(r.reasoning||'')}">`
+    +`<a href="https://github.com/${esc(r.full_name)}" target="_blank">${esc(r.full_name)}</a>`
+    +` <span class="muted">${esc(r.method)}</span></span><small>×</small></div>`).join('')
+    :'<span class="muted">none</span>';
   const bo=await j('/api/bad-owners');
   $('badowners').innerHTML=bo.length?bo.slice(0,12).map(b=>
     `<div class="bar"><span title="${esc(b.full_name)} — owner ships malware in ${(b.provenance||[]).join(', ')}">`
     +`<a href="https://github.com/${esc(b.full_name)}" target="_blank">${esc(b.full_name)}</a></span>`
     +`<small>${(b.provenance||[]).length}◆ proven</small></div>`).join('')
     :'<span class="muted">none</span>';
+  await loadActors();
+  await loadVectors();
+  await loadC2();
+}
+
+async function loadVectors(){
+  const v=await j('/api/vectors');
+  $('vectors').innerHTML=v.length?v.map(x=>
+    `<div class="vecrow" title="${esc(x.desc)} — e.g. ${esc((x.sample||[]).slice(0,3).join(', '))}">`
+    +`<b>${x.count}</b> ${esc(x.vector)} <small>${esc(x.desc)}</small></div>`).join('')
+    :'<span class="muted">none</span>';
+}
+async function loadC2(){
+  const c=await j('/api/c2');
+  $('c2infra').innerHTML=c.length?c.map(x=>
+    `<div class="bar" title="calls from: ${esc((x.sample||[]).join(', '))}">`
+    +`<span><span class="c2">${esc(x.host)}</span></span>`
+    +`<i style="width:${Math.max(4,Math.round(x.repo_count/Math.max(1,c[0].repo_count)*110))}px;background:var(--bad)"></i>`
+    +`<small>${x.repo_count} repos</small></div>`).join('')
+    :'<span class="muted">none observed</span>';
+}
+
+// ---- threat-actor contribution panel; ties into the graph via focusActor ----
+async function loadActors(){
+  const ac=await j('/api/actors');
+  const am=Math.max(1,...ac.map(a=>a.repo_count));
+  $('actors').innerHTML=ac.length?ac.map(a=>{
+    const cls=a.actor_status==='unregistered'?'cand':'reg';
+    const methods=Object.entries(a.methods||{}).map(([k,v])=>`${k}×${v}`).join(', ');
+    return `<div class="bar actor ${cls}" data-actor="${esc(a.actor_key)}"
+        title="${esc(a.label)} (${esc(a.actor_status)}) — ${esc(methods)}">`
+      +`<span>${esc(a.label)}</span><i style="width:${Math.max(4,Math.round(a.repo_count/am*120))}px"></i>`
+      +`<small>${a.repo_count}</small></div>`;
+  }).join(''):'<span class="muted">none attributed yet</span>';
+  document.querySelectorAll('#actors .bar').forEach(el=>
+    el.addEventListener('click',()=>focusActor(el.dataset.actor)));
 }
 
 // ---- force-directed graph (vanilla, no deps) ----
@@ -162,7 +255,15 @@ function tick(){
   position(); RAF=requestAnimationFrame(tick);
 }
 function nodeR(n){return n.type==='repo'?Math.max(6,Math.min(16,5+(n.score||4))):n.type==='campaign'?14:n.type==='actor'?12:n.type==='owner'?10:8;}
-function nodeFill(n){return n.type==='repo'?(n.novel?'#c792ea':'#869cb2'):NCOLOR[n.type];}
+function nodeFill(n){
+  if(n.type==='repo'){
+    // Repo colour = attribution confidence, so the visual DB shows who's behind
+    // each finding at a glance; unattributed falls back to novel/known.
+    return {confirmed:'#ff4d4d',probable:'#ff9d3c',possible:'#ffd23c'}[n.tier]
+      || (n.novel?'#c792ea':'#869cb2');
+  }
+  return NCOLOR[n.type];
+}
 function draw(){
   SVG.innerHTML='';
   EDGES.forEach(e=>{const l=document.createElementNS(NS,'line');l.setAttribute('stroke',ECOLOR[e.kind]||'#334155');
@@ -191,6 +292,28 @@ function position(){
     e._l.setAttribute('x1',a.x);e._l.setAttribute('y1',a.y);e._l.setAttribute('x2',b.x);e._l.setAttribute('y2',b.y);});
   NODES.forEach(n=>n._g.setAttribute('transform',`translate(${n.x},${n.y})`));
 }
+
+// Threat-actors panel -> graph: click an actor bar to dim everything except
+// that actor and its directly-attributed repos/campaigns (owner/signature
+// context stays visible via the un-dimmed repo nodes' own edges).
+function resetFocus(){
+  NODES.forEach(n=>{if(n._g)n._g.style.opacity='';});
+  EDGES.forEach(e=>{if(e._l)e._l.style.opacity='';});
+}
+function focusActor(key){
+  const targetId='actor:'+key;
+  if(!BYID[targetId]){
+    alert('No graph node for this actor in the current scope — try scope: all.');
+    return;
+  }
+  const connected=new Set([targetId]);
+  EDGES.forEach(e=>{if(e.s===targetId)connected.add(e.t);if(e.t===targetId)connected.add(e.s);});
+  NODES.forEach(n=>{if(n._g)n._g.style.opacity=connected.has(n.id)?'1':'0.1';});
+  EDGES.forEach(e=>{if(e._l)e._l.style.opacity=(connected.has(e.s)&&connected.has(e.t))?'1':'0.05';});
+  const t=BYID[targetId];
+  if(t){t.fix=true;setTimeout(()=>{t.fix=false;},4000);}
+}
+SVG.addEventListener('click',ev=>{if(ev.target===SVG)resetFocus();});
 let drag=null;
 SVG.addEventListener('mousemove',ev=>{if(!drag)return;const r=SVG.getBoundingClientRect();
   drag.x=ev.clientX-r.left;drag.y=ev.clientY-r.top;});
@@ -206,13 +329,43 @@ async function showRepo(repo){
   const flags=(d.flags||[]).slice(0,10).map(f=>`<div class="flag">
     <code>${esc(f.file)}:${f.line}</code> <span class="r">${esc(f.category)}/${esc(f.rule)}</span>
     ${f.snippet?`<pre>${esc(f.snippet)}</pre>`:''}</div>`).join('');
+  const c2=(d.c2_hosts||[]);
+  const vectorBlock=d.vector?`
+    <div class="vbox">
+      <div class="vhdr">⚠ ${esc(d.vector)}</div>
+      <div class="vdesc">${esc(d.vector_desc||'')}</div>
+      <div class="vmeta">confirmed by <code>${esc(d.confirm_rule||'')}</code>${d.evidence_file?` in <code>${esc(d.evidence_file)}</code>`:''}</div>
+      ${c2.length?`<div class="vmeta">C2 / payload host${c2.length>1?'s':''}: ${c2.map(h=>`<span class="c2">${esc(h)}</span>`).join(' ')}</div>`:''}
+    </div>`:'';
+  // Country-level attribution: confidence tier + the independent signals behind
+  // it (2+ evidence signals, or a named-group intel attribution). Colour = tier.
+  const dp=d.attribution_detail||{};
+  const tierColor={confirmed:'#ff4d4d',probable:'#ff9d3c',possible:'#ffd23c',unattributed:'#8a97a6'}[dp.tier]||'#8a97a6';
+  const dprkBlock=(dp.tier&&dp.tier!=='unattributed')?`
+    <div class="vbox dprk" style="border-left:3px solid ${tierColor}">
+      <div class="vhdr" style="color:${tierColor}">Attribution — ${esc(dp.label||dp.tier)}${dp.campaign?` <span class="muted">(${esc(dp.campaign)})</span>`:''}</div>
+      <div class="vmeta">signals (${(dp.signals||[]).length}): ${(dp.signals||[]).map(s=>`<code>${esc(s)}</code>`).join(' ')||'<span class="muted">none</span>'}${(dp.tags||[]).length?' · tags: '+dp.tags.map(t=>`<span class="c2">${esc(t)}</span>`).join(' '):''}</div>
+      ${(dp.reasons||[]).map(r=>`<div class="vdesc">• ${esc(r)}</div>`).join('')}
+      ${(dp.c2||[]).length?`<div class="vmeta">C2 infrastructure: ${dp.c2.map(h=>`<span class="c2">${esc(h)}</span>`).join(' ')}</div>`:''}
+    </div>`:`<div class="vmeta muted" style="margin-top:6px">Attribution: unattributed (no independent evidence signals)</div>`;
+  // Container threat: malicious behaviour in the Docker build recipe, surfaced
+  // separately with its own Dockerfile evidence.
+  const dk=(d.docker_evidence||[]);
+  const containerBlock=d.container_threat?`
+    <div class="vbox" style="border-left:3px solid #39d98a">
+      <div class="vhdr" style="color:#39d98a">⬢ Container threat — malicious Docker build recipe</div>
+      ${dk.map(f=>`<div class="flag"><code>${esc(f.file)}:${f.line}</code> <span class="r">${esc(f.category)}/${esc(f.rule)}</span>${f.snippet?`<pre>${esc(f.snippet)}</pre>`:''}</div>`).join('')}
+    </div>`:'';
   D.innerHTML=`<h2>Finding detail</h2>
-    <div><b>${esc(d.full_name)}</b> ${d.novel?'<span class="tag novel">novel</span>':'<span class="tag">OSM-known</span>'} ${d.gold?'<span class="tag gold">gold</span>':''}</div>
+    <div><b>${esc(d.full_name)}</b> ${d.novel?'<span class="tag novel">novel</span>':'<span class="tag">OSM-known</span>'} ${d.gold?'<span class="tag gold">gold</span>':''} ${d.container_threat?'<span class="tag" style="background:#12351f;color:#39d98a">container</span>':''}</div>
     <div><a href="${esc(d.url||'#')}" target="_blank">${esc(d.url||'')}</a></div>
+    ${vectorBlock}
     <div>status <span class="s-${d.status}">${esc(d.status)}</span> · method <span class="muted">${esc(d.method)}</span> · score ${d.score}</div>
     <div>attribution <span class="muted">${esc(d.attribution||'unattributed')}</span></div>
+    ${dprkBlock}
+    ${containerBlock}
     ${decoded?`<div style="margin-top:8px">Decoded payload <span class="muted">(client-side atob of the injected blob)</span>:</div><pre>${esc(decoded.slice(0,1200))}</pre>`:''}
-    <div style="margin-top:6px">Flags &amp; code:</div>${flags||'<span class="muted">none</span>'}`;
+    <div style="margin-top:6px">Evidence (file:line → rule):</div>${flags||'<span class="muted">none</span>'}`;
 }
 
 document.querySelectorAll('.scope').forEach(el=>el.addEventListener('click',()=>{

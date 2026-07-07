@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="340" height="86" viewBox="0 0 340 86" role="img" aria-label="OpenSourceMalware profile: view my threat reports">
+  <title>OpenSourceMalware: view my threat reports</title>
+  <defs>
+    <linearGradient id="card" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#191919"/>
+      <stop offset="1" stop-color="#0b0b0b"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.16" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#e5322d" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#e5322d" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect x="1" y="1" width="338" height="84" rx="12" fill="url(#card)" stroke="#2a2a2a" stroke-width="1"/>
+  <rect x="1" y="1" width="338" height="84" rx="12" fill="url(#glow)"/>
+  <rect x="1" y="1" width="4.5" height="84" rx="2" fill="#e5322d"/>
+
+  <!-- skull mark -->
+  <g transform="translate(24,20)">
+    <path fill="#e5322d" d="M23 1C12 1 4 9 4 20.5c0 6.4 3 11 7.5 13.4V38c0 1.7 1.4 3 3 3 1.2 0 2.2-.7 2.7-1.7.5 1 1.5 1.7 2.7 1.7h.2c1.2 0 2.2-.7 2.7-1.7.5 1 1.5 1.7 2.7 1.7 1.6 0 3-1.3 3-3v-4.1C39.6 31.5 42 26.9 42 20.5 42 9 34 1 23 1Z"/>
+    <ellipse cx="15" cy="20" rx="5.4" ry="6" fill="#0b0b0b"/>
+    <ellipse cx="31" cy="20" rx="5.4" ry="6" fill="#0b0b0b"/>
+    <path fill="#0b0b0b" d="M23 25l3.2 5.4h-6.4z"/>
+    <rect x="20" y="34.5" width="1.4" height="5" rx="0.6" fill="#0b0b0b"/>
+    <rect x="24.6" y="34.5" width="1.4" height="5" rx="0.6" fill="#0b0b0b"/>
+  </g>
+
+  <!-- wordmark + CTA -->
+  <text x="82" y="34" font-family="'Segoe UI',Verdana,Helvetica,Arial,sans-serif" font-size="18" font-weight="800" letter-spacing="0.4">
+    <tspan fill="#f5f5f5">OPENSOURCE</tspan><tspan fill="#e5322d"> MALWARE</tspan>
+  </text>
+  <text x="82" y="51" font-family="'Segoe UI',Verdana,Helvetica,Arial,sans-serif" font-size="11" letter-spacing="0.6" fill="#8a8f98">MALICIOUS PACKAGE &amp; REPO INTELLIGENCE</text>
+  <g>
+    <text x="82" y="70" font-family="'Segoe UI',Verdana,Helvetica,Arial,sans-serif" font-size="12.5" font-weight="700" letter-spacing="0.3" fill="#e5322d">View my threat reports</text>
+    <text x="242" y="70.5" font-family="'Segoe UI',Verdana,Helvetica,Arial,sans-serif" font-size="15" font-weight="800" fill="#e5322d">&#8594;</text>
+  </g>
+</svg>

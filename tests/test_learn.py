@@ -92,7 +92,7 @@ def test_hunt_records_learned_iocs_from_confirmed_repo(tmp_path):
         )
         return dest
 
-    hunt(db, _Client(), tools, run_id="hunt-1", now=utcnow(),
+    hunt(db, _Client(), tools, run_id="hunt-1", now=utcnow(), do_news=False,
          do_ioc=False, do_lineage=True, do_actor=False, do_tier2=True, clone=clone_with_ioc)
 
     terms = db.learned_search_terms()
