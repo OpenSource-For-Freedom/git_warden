@@ -189,9 +189,11 @@ def scan_manifests(root, malicious_packages=None) -> list[BashFinding]:
 
         if name == "package.json":
             try:
-                scripts = (json.loads(text or "{}") or {}).get("scripts") or {}
+                pkg = json.loads(text or "{}")
             except ValueError:
                 continue
+            scripts = pkg.get("scripts") if isinstance(pkg, dict) else None
+            scripts = scripts if isinstance(scripts, dict) else {}
             for hook in _LIFECYCLE:
                 cmd = scripts.get(hook)
                 if (cmd and _SUSPICIOUS_CMD.search(str(cmd))
@@ -240,9 +242,14 @@ def _task_command_blob(task: dict) -> str:
 
 def _scan_vscode_tasks(text: str, rel: str) -> list[BashFinding]:
     try:
-        tasks = (json.loads(text or "{}") or {}).get("tasks") or []
+        data = json.loads(text or "{}")
     except ValueError:
         return []
+    # A tasks.json is normally an object; tolerate a top-level array / scalar / null
+    # (a malformed or unusual file must not crash the whole scan -- it aborted a
+    # full pipeline run on 2026-07-07).
+    tasks = data.get("tasks") if isinstance(data, dict) else None
+    tasks = tasks if isinstance(tasks, list) else []
     out: list[BashFinding] = []
     for task in tasks if isinstance(tasks, list) else []:
         if not isinstance(task, dict):
