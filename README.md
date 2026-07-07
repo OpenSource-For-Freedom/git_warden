@@ -180,7 +180,7 @@ view: per-source discovery counters, Tier-1/Tier-2 progress, and a run-number pl
 a learning-corpus delta so you can see the yield compound across runs. It collapses
 each run to four buckets: *repos scanned, signatures matched, code analysis passed,
 queued for review.* Force it with `--progress on`, silence it with `--progress off`
-(it auto-detects a terminal, so CI stays quiet). **Git Warden is iterative** — run 1
+(it auto-detects a terminal, so CI stays quiet). **Git Warden is iterative**: run 1
 sets a baseline, and most batches reach high yield by run 3 as the corpus compounds.
 
 ## Dashboard
@@ -196,8 +196,8 @@ make serve                       # or: python gw.py serve
 It renders the **discovered product** as a force-graph (OSM re-validations are
 hidden, so you see only what Git Warden surfaced):
 
-- **Every repo is colored by attribution confidence** — confirmed (red), probable
-  (orange), possible (yellow), unattributed (purple) — and clustered under its
+- **Every repo is colored by attribution confidence**: confirmed (red), probable
+  (orange), possible (yellow), unattributed (purple), clustered under its
   **origin-country hub** (North Korea, Russia, China, Iran, Cybercrime).
 - **Click any repo** for the full picture: the confirming `file:line` evidence, the
   country attribution with its independent signals, the decoded payload, the C2
@@ -260,3 +260,11 @@ make fmt                         # auto-fix lint findings
 ```
 
 Or invoke the tools directly: `ruff check src tests gw.py` and `pytest -q`.
+
+<p align="center"><img src="docs/sculk-divider.png" alt="" width="900"></p>
+
+<p align="center">
+  <a href="https://opensourcemalware.com/my-submissions">
+    <img src="docs/osm-reports.png" alt="OSM Submissions" width="900">
+  </a>
+</p>
