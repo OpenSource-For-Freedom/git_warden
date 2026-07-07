@@ -163,3 +163,20 @@ def test_is_security_tool_breadcrumbs_pentest_readmes():
     assert not is_security_tool("A cool web3 project that can exploit market inefficiencies.")
     assert not is_security_tool("My portfolio site built with vite and tailwind.")
     assert not is_security_tool(None)
+
+
+def test_is_security_tool_screens_defensive_scanners():
+    # 2026-07-07: dnszlsk/muad-dib (a supply-chain MALWARE SCANNER) confirmed on its
+    # own detection data (C2 lists, honeypot creds, rule strings). A defensive
+    # scanner ships attack signatures as DATA and must be screened too.
+    from git_warden.scanning.discovery import is_security_tool
+    assert is_security_tool(
+        "muad'dib detects malicious npm & pypi packages and typosquats, with a "
+        "sandbox and SARIF output.")
+    assert is_security_tool(
+        "A supply-chain security scanner: detection rules, IOC match, threat detection.")
+    # a DPRK coding-task lure and a plain project must NOT be screened
+    assert not is_security_tool(
+        "# Frontend Assessment\nA React app. Run npm install then npm start.")
+    assert not is_security_tool(
+        "TypeScript client generated from the Twitter API OpenAPI spec.")
