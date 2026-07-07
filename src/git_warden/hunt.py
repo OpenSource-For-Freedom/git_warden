@@ -56,6 +56,19 @@ from .scanning.tier2 import WEAPONIZATION_CATEGORIES, _force_rmtree
 log = logging.getLogger(__name__)
 
 
+def _decide(finding, decision: str, reason: str, **extra) -> None:
+    """Emit a per-candidate Tier-2 decision to the run log.
+
+    This is the FP/gap audit trail: an operator (or a later grep of the run log)
+    sees every CONFIRMED (possible false positive to review), NOT_CONFIRMED
+    (near-miss / possible false negative), REJECTED / SCREENED (a guard fired, and
+    why), and CLONE_FAILED, each with its reason -- the decisions that were
+    previously only written to finding.reasoning in the DB and never surfaced live.
+    """
+    log.info("tier2 decision", extra={"context": {
+        "repo": finding.full_name, "decision": decision, "reason": reason, **extra}})
+
+
 def _osm_iocs(db: Database) -> IocSet:
     agg = IocSet()
     for row in db.list_artifacts():
@@ -509,6 +522,10 @@ def hunt(
         if to_tier2:
             screened_count += 1
         progress.screen_item(_idx, _total, finding.full_name, to_tier2)
+        log.debug("tier1 screen", extra={"context": {
+            "repo": finding.full_name, "score": finding.score,
+            "advance_to_tier2": to_tier2, "good_owner": good_owner,
+            "method": finding.detection_method.value}})
         db.upsert_finding(finding, run_id)
     progress.screen_end(screened_count)
 
@@ -542,6 +559,7 @@ def hunt(
                     finding.reasoning = (finding.reasoning or "") + \
                         " | well-known-legit owner; never scanned/confirmed"
                     db.upsert_finding(finding, run_id)
+                    _decide(finding, "REJECTED", "well-known-legit owner (KNOWN_GOOD_OWNERS)")
                     continue
                 # Offensive-security / research tool (README-flagged at Tier-1): its
                 # attack code is its stated purpose, not malice delivered to victims.
@@ -554,6 +572,8 @@ def hunt(
                         " | security-research/offensive tool (README); breadcrumb, not confirmed"
                     db.upsert_finding(finding, run_id)
                     redteam_breadcrumbs += 1
+                    _decide(finding, "SCREENED",
+                            "security-research/offensive tool (README markers)")
                     continue
                 kwargs = {"clone": clone} if clone else {}
                 kwargs["malicious_packages"] = mal_packages
@@ -571,6 +591,8 @@ def hunt(
                             " | unmodified fork of red-team tool (no intent change)"
                         db.upsert_finding(finding, run_id)
                         rejected_mirrors += 1
+                        _decide(finding, "REJECTED",
+                                "unmodified fork of red-team tool (no intent delta)")
                         continue
                     if not compared:
                         # No diffable upstream (a name_match, or a fork we could not
@@ -582,6 +604,7 @@ def hunt(
                             " | red-team tooling; no diffable intent delta -> breadcrumb"
                         db.upsert_finding(finding, run_id)
                         redteam_breadcrumbs += 1
+                        _decide(finding, "SCREENED", "red-team tooling; no diffable intent delta")
                         continue
                 else:
                     # A red-team tool surfaced by a NON-lineage pivot (owner /
@@ -599,6 +622,7 @@ def hunt(
                             f" | matches pinned red-team tool '{tool}'; breadcrumb, not confirmed"
                         db.upsert_finding(finding, run_id)
                         redteam_breadcrumbs += 1
+                        _decide(finding, "SCREENED", f"matches pinned red-team tool '{tool}'")
                         continue
                 result = scan_candidate(finding.full_name, workdir,
                                         restrict_paths=restrict, confirm_categories=confirm_cats,
@@ -606,6 +630,15 @@ def hunt(
                 if result is None:  # clone failed (404/taken down) or exceeded bounds
                     failed_clones.append({"repo": finding.full_name,
                                           "reason": "clone_failed_or_bounds"})
+                    _decide(finding, "CLONE_FAILED", "404/taken-down or exceeded size bounds")
+                elif not result.confirmed:
+                    # Scanned but did not meet the confirmation bar: a near-miss. This
+                    # is the false-NEGATIVE / recall-gap signal -- what static signal it
+                    # DID trip, so an operator can see which rules almost fired.
+                    _decide(finding, "NOT_CONFIRMED",
+                            f"scanned; static score {result.bash_score} below confirmation bar",
+                            top_signals=sorted({f"{bf.category}:{bf.rule}"
+                                                for bf in result.bash_findings})[:8])
                 if result and result.confirmed:
                     finding.status = RepoFindingStatus.CONFIRMED
                     finding.score += result.bash_score
@@ -633,6 +666,11 @@ def hunt(
                     confirmed += 1
                     confirmed_by_method[finding.detection_method.value] += 1
                     progress.confirmed(finding.full_name, finding.score)
+                    _decide(finding, "CONFIRMED",
+                            f"Tier-2 static confirm (bash score {result.bash_score})",
+                            method=finding.detection_method.value, score=finding.score,
+                            confirming=[f"{bf.category}:{bf.rule}"
+                                        for bf in result.confirming_findings][:6])
                     # Compounding loop: mine this confirmed repo's IOCs into the
                     # search corpus so future hunts find more like it.
                     li = result.learned_iocs

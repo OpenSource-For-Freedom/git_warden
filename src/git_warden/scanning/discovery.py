@@ -104,6 +104,16 @@ _SECURITY_TOOL_MARKERS = (
     "proof of concept", "proof-of-concept", "reverse engineering",
     "malware analysis", "malware research", "threat research", "gadget chain",
     "deserialization gadget", "payload generator",
+    # DEFENSIVE security tools -- a malware/supply-chain SCANNER legitimately ships
+    # attack signatures (C2 domains, credential paths, decode-exec patterns) as its
+    # DETECTION DATA, so it must be screened just like an offensive tool (the
+    # dnszlsk/muad-dib defensive-scanner FP, 2026-07-07). Kept specific enough that
+    # a real malicious package README will not hit two of them.
+    "malware scanner", "malware detection", "malware detector", "package scanner",
+    "dependency scanner", "supply-chain security", "supply chain security",
+    "supply-chain attack", "supply chain attack", "typosquat", "detection engine",
+    "detection rules", "detects malicious", "detect malicious", "threat detection",
+    "static analysis", "indicators of compromise", "ioc match", "sarif",
 )
 
 

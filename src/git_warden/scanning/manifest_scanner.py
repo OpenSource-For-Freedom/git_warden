@@ -50,6 +50,13 @@ _REPUTABLE_INSTALL_HOSTS = (
     "get.docker.com", "download.docker.com", "bun.sh", "astral.sh", "deno.land",
     "install.python-poetry.org", "get.pnpm.io", "apt.llvm.org", "get.helm.sh",
     "packages.microsoft.com", "cli.github.com", "nodejs.org", "python.org",
+    # Package registries: pulling a passive artifact from one is a build step, not a
+    # dropper (the fa0311/twitter-openapi folderOpen venv+pip+curl-maven-jar FP,
+    # 2026-07-07). Attacker C2s (e.g. *.vercel.app droppers) are NOT here, so a
+    # curl|bash to one still confirms.
+    "repo1.maven.org", "repo.maven.apache.org", "registry.npmjs.org",
+    "pypi.org", "files.pythonhosted.org", "crates.io", "static.crates.io",
+    "proxy.golang.org", "rubygems.org",
 )
 
 
@@ -242,6 +249,10 @@ def _scan_vscode_tasks(text: str, rel: str) -> list[BashFinding]:
             continue
         run_on = ((task.get("runOptions") or {}).get("runOn") or "").lower()
         blob = _task_command_blob(task)
-        if run_on == "folderopen" and _SUSPICIOUS_CMD.search(blob):
+        # A folderOpen task that ONLY fetches from reputable registries (a venv+pip+
+        # curl-maven-jar build bootstrap) is not a dropper; an attacker C2 fetch
+        # (or a pure inline eval / reverse shell with no reputable host) still fires.
+        if (run_on == "folderopen" and _SUSPICIOUS_CMD.search(blob)
+                and not _only_reputable_install(blob)):
             out.append(BashFinding(rel, 0, "install_hook", "vscode-autorun", blob[:200]))
     return out

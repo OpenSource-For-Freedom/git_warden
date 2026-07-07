@@ -99,10 +99,13 @@ _RULES: dict[str, list[tuple[str, re.Pattern]]] = {
         # audit FP). Require a read/copy/exfil verb, or a pipe/redirect out, so a
         # permission-management line no longer confirms. /etc/passwd is
         # benign/ubiquitous and never flagged.
+        # Second branch requires the pipe/redirect to reach a REAL command/path, not
+        # a bare "|": a scanner's own sensitive-path REGEX ('/etc/shadow|\.gitconfig')
+        # is an alternation, not an exfil pipe (the dnszlsk/muad-dib FP, 2026-07-07).
         ("shadow-read", re.compile(
             r"\b(?:cat|less|more|head|tail|cp|scp|rsync|dd|xxd|strings|od|base64|"
             r"awk|sed|nc|curl|wget|tar|zip|gzip)\b[^\n]*/etc/shadow"
-            r"|/etc/shadow\b[^\n]*(?:\||>>?|curl|wget|\bnc\b)", re.I)),
+            r"|/etc/shadow\b[^\n]*(?:\|\s*[\w/]|>>?\s*[\w/.]|\b(?:curl|wget|nc)\b)", re.I)),
         ("env-token-grab", re.compile(r"\b(AWS_SECRET|GITHUB_TOKEN|NPM_TOKEN|API_KEY)\b", re.I)),
     ],
     "process_injection": [
