@@ -190,6 +190,7 @@ _HASH_MAX_FILE_BYTES = 5_000_000
 class Tier2Result:
     full_name: str
     code_hash: str
+    commit_sha: str = ""  # the exact commit we scanned, for permanent /blob/<sha>/ evidence
     bash_findings: list[BashFinding] = field(default_factory=list)
     bash_score: int = 0
     scanners: dict[str, str] = field(default_factory=dict)  # name -> status/summary
@@ -318,6 +319,22 @@ def clone_repo(
     return dest
 
 
+def _read_head_sha(root: Path, *, runner=subprocess.run) -> str:
+    """The exact commit SHA of the cloned tree, for permanent evidence links.
+
+    Evidence pinned to ``/blob/<sha>/`` stays valid forever; a ``/blob/HEAD/`` link
+    rots the moment a victim removes the injected file, which makes the report look
+    unverifiable at review time. Best-effort: returns '' if git is unavailable.
+    """
+    try:
+        result = runner(["git", "-C", str(root), "rev-parse", "HEAD"],
+                        capture_output=True, text=True, timeout=30)
+        sha = (result.stdout or "").strip()
+        return sha if result.returncode == 0 and len(sha) == 40 else ""
+    except (OSError, subprocess.SubprocessError):
+        return ""
+
+
 def _run_external(name: str, root: Path, runner) -> str:
     """Run one OSS scanner if installed; return a status string.
 
@@ -423,6 +440,15 @@ def analyze_repo(
         # bash_findings above for transparency.
         if _is_comment_line(f.snippet):
             continue
+        # VS Code and its forks (positron, che-code, ...) resolve the login shell's
+        # environment INTO the editor via `${execPath} -p JSON.stringify(process.env)`
+        # -- reading env for terminal inheritance, not exfiltrating secrets. That is
+        # not credential theft (the microsoft/vscode + posit-dev/positron env-dump
+        # FPs, 2026-07-07). A real stealer's env dump does not spawn the app itself.
+        if key == ("credential_access", "env-dump") and (
+                "execpath" in (f.snippet or "").lower()
+                or "shellenv" in (f.file or "").lower()):
+            continue
         if key in _CONFIRM_ALONE_RULES or (
                 key in _HOST_GATED_ALONE and _fetch_target_suspicious(f.snippet)):
             confirm_alone = True
@@ -490,9 +516,12 @@ def scan_candidate(
             log.warning("clone exceeds size bounds; skipping",
                         extra={"context": {"repo": full_name}})
             return None
-        return analyze_repo(cloned, full_name, runner=runner,
-                            restrict_paths=restrict_paths,
-                            confirm_categories=confirm_categories,
-                            malicious_packages=malicious_packages)
+        result = analyze_repo(cloned, full_name, runner=runner,
+                              restrict_paths=restrict_paths,
+                              confirm_categories=confirm_categories,
+                              malicious_packages=malicious_packages)
+        # Pin the exact commit so evidence links survive the file being removed later.
+        result.commit_sha = _read_head_sha(cloned, runner=runner)
+        return result
     finally:
         _force_rmtree(cloned)

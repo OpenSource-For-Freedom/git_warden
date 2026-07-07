@@ -86,6 +86,38 @@ def is_defensive_repo(full_name: str) -> bool:
     return bool(_DEFENSIVE_REPO.search(full_name))
 
 
+# README phrases that mark a legitimate OFFENSIVE-security / research tool: a
+# pentest suite, an exploit/gadget collection, a CTF or malware-analysis lab. Such
+# a repo CONTAINS attack code (reverse shells, deser payloads, obfuscated loaders)
+# as its stated PURPOSE, so a static scanner will "confirm" it -- but it is a
+# research breadcrumb, never malware delivered to victims (the karmaz95/crimson FP,
+# 2026-07-07). A real malicious lure never describes itself this way.
+_SECURITY_TOOL_MARKERS = (
+    "penetration testing", "pentest", "pen-test", "pen test", "red team",
+    "red-team", "purple team", "adversary emulation", "breach and attack",
+    "vulnerability scan", "vulnerability assessment", "vulnerability research",
+    "exploit development", "exploitation framework", "exploit collection",
+    "offensive security", "security research", "security testing", "security tool",
+    "security toolkit", "bug bounty", "capture the flag", "ctf challenge",
+    "ctf writeup", "for educational purposes", "educational purposes only",
+    "authorized testing", "authorized security", "responsible disclosure",
+    "proof of concept", "proof-of-concept", "reverse engineering",
+    "malware analysis", "malware research", "threat research", "gadget chain",
+    "deserialization gadget", "payload generator",
+)
+
+
+def is_security_tool(readme: str | None) -> bool:
+    """True if a repo's README signals a legitimate security-research / offensive
+    tool. Requires 2+ distinct markers so a lone stray word (a real lure that says
+    'exploit' once) is not misclassified; a genuine tool's README carries several.
+    """
+    text = (readme or "").lower()
+    if not text:
+        return False
+    return sum(1 for m in _SECURITY_TOOL_MARKERS if m in text) >= 2
+
+
 def classify_hit(hit: RepoHit) -> str:
     """'defensive' if the repo merely catalogs the IOC; 'suspicious' if it uses it.
 

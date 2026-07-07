@@ -150,3 +150,16 @@ def test_classify_nondefensive_name_data_only_is_suspicious():
     # eval verify: non-defensive name + IOC only in data files -> investigate.
     hit = RepoHit("attacker/totally-evil", "attacker", "", paths=["notes.txt", "data.md"])
     assert classify_hit(hit) == "suspicious"
+
+
+def test_is_security_tool_breadcrumbs_pentest_readmes():
+    # 2026-07-07: karmaz95/crimson (a pentest tool) confirmed on its exploit
+    # payloads. A README with 2+ offensive-tool markers is a research breadcrumb.
+    from git_warden.scanning.discovery import is_security_tool
+    assert is_security_tool("A penetration testing toolkit for vulnerability assessment.")
+    assert is_security_tool("Exploit collection and CTF challenge writeups for security research.")
+    assert is_security_tool("Web Application Security Testing Tools: vulnerability scanning suite.")
+    # a real malicious lure never describes itself this way (0-1 stray markers)
+    assert not is_security_tool("A cool web3 project that can exploit market inefficiencies.")
+    assert not is_security_tool("My portfolio site built with vite and tailwind.")
+    assert not is_security_tool(None)

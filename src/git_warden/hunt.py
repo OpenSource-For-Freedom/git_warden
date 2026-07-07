@@ -46,9 +46,10 @@ from .scanning import (
     search_iocs,
 )
 from .scanning.actor_search import AccountRepo
-from .scanning.discovery import RepoHit
+from .scanning.discovery import RepoHit, is_security_tool
 from .scanning.enrichment import OwnerRepo
 from .scanning.newsdiscovery import DEFAULT_NEWS_TERMS, NewsHit
+from .scanning.package_resolver import find_package_source_repos
 from .scanning.signatures import load_seed_signatures
 from .scanning.tier2 import WEAPONIZATION_CATEGORIES, _force_rmtree
 
@@ -236,6 +237,18 @@ def _finding_from_owner(ar: OwnerRepo) -> RepoFinding:
     )
 
 
+def _finding_from_package_source(pr) -> RepoFinding:
+    reason = (f"GitHub source of known-malicious {pr.ecosystem} package '{pr.package}'"
+              + (f" (author {pr.author})" if pr.author else ""))
+    return RepoFinding(
+        full_name=pr.full_name,
+        url=f"https://github.com/{pr.full_name}",
+        detection_method=DetectionMethod.PACKAGE_SOURCE,
+        reasoning=reason,
+        matched_iocs=[pr.package],
+    )
+
+
 def _finding_from_osm_repo(full_name: str, url: str, intel: dict, db: Database,
                            run_id: str) -> RepoFinding:
     intel = intel or {}
@@ -277,12 +290,14 @@ def hunt(
     do_osm: bool = True,
     do_signature: bool = True,
     do_news: bool = True,
+    do_package_repos: bool = True,
     do_tier2: bool = False,
     max_iocs: int = 8,
     max_packages: int = 8,
     max_osm: int = 60,
-    max_signatures: int = 8,
+    max_signatures: int = 14,
     max_news: int = 6,
+    max_package_repos: int = 40,
     search_pace: float = 0.0,
     limit: int = 0,
     scan_min_score: int = 4,
@@ -290,6 +305,7 @@ def hunt(
     notifier=None,
     clone=None,
     news_http=None,
+    pkg_http=None,
     osm_live_known: set[str] | None = None,
     progress=None,
 ) -> dict:
@@ -353,6 +369,21 @@ def hunt(
         for ar in find_owner_repos(client, db.malicious_repo_owners(), known=known):
             candidates.setdefault(ar.full_name.casefold(), _finding_from_owner(ar))
         _src("owner pivot")
+
+    if do_package_repos:
+        # HIGH-RECALL package -> repo: resolve known-malicious packages (OSM + any
+        # ingested advisory feed) to their GitHub SOURCE repos via public registry
+        # metadata. Reuses intel we already hold; each is Tier-2-eligible but still
+        # has to confirm on its own code (a typosquat pointing at the legit repo
+        # never confirms).
+        pkg_client = pkg_http
+        if pkg_client is None:
+            from .feeds.http import RequestsHttpClient
+            pkg_client = RequestsHttpClient()
+        for pr in find_package_source_repos(db, pkg_client, known=known,
+                                            limit=max_package_repos):
+            candidates.setdefault(pr.full_name.casefold(), _finding_from_package_source(pr))
+        _src("package source repos")
 
     if do_news:
         # News/discussion pivot: Hacker News + Google News RSS, both free and
@@ -452,16 +483,28 @@ def hunt(
         )
         finding.score = result.score
         finding.signals = sorted(set(finding.signals) | set(result.signal_names))
+        # Flag legitimate offensive-security / research tools from their README so
+        # Tier-2 keeps them a breadcrumb instead of confirming their (purposeful)
+        # attack code (the karmaz95/crimson FP, 2026-07-07).
+        if is_security_tool(readme):
+            finding.signals = sorted(set(finding.signals) | {"security-tool"})
         # Intelligence-driven candidates (reference a known IOC / malicious
         # package / are under a repeat-offender owner) reach Tier-2 on their
         # discovery signal, NOT their (often benign) name; unless they are a
         # defender/sample/catalog repo, which we must not clone+confirm.
         intel = finding.detection_method in (
             DetectionMethod.IOC_SEARCH, DetectionMethod.PACKAGE_REF,
-            DetectionMethod.MALICIOUS_OWNER, DetectionMethod.ACTOR_ACCOUNT,
-            DetectionMethod.OSM_REPOSITORY, DetectionMethod.SIGNATURE_MATCH,
+            DetectionMethod.PACKAGE_SOURCE, DetectionMethod.MALICIOUS_OWNER,
+            DetectionMethod.ACTOR_ACCOUNT, DetectionMethod.OSM_REPOSITORY,
+            DetectionMethod.SIGNATURE_MATCH,
         )
-        to_tier2 = result.tier2 or (intel and not is_defensive_repo(finding.full_name))
+        # A well-known-legit org (microsoft, freebsd, ...) never reaches Tier-2:
+        # its huge codebase legitimately contains tasks.json/eval/env-read patterns
+        # that would otherwise confirm (the microsoft/vscode FP, 2026-07-07). Apply
+        # the allowlist DURING the hunt, not only at the reconcile sweep.
+        good_owner = finding.full_name.split("/", 1)[0].casefold() in config.KNOWN_GOOD_OWNERS
+        to_tier2 = (not good_owner) and (
+            result.tier2 or (intel and not is_defensive_repo(finding.full_name)))
         finding.status = RepoFindingStatus.SCREENED if to_tier2 else RepoFindingStatus.CANDIDATE
         if to_tier2:
             screened_count += 1
@@ -489,6 +532,29 @@ def hunt(
         try:
             for _t2_idx, finding in enumerate(screened, start=1):
                 progress.tier2_item(_t2_idx, _t2_total, finding.full_name)
+                # Well-known-legit org (microsoft, freebsd, ...) is never scanned or
+                # confirmed, even at a high Tier-1 score, because a huge legit
+                # codebase inevitably trips a rule (the microsoft/vscode env-read FP,
+                # 2026-07-07). This is the definitive gate: the screened list can
+                # include a high-score candidate regardless of the Tier-1 decision.
+                if finding.full_name.split("/", 1)[0].casefold() in config.KNOWN_GOOD_OWNERS:
+                    finding.status = RepoFindingStatus.REJECTED
+                    finding.reasoning = (finding.reasoning or "") + \
+                        " | well-known-legit owner; never scanned/confirmed"
+                    db.upsert_finding(finding, run_id)
+                    continue
+                # Offensive-security / research tool (README-flagged at Tier-1): its
+                # attack code is its stated purpose, not malice delivered to victims.
+                # Keep it a research breadcrumb, never confirmed/published -- extends
+                # the red-team-tool protection to EVERY discovery method (the
+                # karmaz95/crimson package_ref FP, 2026-07-07).
+                if "security-tool" in finding.signals:
+                    finding.status = RepoFindingStatus.SCREENED
+                    finding.reasoning = (finding.reasoning or "") + \
+                        " | security-research/offensive tool (README); breadcrumb, not confirmed"
+                    db.upsert_finding(finding, run_id)
+                    redteam_breadcrumbs += 1
+                    continue
                 kwargs = {"clone": clone} if clone else {}
                 kwargs["malicious_packages"] = mal_packages
                 restrict = None
@@ -548,6 +614,9 @@ def hunt(
                         f" | Tier-2 confirmed (bash score {result.bash_score})"
                     finding.code_hash = result.code_hash
                     finding.raw_payload["code_hash"] = result.code_hash
+                    # The exact scanned commit -> permanent /blob/<sha>/ evidence links.
+                    if result.commit_sha:
+                        finding.raw_payload["commit_sha"] = result.commit_sha
                     # Provenance for the gold message (doc 02 6): file:line + rule
                     # per bash finding. The CONFIRMING findings come first so a
                     # noisy repo (1000s of weak hits) never buries the real signal.

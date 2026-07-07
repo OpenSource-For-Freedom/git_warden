@@ -61,9 +61,23 @@ REDTEAM_TOOLS_PATH = Path(
 # Wall of Shame even if a pivot/scanner trips on them (e.g. large OSS build
 # systems whose scripts legitimately fetch+run during builds). Used by the
 # `review --reconcile` precision sweep. Comma-separated owners, case-insensitive.
+# Major OSS orgs/monorepos whose scripts legitimately fetch+run at build time or
+# vendor third-party test code (the 2026-07-07 CTF tripped on freebsd-ports,
+# pfsense, and cheribsd). Extend via GW_KNOWN_GOOD_OWNERS (comma-separated, added
+# to this default set), case-insensitive.
+_DEFAULT_GOOD_OWNERS = (
+    "openwrt", "freebsd", "freebsd-ports", "pfsense", "ctsrd-cheri", "netbsd",
+    "openbsd", "illumos", "dragonflybsd", "torvalds", "gnu", "apache", "llvm",
+    "nodejs", "python", "rust-lang", "golang", "google", "microsoft", "kubernetes",
+    "debian", "archlinux", "gentoo", "nixos", "homebrew", "postgres", "git",
+    # VS Code forks / IDEs: huge legit codebases that carry tasks.json + env-read
+    # patterns (the microsoft/vscode, posit-dev/positron, che-incubator/che-code FPs)
+    "posit-dev", "che-incubator", "eclipse-che", "gitpod-io", "coder", "cdr",
+    "vscodium", "theia-ide", "eclipse-theia", "microsoft-dev", "gitpod-samples",
+)
 KNOWN_GOOD_OWNERS = frozenset(
     o.strip().casefold()
-    for o in os.environ.get("GW_KNOWN_GOOD_OWNERS", "openwrt").split(",")
+    for o in (*_DEFAULT_GOOD_OWNERS, *os.environ.get("GW_KNOWN_GOOD_OWNERS", "").split(","))
     if o.strip()
 )
 
