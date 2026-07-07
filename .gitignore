@@ -33,12 +33,16 @@ Thumbs.db
 .idea/
 .vscode/
 
-# Local-only OSM submit feature -- the write side stays out of the public repo
-# (forward slashes: git uses them on Windows and Linux alike).
-docs/submit.md
-src/git_warden/osm_submit.py
-tests/test_osm_submit.py
+# The OSM submit feature SHIPS -- users need it to submit via the CLI. It is
+# dry-run by default, uses the operator's own key + GW_OSM_CONTRIBUTOR, and checks
+# OSM before every send so it never duplicates. Only the operator's run-specific
+# notes (cleanup ids, etc.) stay local.
 osm_reports.md
+
+# Local-only actor intelligence -- the actor dossier + decoded-IOC miner that
+# builds on the public campaign-attribution layer. Run: python -m git_warden.actor_intel
+src/git_warden/actor_intel.py
+tests/test_actor_intel.py
 
 # Local scheduled-task runners (Task Scheduler .cmd scripts + their logs)
 local/

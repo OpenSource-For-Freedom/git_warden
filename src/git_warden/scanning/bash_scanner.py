@@ -39,13 +39,30 @@ _WEIGHTS = {
 _RULES: dict[str, list[tuple[str, re.Pattern]]] = {
     "reverse_shell": [
         ("dev-tcp-redirect", re.compile(r"/dev/tcp/|/dev/udp/", re.I)),
-        ("nc-exec", re.compile(r"\bn(?:c|cat)\b[^\n]*\s-e\b", re.I)),
+        # shai-hulud-detect FP (2026-07-02): "${NC}"/"$NC" is the ubiquitous
+        # shell convention for a "No Color" ANSI reset variable, which an
+        # unrelated "-e" later on the same line (e.g. prose about Bash's
+        # `set -e`) then completed into a false nc-exec match. The negative
+        # lookbehind excludes "nc"/"NC" as a variable reference; a real
+        # `nc -e ...` invocation (never preceded by `{`/`$`) still matches.
+        ("nc-exec", re.compile(r"(?<![{$])\bn(?:c|cat)\b[^\n]*\s-e\b", re.I)),
         ("bash-i-socket", re.compile(r"bash\s+-i\b[^\n]*(>&|2>&1)", re.I)),
         ("mkfifo-shell", re.compile(r"mkfifo[^\n]*\b(nc|ncat|sh|bash)\b", re.I)),
         ("python-reverse", re.compile(r"socket\.socket[^\n]*(connect|SOCK_STREAM)", re.I)),
     ],
     "download_exec": [
-        ("curl-pipe-shell", re.compile(r"(curl|wget)\s[^\n|]*\|\s*(sh|bash|python|perl)", re.I)),
+        # curl|bash is dangerous from an ATTACKER host, but it is ALSO the standard
+        # install idiom for reputable toolchains (`curl -fsSL deb.nodesource.com/...
+        # | bash` in a Dockerfile). The negative lookahead excludes a pipe-to-shell
+        # whose fetch targets a well-known installer host, so a normal Docker build
+        # no longer confirms as download-and-execute (2026-07-06 docker FP audit).
+        ("curl-pipe-shell", re.compile(
+            r"(?!(?:curl|wget)\b[^\n|]*\b(?:deb\.nodesource\.com|deb\.debian\.org|"
+            r"archive\.ubuntu\.com|security\.ubuntu\.com|get\.docker\.com|"
+            r"download\.docker\.com|sh\.rustup\.rs|rustup\.rs|get\.helm\.sh|"
+            r"apt\.llvm\.org|packages\.microsoft\.com|bun\.sh|astral\.sh|"
+            r"install\.python-poetry\.org)\b)"
+            r"(curl|wget)\s[^\n|]*\|\s*(sh|bash|python|perl)", re.I)),
         ("fetch-then-exec",
          re.compile(r"(curl|wget)\s[^\n]*-o\s*\S+[^\n]*;\s*(sh|bash|chmod)", re.I)),
     ],
@@ -58,8 +75,13 @@ _RULES: dict[str, list[tuple[str, re.Pattern]]] = {
             r"\b(?:curl|wget)\b[^\n]*(?:-d|--data(?:-binary)?|-F|--form|-T|--upload-file)"
             r"[^\n]*(?:id_rsa|id_ed25519|\.ssh/|\.aws/credentials|/etc/shadow|/etc/passwd|"
             r"\.env\b|credentials?\.(?:json|ya?ml)|secrets?\.(?:json|ya?ml|txt))", re.I)),
+        # The exfil flags are case-SENSITIVE: -d (data), -F (form), -T (upload).
+        # Matching them under re.I made curl's ubiquitous benign -f ("fail
+        # silently", as in every `curl -f http://localhost/health` Docker
+        # HEALTHCHECK) collide with -F and confirm as exfiltration. The (?-i:)
+        # scope keeps -f benign while curl/Curl still matches (2026-07-06 FP audit).
         ("curl-post-data",
-         re.compile(r"\bcurl\b.*(?:\s-[dFT]\b|--data\b|--upload-file\b)", re.I)),
+         re.compile(r"\bcurl\b.*(?-i:\s-[dFT]\b|\s--data\b|\s--upload-file\b)", re.I)),
         ("archive-then-send", re.compile(r"(tar|zip|gzip)\b[^\n]*\|\s*(curl|nc|wget)", re.I)),
     ],
     "persistence": [
@@ -72,12 +94,27 @@ _RULES: dict[str, list[tuple[str, re.Pattern]]] = {
     "credential_harvest": [
         ("ssh-keys", re.compile(r"id_rsa|id_ed25519|\.ssh/id_", re.I)),
         ("cloud-creds", re.compile(r"\.aws/credentials|\.config/gcloud|\.azure/", re.I)),
-        # reads /etc/shadow (password hashes); /etc/passwd is benign/ubiquitous
-        ("shadow-passwd", re.compile(r"/etc/shadow\b", re.I)),
+        # READING/exfiltrating /etc/shadow (password hashes) is theft; but
+        # CIS-hardening scripts legitimately chmod/chown/stat/ls it (2026-07-02
+        # audit FP). Require a read/copy/exfil verb, or a pipe/redirect out, so a
+        # permission-management line no longer confirms. /etc/passwd is
+        # benign/ubiquitous and never flagged.
+        ("shadow-read", re.compile(
+            r"\b(?:cat|less|more|head|tail|cp|scp|rsync|dd|xxd|strings|od|base64|"
+            r"awk|sed|nc|curl|wget|tar|zip|gzip)\b[^\n]*/etc/shadow"
+            r"|/etc/shadow\b[^\n]*(?:\||>>?|curl|wget|\bnc\b)", re.I)),
         ("env-token-grab", re.compile(r"\b(AWS_SECRET|GITHUB_TOKEN|NPM_TOKEN|API_KEY)\b", re.I)),
     ],
     "process_injection": [
-        ("ld-preload", re.compile(r"\bLD_PRELOAD\b", re.I)),
+        # LD_PRELOAD is legitimately used to preload memory allocators and
+        # sanitizers (jemalloc/tcmalloc/mimalloc, libasan, ...) -- extremely
+        # common in Dockerfiles (the aristoteleo/pantheonos FP, 2026-07-02 was
+        # `LD_PRELOAD=.../libjemalloc.so.2`). The negative lookahead suppresses
+        # the match when a well-known-legit library is on the same line; a real
+        # `LD_PRELOAD=/tmp/evil.so` (no such name) still fires.
+        ("ld-preload", re.compile(
+            r"(?!.*lib(?:jemalloc|tcmalloc|mimalloc|hugetlbfs|asan|tsan|ubsan|lsan|"
+            r"gomp|faketime|eatmydata|umem|profiler|Segfault))\bLD_PRELOAD\b", re.I)),
         ("ptrace-mem", re.compile(r"/proc/\d+/mem|\bptrace\b", re.I)),
         ("gdb-attach", re.compile(r"gdb\s+-p\b", re.I)),
     ],
@@ -125,9 +162,35 @@ _IGNORE_DIRS = frozenset({
     # non-payload: tests/fixtures/examples carry attack strings as DATA
     "test", "tests", "__tests__", "spec", "__spec__", "fixtures", "fixture",
     "__fixtures__", "mocks", "__mocks__", "e2e", "testdata", "examples", "example",
+    # shai-hulud-detect FP (2026-07-02): a worm DETECTOR ships deliberately
+    # crafted attack-simulation fixtures to prove its own detection works;
+    # these are demo/proof-of-concept payloads, not the repo's real code.
+    "test-cases", "test_cases", "testcases", "samples", "sample",
+    "poc", "pocs", "demo", "demos",
 })
 # Test-file name markers (a test file can live anywhere, e.g. `src/x.test.ts`).
 _TEST_FILE_MARKERS = (".test.", ".spec.", ".stories.", ".fixture.", ".mock.")
+# Language-specific test-file conventions matched by SUFFIX/PREFIX (not loose
+# substring, so `latest_release.py` is never mistaken for a `test_` file). The
+# garagon/aguara FP (2026-07-02) confirmed on Go `*_test.go` fixtures that the
+# JS-style ``.test.`` markers above did not catch.
+_TEST_FILE_SUFFIXES = (
+    "_test.go", "_test.py", "_test.rs", "_test.ts", "_test.js", "_test.tsx",
+    "_tests.py", "_tests.rs", "_spec.rb", ".test.go",
+)
+_TEST_FILE_EXACT = frozenset({"conftest.py", "tests.rs", "test.rs"})
+
+
+def is_test_file(name: str) -> bool:
+    """True if a filename follows any language's test/fixture convention."""
+    low = name.lower()
+    if any(m in low for m in _TEST_FILE_MARKERS):
+        return True
+    if low.endswith(_TEST_FILE_SUFFIXES):
+        return True
+    if low.startswith("test_") and low.endswith((".py", ".rs", ".go")):
+        return True
+    return low in _TEST_FILE_EXACT
 
 # Security-DATA files: a malware scanner / advisory feed carries attack strings and
 # known-bad package names as DATA, not as a payload it runs. The pkgward-oss FP
@@ -141,6 +204,10 @@ _SECURITY_DATA_MARKERS = (
     "attack_pattern", "attack-pattern", "attack_signature", "threat_signature",
     "yara", "ruleset", "detection_rule", "detection-rule", "_signatures.",
     "ioc_list", "ioc-list", "blocklist", "blacklist", "denylist",
+    # cobenian/shai-hulud-detect + idox-genai/shai-hulud-scanner FPs
+    # (2026-07-02): a Shai-Hulud-worm DETECTOR's own reference list of the
+    # compromised package names it scans for, mistaken for evidence of malice.
+    "compromised-package", "compromised_package", "ioc-packages", "ioc_packages",
 )
 
 
@@ -162,7 +229,7 @@ def is_ignored_path(path: Path) -> bool:
     if _IGNORE_DIRS & parts:
         return True
     name = path.name.lower()
-    if any(marker in name for marker in _TEST_FILE_MARKERS):
+    if is_test_file(name):
         return True
     return is_security_data_file(name)
 

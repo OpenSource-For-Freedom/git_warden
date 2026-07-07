@@ -51,8 +51,18 @@ _RULES: dict[str, list[tuple[str, str, re.Pattern]]] = {
          re.compile(r"webhook\.site|requestcatcher\.com|pastebin\.com/api", re.I)),
     ],
     "credential_access": [
+        # Requires the WHOLE process.env object (immediately closed by ``,``/``)``),
+        # not a single named property: JSON.stringify(process.env) dumps every
+        # secret in the environment, while JSON.stringify(process.env.NODE_ENV) is
+        # webpack/bundler dead-code-elimination boilerplate present in nearly
+        # every JS build (the mastra-ai/mastra FP, 2026-07-02) and carries no
+        # secret at all.
+        # word-boundaried \b...\b around post/send/requests (mem0ai/mem0 FP,
+        # 2026-07-02): unbounded, this matched "POST" inside "POSTGRES_HOST" --
+        # ordinary os.environ.get("POSTGRES_...") config code, not exfiltration.
         ("env-dump", "any", re.compile(
-            r"JSON\.stringify\(\s*process\.env|os\.environ\b.*(?:post|send|requests)", re.I)),
+            r"JSON\.stringify\(\s*process\.env\s*[,)]|os\.environ\b.*\b(?:post|send|requests)\b",
+            re.I)),
         # Actual secret-FILE access (private keys, cloud creds); a credential
         # theft signal. A bare ``.env`` reference is NOT here: every dotenv app
         # has one, and it manufactured the tiledesk false positives.

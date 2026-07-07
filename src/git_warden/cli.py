@@ -378,7 +378,15 @@ def _cmd_hunt(args: argparse.Namespace) -> int:
     from .github import GitHubClient
     from .hunt import hunt
     from .notify import cluster_embed, post_discord
+    from .progress import ConsoleProgress, NullProgress
     from .redteam import load_redteam_tools
+
+    # Human progress on stderr, kept off the stdout JSON summary. "auto" shows it
+    # when a human is at the terminal and stays silent in a pipe/CI, so the
+    # non-interactive run.yml workflow is never blocked or spammed.
+    show_progress = args.progress == "on" or (
+        args.progress == "auto" and sys.stderr.isatty())
+    progress = ConsoleProgress(sys.stderr) if show_progress else NullProgress()
 
     if not config.GITHUB_TOKEN:
         print("warning: GW_GITHUB_TOKEN not set -> code search disabled, rate limited.")
@@ -398,22 +406,30 @@ def _cmd_hunt(args: argparse.Namespace) -> int:
 
     db = Database.open(args.db)
     run_id = args.run_id or f"hunt-{datetime.now(UTC).strftime('%Y%m%dT%H%M%SZ')}"
+    # Snapshot the learning corpus before/after so we can show a newcomer the
+    # tool is compounding across runs, not just re-scanning (the "it's iterative"
+    # signal, backed by real DB state).
+    corpus_before = db.corpus_snapshot()
+    progress.run_header(corpus_before["runs_completed"] + 1, corpus_before)
     try:
         summary = hunt(
             db, GitHubClient(), load_redteam_tools(),
             run_id=run_id,
             osm_live_known=osm_live_known,
+            progress=progress,
             do_ioc=not args.no_ioc,
             do_lineage=not args.no_lineage,
             do_actor=not args.no_actor,
             do_enrich=not args.no_enrich,
             do_osm=not args.no_osm,
             do_signature=not args.no_signature,
+            do_news=not args.no_news,
             do_tier2=args.scan,
             max_iocs=args.max_iocs,
             max_packages=args.max_packages,
             max_osm=args.max_osm,
             max_signatures=args.max_signatures,
+            max_news=args.max_news,
             search_pace=args.pace,
             limit=args.limit,
             gold=args.gold,
@@ -438,6 +454,7 @@ def _cmd_hunt(args: argparse.Namespace) -> int:
         # findings CSV artifact. CI pushes the README each run.
         readme_changed = update_readme_registry_table(db)
         readme_changed = update_readme_bad_owners(db) or readme_changed
+        corpus_after = db.corpus_snapshot()
     finally:
         db.close()
     json.dump(summary, sys.stdout, indent=2)
@@ -460,6 +477,8 @@ def _cmd_hunt(args: argparse.Namespace) -> int:
     if failed:
         print(f"{len(failed)} clone(s) could not be scanned; "
               f"see artifacts/{run_id}_failed_clones.csv")
+    # Human wrap-up on stderr: the four newcomer buckets + the learning delta.
+    progress.run_footer(corpus_before, corpus_after, summary["counts"])
     return 0
 
 
@@ -611,6 +630,10 @@ def build_parser() -> argparse.ArgumentParser:
                         help="Skip malware code-signature search (novel-repo discovery).")
     hunt_p.add_argument("--max-signatures", type=int, default=8,
                         help="Malware code signatures to code-search (novel-repo engine).")
+    hunt_p.add_argument("--no-news", action="store_true",
+                        help="Skip the Hacker News / Google News discovery pivot.")
+    hunt_p.add_argument("--max-news", type=int, default=6,
+                        help="News/discussion search terms (Hacker News + Google News RSS).")
     hunt_p.add_argument("--scan", action="store_true", help="Run Tier-2 clone+scan.")
     hunt_p.add_argument("--gold", action="store_true", help="Deliver confirmed to Discord.")
     hunt_p.add_argument("--max-iocs", type=int, default=8, help="IOC terms to search.")
@@ -624,6 +647,9 @@ def build_parser() -> argparse.ArgumentParser:
     hunt_p.add_argument("--limit", type=int, default=0,
                         help="Cap candidates processed (0 = no cap). Bounds a run.")
     hunt_p.add_argument("--pretty-logs", action="store_true", help="Human-readable logs.")
+    hunt_p.add_argument("--progress", choices=["auto", "on", "off"], default="auto",
+                        help="Live progress on stderr (auto = when stderr is a TTY). "
+                             "Separate from the stdout summary and audit log.")
     hunt_p.set_defaults(func=_cmd_hunt)
     return parser
 

@@ -60,19 +60,20 @@ steal-and-send); threat-intel leads (a malicious owner, a shared signature) only
 *seed* which repos get scanned, never confirm one alone.
 
 <!-- git-warden:registry:start -->
-_Top 9 of 22 repositories confirmed malicious by static analysis this run, ranked by severity. The full list ships as the run's CSV artifact and to the Discord feed; every row's evidence (file, line, rule) is in that CSV. Dispute: open an issue and we will re-review._
+_Top 10 of 31 repositories confirmed malicious by static analysis this run, ranked by severity. The full list ships as the run's CSV artifact and to the Discord feed; every row's evidence (file, line, rule) is in that CSV. Dispute: open an issue and we will re-review._
 
 | Repository | Detection | Score | Attribution | Proof (file:line rule) |
 |------------|-----------|-------|-------------|------------------------|
-| [`usmanaliashraf/portfolio`](https://github.com/usmanaliashraf/portfolio) | signature_match | 12 | unattributed | postcss.config.mjs:12 obfuscation/eval-decoded  (+8 more) |
+| [`gauravraisharma/ticketting-system`](https://github.com/gauravraisharma/ticketting-system) | signature_match | 15 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+19 more) |
+| [`alexsander532/projeto_dashboard_versao1`](https://github.com/alexsander532/projeto_dashboard_versao1) | signature_match | 14 | DPRK (North Korea) (per OSM) | frontend/vite.config.js:36 obfuscation/eval-decoded  (+3 more) |
+| [`solarpy/caroline119-defi-property-4e3a113352e3`](https://github.com/solarpy/caroline119-defi-property-4e3a113352e3) | osm_repository | 13 | DPRK (North Korea) (per OSM) | caroline119-defi-property-4e3a113352e3/.vscode/tasks.json:0 install_hook/vscode-autorun  (+12 more) |
+| [`lfirsl/morphix`](https://github.com/lfirsl/morphix) | osm_repository | 12 | DPRK (North Korea) (per OSM) | .vscode/tasks.json:0 install_hook/vscode-autorun  (+13 more) |
+| [`usmanaliashraf/portfolio`](https://github.com/usmanaliashraf/portfolio) | signature_match | 12 | DPRK (North Korea) (per OSM) | postcss.config.mjs:12 obfuscation/eval-decoded  (+8 more) |
 | [`icecoldjay/bri`](https://github.com/icecoldjay/bri) | signature_match | 11 | unattributed | client/tailwind.config.js:61 obfuscation/eval-decoded  (+3 more) |
-| [`dawit212119/prismamonorepoplugin`](https://github.com/dawit212119/prismamonorepoplugin) | osm_repository | 10 | unattributed | src/index.ts:3 code_execution/node-child-process  (+2 more) |
-| [`alexsander532/atlas_landingpage`](https://github.com/alexsander532/atlas_landingpage) | signature_match | 9 | unattributed | astro.config.mjs:7 obfuscation/eval-decoded  (+1 more) |
-| [`alexsander532/mvp_wain_group130`](https://github.com/alexsander532/mvp_wain_group130) | signature_match | 9 | unattributed | frontend/postcss.config.mjs:9 obfuscation/eval-decoded  (+1 more) |
-| [`alexsander532/synapseai_landingpage`](https://github.com/alexsander532/synapseai_landingpage) | signature_match | 9 | unattributed | postcss.config.mjs:12 obfuscation/eval-decoded  (+1 more) |
-| [`alexsander532/synapseai`](https://github.com/alexsander532/synapseai) | signature_match | 8 | unattributed | postcss.config.mjs:11 obfuscation/eval-decoded  (+1 more) |
-| [`bambao1-lang/bambao1-lang.github.io`](https://github.com/bambao1-lang/bambao1-lang.github.io) | signature_match | 8 | unattributed | package.json:49 enumeration/host-recon  (+2 more) |
-| [`haroontaufiq/cosmic-questionnaire`](https://github.com/haroontaufiq/cosmic-questionnaire) | signature_match | 8 | unattributed | postcss.config.mjs:9 obfuscation/eval-decoded  (+3 more) |
+| [`mts-services/olabisiolai_frontend_react`](https://github.com/mts-services/olabisiolai_frontend_react) | signature_match | 11 | unattributed | vite.config.ts:107 obfuscation/eval-decoded  (+4 more) |
+| [`rajaxcodes/token-presale-dapp`](https://github.com/rajaxcodes/token-presale-dapp) | signature_match | 11 | unattributed | tasks.json:0 install_hook/vscode-autorun  (+5 more) |
+| [`simalchaudhari/real-estate`](https://github.com/simalchaudhari/real-estate) | signature_match | 10 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+19 more) |
+| [`abdurrahman224/kodesolution`](https://github.com/abdurrahman224/kodesolution) | signature_match | 9 | unattributed | vite.config.ts:25 obfuscation/eval-decoded  (+2 more) |
 <!-- git-warden:registry:end -->
 
 > [!NOTE]
@@ -95,11 +96,35 @@ _These repositories are NOT confirmed malicious on their own code. They appear o
 
 | Repository | Owner | Owner provenance (repos confirmed on evidence) | Score |
 |------------|-------|------------------------------------------------|-------|
-| [`alexsander532/projeto_dashboard_versao1`](https://github.com/alexsander532/projeto_dashboard_versao1) | alexsander532 | [`alexsander532/atlas_landingpage`](https://github.com/alexsander532/atlas_landingpage), [`alexsander532/mvp_wain_group130`](https://github.com/alexsander532/mvp_wain_group130), [`alexsander532/synapseai`](https://github.com/alexsander532/synapseai)  (+1 more) | 14 |
-| [`alexsander532/portfolio-pessoal`](https://github.com/alexsander532/portfolio-pessoal) | alexsander532 | [`alexsander532/atlas_landingpage`](https://github.com/alexsander532/atlas_landingpage), [`alexsander532/mvp_wain_group130`](https://github.com/alexsander532/mvp_wain_group130), [`alexsander532/synapseai`](https://github.com/alexsander532/synapseai)  (+1 more) | 8 |
-| [`alexsander532/synapse_ai`](https://github.com/alexsander532/synapse_ai) | alexsander532 | [`alexsander532/atlas_landingpage`](https://github.com/alexsander532/atlas_landingpage), [`alexsander532/mvp_wain_group130`](https://github.com/alexsander532/mvp_wain_group130), [`alexsander532/synapseai`](https://github.com/alexsander532/synapseai)  (+1 more) | 8 |
-| [`usmanaliashraf/rag-bot-uet-science-society`](https://github.com/usmanaliashraf/rag-bot-uet-science-society) | usmanaliashraf | [`usmanaliashraf/portfolio`](https://github.com/usmanaliashraf/portfolio) | 8 |
+| [`mts-services/kenndavi2_bbq_sauce_15_02_26_laravel`](https://github.com/mts-services/kenndavi2_bbq_sauce_15_02_26_laravel) | mts-services | [`mts-services/olabisiolai_frontend_react`](https://github.com/mts-services/olabisiolai_frontend_react) | 17 |
+| [`mts-services/kenndavi2_clothing_15_02_26_laravel`](https://github.com/mts-services/kenndavi2_clothing_15_02_26_laravel) | mts-services | [`mts-services/olabisiolai_frontend_react`](https://github.com/mts-services/olabisiolai_frontend_react) | 17 |
+| [`mts-services/kenndavi2_react`](https://github.com/mts-services/kenndavi2_react) | mts-services | [`mts-services/olabisiolai_frontend_react`](https://github.com/mts-services/olabisiolai_frontend_react) | 17 |
+| [`mts-services/macktech_laravel`](https://github.com/mts-services/macktech_laravel) | mts-services | [`mts-services/olabisiolai_frontend_react`](https://github.com/mts-services/olabisiolai_frontend_react) | 17 |
+| [`mts-services/may_writes`](https://github.com/mts-services/may_writes) | mts-services | [`mts-services/olabisiolai_frontend_react`](https://github.com/mts-services/olabisiolai_frontend_react) | 17 |
+| [`mts-services/michaelalleva_04_march_26`](https://github.com/mts-services/michaelalleva_04_march_26) | mts-services | [`mts-services/olabisiolai_frontend_react`](https://github.com/mts-services/olabisiolai_frontend_react) | 17 |
+| [`mts-services/mikylepersad_tow_truck_laravel`](https://github.com/mts-services/mikylepersad_tow_truck_laravel) | mts-services | [`mts-services/olabisiolai_frontend_react`](https://github.com/mts-services/olabisiolai_frontend_react) | 17 |
+| [`mts-services/ok2wg5c6d_tareenhossain`](https://github.com/mts-services/ok2wg5c6d_tareenhossain) | mts-services | [`mts-services/olabisiolai_frontend_react`](https://github.com/mts-services/olabisiolai_frontend_react) | 17 |
+| [`mts-services/timescape_laravel_26`](https://github.com/mts-services/timescape_laravel_26) | mts-services | [`mts-services/olabisiolai_frontend_react`](https://github.com/mts-services/olabisiolai_frontend_react) | 17 |
+| [`mts-services/tungsol_dictionary_1_26`](https://github.com/mts-services/tungsol_dictionary_1_26) | mts-services | [`mts-services/olabisiolai_frontend_react`](https://github.com/mts-services/olabisiolai_frontend_react) | 17 |
 <!-- git-warden:badowners:end -->
+
+<p align="center"><img src="docs/sculk-divider.png" alt="" width="900"></p>
+
+## Attribution
+
+Confirmed repos are attributed to a **country of origin** by a multi-signal engine,
+not a single tag. Git Warden names a country only on **2+ independent evidence
+signals** (Contagious-Interview tradecraft, C2-infrastructure overlap with prior
+campaign repos, a decoded BeaverTail/InvisibleFerret family fingerprint, or a
+known-malicious dependency) **or** a specific named-group intel attribution (APT28,
+Lazarus, Kimsuky, ...). A lone tradecraft vector or a bare nation tag stays a *lead*,
+never an assertion, so a copycat is never over-attributed.
+
+Each finding carries a confidence tier (confirmed / probable / possible /
+unattributed) with the exact evidence listed, so every attribution is falsifiable.
+The 18 seeded actors map to five origins (North Korea, Russia, China, Iran,
+Cybercrime); adding a country is a data entry, and North Korea (Contagious Interview)
+carries full evidence detectors today.
 
 <p align="center"><img src="docs/sculk-divider.png" alt="" width="900"></p>
 
@@ -149,6 +174,63 @@ python gw.py hunt --scan --gold              # full pipeline -> Wall of Shame ->
 python gw.py review --approve owner/repo     # analyst-validate a confirmed repo
 python gw.py probe --feed github --term lazarus  # probe any feed live
 ```
+
+**Watching a run.** In a terminal, `hunt` shows a live, plain-language progress
+view: per-source discovery counters, Tier-1/Tier-2 progress, and a run-number plus
+a learning-corpus delta so you can see the yield compound across runs. It collapses
+each run to four buckets: *repos scanned, signatures matched, code analysis passed,
+queued for review.* Force it with `--progress on`, silence it with `--progress off`
+(it auto-detects a terminal, so CI stays quiet). **Git Warden is iterative** — run 1
+sets a baseline, and most batches reach high yield by run 3 as the corpus compounds.
+
+## Dashboard
+
+A live, read-only **telemetry dashboard** for exploring the registry visually,
+built for data-driven review without touching the CLI:
+
+```bash
+make serve                       # or: python gw.py serve
+#  ->  http://127.0.0.1:8787
+```
+
+It renders the **discovered product** as a force-graph (OSM re-validations are
+hidden, so you see only what Git Warden surfaced):
+
+- **Every repo is colored by attribution confidence** — confirmed (red), probable
+  (orange), possible (yellow), unattributed (purple) — and clustered under its
+  **origin-country hub** (North Korea, Russia, China, Iran, Cybercrime).
+- **Click any repo** for the full picture: the confirming `file:line` evidence, the
+  country attribution with its independent signals, the decoded payload, the C2
+  infrastructure, and a **container-threat** badge when the Docker build recipe is
+  malicious.
+- Side panels break down attack vectors, C2 infrastructure, source yield and
+  precision, the run timeline, and rejected false positives.
+
+Local use needs no auth. For a deployment, set `GW_DASHBOARD_TOKEN` to require a
+bearer token on `/api/*` (every request is logged).
+
+## Submit to OSM
+
+Contribute your confirmed findings back to
+[OpenSourceMalware](https://opensourcemalware.com). The submitter is **safe by
+design**: it is dry-run by default, uses *your* OSM API key (`GW_OSM_API_KEY`) and
+contributor name (`GW_OSM_CONTRIBUTOR`), and **checks OSM before every send so it
+never duplicates an existing report**.
+
+```bash
+make submit                          # dry run: prints exactly what WOULD be sent
+make submit ARGS="--wizard"          # interactive, step-by-step (newcomer-friendly)
+make submit ARGS="--reconcile"       # read-only: your reports vs OSM's live state
+make submit ARGS="--confirm"         # actually POST new reports + corroborated C2 IOCs
+```
+
+Or directly: `python -m git_warden.osm_submit [--wizard|--reconcile|--confirm]`.
+
+Only **novel** confirmed findings with their own `file:line` evidence are eligible;
+OSM re-validations and un-evidenced associations are never sent. Each report carries
+full proof: the country attribution with signals, every confirming evidence link, and
+a plain-language writeup. `--wizard` walks a non-technical user through it step by
+step, including exactly what to paste into OSM's web form.
 
 ## Deployment
 
