@@ -628,9 +628,18 @@ def hunt(
                         redteam_breadcrumbs += 1
                         _decide(finding, "SCREENED", f"matches pinned red-team tool '{tool}'")
                         continue
-                result = scan_candidate(finding.full_name, workdir,
-                                        restrict_paths=restrict, confirm_categories=confirm_cats,
-                                        **kwargs)
+                # Safety net: a scanner bug on ONE repo (e.g. a malformed manifest)
+                # must never abort the whole run -- treat it as an unscannable clone
+                # and move on (a full 2h pipeline died this way on 2026-07-07).
+                try:
+                    result = scan_candidate(
+                        finding.full_name, workdir, restrict_paths=restrict,
+                        confirm_categories=confirm_cats, **kwargs)
+                except Exception as exc:  # noqa: BLE001
+                    result = None
+                    log.warning("scan_candidate crashed; skipping repo",
+                                extra={"context": {"repo": finding.full_name, "err": str(exc)}})
+                    _decide(finding, "SCAN_ERROR", f"scanner raised: {type(exc).__name__}")
                 if result is None:  # clone failed (404/taken down) or exceeded bounds
                     failed_clones.append({"repo": finding.full_name,
                                           "reason": "clone_failed_or_bounds"})
