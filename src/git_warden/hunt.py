@@ -65,8 +65,12 @@ def _decide(finding, decision: str, reason: str, **extra) -> None:
     why), and CLONE_FAILED, each with its reason -- the decisions that were
     previously only written to finding.reasoning in the DB and never surfaced live.
     """
-    log.info("tier2 decision", extra={"context": {
-        "repo": finding.full_name, "decision": decision, "reason": reason, **extra}})
+    tail = (" " + " ".join(f"{k}={v}" for k, v in extra.items())) if extra else ""
+    # Detail goes in the MESSAGE (not just context) so the human-readable
+    # --pretty-logs formatter shows it, not only the JSON formatter.
+    log.info("decision %-13s %s :: %s%s", decision, finding.full_name, reason, tail,
+             extra={"context": {"repo": finding.full_name, "decision": decision,
+                                "reason": reason, **extra}})
 
 
 def _osm_iocs(db: Database) -> IocSet:
