@@ -38,14 +38,27 @@ _TRAILING_JUNK = re.compile(
 HN_SEARCH_URL = "https://hn.algolia.com/api/v1/search"
 
 # Generic, source-agnostic terms; broad enough to surface fresh supply-chain
-# writeups without needing per-actor scoping or an API key.
+# writeups without needing per-actor scoping or an API key. Ordered so the first
+# --max-news (default 6) stay high-value; the rest widen family/actor coverage.
 DEFAULT_NEWS_TERMS = (
+    # supply chain (the core)
     "npm supply chain attack",
     "malicious npm package",
     "malicious pypi package",
     "github malware repository",
     "compromised github repository",
     "supply chain malware github",
+    # broader families, so hunts surface more than the one DPRK config loader
+    "info stealer github",
+    "crypto wallet drainer github",
+    "malicious vscode extension",
+    "malicious github action",
+    "credential stealer open source",
+    "typosquat package malware",
+    # actor-anchored: a writeup naming a NON-DPRK group surfaces its repos, and the
+    # attribution engine can then name the country (Russia / China / Iran / ...)
+    "apt github repository malware",
+    "state sponsored github malware",
 )
 
 

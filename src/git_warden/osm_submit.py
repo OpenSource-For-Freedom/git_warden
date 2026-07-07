@@ -309,7 +309,12 @@ def _evidence_refs(row, cap: int = 15) -> str:
     hunt orders them that way) newline-joined, capped so one noisy repo can't
     produce a thousand-line field. Reviewers get every proof point, not one."""
     full = row["full_name"]
-    bash = json.loads(row["raw_payload"] or "{}").get("bash_findings") or []
+    payload = json.loads(row["raw_payload"] or "{}")
+    bash = payload.get("bash_findings") or []
+    # Pin to the exact scanned commit if we captured it: a /blob/<sha>/ link stays
+    # valid forever, where /blob/HEAD/ rots the moment the file is removed. Falls
+    # back to HEAD for older findings scanned before commit_sha was recorded.
+    ref = payload.get("commit_sha") or "HEAD"
     refs: list[str] = []
     seen: set[tuple] = set()
     for b in bash:
@@ -321,7 +326,7 @@ def _evidence_refs(row, cap: int = 15) -> str:
             continue
         seen.add(key)
         anchor = f"#L{b['line']}" if b.get("line") else ""
-        refs.append(f"https://github.com/{full}/blob/HEAD/{f}{anchor}")
+        refs.append(f"https://github.com/{full}/blob/{ref}/{f}{anchor}")
         if len(refs) >= cap:
             break
     return "\n".join(refs) if refs else f"https://github.com/{full}"
@@ -599,6 +604,168 @@ def osm_current_reports(token: str | None = None, http=None) -> dict:
     return out
 
 
+def _repo_id_variants(full_name: str) -> list[str]:
+    """Every ``resource_identifier`` spelling OSM might have stored for a repo.
+
+    OSM does NOT canonicalize resource_identifier, so ``https://github.com/o/r``,
+    ``https://github.com/o/r/``, ``github.com/o/r`` and ``github.com/o/r/`` are all
+    DISTINCT resources to it -- which is exactly how format drift creates duplicate
+    reports of the same repo. We therefore probe all four when checking novelty.
+    """
+    o = full_name.strip().strip("/")
+    return [f"https://github.com/{o}/", f"https://github.com/{o}",
+            f"github.com/{o}/", f"github.com/{o}"]
+
+
+def osm_search(term: str, *, token: str | None = None, http=None) -> list[dict]:
+    """Full-history EXACT-match lookup via ``functions/v1/search``.
+
+    Unlike ``query-latest`` (a recent-window firehose that is blind to months-old
+    and pending reports), this endpoint searches OSM's whole corpus by the exact
+    ``resource_identifier`` string (case-insensitive). It is the authoritative
+    "is this already in OSM?" check. Returns the list of matching records (each a
+    dict with id/status/resource_identifier/...), or ``[]`` on any error/miss.
+    """
+    import requests
+
+    token = token or OSM_API_KEY
+    if not token:
+        return []
+    try:
+        resp = requests.get(
+            osm_endpoint("search"), params={"q": term},
+            headers={"Authorization": f"Bearer {token}", "apikey": token,
+                     "Accept": "application/json"},
+            timeout=HTTP_TIMEOUT)
+        if resp.status_code != 200:
+            return []
+        data = resp.json() if resp.content else {}
+    except Exception:  # noqa: BLE001
+        return []
+    rows = data.get("data") if isinstance(data, dict) else data
+    return [r for r in (rows or []) if isinstance(r, dict)]
+
+
+def osm_existing_repo(full_name: str, *, token: str | None = None, http=None) -> dict | None:
+    """AUTHORITATIVE novelty gate for a repository: the pre-existing OSM record for
+    ``full_name`` under ANY resource_identifier spelling, or ``None`` if truly novel.
+
+    This queries OSM's full history (see :func:`osm_search`), so it catches the
+    months-old and other-researcher reports that ``query-latest``'s recent window
+    silently misses -- the exact gap that let us duplicate already-verified reports.
+    """
+    want = full_name.strip().strip("/").casefold()
+    for variant in _repo_id_variants(full_name):
+        for row in osm_search(variant, token=token, http=http):
+            rid = str(row.get("resource_identifier") or "")
+            if _osm_resource_key(rid) == want:
+                return row
+    return None
+
+
+def osm_existing_resource(term: str, *, token: str | None = None, http=None) -> dict | None:
+    """Authoritative novelty gate for a non-repo resource (domain, IP, URL, wallet):
+    the pre-existing OSM record whose resource_identifier exactly matches ``term``
+    (case-insensitive), or ``None``. Backs the domain-IOC dedup the same way
+    :func:`osm_existing_repo` backs repos."""
+    want = term.strip().casefold()
+    for row in osm_search(term, token=token, http=http):
+        rid = str(row.get("resource_identifier") or row.get("package_name") or "")
+        if rid.strip().casefold() == want:
+            return row
+    return None
+
+
+def _http_get(url: str, timeout: int = 20):
+    """Minimal GET returning ``(status_code, text)``; injectable for tests."""
+    import requests
+    r = requests.get(url, timeout=timeout)
+    return r.status_code, (r.text or "")
+
+
+def repo_payload_live(row, *, fetch=_http_get) -> bool | None:
+    """Re-fetch the confirming evidence at the repo's CURRENT HEAD and confirm the
+    malicious payload is still there.
+
+    OSM re-verifies against the live repository, so a payload removed since our scan
+    is a guaranteed FALSE_POSITIVE. Returns ``True`` if the payload is still live,
+    ``False`` if the file is gone (404) or the distinctive token has been removed,
+    and ``None`` if the check could not run (no evidence / network error) so the
+    caller can fail open rather than block a send on a transient hiccup.
+    """
+    payload = json.loads(row["raw_payload"] or "{}")
+    bash = payload.get("bash_findings") or []
+    if not bash:
+        return None
+    top = bash[0]  # hunt orders the confirming finding first
+    fpath = top.get("file")
+    if not fpath:
+        return None
+    from .dprk import c2_hosts_from_flags
+    hosts = c2_hosts_from_flags(bash)
+    snippet = (top.get("snippet") or "").strip()
+    token = hosts[0] if hosts else (snippet.split() or [""])[0]
+    url = f"https://raw.githubusercontent.com/{row['full_name']}/HEAD/{fpath}"
+    try:
+        code, text = fetch(url)
+    except Exception:  # noqa: BLE001
+        return None
+    if code == 404:
+        return False
+    if code != 200:
+        return None
+    return True if not token else (token in text)
+
+
+def audit(db, *, limit: int | None = None) -> int:
+    """Read-only: report each submission's CURRENT standing in OSM.
+
+    For every repo we marked submitted, ask OSM's full-history search what it says
+    now (verified / pending / false-positive / absent) and whether OSM's canonical
+    id matches the one we stored (a mismatch means our report is a duplicate of
+    another researcher's, or was superseded). Turns eyeballing the web dashboard
+    into one command, and surfaces the duplicate/rejected reports to clean up.
+    """
+    rows = db.conn.execute(
+        "SELECT full_name, osm_threat_id FROM repo_findings WHERE submitted_osm=1 "
+        "ORDER BY full_name").fetchall()
+    if limit:
+        rows = rows[:limit]
+    if not rows:
+        print("No submissions marked in the local ledger yet (nothing to audit).")
+        return 0
+    print(f"Auditing {len(rows)} submission(s) against OSM full history "
+          f"(search endpoint)...\n")
+    from collections import Counter
+    tally: Counter = Counter()
+    dupes, gone = [], []
+    for r in rows:
+        hit = osm_existing_repo(r["full_name"])
+        if not hit:
+            tally["absent"] += 1
+            gone.append(r["full_name"])
+            print(f"  ABSENT          {r['full_name']}  (not found in OSM now)")
+            continue
+        status = (hit.get("status") or "unknown").lower()
+        tally[status] += 1
+        osm_id, ours = str(hit.get("id") or ""), str(r["osm_threat_id"] or "")
+        dup = ours and osm_id and osm_id[:8] != ours[:8]
+        flag = "  [DUP: canonical != ours]" if dup else ""
+        if dup:
+            dupes.append((r["full_name"], osm_id[:8], ours[:8]))
+        print(f"  {status.upper():<15} {r['full_name']}  id={osm_id[:8]}{flag}")
+    print("\n  Summary: " + ", ".join(f"{k}={v}" for k, v in sorted(tally.items())))
+    if dupes:
+        print(f"\n  {len(dupes)} report(s) whose OSM canonical id differs from ours "
+              f"(likely duplicates to decline):")
+        for name, osm_id, ours in dupes:
+            print(f"    {name}  osm={osm_id}  ours={ours}")
+    if tally.get("false_positive"):
+        print(f"\n  {tally['false_positive']} marked FALSE_POSITIVE by OSM reviewers "
+              f"(rejected).")
+    return 0
+
+
 def _osm_repo_url(full_name: str) -> str:
     """The OSM website page for a repository report (where 'Update Report' lives)."""
     from urllib.parse import quote
@@ -690,8 +857,19 @@ def wizard(db, args) -> int:
     # STEP 2 -- reconcile
     print("STEP 2 of 4  ::  Your findings compared to OSM")
     b = reconcile(db, osm_now)["buckets"]
-    new_rows = [r for r in gold_for_submission(db)
-                if r["full_name"].casefold() not in osm_now]
+    candidate_rows = [r for r in gold_for_submission(db)
+                      if r["full_name"].casefold() not in osm_now]
+    # AUTHORITATIVE full-history gate (search endpoint) on top of the recent-window
+    # filter: catches months-old / other-researcher reports query-latest can't see.
+    print("  Cross-checking OSM full history (search endpoint)...")
+    new_rows = []
+    for r in candidate_rows:
+        hit = osm_existing_repo(r["full_name"])
+        if hit:
+            print(f"  [skip] {r['full_name']}: already in OSM full history "
+                  f"({hit.get('status')}, id {str(hit.get('id'))[:8]})")
+        else:
+            new_rows.append(r)
     print(f"  {len(new_rows):>3}  NEW malicious repo(s) not yet in OSM  (we can submit these)")
     print(f"  {len(b['verified_ours']):>3}  of your reports already verified in OSM  "
           f"(we can enrich these)")
@@ -934,6 +1112,14 @@ def main(argv: list[str] | None = None) -> int:
                    help="Interactive step-by-step 'SUBMIT OSM REPORT' walkthrough for "
                         "non-technical operators (checks OSM first, submits new, and "
                         "guides you field-by-field through enriching existing reports).")
+    p.add_argument("--audit", action="store_true",
+                   help="Report each of your submissions' CURRENT standing in OSM "
+                        "(verified / pending / false-positive / absent) via the "
+                        "full-history search, and flag duplicates. Read-only.")
+    p.add_argument("--no-liveness", action="store_true",
+                   help="Skip the pre-send liveness recheck (by default each repo's "
+                        "payload is re-fetched at HEAD before submitting, so a repo "
+                        "whose payload was removed is not sent to fail OSM review).")
     args = p.parse_args(argv)
 
     floor = {"critical": 4, "high": 3, "medium": 2, "low": 1}
@@ -962,6 +1148,9 @@ def main(argv: list[str] | None = None) -> int:
                 for name, osm_id, ours in b["verified_other"][:15]:
                     print(f"    {name}  osm={str(osm_id)[:8]}  ours={str(ours)[:8]}")
             return 0
+
+        if args.audit:
+            return audit(db, limit=args.limit or None)
 
         import time
 
@@ -1005,6 +1194,33 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  [skip] domain {d['host']}: already in OSM "
                   f"({osm_now[d['host'].casefold()]['status']})")
 
+        # STEP 1b: AUTHORITATIVE full-history novelty gate. query-latest above is a
+        # recent window and is BLIND to months-old / other-researcher reports -- that
+        # blindness is what let us duplicate already-verified reports. The search
+        # endpoint checks OSM's whole corpus by exact resource_identifier (all format
+        # spellings), so a hit here is a real "already reported, do not re-submit".
+        print("Cross-checking OSM full history (search endpoint, all id spellings)...")
+        pre_existing = {}
+        for r in list(rows):
+            hit = osm_existing_repo(r["full_name"])
+            if hit:
+                pre_existing[r["full_name"]] = hit
+        rows = [r for r in rows if r["full_name"] not in pre_existing]
+        for name, hit in pre_existing.items():
+            print(f"  [skip] {name}: ALREADY in OSM full history -- "
+                  f"{hit.get('status')}, id {str(hit.get('id'))[:8]}, "
+                  f"res {hit.get('resource_identifier')}  (NOT re-submitting)")
+
+        pre_domains = {}
+        for d in list(domains):
+            hit = osm_existing_resource(d["host"])
+            if hit:
+                pre_domains[d["host"]] = hit
+        domains = [d for d in domains if d["host"] not in pre_domains]
+        for host, hit in pre_domains.items():
+            print(f"  [skip] domain {host}: ALREADY in OSM full history -- "
+                  f"{hit.get('status')}, id {str(hit.get('id'))[:8]}  (NOT re-submitting)")
+
         # ENRICHMENT: re-POSTing to submit-threat-report CREATES A DUPLICATE (the
         # endpoint is create-only). A true update needs OSM's update-report route,
         # which is not wired yet, so refuse rather than duplicate.
@@ -1042,6 +1258,12 @@ def main(argv: list[str] | None = None) -> int:
                 report = build_report(r, dprk_infra=db.dprk_infra_hosts(exclude=r["full_name"]))
                 if not args.confirm:
                     print(json.dumps(report, indent=2, ensure_ascii=False) + "\n")
+                    continue
+                # Liveness recheck: OSM verifies against the live repo, so never send
+                # one whose payload was removed since our scan (guaranteed rejection).
+                if not args.no_liveness and repo_payload_live(r) is False:
+                    print(f"  [skip] {r['full_name']}: payload no longer present at HEAD "
+                          f"(would fail OSM live verification)")
                     continue
                 if i:
                     time.sleep(args.pace)

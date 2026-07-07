@@ -105,6 +105,42 @@ def test_hunt_signature_match_finds_novel_repo(tmp_path, monkeypatch):
     db.close()
 
 
+def test_hunt_known_good_owner_never_confirms(tmp_path, monkeypatch):
+    # 2026-07-07: microsoft/vscode confirmed on a legit env-read because the
+    # allowlist only ran at reconcile. A known-good owner must never reach Tier-2,
+    # even under a malicious-owner pivot with a weaponized clone.
+    import git_warden.config as cfg
+    monkeypatch.setattr(cfg, "KNOWN_GOOD_OWNERS", frozenset({"microsoft"}))
+
+    class OwnerClient(FakeClient):
+        def list_forks(self, owner, name, per_page=100, sort="newest"):
+            return []
+
+        def list_user_repos(self, owner):
+            return [{"full_name": "microsoft/vscode",
+                     "owner": {"login": "microsoft"},
+                     "html_url": "https://github.com/microsoft/vscode"}]
+
+    db = Database.open(tmp_path / "kg.sqlite")
+    db.start_run("seed", utcnow())
+    # seed a malicious owner "microsoft" so the owner pivot surfaces microsoft/vscode
+    from git_warden.enums import DetectionMethod, RepoFindingStatus
+    from git_warden.models import RepoFinding
+    db.upsert_finding(RepoFinding(
+        full_name="microsoft/evil-seed", detection_method=DetectionMethod.SIGNATURE_MATCH,
+        status=RepoFindingStatus.CONFIRMED, code_hash="x",
+        raw_payload={"bash_findings": [{"file": "x.js", "line": 1,
+                     "category": "obfuscation", "rule": "eval-decoded"}]}), "seed")
+
+    hunt(db, OwnerClient(), TOOLS, run_id="kg", now=utcnow(), do_news=False,
+         do_ioc=False, do_lineage=False, do_actor=False, do_enrich=True, do_osm=False,
+         do_signature=False, do_package_repos=False, do_tier2=True, clone=_fake_clone)
+    row = db.conn.execute(
+        "SELECT status FROM repo_findings WHERE full_name='microsoft/vscode'").fetchone()
+    assert row is None or row["status"] != "confirmed"   # allowlisted -> never confirmed
+    db.close()
+
+
 def test_hunt_osm_repo_validation_confirms(tmp_path):
     # do_osm clones OSM-labeled repos directly and confirms genuine ones.
     from git_warden.enums import ArtifactType, DetectionMethod, FeedSource

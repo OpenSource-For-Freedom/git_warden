@@ -39,6 +39,25 @@ _SUSPICIOUS_CMD = re.compile(
     r"|\b(?:iex|invoke-expression)\b",                                    # PS download-exec
     re.IGNORECASE,
 )
+# A lifecycle script that ONLY fetches from a reputable installer host is a normal
+# toolchain bootstrap (Meteor, Rust, Node, Docker, Bun, ...), not a dropper -- so it
+# must not confirm (the chris-visser/meteor-vue-admin `curl install.meteor.com | sh`
+# and jose-compu/zk-vrf `rustup` preinstall FPs, 2026-07-07). An attacker preinstall
+# fetching a non-installer host still fires.
+_INSTALL_HOST_RE = re.compile(r"https?://([A-Za-z0-9.\-]+)", re.I)
+_REPUTABLE_INSTALL_HOSTS = (
+    "install.meteor.com", "sh.rustup.rs", "static.rust-lang.org", "deb.nodesource.com",
+    "get.docker.com", "download.docker.com", "bun.sh", "astral.sh", "deno.land",
+    "install.python-poetry.org", "get.pnpm.io", "apt.llvm.org", "get.helm.sh",
+    "packages.microsoft.com", "cli.github.com", "nodejs.org", "python.org",
+)
+
+
+def _only_reputable_install(cmd: str) -> bool:
+    """True if a lifecycle command fetches ONLY from reputable installer hosts."""
+    hosts = [h.lower().rstrip(".") for h in _INSTALL_HOST_RE.findall(cmd or "")]
+    return bool(hosts) and all(
+        any(h == r or h.endswith("." + r) for r in _REPUTABLE_INSTALL_HOSTS) for h in hosts)
 # FETCH-AND-RUN inside setup.py (static regex; we do not run it). A bare
 # exec()/subprocess in setup.py is NORMAL; legit packages compile extensions
 # (subprocess -> cmake/nvcc), read their version (exec(open('_version.py'))), and
@@ -168,7 +187,8 @@ def scan_manifests(root, malicious_packages=None) -> list[BashFinding]:
                 continue
             for hook in _LIFECYCLE:
                 cmd = scripts.get(hook)
-                if cmd and _SUSPICIOUS_CMD.search(str(cmd)):
+                if (cmd and _SUSPICIOUS_CMD.search(str(cmd))
+                        and not _only_reputable_install(str(cmd))):
                     findings.append(
                         BashFinding(rel, 0, "install_hook", f"npm-{hook}", str(cmd)[:200])
                     )

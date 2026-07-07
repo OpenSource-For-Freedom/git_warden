@@ -15,7 +15,7 @@ from ..config import HTTP_TIMEOUT, USER_AGENT
 
 
 class HttpClient(Protocol):
-    """Anything that can fetch text from a URL."""
+    """Anything that can fetch text or bytes from a URL."""
 
     def get_text(
         self,
@@ -24,6 +24,14 @@ class HttpClient(Protocol):
         params: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
     ) -> str: ...
+
+    def get_bytes(
+        self,
+        url: str,
+        *,
+        params: dict[str, str] | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> bytes: ...
 
 
 class RequestsHttpClient:
@@ -44,3 +52,16 @@ class RequestsHttpClient:
         resp = self.session.get(url, params=params, headers=headers, timeout=self.timeout)
         resp.raise_for_status()
         return resp.text
+
+    def get_bytes(
+        self,
+        url: str,
+        *,
+        params: dict[str, str] | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> bytes:
+        # Binary sibling of get_text for zipped/exported datasets (e.g. OSV's
+        # per-ecosystem export archives) that must not be decoded as text.
+        resp = self.session.get(url, params=params, headers=headers, timeout=self.timeout)
+        resp.raise_for_status()
+        return resp.content
