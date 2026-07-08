@@ -161,6 +161,42 @@ def _c2_hosts(bash: list[dict]) -> list[str]:
     return [h for h in hosts if not any(o != h and o.startswith(h + ".") for o in hosts)]
 
 
+_URL_IOC_RE = re.compile(r"https?://[^\s'\"|)>]+", re.I)
+
+
+def _verified_iocs(row) -> str:
+    """Curated, machine-verifiable IOCs for the report's ``verified_iocs`` field --
+    the attacker C2 host(s), the exact payload URL(s), the dropper command, and the
+    dropper file path, one per line, so OSM indexes them as pivotable indicators
+    rather than leaving them buried in prose."""
+    payload = json.loads(row["raw_payload"] or "{}")
+    bash = payload.get("bash_findings") or []
+    lines: list[str] = []
+    seen: set[str] = set()
+
+    def add(x: str) -> None:
+        x = (x or "").strip()
+        if x and x.lower() not in seen:
+            seen.add(x.lower())
+            lines.append(x)
+
+    for h in _c2_hosts(bash):
+        add(h)                                    # C2 / payload host
+    for b in bash:
+        sn = b.get("snippet") or ""
+        for u in _URL_IOC_RE.findall(sn):
+            add(u.rstrip("|").strip())            # exact payload URL
+        m = re.search(r"(?:curl|wget)\b[^\n|]*\|\s*(?:bash|sh)\b", sn, re.I)
+        if m:
+            add(m.group(0).strip())               # download-and-run command
+    if bash and bash[0].get("file"):
+        add(bash[0]["file"])                      # dropper file path
+    # Drop truncation artifacts: a line that is a strict prefix of a longer one
+    # (a snippet cut mid-URL leaves e.g. 'https://host.vercel.' before the full URL).
+    return "\n".join(x for x in lines
+                     if not any(y != x and y.startswith(x) for y in lines))
+
+
 def _vectors(bash: list[dict]) -> list[str]:
     """Delivery-vector tags derived from the confirming rules."""
     rules = {b.get("rule") for b in bash}
@@ -393,6 +429,9 @@ def build_report(row, dprk_infra=None) -> dict:
         "tags": _tags(row, assessment),
         # ALL confirming file:line proof, not just the first (see _evidence_refs).
         "evidence_references": _evidence_refs(row),
+        # Curated IOCs (C2 host, payload URL, dropper command, path) so OSM indexes
+        # them as pivotable indicators, not just prose.
+        "verified_iocs": _verified_iocs(row),
         "contributors": [OSM_CONTRIBUTOR] if OSM_CONTRIBUTOR else [],
     }
     fs, ls = _run_to_iso(row["first_seen_run"]), _run_to_iso(row["last_seen_run"])
