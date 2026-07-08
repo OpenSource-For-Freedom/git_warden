@@ -60,20 +60,20 @@ steal-and-send); threat-intel leads (a malicious owner, a shared signature) only
 *seed* which repos get scanned, never confirm one alone.
 
 <!-- git-warden:registry:start -->
-_Top 10 of 41 repositories confirmed malicious by static analysis this run, ranked by severity. The full list ships as the run's CSV artifact and to the Discord feed; every row's evidence (file, line, rule) is in that CSV. Dispute: open an issue and we will re-review._
+_Top 10 of 36 repositories confirmed malicious by static analysis this run, ranked by severity. The full list ships as the run's CSV artifact and to the Discord feed; every row's evidence (file, line, rule) is in that CSV. Dispute: open an issue and we will re-review._
 
 | Repository | Detection | Score | Attribution | Proof (file:line rule) |
 |------------|-----------|-------|-------------|------------------------|
-| [`dnszlsk/muad-dib`](https://github.com/dnszlsk/muad-dib) | signature_match | 61 | unattributed | docker\sandbox-runner.sh:359 credential_harvest/shadow-read  (+19 more) |
-| [`mycosoftlabs/mycosoft-mas`](https://github.com/mycosoftlabs/mycosoft-mas) | signature_match | 53 | unattributed | scripts/vm_apply_mindex_migrations.py:87 obfuscation/py-decode-exec  (+19 more) |
 | [`cybercop-404/termux-setup`](https://github.com/cybercop-404/termux-setup) | signature_match | 18 | unattributed | PREMIUM_SETUP.py:8 obfuscation/py-decode-exec  (+14 more) |
-| [`marven11/etherghost`](https://github.com/marven11/etherghost) | signature_match | 16 | unattributed | ether_ghost/core/php_session_common.py:497 obfuscation/py-decode-exec  (+19 more) |
 | [`gauravraisharma/ticketting-system`](https://github.com/gauravraisharma/ticketting-system) | signature_match | 15 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+19 more) |
 | [`alexsander532/projeto_dashboard_versao1`](https://github.com/alexsander532/projeto_dashboard_versao1) | signature_match | 14 | DPRK (North Korea) (per OSM) | frontend/vite.config.js:36 obfuscation/eval-decoded  (+3 more) |
 | [`id77/quantumultx`](https://github.com/id77/quantumultx) | signature_match | 14 | unattributed | task/xmSports.js:216 credential_access/env-dump  (+19 more) |
 | [`solarpy/caroline119-defi-property-4e3a113352e3`](https://github.com/solarpy/caroline119-defi-property-4e3a113352e3) | osm_repository | 13 | DPRK (North Korea) (per OSM) | caroline119-defi-property-4e3a113352e3/.vscode/tasks.json:0 install_hook/vscode-autorun  (+12 more) |
 | [`lfirsl/morphix`](https://github.com/lfirsl/morphix) | osm_repository | 12 | DPRK (North Korea) (per OSM) | .vscode/tasks.json:0 install_hook/vscode-autorun  (+13 more) |
 | [`usmanaliashraf/portfolio`](https://github.com/usmanaliashraf/portfolio) | signature_match | 12 | DPRK (North Korea) (per OSM) | postcss.config.mjs:12 obfuscation/eval-decoded  (+8 more) |
+| [`icecoldjay/bri`](https://github.com/icecoldjay/bri) | signature_match | 11 | unattributed | client/tailwind.config.js:61 obfuscation/eval-decoded  (+3 more) |
+| [`mts-services/olabisiolai_frontend_react`](https://github.com/mts-services/olabisiolai_frontend_react) | signature_match | 11 | unattributed | vite.config.ts:107 obfuscation/eval-decoded  (+4 more) |
+| [`rajaxcodes/token-presale-dapp`](https://github.com/rajaxcodes/token-presale-dapp) | signature_match | 11 | unattributed | tasks.json:0 install_hook/vscode-autorun  (+5 more) |
 <!-- git-warden:registry:end -->
 
 > [!NOTE]
