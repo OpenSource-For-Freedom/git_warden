@@ -745,3 +745,67 @@ def hunt(
     summary = {"run_id": run_id, "counts": counts, "failed_clones": failed_clones}
     log.info("hunt finished", extra={"context": {"run_id": run_id, "counts": counts}})
     return summary
+
+
+def _default_readme(full_name: str) -> str:
+    """Best-effort fetch of a repo README (for the security-tool screen)."""
+    import requests
+    for name in ("README.md", "README", "readme.md"):
+        try:
+            r = requests.get(
+                f"https://raw.githubusercontent.com/{full_name}/HEAD/{name}", timeout=15)
+            if r.status_code == 200:
+                return r.text
+        except Exception:  # noqa: BLE001
+            pass
+    return ""
+
+
+def revalidate_findings(db, *, clone=scan_candidate, readme_fetch=_default_readme,
+                        limit: int | None = None, run_id: str = "revalidate") -> dict:
+    """Re-scan already-confirmed, unsubmitted findings under the CURRENT rules and
+    reconcile the DB with them.
+
+    A finding is DEMOTED to ``rejected`` when it no longer confirms (a fixed false
+    positive) or its repo now reads as a security tool; otherwise its stored
+    ``confidence`` tier is refreshed so gold/submit gating reflects today's rules.
+    Never touches submitted rows or OSM-sourced repos. ``clone`` is the scanner
+    (injectable; defaults to ``scan_candidate``) so it is unit-testable offline.
+    """
+    from .osm_submit import _ensure_submit_columns
+    _ensure_submit_columns(db)  # submitted_osm / osm_threat_id are runtime columns
+    rows = db.conn.execute(
+        "SELECT full_name, raw_payload FROM repo_findings WHERE status='confirmed' "
+        "AND submitted_osm=0 AND detection_method NOT IN ('osm_repository','redteam_lineage') "
+        "ORDER BY full_name").fetchall()
+    if limit:
+        rows = rows[:limit]
+    import shutil
+    workdir = tempfile.mkdtemp(dir=config.WORK_DIR)
+    out: dict = {"demoted": [], "retiered": [], "kept": []}
+    try:
+        for row in rows:
+            fn = row["full_name"]
+            sec = is_security_tool(readme_fetch(fn))
+            result = clone(fn, workdir)
+            confirmed = bool(result and result.confirmed)
+            if sec or not confirmed:
+                reason = "security-tool" if sec else "no-longer-confirms"
+                note = f" | revalidated ({run_id}): demoted ({reason})"
+                db.conn.execute(
+                    "UPDATE repo_findings SET status='rejected', "
+                    "reasoning=COALESCE(reasoning,'')||? WHERE full_name=?", (note, fn))
+                out["demoted"].append((fn, reason))
+            else:
+                payload = json.loads(row["raw_payload"] or "{}")
+                if payload.get("confidence") != result.confidence:
+                    payload["confidence"] = result.confidence
+                    db.conn.execute("UPDATE repo_findings SET raw_payload=? WHERE full_name=?",
+                                    (json.dumps(payload), fn))
+                    out["retiered"].append((fn, result.confidence))
+                else:
+                    out["kept"].append((fn, result.confidence))
+        db.conn.commit()
+    finally:
+        shutil.rmtree(workdir, ignore_errors=True)
+    return out

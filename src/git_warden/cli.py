@@ -534,6 +534,26 @@ def _cmd_serve(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_revalidate(args: argparse.Namespace) -> int:
+    """Re-scan confirmed-unsubmitted findings under CURRENT rules; demote fixed FPs."""
+    configure_logging(json_output=False)
+    from .db import Database
+    from .hunt import revalidate_findings
+
+    db = Database.open(args.db)
+    print("Re-validating confirmed findings against current rules "
+          "(re-clones each repo)...")
+    out = revalidate_findings(db, limit=args.limit or None)
+    print(f"\n  demoted (fixed FP / security-tool): {len(out['demoted'])}")
+    for fn, reason in out["demoted"]:
+        print(f"     - {fn}  ({reason})")
+    print(f"  re-tiered (confidence changed):     {len(out['retiered'])}")
+    for fn, tier in out["retiered"]:
+        print(f"     - {fn}  -> {tier}")
+    print(f"  unchanged:                          {len(out['kept'])}")
+    return 0
+
+
 def _cmd_resolve_packages(args: argparse.Namespace) -> int:
     """Resolve known-malicious packages to their GitHub SOURCE repos (the
     high-recall package->repo path). Read-only preview: prints each source repo,
@@ -627,6 +647,13 @@ def build_parser() -> argparse.ArgumentParser:
     serve.add_argument("--host", default="127.0.0.1", help="Bind host.")
     serve.add_argument("--port", type=int, default=8787, help="Bind port.")
     serve.set_defaults(func=_cmd_serve)
+
+    reval = sub.add_parser(
+        "revalidate", help="Re-scan confirmed-unsubmitted findings under current rules "
+                           "and demote fixed false positives / security tools.")
+    reval.add_argument("--db", type=Path, default=config.DB_PATH, help="SQLite path.")
+    reval.add_argument("--limit", type=int, default=0, help="Cap findings re-scanned (0 = all).")
+    reval.set_defaults(func=_cmd_revalidate)
 
     rp = sub.add_parser("resolve-packages",
                         help="Resolve malicious packages to their GitHub source repos.")

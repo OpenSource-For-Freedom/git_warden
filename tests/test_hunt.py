@@ -620,3 +620,39 @@ def test_hunt_news_pivot_creates_news_mention_candidate(tmp_path):
     # do_tier2=False -> nothing can be CONFIRMED this run regardless of method.
     assert row["status"] != "confirmed"
     db.close()
+
+
+def test_revalidate_demotes_fixed_fp_and_retiers(tmp_path):
+    """revalidate_findings re-scans confirmed rows: demotes ones that no longer
+    confirm (or are security tools) and refreshes the confidence tier on the rest."""
+    from git_warden.enums import DetectionMethod, RepoFindingStatus
+    from git_warden.hunt import revalidate_findings
+    from git_warden.models import RepoFinding
+    from git_warden.scanning.tier2 import Tier2Result
+
+    db = Database.open(tmp_path / "rv.sqlite")
+    db.start_run("run-1", utcnow())
+    for name in ("keep/real", "fix/fp", "tool/scanner"):
+        db.upsert_finding(RepoFinding(
+            full_name=name, detection_method=DetectionMethod.SIGNATURE_MATCH,
+            status=RepoFindingStatus.CONFIRMED, code_hash="x",
+            raw_payload={"confidence": "auto", "bash_findings": [
+                {"file": "x", "line": 1, "category": "install_hook", "rule": "vscode-autorun"}]}),
+            "run-1")
+
+    def fake_clone(full_name, workdir):
+        if full_name == "fix/fp":
+            return Tier2Result(full_name, "h", confirmed=False, confidence="none")
+        return Tier2Result(full_name, "h", confirmed=True, confidence="auto")
+
+    def fake_readme(full_name):
+        return "A malware scanner with sarif output and typosquat detection." \
+            if full_name == "tool/scanner" else "Just an app."
+
+    out = revalidate_findings(db, clone=fake_clone, readme_fetch=fake_readme)
+    demoted = {n for n, _ in out["demoted"]}
+    assert demoted == {"fix/fp", "tool/scanner"}
+    assert db.get_finding("fix/fp")["status"] == "rejected"
+    assert db.get_finding("tool/scanner")["status"] == "rejected"
+    assert db.get_finding("keep/real")["status"] == "confirmed"
+    db.close()
