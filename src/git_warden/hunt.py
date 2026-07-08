@@ -730,11 +730,24 @@ def hunt(
                 db.set_gold_delivered(names, False)
         progress.note(f"delivered {delivered} confirmed finding(s) to the review feed")
 
+    # Tier breakdown of THIS run's confirmations -- the CTF-relevant number is
+    # confirmed_auto (submit-eligible); review is the human queue.
+    by_tier: Counter = Counter()
+    for tr in db.conn.execute(
+            "SELECT raw_payload FROM repo_findings WHERE last_seen_run=? AND status='confirmed'",
+            (run_id,)).fetchall():
+        try:
+            by_tier[json.loads(tr["raw_payload"] or "{}").get("confidence") or "review"] += 1
+        except Exception:  # noqa: BLE001
+            by_tier["review"] += 1
+
     counts = {
         "candidates": len(candidates),
         "candidates_by_method": dict(by_method),
         "screened": screened_count,  # passed Tier-1 (cumulative, pre-Tier-2)
         "confirmed": confirmed,
+        "confirmed_auto": by_tier.get("auto", 0),      # submit-eligible captures
+        "confirmed_review": by_tier.get("review", 0),  # human-review queue
         "confirmed_by_method": dict(confirmed_by_method),
         "rejected_mirrors": rejected_mirrors,  # unmodified red-team forks dropped
         "redteam_breadcrumbs": redteam_breadcrumbs,  # red-team tooling kept as lead

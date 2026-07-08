@@ -766,6 +766,25 @@ def audit(db, *, limit: int | None = None) -> int:
     return 0
 
 
+def print_queue(db) -> int:
+    """Read-only: the AUTO-tier submit queue -- novel, unsubmitted, high-confidence
+    captures ready for a human go/no-go. This is the morning review view: every row
+    here cleared the confidence tier, evidence gate, and local novelty check."""
+    rows = gold_for_submission(db)  # AUTO + novel + unsubmitted + has-evidence
+    if not rows:
+        print("Submit queue is empty -- no novel AUTO-tier captures awaiting review.")
+        return 0
+    print(f"AUTO-tier submit queue: {len(rows)} novel capture(s) ready for review\n")
+    print(f"  {'repo':44} {'sev':9} {'method':16} score")
+    print("  " + "-" * 78)
+    for r in rows:
+        print(f"  {r['full_name']:44} {severity_level(r):9} "
+              f"{r['detection_method']:16} {r['score']}")
+    print("\n  Review, then submit with:  make submit ARGS=\"--confirm\"")
+    print("  (each is re-checked against OSM full history + liveness before sending)")
+    return 0
+
+
 def _osm_repo_url(full_name: str) -> str:
     """The OSM website page for a repository report (where 'Update Report' lives)."""
     from urllib.parse import quote
@@ -1133,6 +1152,9 @@ def main(argv: list[str] | None = None) -> int:
                    help="Skip the pre-send liveness recheck (by default each repo's "
                         "payload is re-fetched at HEAD before submitting, so a repo "
                         "whose payload was removed is not sent to fail OSM review).")
+    p.add_argument("--queue", action="store_true",
+                   help="Show the AUTO-tier submit queue: novel, unsubmitted, "
+                        "high-confidence captures ready for review. Read-only.")
     args = p.parse_args(argv)
 
     floor = {"critical": 4, "high": 3, "medium": 2, "low": 1}
@@ -1164,6 +1186,9 @@ def main(argv: list[str] | None = None) -> int:
 
         if args.audit:
             return audit(db, limit=args.limit or None)
+
+        if args.queue:
+            return print_queue(db)
 
         import time
 
