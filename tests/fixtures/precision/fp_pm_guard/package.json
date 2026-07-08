@@ -1,0 +1,7 @@
+{
+  "name": "my-app",
+  "version": "1.0.0",
+  "scripts": {
+    "preinstall": "node -e \"const ua=process.env.npm_config_user_agent||''; if(!/pnpm/.test(ua)){console.error('Please use pnpm'); process.exit(1)}\""
+  }
+}

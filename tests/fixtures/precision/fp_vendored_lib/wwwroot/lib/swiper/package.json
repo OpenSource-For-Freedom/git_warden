@@ -1,0 +1,8 @@
+{
+  "name": "swiper",
+  "version": "8.4.5",
+  "description": "Vendored third-party slider library (front-end asset).",
+  "scripts": {
+    "postinstall": "node -e \"try{require('./postinstall')}catch(e){}\""
+  }
+}
