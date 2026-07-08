@@ -62,7 +62,14 @@ _RULES: dict[str, list[tuple[str, re.Pattern]]] = {
             r"download\.docker\.com|sh\.rustup\.rs|rustup\.rs|get\.helm\.sh|"
             r"apt\.llvm\.org|packages\.microsoft\.com|bun\.sh|astral\.sh|"
             r"install\.python-poetry\.org)\b)"
-            r"(curl|wget)\s[^\n|]*\|\s*(sh|bash|python|perl)", re.I)),
+            # `python -m json.tool` / `-m http.server` READ stdin as data (pretty-print
+            # / serve); they never execute the fetched bytes, so `curl ... | python -m
+            # json.tool` is not download-and-run (the localhost/API health-check FPs,
+            # 2026-07-07). The lookahead sits BEFORE the interpreter so `python[0-9]?`
+            # cannot backtrack past it. Bare `python`, `python -c`, sh/bash/perl confirm.
+            r"(curl|wget)\s[^\n|]*\|\s*"
+            r"(?!python[0-9]?\s+-m\s+(?:json\.tool|http\.server)\b)"
+            r"(sh|bash|perl|python[0-9]?)", re.I)),
         ("fetch-then-exec",
          re.compile(r"(curl|wget)\s[^\n]*-o\s*\S+[^\n]*;\s*(sh|bash|chmod)", re.I)),
     ],
@@ -102,10 +109,15 @@ _RULES: dict[str, list[tuple[str, re.Pattern]]] = {
         # Second branch requires the pipe/redirect to reach a REAL command/path, not
         # a bare "|": a scanner's own sensitive-path REGEX ('/etc/shadow|\.gitconfig')
         # is an alternation, not an exfil pipe (the dnszlsk/muad-dib FP, 2026-07-07).
+        # Primary: a read/copy/exfil VERB reaching /etc/shadow (high precision).
+        # Secondary is deliberately TIGHT -- an IMMEDIATE redirect to a real capture
+        # file (not /dev/null, no gap): a loose `[^\n]*` version matched `2>/dev/null`
+        # and the `||` after "/etc/shadow readable!" in a warning string
+        # (arry8/openclaw-edge hardening audit, 2026-07-07).
         ("shadow-read", re.compile(
             r"\b(?:cat|less|more|head|tail|cp|scp|rsync|dd|xxd|strings|od|base64|"
             r"awk|sed|nc|curl|wget|tar|zip|gzip)\b[^\n]*/etc/shadow"
-            r"|/etc/shadow\b[^\n]*(?:\|\s*[\w/]|>>?\s*[\w/.]|\b(?:curl|wget|nc)\b)", re.I)),
+            r"|/etc/shadow\b\s*>>?\s*(?!/dev/null\b)[\w/.]", re.I)),
         ("env-token-grab", re.compile(r"\b(AWS_SECRET|GITHUB_TOKEN|NPM_TOKEN|API_KEY)\b", re.I)),
     ],
     "process_injection": [

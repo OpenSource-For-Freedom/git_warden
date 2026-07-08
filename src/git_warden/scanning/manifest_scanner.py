@@ -57,14 +57,25 @@ _REPUTABLE_INSTALL_HOSTS = (
     "repo1.maven.org", "repo.maven.apache.org", "registry.npmjs.org",
     "pypi.org", "files.pythonhosted.org", "crates.io", "static.crates.io",
     "proxy.golang.org", "rubygems.org",
+    # Named-toolchain installers that publish an official `curl <host> | sh` (same
+    # shape as rustup): Foundry (Ethereum), Homebrew, Starship, Volta, nvm, Semgrep.
+    "foundry.paradigm.xyz", "raw.githubusercontent.com/foundry-rs", "get.brew.sh",
+    "starship.rs", "get.volta.sh", "raw.githubusercontent.com/nvm-sh", "semgrep.dev",
 )
+
+
+def is_reputable_install_host(host: str) -> bool:
+    """True if ``host`` is a known toolchain-installer / package-registry host, so a
+    ``curl <host> | sh`` is a normal bootstrap rather than a dropper. Shared with the
+    Tier-2 fetch-target gate so both scanners agree on what is reputable."""
+    h = (host or "").lower().rstrip(".")
+    return any(h == r or h.endswith("." + r) for r in _REPUTABLE_INSTALL_HOSTS)
 
 
 def _only_reputable_install(cmd: str) -> bool:
     """True if a lifecycle command fetches ONLY from reputable installer hosts."""
     hosts = [h.lower().rstrip(".") for h in _INSTALL_HOST_RE.findall(cmd or "")]
-    return bool(hosts) and all(
-        any(h == r or h.endswith("." + r) for r in _REPUTABLE_INSTALL_HOSTS) for h in hosts)
+    return bool(hosts) and all(is_reputable_install_host(h) for h in hosts)
 # FETCH-AND-RUN inside setup.py (static regex; we do not run it). A bare
 # exec()/subprocess in setup.py is NORMAL; legit packages compile extensions
 # (subprocess -> cmake/nvcc), read their version (exec(open('_version.py'))), and

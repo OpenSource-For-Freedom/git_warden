@@ -240,11 +240,14 @@ def test_audit_reports_status_and_flags_duplicates(tmp_path, monkeypatch, capsys
     db.close()
 
 
-def _confirmed(db, name, method):
+def _confirmed(db, name, method, confidence="auto"):
+    # An AUTO-tier delivery mechanism (install-hook autorun) is the submittable case
+    # these tests exercise; pass confidence="review" to model a human-review finding.
     db.upsert_finding(RepoFinding(
         full_name=name, detection_method=method, status=RepoFindingStatus.CONFIRMED,
-        raw_payload={"bash_findings": [
-            {"file": "x.js", "line": 1, "category": "obfuscation", "rule": "eval-decoded"}]}),
+        raw_payload={"confidence": confidence, "bash_findings": [
+            {"file": ".vscode/tasks.json", "line": 1, "category": "install_hook",
+             "rule": "vscode-autorun"}]}),
         "run-1")
 
 
