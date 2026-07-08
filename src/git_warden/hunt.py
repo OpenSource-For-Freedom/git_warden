@@ -324,6 +324,7 @@ def hunt(
     news_http=None,
     pkg_http=None,
     osm_live_known: set[str] | None = None,
+    resume: bool = False,
     progress=None,
 ) -> dict:
     """Run the hunt and return a summary. Persists findings into the registry.
@@ -553,6 +554,13 @@ def hunt(
         try:
             for _t2_idx, finding in enumerate(screened, start=1):
                 progress.tier2_item(_t2_idx, _t2_total, finding.full_name)
+                # RESUME: skip a repo already Tier-2 scanned in a prior run (it has a
+                # stored code_hash), so a killed/rate-limited long run continues where
+                # it stopped instead of re-cloning everything.
+                if resume:
+                    prior = db.get_finding(finding.full_name)
+                    if prior is not None and prior["code_hash"]:
+                        continue
                 # Well-known-legit org (microsoft, freebsd, ...) is never scanned or
                 # confirmed, even at a high Tier-1 score, because a huge legit
                 # codebase inevitably trips a rule (the microsoft/vscode env-read FP,

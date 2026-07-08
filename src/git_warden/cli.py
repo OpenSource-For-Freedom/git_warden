@@ -416,6 +416,7 @@ def _cmd_hunt(args: argparse.Namespace) -> int:
             db, GitHubClient(), load_redteam_tools(),
             run_id=run_id,
             osm_live_known=osm_live_known,
+            resume=args.resume,
             progress=progress,
             do_ioc=not args.no_ioc,
             do_lineage=not args.no_lineage,
@@ -712,6 +713,10 @@ def build_parser() -> argparse.ArgumentParser:
     hunt_p.add_argument("--pace", type=float, default=7.0,
                         help="Seconds between code searches. Code search allows ~10/min, so "
                              "keep this >=6; the client also backs off on a rate-limit response.")
+    hunt_p.add_argument("--resume", action="store_true",
+                        help="Skip repos already Tier-2 scanned in a prior run (they "
+                             "carry a stored code_hash), so a killed or rate-limited "
+                             "long run continues where it stopped.")
     hunt_p.add_argument("--limit", type=int, default=0,
                         help="Cap candidates processed (0 = no cap). Bounds a run.")
     hunt_p.add_argument("--pretty-logs", action="store_true", help="Human-readable logs.")
