@@ -660,6 +660,22 @@ def hunt(
                             f"scanned; static score {result.bash_score} below confirmation bar",
                             top_signals=sorted({f"{bf.category}:{bf.rule}"
                                                 for bf in result.bash_findings})[:8])
+                # A pinned red-team tool's OWN attack code (hex blobs, obfuscation) is
+                # its stated purpose, not weaponization. A fork of one confirms ONLY on
+                # AUTO-tier ADDED weaponization (a real dropper / exfil / install hook),
+                # never on its own review-tier obfuscation alone (the
+                # thec0nci3rge/infection-monkey-v2.3.0 hex-blob FP, 2026-07-07).
+                if (result and result.confirmed
+                        and finding.detection_method is DetectionMethod.REDTEAM_LINEAGE
+                        and result.confidence != "auto"):
+                    finding.status = RepoFindingStatus.SCREENED
+                    finding.reasoning = (finding.reasoning or "") + \
+                        " | red-team tool's own code (no AUTO-tier weaponization); breadcrumb"
+                    db.upsert_finding(finding, run_id)
+                    redteam_breadcrumbs += 1
+                    _decide(finding, "SCREENED",
+                            "red-team tool own-code; no AUTO-tier added weaponization")
+                    continue
                 if result and result.confirmed:
                     finding.status = RepoFindingStatus.CONFIRMED
                     finding.score += result.bash_score
