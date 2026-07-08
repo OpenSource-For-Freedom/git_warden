@@ -40,6 +40,10 @@ class FakeSession:
         self.calls.append((url, params, headers))
         for suffix, resp in self.routes.items():
             if url.endswith(suffix):
+                # A list value = sequential responses (retry scenarios); the last one
+                # sticks once reached.
+                if isinstance(resp, list):
+                    return resp.pop(0) if len(resp) > 1 else resp[0]
                 return resp
         return FakeResponse(404, {})
 
@@ -106,18 +110,36 @@ def test_search_code_returns_items():
     assert client.search_code("workers.dev")[0]["path"] == "a.js"
 
 
-def test_search_code_secondary_limit_raises_rate_limit_with_retry_after():
+def test_search_code_secondary_limit_backs_off_then_raises():
+    # A persistent secondary limit is retried (honoring Retry-After) and only raises
+    # after exhausting the backoff rounds -- so a transient burst self-heals, but a
+    # hard throttle still surfaces. _sleep is stubbed so the test doesn't actually wait.
     session = FakeSession(
         {"/search/code": FakeResponse(403, {"message": "secondary rate limit"},
                                       headers={"Retry-After": "45"})}
     )
     client = GitHubClient(token="t", session=session)
+    waits = []
+    client._sleep = lambda s: waits.append(s)
     with pytest.raises(GitHubRateLimitError) as ei:
         client.search_code("x")
     assert ei.value.retry_after == 45.0
+    assert waits.count(45.0) == 3     # backed off (waited the full Retry-After) 3x
+    assert client._search_interval > client._search_base_interval  # ratcheted up
 
 
-def test_search_code_primary_limit_waits_to_reset():
+def test_search_code_secondary_limit_self_heals_on_retry():
+    # First call throttles, the retry succeeds -> items returned, no exception.
+    session = FakeSession({"/search/code": [
+        FakeResponse(403, {"message": "secondary rate limit"}, headers={"Retry-After": "10"}),
+        FakeResponse(200, {"items": [{"path": "a.js"}]}),
+    ]})
+    client = GitHubClient(token="t", session=session)
+    client._sleep = lambda s: None
+    assert client.search_code("x")[0]["path"] == "a.js"
+
+
+def test_search_code_primary_limit_backs_off_then_raises():
     import time
     session = FakeSession(
         {"/search/code": FakeResponse(403, {"message": "API rate limit exceeded"},
@@ -125,6 +147,7 @@ def test_search_code_primary_limit_waits_to_reset():
                                                "X-RateLimit-Reset": str(int(time.time()) + 30)})}
     )
     client = GitHubClient(token="t", session=session)
+    client._sleep = lambda s: None
     with pytest.raises(GitHubRateLimitError) as ei:
         client.search_code("x")
     assert 0 < ei.value.retry_after <= 31
