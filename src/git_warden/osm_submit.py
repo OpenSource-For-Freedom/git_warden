@@ -1020,19 +1020,30 @@ def _has_intrinsic_evidence(row) -> bool:
     return bool(payload.get("bash_findings"))
 
 
-def gold_for_submission(db, limit: int = 0) -> list:
+def finding_confidence(row) -> str:
+    """The confidence tier stored at scan time (``auto`` | ``review``).
+
+    Defaults to ``review`` when absent, so a legacy finding scanned before tiering
+    (or any un-tiered row) is NEVER treated as auto-submittable. Only ``auto`` --
+    a delivery/exfil/dependency mechanism or a malware-scanner flag -- is eligible
+    for gold delivery and one-click submission; ``review`` waits for a human.
+    """
+    try:
+        return json.loads(row["raw_payload"] or "{}").get("confidence") or "review"
+    except Exception:  # noqa: BLE001
+        return "review"
+
+
+def gold_for_submission(db, limit: int = 0, *, min_confidence: str = "auto") -> list:
     """Novel confirmed TRUE POSITIVES not yet reported to OSM.
 
     A repo is submittable when it was Tier-2 CONFIRMED on its OWN static evidence
-    (file:line proof in bash_findings) and is novel. The discovery METHOD does not
-    gate this: a repo found via the owner pivot (malicious_owner) or actor pivot
-    but confirmed on its own injected payload (e.g. a .vscode/tasks.json that
-    fetch-and-runs on folderOpen) is just as submittable as a signature hit -- the
-    2026-07-02 owner-pivot runs surfaced 30+ such genuine lures that the old
-    method-based exclusion wrongly withheld. We still exclude osm_repository (OSM
-    already has it -- re-reporting is pointless) and redteam_lineage (a research
-    breadcrumb the design never publishes). ``submitted_osm`` gates out anything
-    already sent so we never double-report.
+    (file:line proof in bash_findings), is novel, and reached the ``auto``
+    confidence tier -- a high-precision delivery/exfil/dependency mechanism, not a
+    lone broad signal. The discovery METHOD does not gate this. We still exclude
+    osm_repository (OSM already has it) and redteam_lineage (a research breadcrumb).
+    ``submitted_osm`` gates out anything already sent. Pass ``min_confidence=
+    "review"`` to include the human-review tier (never the default).
     """
     _ensure_submit_columns(db)
     known = db.osm_known_repos()
@@ -1042,8 +1053,10 @@ def gold_for_submission(db, limit: int = 0) -> list:
         "AND detection_method NOT IN ('osm_repository', 'redteam_lineage') "
         "ORDER BY score DESC, full_name"
     ).fetchall()
+    allow = {"auto"} if min_confidence == "auto" else {"auto", "review"}
     novel = [r for r in rows
-             if r["full_name"].casefold() not in known and _has_intrinsic_evidence(r)]
+             if r["full_name"].casefold() not in known and _has_intrinsic_evidence(r)
+             and finding_confidence(r) in allow]
     return novel[:limit] if limit else novel
 
 

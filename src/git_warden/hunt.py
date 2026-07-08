@@ -660,6 +660,8 @@ def hunt(
                         f" | Tier-2 confirmed (bash score {result.bash_score})"
                     finding.code_hash = result.code_hash
                     finding.raw_payload["code_hash"] = result.code_hash
+                    # Confidence tier (auto|review) -- gates gold + submit downstream.
+                    finding.raw_payload["confidence"] = result.confidence
                     # The exact scanned commit -> permanent /blob/<sha>/ evidence links.
                     if result.commit_sha:
                         finding.raw_payload["commit_sha"] = result.commit_sha
@@ -679,7 +681,7 @@ def hunt(
                     confirmed += 1
                     confirmed_by_method[finding.detection_method.value] += 1
                     progress.confirmed(finding.full_name, finding.score)
-                    _decide(finding, "CONFIRMED",
+                    _decide(finding, f"CONFIRMED[{result.confidence}]",
                             f"Tier-2 static confirm (bash score {result.bash_score})",
                             method=finding.detection_method.value, score=finding.score,
                             confirming=[f"{bf.category}:{bf.rule}"
@@ -705,8 +707,16 @@ def hunt(
     osm_live = {r.casefold() for r in (osm_live_known or set())}
     if gold and notifier is not None:
         progress.phase("Deliver", "posting confirmed clusters to the review feed")
-        # Live re-check: never report a repo OSM has added since our ingest.
-        rows = [r for r in db.undelivered_gold() if r["full_name"].casefold() not in osm_live]
+        # Gold is AUTO-tier only: a lone broad-signal (review) finding never pings
+        # Discord. Plus the live re-check so we never report a repo OSM already has.
+        def _is_auto(r) -> bool:
+            try:
+                return (json.loads(r["raw_payload"] or "{}").get("confidence") or
+                        "review") == "auto"
+            except Exception:  # noqa: BLE001
+                return False
+        rows = [r for r in db.undelivered_gold()
+                if r["full_name"].casefold() not in osm_live and _is_auto(r)]
         # ONE report per connected cluster (campaign), never duplicated per-repo.
         for cluster in cluster_findings(rows):
             names = [r["full_name"] for r in cluster]
