@@ -76,6 +76,25 @@ def _only_reputable_install(cmd: str) -> bool:
     """True if a lifecycle command fetches ONLY from reputable installer hosts."""
     hosts = [h.lower().rstrip(".") for h in _INSTALL_HOST_RE.findall(cmd or "")]
     return bool(hosts) and all(is_reputable_install_host(h) for h in hosts)
+
+
+# `node -e "<inline>"` in a lifecycle hook is only a dropper when the inline code
+# actually fetches / decodes / spawns. A package-manager guard (read
+# npm_config_user_agent, process.exit) or a local `require('./postinstall')` is
+# benign and ubiquitous -- the frankhli843/gemmahermes PM-guard FP (2026-07-07).
+_NODE_EVAL = re.compile(r"\bnode\s+(?:-e|--eval)\b", re.I)
+_NODE_EVAL_DANGER = re.compile(
+    r"child_process|\bexec(?:Sync)?\s*\(|\bspawn|\bfetch\s*\(|https?://|/dev/tcp/"
+    r"|\batob\s*\(|Buffer\.from\([^)]*base64|\beval\s*\(|\bFunction\s*\(|require\s*\(\s*"
+    r"['\"](?:child_process|node:child_process|https?|node:https?|net|dgram)",
+    re.I)
+
+
+def _is_benign_node_eval(cmd: str) -> bool:
+    """True if the command's danger is ONLY a `node -e` whose inline code neither
+    fetches, decodes, nor spawns (a PM guard / local require), so it must not confirm."""
+    c = str(cmd or "")
+    return bool(_NODE_EVAL.search(c)) and not _NODE_EVAL_DANGER.search(c)
 # FETCH-AND-RUN inside setup.py (static regex; we do not run it). A bare
 # exec()/subprocess in setup.py is NORMAL; legit packages compile extensions
 # (subprocess -> cmake/nvcc), read their version (exec(open('_version.py'))), and
@@ -208,7 +227,8 @@ def scan_manifests(root, malicious_packages=None) -> list[BashFinding]:
             for hook in _LIFECYCLE:
                 cmd = scripts.get(hook)
                 if (cmd and _SUSPICIOUS_CMD.search(str(cmd))
-                        and not _only_reputable_install(str(cmd))):
+                        and not _only_reputable_install(str(cmd))
+                        and not _is_benign_node_eval(str(cmd))):
                     findings.append(
                         BashFinding(rel, 0, "install_hook", f"npm-{hook}", str(cmd)[:200])
                     )
@@ -271,6 +291,7 @@ def _scan_vscode_tasks(text: str, rel: str) -> list[BashFinding]:
         # curl-maven-jar build bootstrap) is not a dropper; an attacker C2 fetch
         # (or a pure inline eval / reverse shell with no reputable host) still fires.
         if (run_on == "folderopen" and _SUSPICIOUS_CMD.search(blob)
-                and not _only_reputable_install(blob)):
+                and not _only_reputable_install(blob)
+                and not _is_benign_node_eval(blob)):
             out.append(BashFinding(rel, 0, "install_hook", "vscode-autorun", blob[:200]))
     return out

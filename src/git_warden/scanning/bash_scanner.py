@@ -170,10 +170,14 @@ _MAX_BYTES = 1_000_000
 # Excluding both means only first-party, shipped code can confirm a finding.
 # (Names are compared case-insensitively.)
 _IGNORE_DIRS = frozenset({
-    ".git", "node_modules", "bower_components", "vendor", "third_party",
-    "third-party", "dist", "build", "out", ".next", ".nuxt", "target",
-    ".venv", "venv", "virtualenv", "site-packages", "__pycache__", "pods",
-    ".gradle", ".terraform", ".yarn",
+    ".git", "node_modules", "bower_components", "vendor", "vendored",
+    "third_party", "third-party", "dist", "build", "out", ".next", ".nuxt",
+    "target", ".venv", "venv", "virtualenv", "site-packages", "__pycache__",
+    "pods", ".gradle", ".terraform", ".yarn",
+    # Static web root: an ASP.NET / static site ships VENDORED front-end libs under
+    # wwwroot/lib (their upstream install hooks are not the repo owner's injection)
+    # -- the mahfuznazib/eyehospitalmis swiper postinstall FP, 2026-07-07.
+    "wwwroot",
     # non-payload: tests/fixtures/examples carry attack strings as DATA
     "test", "tests", "__tests__", "spec", "__spec__", "fixtures", "fixture",
     "__fixtures__", "mocks", "__mocks__", "e2e", "testdata", "examples", "example",
