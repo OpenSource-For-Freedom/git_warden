@@ -34,7 +34,7 @@ lint: ## Check style with ruff
 fmt: ## Auto-fix lint findings
 	$(PY) -m ruff check --fix src tests gw.py
 
-check: lint test ## Lint + test -- run before pushing
+check: lint test ## Lint and test (run this before pushing)
 
 # --- Threat-intel pipeline ---
 ingest: ## Pull feeds (OSM, MITRE, CISA, news) into the DB
@@ -51,6 +51,12 @@ iocs: ## Show the aggregated IOC pivot set
 
 review: ## List confirmed findings (override with ARGS="--reject owner/repo")
 	$(GW) review $(or $(ARGS),--list)
+
+revalidate: ## Re-scan confirmed findings under current rules; demote fixed false positives
+	$(GW) revalidate $(ARGS)
+
+queue: ## Show the AUTO-tier submit queue (novel, high-confidence, ready to review)
+	$(PY) -m git_warden.osm_submit --queue
 
 serve: ## Serve the telemetry dashboard on http://127.0.0.1:8787
 	$(GW) serve
