@@ -41,6 +41,9 @@ git_warden = ["db/*.sql", "dashboard/static/*"]
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+# Precision fixtures are intentional malicious/attack-code SAMPLES (test data, not
+# real code) -- linting them flags the very patterns they exist to represent.
+extend-exclude = ["tests/fixtures"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
