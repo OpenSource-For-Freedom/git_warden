@@ -67,7 +67,7 @@ flowchart TD
     HUMAN -->|analyst approves| QUEUE
 
     QUEUE --> SUB["OSM submit<br/>full-history dedup + liveness recheck + verified IOCs"]
-    T2 -. mined IOCs (learning loop) .-> ACT
+    T2 -. "mined IOCs, learning loop" .-> ACT
 
     classDef auto fill:#1a7f37,stroke:#0c5222,color:#fff;
     classDef review fill:#9a6700,stroke:#6b4700,color:#fff;
