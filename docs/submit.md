@@ -1,16 +1,31 @@
 # Report a malicious asset via API
--Automate submission of threat reports from your own tooling instead of the web UI.
 
--The submit-threat endpoint lets you submit threat reports programmatically without using the web interface. Submitted reports enter the community verification process and are only published after passing review.
--Use this endpoint to:
-Automate reporting from your tooling: Flag suspicious packages the moment your internal detection systems identify them, without switching to the web UI.
-Integrate with security pipelines: Trigger submissions directly from CI/CD workflows, dependency scanners, or SIEM alerts.
-Contribute at scale: Research teams and Research Partners can submit structured threat reports in bulk via API.
-Submitted reports go through the community verification process before they are published to the database. This review ensures data quality and prevents false positives. You can track the status of your submissions from your profile on opensourcemalware.com.
-For guidance on writing high-quality threat reports — including what evidence to include and how to describe threat behavior — see the reporting guidelines.
+This is OpenSourceMalware's own API reference, kept here for operators who build
+their own tooling. Git Warden's built-in submitter (`python -m git_warden.osm_submit`)
+already wraps all of this with full-history dedup, a liveness recheck, and verified
+IOCs. See the "Submit to OSM" section of the README.
+
+Submit threat reports programmatically instead of using the web UI. Submitted reports
+enter the community verification process and are only published after passing review.
+Use this endpoint to:
+
+- Automate reporting from your tooling: flag suspicious packages the moment your
+  internal detection systems identify them.
+- Integrate with security pipelines: trigger submissions from CI/CD workflows,
+  dependency scanners, or SIEM alerts.
+- Contribute at scale: research teams can submit structured reports in bulk.
+
+You can track the status of your submissions from your profile on opensourcemalware.com.
+For guidance on writing high-quality threat reports, including what evidence to
+include and how to describe threat behavior, see the reporting guidelines.
+
 ## Endpoint
+
+The working create endpoint is `submit-threat-report`. The public docs list
+`submit-threat`, which returns 404, so use the one below.
+
 ```
-POST https://api.opensourcemalware.com/functions/v1/submit-threat
+POST https://api.opensourcemalware.com/functions/v1/submit-threat-report
 ```
 ## Required headers
 ```
