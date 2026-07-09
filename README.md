@@ -30,20 +30,65 @@ for what's built vs. planned. Guiding principle: **accuracy over volume.**
 
 ## How it works
 
+Provenance feeds seed **who** and **what** to look for. A self-paced discovery
+layer finds candidate repos. A two-tier static analysis confirms malice on the
+code's own evidence, and a **confidence tier** decides what is submit-ready versus
+what waits for a human. Nothing is ever executed.
+
+```mermaid
+flowchart TD
+    subgraph INGEST["INGEST · provenance breadcrumbs"]
+        F["MITRE ATT&CK · Google News · CISA · OpenSourceMalware"]
+        F --> VAL["Validator<br/>2+ feeds → promoted actor"]
+        VAL --> ACT[("Actors + OSM IOCs<br/>+ malicious packages")]
+    end
+
+    subgraph DISCOVER["DISCOVER · candidate repos (self-paced code search)"]
+        direction LR
+        D["IOC search · malware signatures / folderOpen dropper ·<br/>owner pivot · actor accounts · OSM repos ·<br/>package→source · news mentions · red-team lineage"]
+    end
+    ACT --> D
+
+    D --> T1{"Tier-1 screen<br/>name + README, no clone<br/>homoglyph / typosquat / security-tool guard"}
+    T1 -->|"security tool · known-good owner"| BC["Breadcrumb (never confirmed)"]:::drop
+    T1 -->|advance| T2
+
+    T2["Tier-2 STATIC scan · clone, never execute<br/>bash + manifest + content scanners + GuardDog / YARA<br/>+ code-hash dedup"]:::stage
+    T2 --> CONF{"Confirmed on the repo's<br/>OWN intrinsic evidence?"}
+    CONF -->|no| NM["Not confirmed / near-miss"]:::drop
+
+    CONF -->|yes| TIER{"Confidence tier<br/>from the confirming mechanism"}
+    TIER -->|"delivery · exfil · dependency ·<br/>reverse shell · malware-scanner flag"| AUTO["AUTO"]:::auto
+    TIER -->|"lone obfuscation / env-dump"| REVIEW["REVIEW"]:::review
+
+    AUTO --> GOLD["Discord gold + Wall of Shame"]
+    AUTO --> QUEUE["Submit queue"]
+    REVIEW --> HUMAN["Human review queue"]
+    HUMAN -->|analyst approves| QUEUE
+
+    QUEUE --> SUB["OSM submit<br/>full-history dedup + liveness recheck + verified IOCs"]
+    T2 -. "mined IOCs, learning loop" .-> ACT
+
+    classDef auto fill:#1a7f37,stroke:#0c5222,color:#fff;
+    classDef review fill:#9a6700,stroke:#6b4700,color:#fff;
+    classDef drop fill:#5a6472,stroke:#3a4048,color:#fff;
+    classDef stage fill:#0d6a8c,stroke:#094a61,color:#fff;
 ```
-INGEST (breadcrumbs)                 HUNT (find malicious GitHub repos)
-  MITRE ATT&CK ─┐                      ┌─ IOC search: mirror OSM IOCs into
-  Google News  ─┼─ corroborate ─►      │   GitHub code search ----|
-  CISA         ─┘   threat actors      ├─ red-team lineage: forks/│
-  OpenSourceMalware ─► malicious       │   renames of pinned tools┤
-     packages/repos + IOCs ────────────┘                          ▼
-                                        Tier-1 screen (name+README, no clone)
-                                                          │
-                                        Tier-2 (clone + bash scanner + OSS
-                                          scanners + code-hash dedup)
-                                                          ▼
-                                        Wall of Shame ─► Discord gold
-```
+
+**The spine: confidence tiering.** A finding's confirming mechanism sets its tier,
+and **only `AUTO` reaches Discord gold and the submit queue**:
+
+| Tier | Confirmed on | What happens |
+|------|--------------|--------------|
+| **AUTO** | a delivery, exfil, or dependency mechanism: a folderOpen `curl \| bash`, an install-hook fetch-and-run, a reverse shell, steal-and-send, an OSM-listed dependency, or a malware-scanner flag | gold plus submit-eligible |
+| **REVIEW** | a lone broad signal: standalone obfuscation or decode-exec, or a bare env-dump | stored for a human, never auto-gold or auto-submit |
+| **none** | recon only, a security or red-team tool's own code, or nothing | breadcrumb, dropped |
+
+This is why a localhost health check, or a tutorial's example command, cannot reach
+the queue. The noise lands in `REVIEW` or is dropped by design, not by patching each
+pattern one at a time. A [golden fixture corpus](tests/fixtures/precision/) gates
+AUTO-tier precision in CI, so a rule change cannot silently bring back a known false
+positive.
 
 <p align="center"><img src="docs/sculk-divider.png" alt="" width="900"></p>
 
@@ -157,6 +202,8 @@ make iocs                        # IOC pivot set mined from OSM
 make discover                    # IOC code search -> new repos
 make hunt                        # full pipeline -> Wall of Shame -> Discord (LIMIT=N caps it)
 make review                      # list confirmed repos (ARGS="--approve owner/repo")
+make revalidate                  # re-scan confirmed findings; demote fixed false positives
+make queue                       # show the AUTO-tier submit queue (ready to review)
 make serve                       # live telemetry dashboard
 make check                       # lint + tests, run before pushing
 ```
@@ -182,6 +229,14 @@ each run to four buckets: *repos scanned, signatures matched, code analysis pass
 queued for review.* Force it with `--progress on`, silence it with `--progress off`
 (it auto-detects a terminal, so CI stays quiet). **Git Warden is iterative**: run 1
 sets a baseline, and most batches reach high yield by run 3 as the corpus compounds.
+
+**Long runs.** Code search self-paces under GitHub's secondary rate limit, so a slow,
+methodical sweep keeps discovering instead of quitting after a burst. Tune the pace
+with `GW_SEARCH_MIN_INTERVAL` (seconds between searches, default 8; raise it if you
+still get throttled). Add `--resume` to a re-run so it skips repos already scanned and
+continues where it stopped. Turn on full-verbosity logging for debugging with
+`GW_LOG_LEVEL=DEBUG`, which surfaces the per-candidate decision log (why each repo was
+confirmed, screened, or rejected).
 
 ## Dashboard
 
@@ -214,22 +269,28 @@ bearer token on `/api/*` (every request is logged).
 Contribute your confirmed findings back to
 [OpenSourceMalware](https://opensourcemalware.com). The submitter is **safe by
 design**: it is dry-run by default, uses *your* OSM API key (`GW_OSM_API_KEY`) and
-contributor name (`GW_OSM_CONTRIBUTOR`), and **checks OSM before every send so it
-never duplicates an existing report**.
+contributor name (`GW_OSM_CONTRIBUTOR`), and runs three checks before any send. It
+cross-checks OSM's **full history** (not just the recent window) across every
+resource-identifier spelling so it never duplicates an existing report, it re-fetches
+each repo's payload at HEAD so a taken-down repo is not sent, and it marks the IOCs
+(C2 host, payload URL, dropper command, path) in the report so OSM indexes them.
 
 ```bash
+make queue                           # the AUTO-tier submit queue: what is ready to review
 make submit                          # dry run: prints exactly what WOULD be sent
+make submit ARGS="--audit"           # each of your submissions' current standing in OSM
 make submit ARGS="--wizard"          # interactive, step-by-step (newcomer-friendly)
 make submit ARGS="--reconcile"       # read-only: your reports vs OSM's live state
 make submit ARGS="--confirm"         # actually POST new reports + corroborated C2 IOCs
 ```
 
-Or directly: `python -m git_warden.osm_submit [--wizard|--reconcile|--confirm]`.
+Or directly: `python -m git_warden.osm_submit [--queue|--audit|--wizard|--reconcile|--confirm]`.
 
-Only **novel** confirmed findings with their own `file:line` evidence are eligible;
-OSM re-validations and un-evidenced associations are never sent. Each report carries
-full proof: the country attribution with signals, every confirming evidence link, and
-a plain-language writeup. `--wizard` walks a non-technical user through it step by
+Only **novel** AUTO-tier findings with their own `file:line` evidence are eligible.
+REVIEW-tier findings, OSM re-validations, and un-evidenced associations are never
+sent. Each report carries full proof: the country attribution with signals, every
+confirming evidence link, the marked IOCs, and a plain-language writeup. `--wizard`
+walks a non-technical user through it step by
 step, including exactly what to paste into OSM's web form.
 
 ## Deployment
