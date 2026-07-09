@@ -58,7 +58,8 @@ def test_hunt_actor_account_stage_creates_attributed_findings(tmp_path):
 
     client = FakeClient({"evilcorp": [_repo("evilcorp/dropper")]})
     hunt(db, client, [RedTeamTool(name="Sliver", repos=["BishopFox/sliver"])],
-         run_id="hunt-1", now=utcnow(), do_news=False, do_ioc=False, do_lineage=False, do_actor=True)
+         run_id="hunt-1", now=utcnow(), do_news=False, do_ioc=False,
+         do_lineage=False, do_actor=True)
 
     row = db.conn.execute(
         "SELECT detection_method, actor_key FROM repo_findings WHERE full_name = ?",

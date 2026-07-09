@@ -34,7 +34,8 @@ _SUSPICIOUS_CMD = re.compile(
     rf"|{_FETCH}\b[^\n]*-o\b[^\n]*(?:;|&&)\s*(?:{_RUNSH}|chmod)\b"        # curl -o x; sh x
     r"|\bnode\s+(?:-e|--eval)\b|\bpython[0-9]?\s+-c\b|\bperl\s+-e\b|\bruby\s+-e\b"  # inline code
     r"|\beval\s*\(|\bnew\s+Function\s*\("                                 # JS eval / Function()
-    r"|(?:base64\s+(?:-d|--decode)|\batob\s*\()[^\n]*(?:\|\s*" + _RUNSH + r"|\beval\b|\bexec\b)"  # decode->run
+    # decode -> run
+    r"|(?:base64\s+(?:-d|--decode)|\batob\s*\()[^\n]*(?:\|\s*" + _RUNSH + r"|\beval\b|\bexec\b)"
     r"|/dev/tcp/"                                                         # reverse shell
     r"|\b(?:iex|invoke-expression)\b",                                    # PS download-exec
     re.IGNORECASE,
