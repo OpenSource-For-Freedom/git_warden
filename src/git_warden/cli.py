@@ -416,6 +416,7 @@ def _cmd_hunt(args: argparse.Namespace) -> int:
             db, GitHubClient(), load_redteam_tools(),
             run_id=run_id,
             osm_live_known=osm_live_known,
+            resume=args.resume,
             progress=progress,
             do_ioc=not args.no_ioc,
             do_lineage=not args.no_lineage,
@@ -424,12 +425,14 @@ def _cmd_hunt(args: argparse.Namespace) -> int:
             do_osm=not args.no_osm,
             do_signature=not args.no_signature,
             do_news=not args.no_news,
+            do_package_repos=not args.no_package_repos,
             do_tier2=args.scan,
             max_iocs=args.max_iocs,
             max_packages=args.max_packages,
             max_osm=args.max_osm,
             max_signatures=args.max_signatures,
             max_news=args.max_news,
+            max_package_repos=args.max_package_repos,
             search_pace=args.pace,
             limit=args.limit,
             gold=args.gold,
@@ -532,6 +535,54 @@ def _cmd_serve(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_revalidate(args: argparse.Namespace) -> int:
+    """Re-scan confirmed-unsubmitted findings under CURRENT rules; demote fixed FPs."""
+    configure_logging(json_output=False)
+    from .db import Database
+    from .hunt import revalidate_findings
+
+    db = Database.open(args.db)
+    print("Re-validating confirmed findings against current rules "
+          "(re-clones each repo)...")
+    out = revalidate_findings(db, limit=args.limit or None)
+    print(f"\n  demoted (fixed FP / security-tool): {len(out['demoted'])}")
+    for fn, reason in out["demoted"]:
+        print(f"     - {fn}  ({reason})")
+    print(f"  re-tiered (confidence changed):     {len(out['retiered'])}")
+    for fn, tier in out["retiered"]:
+        print(f"     - {fn}  -> {tier}")
+    print(f"  unchanged:                          {len(out['kept'])}")
+    return 0
+
+
+def _cmd_resolve_packages(args: argparse.Namespace) -> int:
+    """Resolve known-malicious packages to their GitHub SOURCE repos (the
+    high-recall package->repo path). Read-only preview: prints each source repo,
+    its package + ecosystem + author. `hunt` runs this automatically; this command
+    lets you see and validate the yield on its own."""
+    configure_logging(json_output=False)
+    from .feeds.http import RequestsHttpClient
+    from .scanning.package_resolver import find_package_source_repos
+
+    db = Database.open(args.db)
+    try:
+        repos = find_package_source_repos(
+            db, RequestsHttpClient(), known=db.known_repo_names(),
+            limit=args.limit, resolve_cap=args.max)
+    finally:
+        db.close()
+    print(f"resolved {len(repos)} malicious-package source repo(s) "
+          f"(novel, not already known):\n")
+    for pr in repos:
+        author = f"  author: {pr.author}" if pr.author else ""
+        print(f"  https://github.com/{pr.full_name}")
+        print(f"      from {pr.ecosystem} package '{pr.package}'{author}")
+    if not repos:
+        print("  (none -- ingest more package intel, or they resolve to non-GitHub "
+              "or already-known repos)")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="git-warden", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -598,6 +649,20 @@ def build_parser() -> argparse.ArgumentParser:
     serve.add_argument("--port", type=int, default=8787, help="Bind port.")
     serve.set_defaults(func=_cmd_serve)
 
+    reval = sub.add_parser(
+        "revalidate", help="Re-scan confirmed-unsubmitted findings under current rules "
+                           "and demote fixed false positives / security tools.")
+    reval.add_argument("--db", type=Path, default=config.DB_PATH, help="SQLite path.")
+    reval.add_argument("--limit", type=int, default=0, help="Cap findings re-scanned (0 = all).")
+    reval.set_defaults(func=_cmd_revalidate)
+
+    rp = sub.add_parser("resolve-packages",
+                        help="Resolve malicious packages to their GitHub source repos.")
+    rp.add_argument("--db", type=Path, default=config.DB_PATH, help="SQLite path.")
+    rp.add_argument("--limit", type=int, default=50, help="Max source repos to return.")
+    rp.add_argument("--max", type=int, default=400, help="Max registry lookups this run.")
+    rp.set_defaults(func=_cmd_resolve_packages)
+
     iocs = sub.add_parser("iocs", help="Aggregate the searchable IOC pivot set from OSM data.")
     iocs.add_argument("--db", type=Path, default=config.DB_PATH, help="SQLite path.")
     iocs.add_argument("--limit", type=int, default=20, help="Top domains to show.")
@@ -628,12 +693,16 @@ def build_parser() -> argparse.ArgumentParser:
                         help="Skip the live OSM re-check before gold delivery (novelty gate).")
     hunt_p.add_argument("--no-signature", action="store_true",
                         help="Skip malware code-signature search (novel-repo discovery).")
-    hunt_p.add_argument("--max-signatures", type=int, default=8,
+    hunt_p.add_argument("--max-signatures", type=int, default=14,
                         help="Malware code signatures to code-search (novel-repo engine).")
     hunt_p.add_argument("--no-news", action="store_true",
                         help="Skip the Hacker News / Google News discovery pivot.")
     hunt_p.add_argument("--max-news", type=int, default=6,
                         help="News/discussion search terms (Hacker News + Google News RSS).")
+    hunt_p.add_argument("--no-package-repos", action="store_true",
+                        help="Skip resolving malicious packages to their GitHub source repos.")
+    hunt_p.add_argument("--max-package-repos", type=int, default=40,
+                        help="Max package->source-repo candidates to resolve per run.")
     hunt_p.add_argument("--scan", action="store_true", help="Run Tier-2 clone+scan.")
     hunt_p.add_argument("--gold", action="store_true", help="Deliver confirmed to Discord.")
     hunt_p.add_argument("--max-iocs", type=int, default=8, help="IOC terms to search.")
@@ -644,6 +713,10 @@ def build_parser() -> argparse.ArgumentParser:
     hunt_p.add_argument("--pace", type=float, default=7.0,
                         help="Seconds between code searches. Code search allows ~10/min, so "
                              "keep this >=6; the client also backs off on a rate-limit response.")
+    hunt_p.add_argument("--resume", action="store_true",
+                        help="Skip repos already Tier-2 scanned in a prior run (they "
+                             "carry a stored code_hash), so a killed or rate-limited "
+                             "long run continues where it stopped.")
     hunt_p.add_argument("--limit", type=int, default=0,
                         help="Cap candidates processed (0 = no cap). Bounds a run.")
     hunt_p.add_argument("--pretty-logs", action="store_true", help="Human-readable logs.")

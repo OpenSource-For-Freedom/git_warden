@@ -38,6 +38,8 @@ Thumbs.db
 # OSM before every send so it never duplicates. Only the operator's run-specific
 # notes (cleanup ids, etc.) stay local.
 osm_reports.md
+osm_cleanup.md
+osm_update_*.md
 
 # Local-only actor intelligence -- the actor dossier + decoded-IOC miner that
 # builds on the public campaign-attribution layer. Run: python -m git_warden.actor_intel

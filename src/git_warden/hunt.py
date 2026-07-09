@@ -46,13 +46,31 @@ from .scanning import (
     search_iocs,
 )
 from .scanning.actor_search import AccountRepo
-from .scanning.discovery import RepoHit
+from .scanning.discovery import RepoHit, is_security_tool
 from .scanning.enrichment import OwnerRepo
 from .scanning.newsdiscovery import DEFAULT_NEWS_TERMS, NewsHit
+from .scanning.package_resolver import find_package_source_repos
 from .scanning.signatures import load_seed_signatures
 from .scanning.tier2 import WEAPONIZATION_CATEGORIES, _force_rmtree
 
 log = logging.getLogger(__name__)
+
+
+def _decide(finding, decision: str, reason: str, **extra) -> None:
+    """Emit a per-candidate Tier-2 decision to the run log.
+
+    This is the FP/gap audit trail: an operator (or a later grep of the run log)
+    sees every CONFIRMED (possible false positive to review), NOT_CONFIRMED
+    (near-miss / possible false negative), REJECTED / SCREENED (a guard fired, and
+    why), and CLONE_FAILED, each with its reason -- the decisions that were
+    previously only written to finding.reasoning in the DB and never surfaced live.
+    """
+    tail = (" " + " ".join(f"{k}={v}" for k, v in extra.items())) if extra else ""
+    # Detail goes in the MESSAGE (not just context) so the human-readable
+    # --pretty-logs formatter shows it, not only the JSON formatter.
+    log.info("decision %-13s %s :: %s%s", decision, finding.full_name, reason, tail,
+             extra={"context": {"repo": finding.full_name, "decision": decision,
+                                "reason": reason, **extra}})
 
 
 def _osm_iocs(db: Database) -> IocSet:
@@ -236,6 +254,18 @@ def _finding_from_owner(ar: OwnerRepo) -> RepoFinding:
     )
 
 
+def _finding_from_package_source(pr) -> RepoFinding:
+    reason = (f"GitHub source of known-malicious {pr.ecosystem} package '{pr.package}'"
+              + (f" (author {pr.author})" if pr.author else ""))
+    return RepoFinding(
+        full_name=pr.full_name,
+        url=f"https://github.com/{pr.full_name}",
+        detection_method=DetectionMethod.PACKAGE_SOURCE,
+        reasoning=reason,
+        matched_iocs=[pr.package],
+    )
+
+
 def _finding_from_osm_repo(full_name: str, url: str, intel: dict, db: Database,
                            run_id: str) -> RepoFinding:
     intel = intel or {}
@@ -277,12 +307,14 @@ def hunt(
     do_osm: bool = True,
     do_signature: bool = True,
     do_news: bool = True,
+    do_package_repos: bool = True,
     do_tier2: bool = False,
     max_iocs: int = 8,
     max_packages: int = 8,
     max_osm: int = 60,
-    max_signatures: int = 8,
+    max_signatures: int = 14,
     max_news: int = 6,
+    max_package_repos: int = 40,
     search_pace: float = 0.0,
     limit: int = 0,
     scan_min_score: int = 4,
@@ -290,7 +322,9 @@ def hunt(
     notifier=None,
     clone=None,
     news_http=None,
+    pkg_http=None,
     osm_live_known: set[str] | None = None,
+    resume: bool = False,
     progress=None,
 ) -> dict:
     """Run the hunt and return a summary. Persists findings into the registry.
@@ -353,6 +387,21 @@ def hunt(
         for ar in find_owner_repos(client, db.malicious_repo_owners(), known=known):
             candidates.setdefault(ar.full_name.casefold(), _finding_from_owner(ar))
         _src("owner pivot")
+
+    if do_package_repos:
+        # HIGH-RECALL package -> repo: resolve known-malicious packages (OSM + any
+        # ingested advisory feed) to their GitHub SOURCE repos via public registry
+        # metadata. Reuses intel we already hold; each is Tier-2-eligible but still
+        # has to confirm on its own code (a typosquat pointing at the legit repo
+        # never confirms).
+        pkg_client = pkg_http
+        if pkg_client is None:
+            from .feeds.http import RequestsHttpClient
+            pkg_client = RequestsHttpClient()
+        for pr in find_package_source_repos(db, pkg_client, known=known,
+                                            limit=max_package_repos):
+            candidates.setdefault(pr.full_name.casefold(), _finding_from_package_source(pr))
+        _src("package source repos")
 
     if do_news:
         # News/discussion pivot: Hacker News + Google News RSS, both free and
@@ -452,20 +501,36 @@ def hunt(
         )
         finding.score = result.score
         finding.signals = sorted(set(finding.signals) | set(result.signal_names))
+        # Flag legitimate offensive-security / research tools from their README so
+        # Tier-2 keeps them a breadcrumb instead of confirming their (purposeful)
+        # attack code (the karmaz95/crimson FP, 2026-07-07).
+        if is_security_tool(readme):
+            finding.signals = sorted(set(finding.signals) | {"security-tool"})
         # Intelligence-driven candidates (reference a known IOC / malicious
         # package / are under a repeat-offender owner) reach Tier-2 on their
         # discovery signal, NOT their (often benign) name; unless they are a
         # defender/sample/catalog repo, which we must not clone+confirm.
         intel = finding.detection_method in (
             DetectionMethod.IOC_SEARCH, DetectionMethod.PACKAGE_REF,
-            DetectionMethod.MALICIOUS_OWNER, DetectionMethod.ACTOR_ACCOUNT,
-            DetectionMethod.OSM_REPOSITORY, DetectionMethod.SIGNATURE_MATCH,
+            DetectionMethod.PACKAGE_SOURCE, DetectionMethod.MALICIOUS_OWNER,
+            DetectionMethod.ACTOR_ACCOUNT, DetectionMethod.OSM_REPOSITORY,
+            DetectionMethod.SIGNATURE_MATCH,
         )
-        to_tier2 = result.tier2 or (intel and not is_defensive_repo(finding.full_name))
+        # A well-known-legit org (microsoft, freebsd, ...) never reaches Tier-2:
+        # its huge codebase legitimately contains tasks.json/eval/env-read patterns
+        # that would otherwise confirm (the microsoft/vscode FP, 2026-07-07). Apply
+        # the allowlist DURING the hunt, not only at the reconcile sweep.
+        good_owner = finding.full_name.split("/", 1)[0].casefold() in config.KNOWN_GOOD_OWNERS
+        to_tier2 = (not good_owner) and (
+            result.tier2 or (intel and not is_defensive_repo(finding.full_name)))
         finding.status = RepoFindingStatus.SCREENED if to_tier2 else RepoFindingStatus.CANDIDATE
         if to_tier2:
             screened_count += 1
         progress.screen_item(_idx, _total, finding.full_name, to_tier2)
+        log.debug("tier1 screen", extra={"context": {
+            "repo": finding.full_name, "score": finding.score,
+            "advance_to_tier2": to_tier2, "good_owner": good_owner,
+            "method": finding.detection_method.value}})
         db.upsert_finding(finding, run_id)
     progress.screen_end(screened_count)
 
@@ -489,6 +554,39 @@ def hunt(
         try:
             for _t2_idx, finding in enumerate(screened, start=1):
                 progress.tier2_item(_t2_idx, _t2_total, finding.full_name)
+                # RESUME: skip a repo already Tier-2 scanned in a prior run (it has a
+                # stored code_hash), so a killed/rate-limited long run continues where
+                # it stopped instead of re-cloning everything.
+                if resume:
+                    prior = db.get_finding(finding.full_name)
+                    if prior is not None and prior["code_hash"]:
+                        continue
+                # Well-known-legit org (microsoft, freebsd, ...) is never scanned or
+                # confirmed, even at a high Tier-1 score, because a huge legit
+                # codebase inevitably trips a rule (the microsoft/vscode env-read FP,
+                # 2026-07-07). This is the definitive gate: the screened list can
+                # include a high-score candidate regardless of the Tier-1 decision.
+                if finding.full_name.split("/", 1)[0].casefold() in config.KNOWN_GOOD_OWNERS:
+                    finding.status = RepoFindingStatus.REJECTED
+                    finding.reasoning = (finding.reasoning or "") + \
+                        " | well-known-legit owner; never scanned/confirmed"
+                    db.upsert_finding(finding, run_id)
+                    _decide(finding, "REJECTED", "well-known-legit owner (KNOWN_GOOD_OWNERS)")
+                    continue
+                # Offensive-security / research tool (README-flagged at Tier-1): its
+                # attack code is its stated purpose, not malice delivered to victims.
+                # Keep it a research breadcrumb, never confirmed/published -- extends
+                # the red-team-tool protection to EVERY discovery method (the
+                # karmaz95/crimson package_ref FP, 2026-07-07).
+                if "security-tool" in finding.signals:
+                    finding.status = RepoFindingStatus.SCREENED
+                    finding.reasoning = (finding.reasoning or "") + \
+                        " | security-research/offensive tool (README); breadcrumb, not confirmed"
+                    db.upsert_finding(finding, run_id)
+                    redteam_breadcrumbs += 1
+                    _decide(finding, "SCREENED",
+                            "security-research/offensive tool (README markers)")
+                    continue
                 kwargs = {"clone": clone} if clone else {}
                 kwargs["malicious_packages"] = mal_packages
                 restrict = None
@@ -505,6 +603,8 @@ def hunt(
                             " | unmodified fork of red-team tool (no intent change)"
                         db.upsert_finding(finding, run_id)
                         rejected_mirrors += 1
+                        _decide(finding, "REJECTED",
+                                "unmodified fork of red-team tool (no intent delta)")
                         continue
                     if not compared:
                         # No diffable upstream (a name_match, or a fork we could not
@@ -516,6 +616,7 @@ def hunt(
                             " | red-team tooling; no diffable intent delta -> breadcrumb"
                         db.upsert_finding(finding, run_id)
                         redteam_breadcrumbs += 1
+                        _decide(finding, "SCREENED", "red-team tooling; no diffable intent delta")
                         continue
                 else:
                     # A red-team tool surfaced by a NON-lineage pivot (owner /
@@ -533,13 +634,48 @@ def hunt(
                             f" | matches pinned red-team tool '{tool}'; breadcrumb, not confirmed"
                         db.upsert_finding(finding, run_id)
                         redteam_breadcrumbs += 1
+                        _decide(finding, "SCREENED", f"matches pinned red-team tool '{tool}'")
                         continue
-                result = scan_candidate(finding.full_name, workdir,
-                                        restrict_paths=restrict, confirm_categories=confirm_cats,
-                                        **kwargs)
+                # Safety net: a scanner bug on ONE repo (e.g. a malformed manifest)
+                # must never abort the whole run -- treat it as an unscannable clone
+                # and move on (a full 2h pipeline died this way on 2026-07-07).
+                try:
+                    result = scan_candidate(
+                        finding.full_name, workdir, restrict_paths=restrict,
+                        confirm_categories=confirm_cats, **kwargs)
+                except Exception as exc:  # noqa: BLE001
+                    result = None
+                    log.warning("scan_candidate crashed; skipping repo",
+                                extra={"context": {"repo": finding.full_name, "err": str(exc)}})
+                    _decide(finding, "SCAN_ERROR", f"scanner raised: {type(exc).__name__}")
                 if result is None:  # clone failed (404/taken down) or exceeded bounds
                     failed_clones.append({"repo": finding.full_name,
                                           "reason": "clone_failed_or_bounds"})
+                    _decide(finding, "CLONE_FAILED", "404/taken-down or exceeded size bounds")
+                elif not result.confirmed:
+                    # Scanned but did not meet the confirmation bar: a near-miss. This
+                    # is the false-NEGATIVE / recall-gap signal -- what static signal it
+                    # DID trip, so an operator can see which rules almost fired.
+                    _decide(finding, "NOT_CONFIRMED",
+                            f"scanned; static score {result.bash_score} below confirmation bar",
+                            top_signals=sorted({f"{bf.category}:{bf.rule}"
+                                                for bf in result.bash_findings})[:8])
+                # A pinned red-team tool's OWN attack code (hex blobs, obfuscation) is
+                # its stated purpose, not weaponization. A fork of one confirms ONLY on
+                # AUTO-tier ADDED weaponization (a real dropper / exfil / install hook),
+                # never on its own review-tier obfuscation alone (the
+                # thec0nci3rge/infection-monkey-v2.3.0 hex-blob FP, 2026-07-07).
+                if (result and result.confirmed
+                        and finding.detection_method is DetectionMethod.REDTEAM_LINEAGE
+                        and result.confidence != "auto"):
+                    finding.status = RepoFindingStatus.SCREENED
+                    finding.reasoning = (finding.reasoning or "") + \
+                        " | red-team tool's own code (no AUTO-tier weaponization); breadcrumb"
+                    db.upsert_finding(finding, run_id)
+                    redteam_breadcrumbs += 1
+                    _decide(finding, "SCREENED",
+                            "red-team tool own-code; no AUTO-tier added weaponization")
+                    continue
                 if result and result.confirmed:
                     finding.status = RepoFindingStatus.CONFIRMED
                     finding.score += result.bash_score
@@ -548,6 +684,11 @@ def hunt(
                         f" | Tier-2 confirmed (bash score {result.bash_score})"
                     finding.code_hash = result.code_hash
                     finding.raw_payload["code_hash"] = result.code_hash
+                    # Confidence tier (auto|review) -- gates gold + submit downstream.
+                    finding.raw_payload["confidence"] = result.confidence
+                    # The exact scanned commit -> permanent /blob/<sha>/ evidence links.
+                    if result.commit_sha:
+                        finding.raw_payload["commit_sha"] = result.commit_sha
                     # Provenance for the gold message (doc 02 6): file:line + rule
                     # per bash finding. The CONFIRMING findings come first so a
                     # noisy repo (1000s of weak hits) never buries the real signal.
@@ -564,6 +705,11 @@ def hunt(
                     confirmed += 1
                     confirmed_by_method[finding.detection_method.value] += 1
                     progress.confirmed(finding.full_name, finding.score)
+                    _decide(finding, f"CONFIRMED[{result.confidence}]",
+                            f"Tier-2 static confirm (bash score {result.bash_score})",
+                            method=finding.detection_method.value, score=finding.score,
+                            confirming=[f"{bf.category}:{bf.rule}"
+                                        for bf in result.confirming_findings][:6])
                     # Compounding loop: mine this confirmed repo's IOCs into the
                     # search corpus so future hunts find more like it.
                     li = result.learned_iocs
@@ -585,8 +731,16 @@ def hunt(
     osm_live = {r.casefold() for r in (osm_live_known or set())}
     if gold and notifier is not None:
         progress.phase("Deliver", "posting confirmed clusters to the review feed")
-        # Live re-check: never report a repo OSM has added since our ingest.
-        rows = [r for r in db.undelivered_gold() if r["full_name"].casefold() not in osm_live]
+        # Gold is AUTO-tier only: a lone broad-signal (review) finding never pings
+        # Discord. Plus the live re-check so we never report a repo OSM already has.
+        def _is_auto(r) -> bool:
+            try:
+                return (json.loads(r["raw_payload"] or "{}").get("confidence") or
+                        "review") == "auto"
+            except Exception:  # noqa: BLE001
+                return False
+        rows = [r for r in db.undelivered_gold()
+                if r["full_name"].casefold() not in osm_live and _is_auto(r)]
         # ONE report per connected cluster (campaign), never duplicated per-repo.
         for cluster in cluster_findings(rows):
             names = [r["full_name"] for r in cluster]
@@ -600,11 +754,24 @@ def hunt(
                 db.set_gold_delivered(names, False)
         progress.note(f"delivered {delivered} confirmed finding(s) to the review feed")
 
+    # Tier breakdown of THIS run's confirmations -- the CTF-relevant number is
+    # confirmed_auto (submit-eligible); review is the human queue.
+    by_tier: Counter = Counter()
+    for tr in db.conn.execute(
+            "SELECT raw_payload FROM repo_findings WHERE last_seen_run=? AND status='confirmed'",
+            (run_id,)).fetchall():
+        try:
+            by_tier[json.loads(tr["raw_payload"] or "{}").get("confidence") or "review"] += 1
+        except Exception:  # noqa: BLE001
+            by_tier["review"] += 1
+
     counts = {
         "candidates": len(candidates),
         "candidates_by_method": dict(by_method),
         "screened": screened_count,  # passed Tier-1 (cumulative, pre-Tier-2)
         "confirmed": confirmed,
+        "confirmed_auto": by_tier.get("auto", 0),      # submit-eligible captures
+        "confirmed_review": by_tier.get("review", 0),  # human-review queue
         "confirmed_by_method": dict(confirmed_by_method),
         "rejected_mirrors": rejected_mirrors,  # unmodified red-team forks dropped
         "redteam_breadcrumbs": redteam_breadcrumbs,  # red-team tooling kept as lead
@@ -615,3 +782,67 @@ def hunt(
     summary = {"run_id": run_id, "counts": counts, "failed_clones": failed_clones}
     log.info("hunt finished", extra={"context": {"run_id": run_id, "counts": counts}})
     return summary
+
+
+def _default_readme(full_name: str) -> str:
+    """Best-effort fetch of a repo README (for the security-tool screen)."""
+    import requests
+    for name in ("README.md", "README", "readme.md"):
+        try:
+            r = requests.get(
+                f"https://raw.githubusercontent.com/{full_name}/HEAD/{name}", timeout=15)
+            if r.status_code == 200:
+                return r.text
+        except Exception:  # noqa: BLE001
+            pass
+    return ""
+
+
+def revalidate_findings(db, *, clone=scan_candidate, readme_fetch=_default_readme,
+                        limit: int | None = None, run_id: str = "revalidate") -> dict:
+    """Re-scan already-confirmed, unsubmitted findings under the CURRENT rules and
+    reconcile the DB with them.
+
+    A finding is DEMOTED to ``rejected`` when it no longer confirms (a fixed false
+    positive) or its repo now reads as a security tool; otherwise its stored
+    ``confidence`` tier is refreshed so gold/submit gating reflects today's rules.
+    Never touches submitted rows or OSM-sourced repos. ``clone`` is the scanner
+    (injectable; defaults to ``scan_candidate``) so it is unit-testable offline.
+    """
+    from .osm_submit import _ensure_submit_columns
+    _ensure_submit_columns(db)  # submitted_osm / osm_threat_id are runtime columns
+    rows = db.conn.execute(
+        "SELECT full_name, raw_payload FROM repo_findings WHERE status='confirmed' "
+        "AND submitted_osm=0 AND detection_method NOT IN ('osm_repository','redteam_lineage') "
+        "ORDER BY full_name").fetchall()
+    if limit:
+        rows = rows[:limit]
+    import shutil
+    workdir = tempfile.mkdtemp(dir=config.WORK_DIR)
+    out: dict = {"demoted": [], "retiered": [], "kept": []}
+    try:
+        for row in rows:
+            fn = row["full_name"]
+            sec = is_security_tool(readme_fetch(fn))
+            result = clone(fn, workdir)
+            confirmed = bool(result and result.confirmed)
+            if sec or not confirmed:
+                reason = "security-tool" if sec else "no-longer-confirms"
+                note = f" | revalidated ({run_id}): demoted ({reason})"
+                db.conn.execute(
+                    "UPDATE repo_findings SET status='rejected', "
+                    "reasoning=COALESCE(reasoning,'')||? WHERE full_name=?", (note, fn))
+                out["demoted"].append((fn, reason))
+            else:
+                payload = json.loads(row["raw_payload"] or "{}")
+                if payload.get("confidence") != result.confidence:
+                    payload["confidence"] = result.confidence
+                    db.conn.execute("UPDATE repo_findings SET raw_payload=? WHERE full_name=?",
+                                    (json.dumps(payload), fn))
+                    out["retiered"].append((fn, result.confidence))
+                else:
+                    out["kept"].append((fn, result.confidence))
+        db.conn.commit()
+    finally:
+        shutil.rmtree(workdir, ignore_errors=True)
+    return out

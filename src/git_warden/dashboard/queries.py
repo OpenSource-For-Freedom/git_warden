@@ -137,8 +137,8 @@ def summary(db: Database) -> dict[str, Any]:
 def findings(db: Database, status: str | None = None) -> list[dict[str, Any]]:
     """Finding rows for the table, newest/high-score first; novel flag attached."""
     known = db.osm_known_repos()
-    sql = ("SELECT full_name, detection_method, status, score, delivered_gold, actor_key "
-           "FROM repo_findings")
+    sql = ("SELECT full_name, detection_method, status, score, delivered_gold, "
+           "actor_key, raw_payload FROM repo_findings")
     params: tuple = ()
     if status:
         sql += " WHERE status = ?"
@@ -146,6 +146,10 @@ def findings(db: Database, status: str | None = None) -> list[dict[str, Any]]:
     sql += " ORDER BY (status='confirmed') DESC, score DESC, full_name"
     out = []
     for r in db.conn.execute(sql, params):
+        try:
+            conf = json.loads(r["raw_payload"] or "{}").get("confidence")
+        except Exception:  # noqa: BLE001
+            conf = None
         out.append({
             "full_name": r["full_name"],
             "owner": _owner(r["full_name"]),
@@ -155,6 +159,8 @@ def findings(db: Database, status: str | None = None) -> list[dict[str, Any]]:
             "gold": bool(r["delivered_gold"]),
             "attribution": r["actor_key"],
             "novel": r["full_name"].casefold() not in known,
+            # AUTO = submit-eligible high-confidence capture; review = human queue.
+            "confidence": conf if r["status"] == "confirmed" else None,
         })
     return out
 
