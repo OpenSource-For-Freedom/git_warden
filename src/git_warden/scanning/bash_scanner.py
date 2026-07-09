@@ -62,7 +62,14 @@ _RULES: dict[str, list[tuple[str, re.Pattern]]] = {
             r"download\.docker\.com|sh\.rustup\.rs|rustup\.rs|get\.helm\.sh|"
             r"apt\.llvm\.org|packages\.microsoft\.com|bun\.sh|astral\.sh|"
             r"install\.python-poetry\.org)\b)"
-            r"(curl|wget)\s[^\n|]*\|\s*(sh|bash|python|perl)", re.I)),
+            # `python -m json.tool` / `-m http.server` READ stdin as data (pretty-print
+            # / serve); they never execute the fetched bytes, so `curl ... | python -m
+            # json.tool` is not download-and-run (the localhost/API health-check FPs,
+            # 2026-07-07). The lookahead sits BEFORE the interpreter so `python[0-9]?`
+            # cannot backtrack past it. Bare `python`, `python -c`, sh/bash/perl confirm.
+            r"(curl|wget)\s[^\n|]*\|\s*"
+            r"(?!python[0-9]?\s+-m\s+(?:json\.tool|http\.server)\b)"
+            r"(sh|bash|perl|python[0-9]?)", re.I)),
         ("fetch-then-exec",
          re.compile(r"(curl|wget)\s[^\n]*-o\s*\S+[^\n]*;\s*(sh|bash|chmod)", re.I)),
     ],
@@ -99,10 +106,18 @@ _RULES: dict[str, list[tuple[str, re.Pattern]]] = {
         # audit FP). Require a read/copy/exfil verb, or a pipe/redirect out, so a
         # permission-management line no longer confirms. /etc/passwd is
         # benign/ubiquitous and never flagged.
+        # Second branch requires the pipe/redirect to reach a REAL command/path, not
+        # a bare "|": a scanner's own sensitive-path REGEX ('/etc/shadow|\.gitconfig')
+        # is an alternation, not an exfil pipe (the dnszlsk/muad-dib FP, 2026-07-07).
+        # Primary: a read/copy/exfil VERB reaching /etc/shadow (high precision).
+        # Secondary is deliberately TIGHT -- an IMMEDIATE redirect to a real capture
+        # file (not /dev/null, no gap): a loose `[^\n]*` version matched `2>/dev/null`
+        # and the `||` after "/etc/shadow readable!" in a warning string
+        # (arry8/openclaw-edge hardening audit, 2026-07-07).
         ("shadow-read", re.compile(
             r"\b(?:cat|less|more|head|tail|cp|scp|rsync|dd|xxd|strings|od|base64|"
             r"awk|sed|nc|curl|wget|tar|zip|gzip)\b[^\n]*/etc/shadow"
-            r"|/etc/shadow\b[^\n]*(?:\||>>?|curl|wget|\bnc\b)", re.I)),
+            r"|/etc/shadow\b\s*>>?\s*(?!/dev/null\b)[\w/.]", re.I)),
         ("env-token-grab", re.compile(r"\b(AWS_SECRET|GITHUB_TOKEN|NPM_TOKEN|API_KEY)\b", re.I)),
     ],
     "process_injection": [
@@ -155,10 +170,14 @@ _MAX_BYTES = 1_000_000
 # Excluding both means only first-party, shipped code can confirm a finding.
 # (Names are compared case-insensitively.)
 _IGNORE_DIRS = frozenset({
-    ".git", "node_modules", "bower_components", "vendor", "third_party",
-    "third-party", "dist", "build", "out", ".next", ".nuxt", "target",
-    ".venv", "venv", "virtualenv", "site-packages", "__pycache__", "pods",
-    ".gradle", ".terraform", ".yarn",
+    ".git", "node_modules", "bower_components", "vendor", "vendored",
+    "third_party", "third-party", "dist", "build", "out", ".next", ".nuxt",
+    "target", ".venv", "venv", "virtualenv", "site-packages", "__pycache__",
+    "pods", ".gradle", ".terraform", ".yarn",
+    # Static web root: an ASP.NET / static site ships VENDORED front-end libs under
+    # wwwroot/lib (their upstream install hooks are not the repo owner's injection)
+    # -- the mahfuznazib/eyehospitalmis swiper postinstall FP, 2026-07-07.
+    "wwwroot",
     # non-payload: tests/fixtures/examples carry attack strings as DATA
     "test", "tests", "__tests__", "spec", "__spec__", "fixtures", "fixture",
     "__fixtures__", "mocks", "__mocks__", "e2e", "testdata", "examples", "example",
@@ -167,7 +186,16 @@ _IGNORE_DIRS = frozenset({
     # these are demo/proof-of-concept payloads, not the repo's real code.
     "test-cases", "test_cases", "testcases", "samples", "sample",
     "poc", "pocs", "demo", "demos",
+    # THIRD-PARTY / regression-test trees in large OSS monorepos (2026-07-07 CTF
+    # FPs: cheribsd `contrib/netbsd-tests/...sh` nc-exec; freebsd-ports
+    # `devel/electron*/files/packagejsons/package.json` npm-preinstall). "contrib"
+    # is contributed third-party code; "regress"/"atf" are BSD regression tests;
+    # "packagejsons" is the ports tree's vendored npm metadata.
+    "contrib", "regress", "atf", "packagejsons", "distinfo",
 })
+# Directory-name SUFFIXES that mark a test tree even when hyphenated/prefixed
+# (netbsd-tests, atf-tests, kyua-tests, lib-tests, ...).
+_TEST_DIR_SUFFIXES = ("-tests", "_tests", "-test", "_test")
 # Test-file name markers (a test file can live anywhere, e.g. `src/x.test.ts`).
 _TEST_FILE_MARKERS = (".test.", ".spec.", ".stories.", ".fixture.", ".mock.")
 # Language-specific test-file conventions matched by SUFFIX/PREFIX (not loose
@@ -227,6 +255,9 @@ def is_ignored_path(path: Path) -> bool:
     file (skip for scanning so only first-party PAYLOAD code can confirm)."""
     parts = {p.lower() for p in path.parts}
     if _IGNORE_DIRS & parts:
+        return True
+    # hyphenated/prefixed test trees (netbsd-tests, atf-tests, ...)
+    if any(p.endswith(_TEST_DIR_SUFFIXES) for p in parts):
         return True
     name = path.name.lower()
     if is_test_file(name):

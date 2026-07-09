@@ -118,6 +118,31 @@ _HOST_GATED_ALONE = frozenset({
     ("download_exec", "curl-pipe-shell"), ("download_exec", "fetch-then-exec"),
     ("exfiltration", "curl-post-data"), ("exfiltration", "archive-then-send"),
 })
+# CONFIDENCE TIERS. The confirming MECHANISM decides how much to trust a finding:
+#   auto   -- a delivery/exfil/dependency mechanism (fetch-and-run, install hook,
+#             reverse shell, steal-and-send, OSM-listed malicious dep). High
+#             precision; eligible for gold + submit.
+#   review -- confirmed only on a broad single signal (standalone obfuscation /
+#             decode-exec literal, a lone env dump). Real-ish but noisy: stored for
+#             a human, NEVER auto-gold or auto-submit.
+# Everything a big legit app trips (recon, code-exec smell) never confirmed at all.
+_AUTO_CONFIRM_CATEGORIES = frozenset({
+    "install_hook", "download_exec", "reverse_shell", "malicious_dependency",
+    "credential_harvest", "exfiltration", "network_exfil",
+})
+
+
+def _confidence_tier(confirmed: bool, confirming: list[BashFinding],
+                     oss_confirmed: bool = False) -> str:
+    if not confirmed:
+        return "none"
+    # A malware-specific scanner (guarddog install-hooks/exfil, yara rulesets) is a
+    # high-confidence detector; so is any delivery/exfil/dependency mechanism.
+    if oss_confirmed or any(f.category in _AUTO_CONFIRM_CATEGORIES for f in confirming):
+        return "auto"
+    return "review"  # obfuscation / lone env-dump only
+
+
 _URL_HOST = re.compile(r"https?://(?:[^/@\s]*@)?([A-Za-z0-9.\-]+)", re.I)
 _IP_HOST = re.compile(r"^\d{1,3}(?:\.\d{1,3}){3}$")
 # Paste/transfer hosts with near-zero legitimate "pipe to shell" use.
@@ -141,14 +166,27 @@ def _is_comment_line(snippet: str) -> bool:
     return s.startswith(_COMMENT_PREFIXES)
 
 
-def _fetch_target_suspicious(snippet: str) -> bool:
-    """True if a curl/fetch line targets an attacker host (IP, ephemeral, paste).
+_LOCAL_HOSTS = frozenset({"localhost", "127.0.0.1", "0.0.0.0", "::1", "[::1]", "::"})
+# Private / loopback / link-local IPv4 ranges (RFC1918 + 127/8 + 169.254/16). A
+# curl to one of these is a LOCAL health check, never attacker C2 (the
+# siragpt/full-scene/hermes `curl 127.0.0.1/system_stats | python3` FPs, 2026-07-07).
+_PRIVATE_IP = re.compile(
+    r"^(?:127\.|10\.|192\.168\.|169\.254\.|172\.(?:1[6-9]|2\d|3[01])\.)")
 
-    Reputable installer domains (rustup.rs, bun.sh, nodesource.com, ...) are not
-    flagged, so a normal `curl ... | sh` install never confirms.
+
+def _fetch_target_suspicious(snippet: str) -> bool:
+    """True if a curl/fetch line targets an attacker host (public IP, ephemeral, paste).
+
+    Localhost / private / reserved IPs (a local health check) and reputable
+    installer or registry hosts (a toolchain bootstrap: rustup, bun, Foundry, ...)
+    are NOT suspicious, so neither a `curl 127.0.0.1/... | python` health check nor a
+    `curl https://foundry.paradigm.xyz | sh` install confirms.
     """
+    from .manifest_scanner import is_reputable_install_host
     for host in _URL_HOST.findall(snippet or ""):
         h = host.lower().rstrip(".")
+        if h in _LOCAL_HOSTS or _PRIVATE_IP.match(h) or is_reputable_install_host(h):
+            continue
         if _IP_HOST.match(h) or h in _PASTE_HOSTS or is_attacker_host(h):
             return True
     return False
@@ -190,10 +228,12 @@ _HASH_MAX_FILE_BYTES = 5_000_000
 class Tier2Result:
     full_name: str
     code_hash: str
+    commit_sha: str = ""  # the exact commit we scanned, for permanent /blob/<sha>/ evidence
     bash_findings: list[BashFinding] = field(default_factory=list)
     bash_score: int = 0
     scanners: dict[str, str] = field(default_factory=dict)  # name -> status/summary
     confirmed: bool = False
+    confidence: str = "none"  # "auto" | "review" | "none" -- gates gold + submit
     learned_iocs: IocSet = field(default_factory=IocSet)  # IOCs mined from the code
     learned_signatures: list[str] = field(default_factory=list)  # code sigs mined
     confirming_findings: list[BashFinding] = field(default_factory=list)  # what confirmed
@@ -318,6 +358,22 @@ def clone_repo(
     return dest
 
 
+def _read_head_sha(root: Path, *, runner=subprocess.run) -> str:
+    """The exact commit SHA of the cloned tree, for permanent evidence links.
+
+    Evidence pinned to ``/blob/<sha>/`` stays valid forever; a ``/blob/HEAD/`` link
+    rots the moment a victim removes the injected file, which makes the report look
+    unverifiable at review time. Best-effort: returns '' if git is unavailable.
+    """
+    try:
+        result = runner(["git", "-C", str(root), "rev-parse", "HEAD"],
+                        capture_output=True, text=True, timeout=30)
+        sha = (result.stdout or "").strip()
+        return sha if result.returncode == 0 and len(sha) == 40 else ""
+    except (OSError, subprocess.SubprocessError):
+        return ""
+
+
 def _run_external(name: str, root: Path, runner) -> str:
     """Run one OSS scanner if installed; return a status string.
 
@@ -423,6 +479,15 @@ def analyze_repo(
         # bash_findings above for transparency.
         if _is_comment_line(f.snippet):
             continue
+        # VS Code and its forks (positron, che-code, ...) resolve the login shell's
+        # environment INTO the editor via `${execPath} -p JSON.stringify(process.env)`
+        # -- reading env for terminal inheritance, not exfiltrating secrets. That is
+        # not credential theft (the microsoft/vscode + posit-dev/positron env-dump
+        # FPs, 2026-07-07). A real stealer's env dump does not spawn the app itself.
+        if key == ("credential_access", "env-dump") and (
+                "execpath" in (f.snippet or "").lower()
+                or "shellenv" in (f.file or "").lower()):
+            continue
         if key in _CONFIRM_ALONE_RULES or (
                 key in _HOST_GATED_ALONE and _fetch_target_suspicious(f.snippet)):
             confirm_alone = True
@@ -458,6 +523,7 @@ def analyze_repo(
         bash_score=score,
         scanners=scanners,
         confirmed=confirmed,
+        confidence=_confidence_tier(confirmed, confirming, oss_confirmed),
         learned_iocs=learned,
         learned_signatures=learned_sigs,
         confirming_findings=confirming,
@@ -490,9 +556,12 @@ def scan_candidate(
             log.warning("clone exceeds size bounds; skipping",
                         extra={"context": {"repo": full_name}})
             return None
-        return analyze_repo(cloned, full_name, runner=runner,
-                            restrict_paths=restrict_paths,
-                            confirm_categories=confirm_categories,
-                            malicious_packages=malicious_packages)
+        result = analyze_repo(cloned, full_name, runner=runner,
+                              restrict_paths=restrict_paths,
+                              confirm_categories=confirm_categories,
+                              malicious_packages=malicious_packages)
+        # Pin the exact commit so evidence links survive the file being removed later.
+        result.commit_sha = _read_head_sha(cloned, runner=runner)
+        return result
     finally:
         _force_rmtree(cloned)

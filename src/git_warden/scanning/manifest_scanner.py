@@ -39,6 +39,62 @@ _SUSPICIOUS_CMD = re.compile(
     r"|\b(?:iex|invoke-expression)\b",                                    # PS download-exec
     re.IGNORECASE,
 )
+# A lifecycle script that ONLY fetches from a reputable installer host is a normal
+# toolchain bootstrap (Meteor, Rust, Node, Docker, Bun, ...), not a dropper -- so it
+# must not confirm (the chris-visser/meteor-vue-admin `curl install.meteor.com | sh`
+# and jose-compu/zk-vrf `rustup` preinstall FPs, 2026-07-07). An attacker preinstall
+# fetching a non-installer host still fires.
+_INSTALL_HOST_RE = re.compile(r"https?://([A-Za-z0-9.\-]+)", re.I)
+_REPUTABLE_INSTALL_HOSTS = (
+    "install.meteor.com", "sh.rustup.rs", "static.rust-lang.org", "deb.nodesource.com",
+    "get.docker.com", "download.docker.com", "bun.sh", "astral.sh", "deno.land",
+    "install.python-poetry.org", "get.pnpm.io", "apt.llvm.org", "get.helm.sh",
+    "packages.microsoft.com", "cli.github.com", "nodejs.org", "python.org",
+    # Package registries: pulling a passive artifact from one is a build step, not a
+    # dropper (the fa0311/twitter-openapi folderOpen venv+pip+curl-maven-jar FP,
+    # 2026-07-07). Attacker C2s (e.g. *.vercel.app droppers) are NOT here, so a
+    # curl|bash to one still confirms.
+    "repo1.maven.org", "repo.maven.apache.org", "registry.npmjs.org",
+    "pypi.org", "files.pythonhosted.org", "crates.io", "static.crates.io",
+    "proxy.golang.org", "rubygems.org",
+    # Named-toolchain installers that publish an official `curl <host> | sh` (same
+    # shape as rustup): Foundry (Ethereum), Homebrew, Starship, Volta, nvm, Semgrep.
+    "foundry.paradigm.xyz", "raw.githubusercontent.com/foundry-rs", "get.brew.sh",
+    "starship.rs", "get.volta.sh", "raw.githubusercontent.com/nvm-sh", "semgrep.dev",
+)
+
+
+def is_reputable_install_host(host: str) -> bool:
+    """True if ``host`` is a known toolchain-installer / package-registry host, so a
+    ``curl <host> | sh`` is a normal bootstrap rather than a dropper. Shared with the
+    Tier-2 fetch-target gate so both scanners agree on what is reputable."""
+    h = (host or "").lower().rstrip(".")
+    return any(h == r or h.endswith("." + r) for r in _REPUTABLE_INSTALL_HOSTS)
+
+
+def _only_reputable_install(cmd: str) -> bool:
+    """True if a lifecycle command fetches ONLY from reputable installer hosts."""
+    hosts = [h.lower().rstrip(".") for h in _INSTALL_HOST_RE.findall(cmd or "")]
+    return bool(hosts) and all(is_reputable_install_host(h) for h in hosts)
+
+
+# `node -e "<inline>"` in a lifecycle hook is only a dropper when the inline code
+# actually fetches / decodes / spawns. A package-manager guard (read
+# npm_config_user_agent, process.exit) or a local `require('./postinstall')` is
+# benign and ubiquitous -- the frankhli843/gemmahermes PM-guard FP (2026-07-07).
+_NODE_EVAL = re.compile(r"\bnode\s+(?:-e|--eval)\b", re.I)
+_NODE_EVAL_DANGER = re.compile(
+    r"child_process|\bexec(?:Sync)?\s*\(|\bspawn|\bfetch\s*\(|https?://|/dev/tcp/"
+    r"|\batob\s*\(|Buffer\.from\([^)]*base64|\beval\s*\(|\bFunction\s*\(|require\s*\(\s*"
+    r"['\"](?:child_process|node:child_process|https?|node:https?|net|dgram)",
+    re.I)
+
+
+def _is_benign_node_eval(cmd: str) -> bool:
+    """True if the command's danger is ONLY a `node -e` whose inline code neither
+    fetches, decodes, nor spawns (a PM guard / local require), so it must not confirm."""
+    c = str(cmd or "")
+    return bool(_NODE_EVAL.search(c)) and not _NODE_EVAL_DANGER.search(c)
 # FETCH-AND-RUN inside setup.py (static regex; we do not run it). A bare
 # exec()/subprocess in setup.py is NORMAL; legit packages compile extensions
 # (subprocess -> cmake/nvcc), read their version (exec(open('_version.py'))), and
@@ -163,12 +219,16 @@ def scan_manifests(root, malicious_packages=None) -> list[BashFinding]:
 
         if name == "package.json":
             try:
-                scripts = (json.loads(text or "{}") or {}).get("scripts") or {}
+                pkg = json.loads(text or "{}")
             except ValueError:
                 continue
+            scripts = pkg.get("scripts") if isinstance(pkg, dict) else None
+            scripts = scripts if isinstance(scripts, dict) else {}
             for hook in _LIFECYCLE:
                 cmd = scripts.get(hook)
-                if cmd and _SUSPICIOUS_CMD.search(str(cmd)):
+                if (cmd and _SUSPICIOUS_CMD.search(str(cmd))
+                        and not _only_reputable_install(str(cmd))
+                        and not _is_benign_node_eval(str(cmd))):
                     findings.append(
                         BashFinding(rel, 0, "install_hook", f"npm-{hook}", str(cmd)[:200])
                     )
@@ -213,15 +273,25 @@ def _task_command_blob(task: dict) -> str:
 
 def _scan_vscode_tasks(text: str, rel: str) -> list[BashFinding]:
     try:
-        tasks = (json.loads(text or "{}") or {}).get("tasks") or []
+        data = json.loads(text or "{}")
     except ValueError:
         return []
+    # A tasks.json is normally an object; tolerate a top-level array / scalar / null
+    # (a malformed or unusual file must not crash the whole scan -- it aborted a
+    # full pipeline run on 2026-07-07).
+    tasks = data.get("tasks") if isinstance(data, dict) else None
+    tasks = tasks if isinstance(tasks, list) else []
     out: list[BashFinding] = []
     for task in tasks if isinstance(tasks, list) else []:
         if not isinstance(task, dict):
             continue
         run_on = ((task.get("runOptions") or {}).get("runOn") or "").lower()
         blob = _task_command_blob(task)
-        if run_on == "folderopen" and _SUSPICIOUS_CMD.search(blob):
+        # A folderOpen task that ONLY fetches from reputable registries (a venv+pip+
+        # curl-maven-jar build bootstrap) is not a dropper; an attacker C2 fetch
+        # (or a pure inline eval / reverse shell with no reputable host) still fires.
+        if (run_on == "folderopen" and _SUSPICIOUS_CMD.search(blob)
+                and not _only_reputable_install(blob)
+                and not _is_benign_node_eval(blob)):
             out.append(BashFinding(rel, 0, "install_hook", "vscode-autorun", blob[:200]))
     return out

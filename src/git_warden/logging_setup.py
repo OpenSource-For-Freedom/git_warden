@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import sys
 from datetime import UTC, datetime
 
@@ -28,7 +29,15 @@ class JsonFormatter(logging.Formatter):
 
 
 def configure_logging(level: int = logging.INFO, *, json_output: bool = True) -> None:
-    """Configure the root logger once. Idempotent across repeated calls."""
+    """Configure the root logger once. Idempotent across repeated calls.
+
+    ``GW_LOG_LEVEL`` (DEBUG/INFO/WARNING/...) overrides the default level, so an
+    operator can turn on full-verbosity monitoring (network calls, retries, every
+    decision) for a run without a code change: ``GW_LOG_LEVEL=DEBUG git-warden hunt``.
+    """
+    env_level = os.environ.get("GW_LOG_LEVEL", "").strip().upper()
+    if env_level:
+        level = getattr(logging, env_level, level)
     root = logging.getLogger()
     root.setLevel(level)
     for handler in list(root.handlers):
@@ -42,3 +51,7 @@ def configure_logging(level: int = logging.INFO, *, json_output: bool = True) ->
             logging.Formatter("%(asctime)s %(levelname)-7s %(name)s: %(message)s")
         )
     root.addHandler(handler)
+    # Transport libraries are pure noise at DEBUG (every header, redirect, retry);
+    # keep the signal on git_warden's own discovery/decision logs.
+    for noisy in ("urllib3", "requests", "git", "asyncio", "charset_normalizer", "httpx"):
+        logging.getLogger(noisy).setLevel(logging.WARNING)
