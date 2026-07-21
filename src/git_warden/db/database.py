@@ -73,6 +73,24 @@ def connect(db_path: Path | str = DB_PATH) -> sqlite3.Connection:
     return conn
 
 
+def connect_readonly(db_path: Path | str = DB_PATH) -> sqlite3.Connection:
+    """Open a strictly READ-ONLY connection (``mode=ro`` plus ``query_only``).
+
+    It never takes a write lock and never sets journal mode, so a live dashboard
+    polling the registry cannot contend with a running hunt's writes. The dashboard
+    previously opened a read-write connection on every request, which ran
+    ``PRAGMA journal_mode=WAL`` (a write) each time. Under a concurrent writer that
+    stalled on a Windows disk-I/O error and hung the process on the DB file. WAL
+    lets readers proceed freely alongside the writer, so read-only is all it needs.
+    """
+    uri = f"file:{Path(db_path).as_posix()}?mode=ro"
+    conn = sqlite3.connect(uri, uri=True, timeout=30)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA busy_timeout = 30000")
+    conn.execute("PRAGMA query_only = ON")
+    return conn
+
+
 def _ensure_columns(conn: sqlite3.Connection, table: str, columns: dict[str, str]) -> None:
     """Lightweight forward-only migration: add any missing columns."""
     existing = {row[1] for row in conn.execute(f"PRAGMA table_info({table})")}
@@ -112,6 +130,12 @@ class Database:
         conn = connect(db_path)
         init_db(conn)
         return cls(conn)
+
+    @classmethod
+    def open_readonly(cls, db_path: Path | str = DB_PATH) -> Database:
+        """Read-only handle for viewers (the dashboard). Skips schema creation, so it
+        never writes and never contends with a running hunt."""
+        return cls(connect_readonly(db_path))
 
     def close(self) -> None:
         self.conn.close()

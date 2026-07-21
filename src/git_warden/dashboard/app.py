@@ -44,7 +44,9 @@ def create_app(db_path=DB_PATH):
         return await call_next(request)
 
     def _q(fn, *args):
-        db = Database.open(db_path)
+        # READ-ONLY: the dashboard must never take a write lock, or a live viewer
+        # contends with a running hunt (that combination stalled the DB on Windows).
+        db = Database.open_readonly(db_path)
         try:
             return fn(db, *args)
         finally:
