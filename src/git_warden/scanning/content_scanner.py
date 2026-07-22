@@ -15,7 +15,7 @@ import base64
 import re
 from pathlib import Path
 
-from .bash_scanner import BashFinding, is_ignored_path
+from .bash_scanner import BashFinding, is_benign_construct, is_ignored_path
 
 _JS_EXT = {".js", ".mjs", ".cjs", ".ts", ".tsx", ".jsx"}
 _PY_EXT = {".py"}
@@ -170,7 +170,7 @@ def scan_content(root) -> list[BashFinding]:
                 for rule_name, rule_lang, pattern in rules:
                     if rule_lang != "any" and rule_lang != lang:
                         continue
-                    if pattern.search(line):
+                    if pattern.search(line) and not is_benign_construct(rule_name, line):
                         snippet = line.strip()[:200]
                         if rule_name in _DECODE_EXEC_RULES:
                             malicious, note = _verify_decode_exec(line)
