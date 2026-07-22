@@ -129,6 +129,10 @@
   <div style="grid-column:span 2"><h3>Rejected (false positives)</h3><div id="rejected"></div></div>
   <div style="grid-column:span 2"><h3>Attack vectors (how the payload runs)</h3><div id="vectors"></div></div>
   <div style="grid-column:span 2"><h3>C2 / payload infrastructure</h3><div id="c2infra"></div></div>
+  <div style="grid-column:span 2"><h3>GitHub API health</h3><div id="apihealth"></div></div>
+  <div style="grid-column:span 2"><h3>Search telemetry <span class="muted"
+    style="text-transform:none">(live, what the hunt is querying)</span></h3>
+    <div id="searchstat"></div><div id="searchfeed"></div></div>
 </footer>
 
 <script>
@@ -427,7 +431,52 @@ async function loadRuns(){
     +` · <b class="good">${r.confirmed}</b> confirmed`;
 }
 
-loadMeta(); loadFunnel(); loadRuns(); loadGraph(false);
+// ---- search telemetry + API quota -------------------------------------------
+// Quota bars go amber under 50% and red under 20% left. code_search is the bucket
+// that actually paces a hunt, so it is shown first when GitHub reports it.
+function quotaBar(name,b){
+  if(!b||b.limit==null) return '';
+  const pct=Math.max(0,Math.min(100,Math.round(b.remaining/b.limit*100)));
+  const col=pct<20?'var(--bad)':(pct<50?'#d9a441':'var(--good)');
+  const mins=Math.round((b.reset_in||0)/60);
+  return `<div class="bar" title="resets in ${mins} min">`
+    +`<span>${esc(name)}</span>`
+    +`<i style="width:${Math.max(4,Math.round(pct*1.1))}px;background:${col}"></i>`
+    +`<small>${b.remaining}/${b.limit} · resets ${mins}m</small></div>`;
+}
+async function loadSearch(){
+  let d; try{ d=await j('/api/search'); }catch(e){ return; }
+  const a=d.api||{};
+  $('apihealth').innerHTML = a.ok
+    ? (quotaBar('code search',a.code_search)+quotaBar('search',a.search)+quotaBar('core',a.core))
+      || '<span class="muted">no buckets reported</span>'
+    : `<span class="muted">unavailable${a.error?': '+esc(a.error):''}</span>`;
+
+  const s=d.summary||{}; const idle=s.idle_seconds;
+  const live = idle!=null && idle < 120;
+  $('searchstat').innerHTML =
+    `<span class="dot ${live?'on':''}"></span>`
+    +(live?'<span class="good">searching</span>':'<span class="muted">no recent searches</span>')
+    +` · <b>${s.searches||0}</b> in last 15m`
+    +` · <b>${s.results||0}</b> hits`
+    +` · pace <b>${s.interval!=null?s.interval+'s':'n/a'}</b>`
+    +(s.throttled?` · <span class="bad">${s.throttled} throttled</span>`:'')
+    +(idle!=null?` · last ${Math.round(idle)}s ago`:'');
+
+  const rows=(d.recent||[]);
+  $('searchfeed').innerHTML = rows.length ? rows.map(r=>{
+    const t=new Date((r.ts||0)*1000).toLocaleTimeString();
+    const bad=r.throttled;
+    const res=bad?'throttled':((r.results==null?'-':r.results)+' hits');
+    return `<div class="vecrow"><b>${bad?'<span class="bad">!</span>':(r.results||0)}</b> `
+      +`<small class="muted">${esc(t)}</small> `
+      +`<code>${esc(String(r.query||'').slice(0,110))}</code> `
+      +`<small class="${bad?'bad':'muted'}">${esc(res)}</small></div>`;
+  }).join('') : '<span class="muted">no searches recorded yet (starts with the next hunt)</span>';
+}
+
+loadMeta(); loadFunnel(); loadRuns(); loadGraph(false); loadSearch();
+setInterval(loadSearch, 5000);
 setInterval(()=>{loadMeta(); loadFunnel(); loadRuns();}, 15000);
 setInterval(()=>loadGraph(true), 12000);   // live mapping: new inclusions pop in
 window.addEventListener('resize',()=>{const[W,H]=size();});

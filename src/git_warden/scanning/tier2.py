@@ -126,9 +126,16 @@ _HOST_GATED_ALONE = frozenset({
 #             decode-exec literal, a lone env dump). Real-ish but noisy: stored for
 #             a human, NEVER auto-gold or auto-submit.
 # Everything a big legit app trips (recon, code-exec smell) never confirmed at all.
+# NOTE credential_harvest is deliberately NOT here. Reading a credential file is
+# only THEFT when the repo also SENDS it somewhere, which is what "steal-and-send"
+# above always meant; listing the read as auto-alone let a single administrative
+# `SHADOW=$(cat /etc/shadow)` in photoprism's DigitalOcean setup check reach Discord
+# gold and the submit queue (2026-07-21). A real stealer always pairs the read with
+# an exfiltration / network_exfil / reverse_shell signal, and confirms through that
+# category instead. A lone read now lands in review for a human.
 _AUTO_CONFIRM_CATEGORIES = frozenset({
     "install_hook", "download_exec", "reverse_shell", "malicious_dependency",
-    "credential_harvest", "exfiltration", "network_exfil",
+    "exfiltration", "network_exfil",
 })
 
 

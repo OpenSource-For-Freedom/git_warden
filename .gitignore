@@ -20,6 +20,8 @@ data/cache/
 data/*.sqlite
 data/*.sqlite-journal
 data/*.sqlite-wal
+data/*.sqlite-shm
+data/search_telemetry.jsonl
 artifacts/
 *.parquet
 
