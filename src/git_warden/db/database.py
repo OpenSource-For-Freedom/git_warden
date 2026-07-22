@@ -723,13 +723,22 @@ class Database:
         so the pivot cannot chain: an owner is "malicious" only when they own a
         repo confirmed by an INTRINSIC malware-discovery method, never merely
         because a sibling was itself owner-pivoted in.
+
+        REVIEW-tier confirmations do not seed either. That tier means a human still
+        has to look, which is nowhere near enough to brand an entire organisation.
+        On 2026-07-22 a lone base64 decode in nvidia/model-optimizer, confirmed at
+        REVIEW, marked NVIDIA malicious, pulled 107 of their repositories in for
+        scanning, and AUTO-confirmed nvidia/aistore on a POST to a local Docker
+        address. The pivot is the highest-yield discovery path precisely because it
+        expands hard, so its seed has to be the strongest evidence, not the weakest.
         """
         return {
             row["full_name"].split("/", 1)[0]
             for row in self.conn.execute(
                 "SELECT full_name FROM repo_findings "
                 "WHERE status IN ('confirmed', 'validated') "
-                "AND detection_method NOT IN ('redteam_lineage', 'malicious_owner')"
+                "AND detection_method NOT IN ('redteam_lineage', 'malicious_owner') "
+                "AND COALESCE(json_extract(raw_payload, '$.confidence'), 'auto') != 'review'"
             )
         }
 
