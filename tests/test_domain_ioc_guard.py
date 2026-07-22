@@ -70,3 +70,32 @@ def test_domain_reports_drop_services_and_keep_c2():
 def test_domain_reports_can_be_empty():
     row = {"full_name": "attacker/lure"}
     assert domain_reports_for(row, _Assessment(["api.telegram.org"])) == []
+
+
+def test_review_tier_never_reaches_the_public_wall(tmp_path):
+    """The Wall of Shame is a public accusation, so REVIEW must not appear on it.
+
+    The 2026-07-21 run published photoprism/photoprism and mlflow/mlflow as
+    confirmed malware on the strength of one administrative credential read.
+    """
+    import json
+
+    from git_warden.db import Database
+
+    db = Database.open(tmp_path / "t.sqlite")
+    for name, conf in (("attacker/dropper", "auto"),
+                       ("photoprism/photoprism", "review"),
+                       ("legacy/capture", None)):
+        payload = {"confidence": conf} if conf else {}
+        db.conn.execute(
+            "INSERT INTO repo_findings (full_name, url, detection_method, status, "
+            "score, raw_payload) VALUES (?,?,?,?,?,?)",
+            (name, f"https://github.com/{name}", "signature_match", "confirmed",
+             10, json.dumps(payload)),
+        )
+    db.conn.commit()
+    published = {r["full_name"] for r in db.published_findings()}
+    assert "attacker/dropper" in published
+    assert "legacy/capture" in published, "pre-tiering captures are kept"
+    assert "photoprism/photoprism" not in published, "REVIEW must never be published"
+    db.close()

@@ -528,11 +528,20 @@ class Database:
           feeds the IOC learning loop, but never confirms one on the wall.
         * actor_account: "repo under a known threat-actor account" is the account
           being suspect, not this repo's code. Same breadcrumb treatment.
+
+        REVIEW-tier findings are also excluded. That tier means "real-ish but a
+        human has to look", and this table is a public accusation of shipping
+        malware. Publishing one is the worst possible reading of it: the 2026-07-21
+        run put photoprism/photoprism and mlflow/mlflow on the wall on the strength
+        of a single administrative credential read. Findings from before the
+        confidence tiers existed carry no tier and are kept, since many are already
+        OSM-verified captures; ``git-warden revalidate`` re-tiers them in place.
         """
         return self.conn.execute(
             "SELECT * FROM repo_findings WHERE status IN ('confirmed', 'validated') "
             "AND detection_method NOT IN "
             "('redteam_lineage', 'malicious_owner', 'actor_account') "
+            "AND COALESCE(json_extract(raw_payload, '$.confidence'), 'auto') != 'review' "
             "ORDER BY score DESC, full_name"
         ).fetchall()
 
@@ -548,11 +557,16 @@ class Database:
         is real intel, so we list it separately. Highest score first.
         """
         # owner (casefold) -> the evidence-confirmed repos that brand the owner bad.
+        # A REVIEW-tier sibling must never brand an owner: this table names an owner
+        # publicly, and on 2026-07-21 a lone env-dump in mlflow/mlflow was enough to
+        # list mlflow as an owner shipping malware. Only an AUTO-tier (or legacy,
+        # pre-tiering) confirmation is strong enough to carry that.
         by_owner: dict[str, list[str]] = {}
         for r in self.conn.execute(
             "SELECT full_name FROM repo_findings WHERE status IN ('confirmed', 'validated') "
             "AND detection_method NOT IN "
-            "('redteam_lineage', 'malicious_owner', 'actor_account')"
+            "('redteam_lineage', 'malicious_owner', 'actor_account') "
+            "AND COALESCE(json_extract(raw_payload, '$.confidence'), 'auto') != 'review'"
         ):
             owner = r["full_name"].split("/", 1)[0].casefold()
             by_owner.setdefault(owner, []).append(r["full_name"])
@@ -564,13 +578,21 @@ class Database:
             "ORDER BY score DESC, full_name"
         ):
             owner = r["full_name"].split("/", 1)[0]
+            provenance = sorted(by_owner.get(owner.casefold(), []))
+            # No provenance, no row. This table's whole claim is "this repo carries no
+            # evidence of its own, but its owner ships malware elsewhere, and here it
+            # is". Once the branding sibling is filtered out the claim is unsupported,
+            # and printing the owner anyway is a bare public accusation (mlflow/dev
+            # survived as "known-malicious owner" with an empty provenance column).
+            if not provenance:
+                continue
             out.append({
                 "full_name": r["full_name"],
                 "owner": owner,
                 "score": r["score"],
                 "actor_key": r["actor_key"],
                 "reasoning": r["reasoning"],
-                "provenance": sorted(by_owner.get(owner.casefold(), [])),
+                "provenance": provenance,
             })
         return out
 
