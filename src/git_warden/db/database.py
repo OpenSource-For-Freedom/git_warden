@@ -73,6 +73,24 @@ def connect(db_path: Path | str = DB_PATH) -> sqlite3.Connection:
     return conn
 
 
+def connect_readonly(db_path: Path | str = DB_PATH) -> sqlite3.Connection:
+    """Open a strictly READ-ONLY connection (``mode=ro`` plus ``query_only``).
+
+    It never takes a write lock and never sets journal mode, so a live dashboard
+    polling the registry cannot contend with a running hunt's writes. The dashboard
+    previously opened a read-write connection on every request, which ran
+    ``PRAGMA journal_mode=WAL`` (a write) each time. Under a concurrent writer that
+    stalled on a Windows disk-I/O error and hung the process on the DB file. WAL
+    lets readers proceed freely alongside the writer, so read-only is all it needs.
+    """
+    uri = f"file:{Path(db_path).as_posix()}?mode=ro"
+    conn = sqlite3.connect(uri, uri=True, timeout=30)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA busy_timeout = 30000")
+    conn.execute("PRAGMA query_only = ON")
+    return conn
+
+
 def _ensure_columns(conn: sqlite3.Connection, table: str, columns: dict[str, str]) -> None:
     """Lightweight forward-only migration: add any missing columns."""
     existing = {row[1] for row in conn.execute(f"PRAGMA table_info({table})")}
@@ -112,6 +130,12 @@ class Database:
         conn = connect(db_path)
         init_db(conn)
         return cls(conn)
+
+    @classmethod
+    def open_readonly(cls, db_path: Path | str = DB_PATH) -> Database:
+        """Read-only handle for viewers (the dashboard). Skips schema creation, so it
+        never writes and never contends with a running hunt."""
+        return cls(connect_readonly(db_path))
 
     def close(self) -> None:
         self.conn.close()
@@ -504,11 +528,20 @@ class Database:
           feeds the IOC learning loop, but never confirms one on the wall.
         * actor_account: "repo under a known threat-actor account" is the account
           being suspect, not this repo's code. Same breadcrumb treatment.
+
+        REVIEW-tier findings are also excluded. That tier means "real-ish but a
+        human has to look", and this table is a public accusation of shipping
+        malware. Publishing one is the worst possible reading of it: the 2026-07-21
+        run put photoprism/photoprism and mlflow/mlflow on the wall on the strength
+        of a single administrative credential read. Findings from before the
+        confidence tiers existed carry no tier and are kept, since many are already
+        OSM-verified captures; ``git-warden revalidate`` re-tiers them in place.
         """
         return self.conn.execute(
             "SELECT * FROM repo_findings WHERE status IN ('confirmed', 'validated') "
             "AND detection_method NOT IN "
             "('redteam_lineage', 'malicious_owner', 'actor_account') "
+            "AND COALESCE(json_extract(raw_payload, '$.confidence'), 'auto') != 'review' "
             "ORDER BY score DESC, full_name"
         ).fetchall()
 
@@ -524,11 +557,16 @@ class Database:
         is real intel, so we list it separately. Highest score first.
         """
         # owner (casefold) -> the evidence-confirmed repos that brand the owner bad.
+        # A REVIEW-tier sibling must never brand an owner: this table names an owner
+        # publicly, and on 2026-07-21 a lone env-dump in mlflow/mlflow was enough to
+        # list mlflow as an owner shipping malware. Only an AUTO-tier (or legacy,
+        # pre-tiering) confirmation is strong enough to carry that.
         by_owner: dict[str, list[str]] = {}
         for r in self.conn.execute(
             "SELECT full_name FROM repo_findings WHERE status IN ('confirmed', 'validated') "
             "AND detection_method NOT IN "
-            "('redteam_lineage', 'malicious_owner', 'actor_account')"
+            "('redteam_lineage', 'malicious_owner', 'actor_account') "
+            "AND COALESCE(json_extract(raw_payload, '$.confidence'), 'auto') != 'review'"
         ):
             owner = r["full_name"].split("/", 1)[0].casefold()
             by_owner.setdefault(owner, []).append(r["full_name"])
@@ -540,13 +578,21 @@ class Database:
             "ORDER BY score DESC, full_name"
         ):
             owner = r["full_name"].split("/", 1)[0]
+            provenance = sorted(by_owner.get(owner.casefold(), []))
+            # No provenance, no row. This table's whole claim is "this repo carries no
+            # evidence of its own, but its owner ships malware elsewhere, and here it
+            # is". Once the branding sibling is filtered out the claim is unsupported,
+            # and printing the owner anyway is a bare public accusation (mlflow/dev
+            # survived as "known-malicious owner" with an empty provenance column).
+            if not provenance:
+                continue
             out.append({
                 "full_name": r["full_name"],
                 "owner": owner,
                 "score": r["score"],
                 "actor_key": r["actor_key"],
                 "reasoning": r["reasoning"],
-                "provenance": sorted(by_owner.get(owner.casefold(), [])),
+                "provenance": provenance,
             })
         return out
 

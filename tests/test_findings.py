@@ -109,8 +109,11 @@ def test_bad_owner_findings_split_with_provenance(db):
     assert by_name["badguy/just-owned"]["provenance"] == ["badguy/proven"]
     assert "badguy/proven" not in by_name                       # evidence repo stays on wall
     assert "badguy/proven" in {r["full_name"] for r in db.published_findings()}
-    # cleanguy has no evidence-confirmed sibling -> empty provenance.
-    assert by_name["cleanguy/some-repo"]["provenance"] == []
+    # cleanguy has no evidence-confirmed sibling, so there is nothing to brand the
+    # owner with and the row is dropped entirely rather than published with an empty
+    # provenance column. This table names an owner publicly; without the sibling that
+    # earned it, the row is a bare accusation.
+    assert "cleanguy/some-repo" not in by_name
 
 
 def test_reconcile_rejects_security_data_only_evidence(db):
