@@ -15,7 +15,12 @@ import json
 import re
 from pathlib import Path
 
-from .bash_scanner import BashFinding, is_ignored_path
+from .bash_scanner import (
+    _INSTALL_HOST_RE,
+    BashFinding,
+    is_ignored_path,
+    is_reputable_install_host,
+)
 
 _LIFECYCLE = ("preinstall", "install", "postinstall", "prepare", "preuninstall")
 
@@ -44,33 +49,8 @@ _SUSPICIOUS_CMD = re.compile(
 # toolchain bootstrap (Meteor, Rust, Node, Docker, Bun, ...), not a dropper -- so it
 # must not confirm (the chris-visser/meteor-vue-admin `curl install.meteor.com | sh`
 # and jose-compu/zk-vrf `rustup` preinstall FPs, 2026-07-07). An attacker preinstall
-# fetching a non-installer host still fires.
-_INSTALL_HOST_RE = re.compile(r"https?://([A-Za-z0-9.\-]+)", re.I)
-_REPUTABLE_INSTALL_HOSTS = (
-    "install.meteor.com", "sh.rustup.rs", "static.rust-lang.org", "deb.nodesource.com",
-    "get.docker.com", "download.docker.com", "bun.sh", "astral.sh", "deno.land",
-    "install.python-poetry.org", "get.pnpm.io", "apt.llvm.org", "get.helm.sh",
-    "packages.microsoft.com", "cli.github.com", "nodejs.org", "python.org",
-    # Package registries: pulling a passive artifact from one is a build step, not a
-    # dropper (the fa0311/twitter-openapi folderOpen venv+pip+curl-maven-jar FP,
-    # 2026-07-07). Attacker C2s (e.g. *.vercel.app droppers) are NOT here, so a
-    # curl|bash to one still confirms.
-    "repo1.maven.org", "repo.maven.apache.org", "registry.npmjs.org",
-    "pypi.org", "files.pythonhosted.org", "crates.io", "static.crates.io",
-    "proxy.golang.org", "rubygems.org",
-    # Named-toolchain installers that publish an official `curl <host> | sh` (same
-    # shape as rustup): Foundry (Ethereum), Homebrew, Starship, Volta, nvm, Semgrep.
-    "foundry.paradigm.xyz", "raw.githubusercontent.com/foundry-rs", "get.brew.sh",
-    "starship.rs", "get.volta.sh", "raw.githubusercontent.com/nvm-sh", "semgrep.dev",
-)
-
-
-def is_reputable_install_host(host: str) -> bool:
-    """True if ``host`` is a known toolchain-installer / package-registry host, so a
-    ``curl <host> | sh`` is a normal bootstrap rather than a dropper. Shared with the
-    Tier-2 fetch-target gate so both scanners agree on what is reputable."""
-    h = (host or "").lower().rstrip(".")
-    return any(h == r or h.endswith("." + r) for r in _REPUTABLE_INSTALL_HOSTS)
+# fetching a non-installer host still fires. The host list itself lives in
+# bash_scanner so every layer shares one copy.
 
 
 def _only_reputable_install(cmd: str) -> bool:
