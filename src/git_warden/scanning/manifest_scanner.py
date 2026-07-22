@@ -71,11 +71,37 @@ _NODE_EVAL_DANGER = re.compile(
     re.I)
 
 
+# Running a LOCALLY INSTALLED dev tool from a lifecycle hook is ordinary project
+# setup, not a dropper. The husky git-hooks bootstrap is in a large share of npm
+# projects and is exactly this shape (awaw32/my-gums, 2026-07-22):
+#   node -e "try{require('child_process').execSync('husky',{stdio:'ignore'})}catch(e){}"
+# It spawns, which trips the danger check, but the target is a bare local binary
+# with no URL, no decode, and no shell metacharacters, so nothing attacker supplied
+# can reach it. A dropper's exec always carries a fetch, a decode, or a shell.
+_LOCAL_TOOL_EXEC = re.compile(
+    r"\bexec(?:Sync|FileSync)?\s*\(\s*['\"]"
+    r"(?:husky|lefthook|simple-git-hooks|patch-package|prisma|tsc|node-gyp|"
+    r"playwright|puppeteer|electron-builder|husky\s+install)"
+    r"[^'\"]*['\"]",
+    re.I)
+_REMOTE_OR_DECODE = re.compile(
+    r"https?://|/dev/tcp/|\batob\s*\(|base64|Buffer\.from\([^)]*base64|"
+    r"\bcurl\b|\bwget\b|[|;&`$]\(", re.I)
+
+
 def _is_benign_node_eval(cmd: str) -> bool:
     """True if the command's danger is ONLY a `node -e` whose inline code neither
-    fetches, decodes, nor spawns (a PM guard / local require), so it must not confirm."""
+    fetches, decodes, nor spawns (a PM guard / local require), so it must not confirm.
+
+    Also covers a spawn of a locally installed dev tool (husky and friends), where
+    the exec target is a fixed local binary and nothing remote or encoded is in play.
+    """
     c = str(cmd or "")
-    return bool(_NODE_EVAL.search(c)) and not _NODE_EVAL_DANGER.search(c)
+    if not _NODE_EVAL.search(c):
+        return False
+    if not _NODE_EVAL_DANGER.search(c):
+        return True
+    return bool(_LOCAL_TOOL_EXEC.search(c)) and not _REMOTE_OR_DECODE.search(c)
 # FETCH-AND-RUN inside setup.py (static regex; we do not run it). A bare
 # exec()/subprocess in setup.py is NORMAL; legit packages compile extensions
 # (subprocess -> cmake/nvcc), read their version (exec(open('_version.py'))), and
