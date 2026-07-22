@@ -22,6 +22,7 @@ from dataclasses import dataclass
 import requests
 
 from ..config import GITHUB_API_URL, GITHUB_API_VERSION, GITHUB_TOKEN, HTTP_TIMEOUT, USER_AGENT
+from . import telemetry
 
 log = logging.getLogger(__name__)
 
@@ -193,6 +194,8 @@ class GitHubClient:
                 # Throttled: honor Retry-After IN FULL and ratchet the interval up so
                 # subsequent searches stop tripping the secondary limit; then retry.
                 self._search_interval = min(self._search_interval * 1.5 + 3, 60.0)
+                self._record_search(query, resp.status_code, None, attempt,
+                                    throttled=True, wait=wait)
                 if attempt < 3:
                     log.info("code search throttled; waiting %.0fs, interval -> %.0fs",
                              wait, self._search_interval)
@@ -203,8 +206,26 @@ class GitHubClient:
             resp.raise_for_status()
             # A clean search relaxes the interval back toward the base.
             self._search_interval = max(self._search_base_interval, self._search_interval * 0.9)
-            return resp.json().get("items", [])
+            items = resp.json().get("items", [])
+            self._record_search(query, resp.status_code, len(items), attempt)
+            return items
         return []
+
+    def _record_search(self, query, status, results, attempt, *,
+                       throttled=False, wait=None) -> None:
+        """Publish one search to the telemetry log the dashboard reads."""
+        telemetry.record(
+            event="search",
+            query=query[:200],
+            status=status,
+            results=results,
+            attempt=attempt,
+            throttled=throttled,
+            wait=wait,
+            interval=round(self._search_interval, 1),
+            rate_remaining=self.last_rate_limit.remaining,
+            rate_limit=self.last_rate_limit.limit,
+        )
 
     def compare(
         self, base_full: str, base_branch: str, head_full: str, head_branch: str
