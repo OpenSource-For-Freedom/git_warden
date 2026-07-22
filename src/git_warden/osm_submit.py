@@ -487,6 +487,10 @@ def domain_reports_for(row, assessment, db=None) -> list[dict]:
         for ioc in db.iocs_for_repo(full):
             if ioc["kind"] == "domain" and ioc["value"] not in hosts:
                 hosts.append(ioc["value"])
+    # Never accuse a URL shortener or a shared service of being C2. The redirect or
+    # the multi-tenant API is not the attacker's infrastructure, and a domain report
+    # against one asks OSM to blocklist it for every legitimate user.
+    hosts = [h for h in hosts if _reportable_domain(h)]
     tags = ["c2", "supply-chain", "github-repo"] + list(assessment.tags)
     reports = []
     for h in hosts:
@@ -520,6 +524,39 @@ def _is_shortener(host: str) -> bool:
     return any(host == s or host.endswith("." + s) for s in _URL_SHORTENERS)
 
 
+# Shared services that malware abuses as a drop point. The host is NOT attacker
+# infrastructure: api.telegram.org is Telegram's own bot API and serves millions of
+# legitimate bots. The malicious artifact is the specific bot token or webhook path,
+# never the domain, so reporting the domain would ask OSM to blocklist the service
+# for everyone. Run #88 queued api.telegram.org as a C2 domain report.
+#
+# Matched EXACTLY (optionally with a www prefix) rather than by suffix, because a
+# platform's attacker-controlled SUBDOMAIN is real infrastructure and must still be
+# reportable. default-configuration.vercel.app is the live example: vercel.app is a
+# service, that subdomain is the dropper host.
+_SHARED_SERVICE_HOSTS = frozenset({
+    "api.telegram.org", "telegram.org",
+    "discord.com", "discordapp.com", "canary.discord.com", "ptb.discord.com",
+    "hooks.slack.com", "slack.com",
+    "github.com", "api.github.com", "raw.githubusercontent.com", "gist.github.com",
+    "gitlab.com", "bitbucket.org",
+    "pastebin.com", "webhook.site", "requestbin.com", "pipedream.net",
+    "transfer.sh", "file.io", "0x0.st", "termbin.com",
+    "t.me", "api.mailgun.net", "api.sendgrid.com",
+})
+
+
+def _is_shared_service(host: str) -> bool:
+    """True if the host is a legitimate shared service rather than attacker infra."""
+    h = (host or "").lower().rstrip(".")
+    return h in _SHARED_SERVICE_HOSTS or h.removeprefix("www.") in _SHARED_SERVICE_HOSTS
+
+
+def _reportable_domain(host: str) -> bool:
+    """True if a host may be submitted to OSM as a malicious domain in its own right."""
+    return bool(host) and not _is_shortener(host) and not _is_shared_service(host)
+
+
 def corroborated_c2(db, min_repos: int = 2) -> list[dict]:
     """Attacker C2 hosts seen in >= ``min_repos`` confirmed repos, with each host's
     corroborating repos and best attribution.
@@ -541,9 +578,9 @@ def corroborated_c2(db, min_repos: int = 2) -> list[dict]:
         "WHERE status IN ('confirmed', 'validated')"
     ):
         flags = (json.loads(r["raw_payload"] or "{}") or {}).get("bash_findings") or []
-        hosts = {h for h in c2_hosts_from_flags(flags) if not _is_shortener(h)}
+        hosts = {h for h in c2_hosts_from_flags(flags) if _reportable_domain(h)}
         for ioc in db.iocs_for_repo(r["full_name"]):
-            if ioc["kind"] == "domain" and not _is_shortener(ioc["value"]):
+            if ioc["kind"] == "domain" and _reportable_domain(ioc["value"]):
                 hosts.add(ioc["value"])
         if not hosts:
             continue
