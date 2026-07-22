@@ -81,6 +81,25 @@ def severity_level(row) -> str:
 # Plain-language explanation of what each detected category actually does, so the
 # report reads as a human writeup instead of a rule dump. Full sentences, no
 # arrows and no dashes.
+# Some rules inside a shared category trigger in completely different ways, so the
+# category sentence alone would misdescribe them. A VS Code folderOpen task is an
+# install_hook to the scanner, but nothing is installed and the generic wording
+# ("installing the project is enough") would tell an OSM reviewer the wrong thing.
+# A rule listed here overrides its category text.
+_BEHAVIOR_BY_RULE = {
+    "vscode-autorun": (
+        "The code runs automatically from a Visual Studio Code task configured to "
+        "trigger on folderOpen. Nothing has to be installed, built, or clicked. "
+        "Opening the project folder in the editor is enough to run the attacker's "
+        "command. The task fetches a remote script and pipes it straight into a "
+        "shell, with a separate payload selected for macOS, Linux and Windows. It "
+        "also carries a presentation block that sets reveal to never and echo to "
+        "false and closes the panel afterwards, which hides the terminal so the "
+        "victim never sees the command run. Suppressing output next to a fetch and "
+        "pipe has no legitimate use and shows the intent is concealment."
+    ),
+}
+
 _BEHAVIOR = {
     "obfuscation": (
         "The file hides part of its logic in a base64-encoded blob that the program "
@@ -247,9 +266,19 @@ def _threat_description(row, assessment=None) -> str:
     line = top.get("line")
     where = f"the file {file}" + (f" around line {line}" if line else "")
 
-    behavior = _BEHAVIOR.get(cat, (
+    behavior = _BEHAVIOR_BY_RULE.get(top.get("rule", "")) or _BEHAVIOR.get(cat, (
         "The code carries out actions that fit malware rather than the stated purpose "
         "of the project."))
+
+    # A dropper planted in several directories is deliberate coverage, not a stray
+    # file, and a reviewer should know how wide it was spread before deciding.
+    same_rule = {b.get("file") for b in bash
+                 if b.get("rule") == top.get("rule") and b.get("file")}
+    spread = ""
+    if len(same_rule) > 1:
+        spread = (f" The same dropper is planted in {len(same_rule)} separate "
+                  f"directories in this repository, so it runs whichever of them the "
+                  f"victim opens: " + ", ".join(sorted(same_rule)) + ".")
 
     extra = ""
     snippet = top.get("snippet") or ""
@@ -265,7 +294,7 @@ def _threat_description(row, assessment=None) -> str:
         "Git Warden confirmed this repository as malicious by static analysis of its "
         "source code. The code was read, never executed.",
         f"The malicious code sits in {where}.",
-        behavior + extra,
+        behavior + spread + extra,
         "No legitimate project ships code like this. The repository was either "
         "compromised or purpose-built to deliver malware to anyone who clones or "
         "installs it.",
@@ -377,7 +406,7 @@ def _payload_description(row) -> str:
     file = top.get("file") or "the affected source file"
     line = top.get("line")
     where = f"in {file}" + (f" at line {line}" if line else "")
-    base = _BEHAVIOR.get(cat, (
+    base = _BEHAVIOR_BY_RULE.get(top.get("rule", "")) or _BEHAVIOR.get(cat, (
         "The code performs actions that match malware behavior rather than the stated "
         "purpose of the project."))
 
