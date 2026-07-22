@@ -19,6 +19,45 @@ from . import queries
 log = logging.getLogger(__name__)
 _STATIC = Path(__file__).parent / "static"
 
+# GitHub /rate_limit costs no quota, but the dashboard polls, so cache it anyway.
+_RATE_TTL = 30.0
+_rate_cache: dict = {"at": 0.0, "value": None}
+
+
+def _api_health() -> dict:
+    """Live GitHub quota for the core and code-search buckets, cached briefly.
+
+    Reported separately because they run out independently: code search is the
+    tight one (roughly ten per minute) and is what actually paces a hunt, while
+    core sits at 5000 per hour and is rarely the constraint.
+    """
+    import time
+
+    if _rate_cache["value"] is not None and time.time() - _rate_cache["at"] < _RATE_TTL:
+        return _rate_cache["value"]
+    out: dict = {"ok": False}
+    try:
+        from ..github.client import GitHubClient
+
+        client = GitHubClient()
+        resp = client._get("/rate_limit")
+        resp.raise_for_status()
+        res = resp.json().get("resources", {})
+        out = {"ok": True, "checked_at": time.time()}
+        for bucket in ("core", "search", "code_search"):
+            b = res.get(bucket)
+            if b:
+                out[bucket] = {
+                    "limit": b.get("limit"),
+                    "remaining": b.get("remaining"),
+                    "reset": b.get("reset"),
+                    "reset_in": max(0, int(b.get("reset", 0) - time.time())),
+                }
+    except Exception as exc:                             # network down, bad token, ...
+        out = {"ok": False, "error": str(exc)[:200]}
+    _rate_cache.update(at=time.time(), value=out)
+    return out
+
 
 def create_app(db_path=DB_PATH):
     """Build the FastAPI app bound to ``db_path``. Imports FastAPI lazily."""
@@ -98,6 +137,21 @@ def create_app(db_path=DB_PATH):
             "signature_yield": _q(queries.signature_yield),
             "runs": _q(queries.runs_timeline),
             "source_yield": _q(queries.source_yield),
+        }
+
+    @app.get("/api/search")
+    def api_search():
+        """Live search telemetry plus GitHub API health.
+
+        The rate-limit probe is cached: /rate_limit does not consume quota, but a
+        dashboard polling every few seconds would still hammer it pointlessly.
+        """
+        from ..github import telemetry
+
+        return {
+            "summary": telemetry.summary(),
+            "recent": telemetry.recent(40),
+            "api": _api_health(),
         }
 
     @app.get("/api/rejected")
