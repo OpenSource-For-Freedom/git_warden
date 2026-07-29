@@ -57,6 +57,13 @@ REDTEAM_TOOLS_PATH = Path(
     os.environ.get("GW_REDTEAM_TOOLS", PROJECT_ROOT / "config" / "redteam_tools.json")
 )
 
+# Curated DPRK / Contagious-Interview intel for DIRECT attribution matching: known
+# C2 hosts and host-name shapes, the operator's dropper URL path fingerprint (which
+# survives host rotation), and the campaign's malicious package families.
+DPRK_INTEL_PATH = Path(
+    os.environ.get("GW_DPRK_INTEL", PROJECT_ROOT / "config" / "dprk_intel.json")
+)
+
 # Allowlist of well-known legitimate orgs whose repos must never reach the public
 # Wall of Shame even if a pivot/scanner trips on them (e.g. large OSS build
 # systems whose scripts legitimately fetch+run during builds). Used by the

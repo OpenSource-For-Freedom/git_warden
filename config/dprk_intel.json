@@ -1,0 +1,38 @@
+{
+  "_doc": "Curated DPRK / Contagious-Interview intel for DIRECT matching. Unlike the self-sourced infra set (hosts we confirmed ourselves), these are known-bad indicators matched directly, so a fresh sighting attributes on first contact instead of waiting for us to confirm it. Grounded in this tool's own confirmed cluster plus the publicly documented campaign structure. Keep specific: every entry must be something with near-zero legitimate use. Reviewed 2026-07-22.",
+
+  "known_c2_hosts": [
+    "default-configuration.vercel.app",
+    "default-configuration-sandy.vercel.app",
+    "vscode-extension-260120.vercel.app",
+    "vscode-config.vercel.app",
+    "vscode-config-setting.vercel.app",
+    "coreviewer.vercel.app",
+    "everydaynodechecker-39143n.vercel.app"
+  ],
+
+  "_host_shape_doc": "Regexes over a full host. The operator stands up disposable project subdomains on free PaaS. These are deliberately NOT bare 'vercel.app' (that is a legitimate service); they require the campaign's own naming shape so a normal deploy is never matched.",
+  "known_c2_host_patterns": [
+    "^default-configuration[a-z0-9-]*\\.vercel\\.app$",
+    "^vscode-(?:config|configuration|extension|settings?)[a-z0-9-]*\\.vercel\\.app$",
+    "^[a-z]+nodechecker-[a-z0-9]+\\.vercel\\.app$"
+  ],
+
+  "_path_shape_doc": "The operator's dropper URL fingerprint: an OS-selector path segment plus a flag query, fetched and piped to a shell. This SURVIVES host rotation, so when they move to a new host the path still matches. Matched against the fetched URL in a curl/wget-to-shell line.",
+  "dropper_path_patterns": [
+    "/(?:settings|config|install|setup|init|update)/(?:linux|win|windows|osx|mac|darwin)\\b[^\\s'\"]*[?&]flag=",
+    "/(?:linux|win|windows|osx|mac|darwin)\\?flag=[0-9]"
+  ],
+
+  "_package_families_doc": "npm / pypi package-name families used as the malicious dependency in Contagious-Interview lures. Matched as an EXACT name or a documented family prefix; a range-versioned popular package is never confirmed on name alone (see manifest_scanner pinning).",
+  "campaign_package_names": [
+    "react-editable-calendar",
+    "react-refresh-update",
+    "prism-lint",
+    "fastify-lint",
+    "hostinger-official.hostinger-connector"
+  ],
+
+  "_handle_doc": "GitHub owner-handle heuristics are intentionally EMPTY. The cluster's victims are real developers with compromised accounts (kreliannn, teeps-heisenberg), so a handle pattern would brand victims. Attribution comes from code and infrastructure, never from who owns the repo.",
+  "known_actor_handles": []
+}
