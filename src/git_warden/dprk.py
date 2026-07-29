@@ -71,12 +71,24 @@ _DPRK_ACTOR_KEYS = frozenset({
 
 
 def campaign_vectors(flags: list[dict]) -> list[str]:
-    """Contagious-Interview delivery vectors present in a finding's flags."""
+    """Contagious-Interview delivery vectors present in a finding's flags.
+
+    Includes the operator's dropper URL PATH fingerprint, which is matched against
+    the evidence snippets directly. The path shape survives host rotation, so a
+    brand-new C2 with the same ``/settings/<os>?flag=`` structure still registers
+    the tradecraft vector even though its host is unknown."""
+    from . import dprk_intel
+
     out: list[str] = []
     for b in flags or []:
         v = _VECTOR_RULES.get(b.get("rule"))
         if v and v not in out:
             out.append(v)
+    snippets = " ".join((b.get("snippet") or "") for b in flags or [])
+    if dprk_intel.matches_dropper_path(snippets):
+        vec = "dprk-dropper-path-shape"
+        if vec not in out:
+            out.append(vec)
     return out
 
 
@@ -167,7 +179,22 @@ def assess(
             "Delivery vector matches Contagious-Interview tradecraft: "
             + ", ".join(vectors) + ".")
 
-    overlap = sorted(h for h in c2 if h in infra)
+    from . import dprk_intel
+
+    # DIRECT match against curated known-DPRK infrastructure. This fires on the
+    # FIRST sighting of a known host or a host that fits the operator's naming
+    # shape, without waiting for us to have confirmed it before, which is the gap
+    # the self-sourced set below cannot close.
+    known = dprk_intel.known_infra_hits(c2)
+    if known:
+        signals.append("known_dprk_infra")
+        reasons.append(
+            "Payload host is curated known-DPRK / Contagious-Interview "
+            "infrastructure: " + ", ".join(known) + ".")
+
+    # Self-sourced overlap: a host we confirmed on a prior campaign repo. Kept
+    # separate so a host does not double-count when it is both curated and seen.
+    overlap = sorted(h for h in c2 if h in infra and h not in set(known))
     if overlap:
         signals.append("c2_infra_overlap")
         reasons.append(
@@ -198,7 +225,9 @@ def assess(
     # Tier from the count of INDEPENDENT evidence signals (OSM tag excluded).
     n = len(signals)
     has_vector = "tradecraft_vector" in signals
-    has_infra = "c2_infra_overlap" in signals
+    # A curated known-DPRK host is at least as strong as a self-sourced overlap,
+    # so it counts as infra everywhere the self-sourced signal does.
+    has_infra = "c2_infra_overlap" in signals or "known_dprk_infra" in signals
     has_decoded = "decoded_family" in signals
     if (has_decoded and (has_vector or has_infra)) or n >= 3:
         tier = "confirmed"
