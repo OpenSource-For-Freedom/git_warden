@@ -149,6 +149,22 @@ Supporting commands: `--queue` shows the AUTO submit queue ready for review,
 `--reconcile` compares your reports against OSM's live state, and `--wizard` walks a
 non-technical operator through it step by step.
 
+### Dependency audit (`git-warden audit-deps`)
+Check a project's lockfiles against a known-compromised package manifest. After a
+supply-chain incident the malicious versions are usually unpublished within hours,
+so a live registry check comes back clean while a committed lockfile, a CI cache, or
+an old `node_modules` still pins the bad release. This reads the RESOLVED versions
+out of `package-lock.json` (v1, v2, v3), `pnpm-lock.yaml` (v5, v6, v9), and
+`yarn.lock` (classic and berry), so it reports what was actually installed rather
+than the semver range in `package.json`. A caret range floats to a patched release
+and is never a match; only an exact resolved version counts. It walks a whole
+project, skips vendored and build directories, exits non-zero when it finds a
+compromised pin so it can gate CI, and prints the remediation, including rotating any
+secret that was on a machine that installed one. The default manifest is the
+Chaindrop / Shai-Hulud incident export in `intel/incidents/`; point `--manifest` at
+any other `name,version` list. Static and offline: nothing is executed and no
+network is touched.
+
 ### DB hygiene (`git-warden revalidate`)
 Re-scan confirmed but unsubmitted findings under the current rules. Anything that no
 longer confirms, or now reads as a security tool, is demoted to `rejected`, and the

