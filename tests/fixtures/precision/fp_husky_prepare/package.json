@@ -1,0 +1,8 @@
+{
+  "name": "my-gums",
+  "version": "1.0.0",
+  "scripts": {
+    "prepare": "node -e \"try{require('child_process').execSync('husky',{stdio:'ignore'})}catch(e){}\""
+  },
+  "devDependencies": { "husky": "^9.0.0" }
+}
