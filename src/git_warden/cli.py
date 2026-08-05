@@ -583,6 +583,40 @@ def _cmd_resolve_packages(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_audit_deps(args: argparse.Namespace) -> int:
+    """Audit a project's lockfiles against a known-compromised package manifest.
+
+    Answers "did we ever install one of these?" after a supply-chain incident. The
+    malicious versions are usually unpublished within hours, so a live registry
+    check is clean while a committed lockfile still pins the bad release. Reads the
+    RESOLVED versions from package-lock.json / pnpm-lock.yaml / yarn.lock. Exits 1
+    when a compromised pin is found, so it can gate CI."""
+    configure_logging(json_output=False)
+    from .config import COMPROMISED_MANIFEST_PATH
+    from .scanning.lockfile_audit import audit_tree, load_compromised
+
+    manifest = Path(args.manifest) if args.manifest else COMPROMISED_MANIFEST_PATH
+    if not manifest.exists():
+        print(f"manifest not found: {manifest}")
+        return 2
+    compromised = load_compromised(manifest)
+    total_versions = sum(len(v) for v in compromised.values())
+    print(f"manifest: {manifest.name}  ({len(compromised)} packages, "
+          f"{total_versions} versions)")
+    hits = audit_tree(args.path, compromised)
+    if not hits:
+        print(f"clean: no compromised pins under {args.path}")
+        return 0
+    print(f"\nFOUND {len(hits)} compromised pin(s):\n")
+    for h in hits:
+        print(f"  [{h.ecosystem}] {h.package}@{h.version}")
+        print(f"      in {h.lockfile}")
+    print("\nRemediation: bump each to a clean version, delete node_modules and the\n"
+          "lockfile entry, reinstall, and ROTATE any secret that was on a machine or\n"
+          "CI runner that installed one (the worm harvests tokens on install).")
+    return 1
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="git-warden", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -655,6 +689,15 @@ def build_parser() -> argparse.ArgumentParser:
     reval.add_argument("--db", type=Path, default=config.DB_PATH, help="SQLite path.")
     reval.add_argument("--limit", type=int, default=0, help="Cap findings re-scanned (0 = all).")
     reval.set_defaults(func=_cmd_revalidate)
+
+    audit = sub.add_parser(
+        "audit-deps",
+        help="Audit lockfiles against a known-compromised package manifest.")
+    audit.add_argument("path", help="Project dir or a single lockfile to audit.")
+    audit.add_argument("--manifest", default=None,
+                       help="name,version CSV of compromised packages "
+                            "(default: the bundled Chaindrop/Shai-Hulud export).")
+    audit.set_defaults(func=_cmd_audit_deps)
 
     rp = sub.add_parser("resolve-packages",
                         help="Resolve malicious packages to their GitHub source repos.")

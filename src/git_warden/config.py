@@ -64,6 +64,14 @@ DPRK_INTEL_PATH = Path(
     os.environ.get("GW_DPRK_INTEL", PROJECT_ROOT / "config" / "dprk_intel.json")
 )
 
+# Known-compromised package manifest (name,version CSV) for the lockfile audit.
+# Default is the Chaindrop / Shai-Hulud incident export; override to audit against
+# any other advisory list.
+COMPROMISED_MANIFEST_PATH = Path(
+    os.environ.get("GW_COMPROMISED_MANIFEST",
+                   PROJECT_ROOT / "intel" / "incidents" / "chaindrop-compromised-packages.csv")
+)
+
 # Allowlist of well-known legitimate orgs whose repos must never reach the public
 # Wall of Shame even if a pivot/scanner trips on them (e.g. large OSS build
 # systems whose scripts legitimately fetch+run during builds). Used by the
