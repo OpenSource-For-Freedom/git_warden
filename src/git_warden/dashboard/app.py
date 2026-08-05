@@ -53,8 +53,11 @@ def _api_health() -> dict:
                     "reset": b.get("reset"),
                     "reset_in": max(0, int(b.get("reset", 0) - time.time())),
                 }
-    except Exception as exc:                             # network down, bad token, ...
-        out = {"ok": False, "error": str(exc)[:200]}
+    except Exception:                                    # network down, bad token, ...
+        # Do not leak the exception text into the HTTP response (CodeQL
+        # py/stack-trace-exposure); log it server-side, return a generic marker.
+        log.warning("rate-limit probe failed", exc_info=True)
+        out = {"ok": False, "error": "rate-limit probe failed"}
     _rate_cache.update(at=time.time(), value=out)
     return out
 

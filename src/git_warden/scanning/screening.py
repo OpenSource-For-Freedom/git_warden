@@ -66,7 +66,11 @@ _EXFIL = re.compile(
     re.IGNORECASE,
 )
 _REMOTE_EXEC = re.compile(
-    r"curl\s+[^\n|]+\|\s*(sh|bash)|wget\s+[^\n|]+\|\s*(sh|bash)|"
+    # `\s+[^\n|]+` overlapped on whitespace (both match a space), so a `curl` followed
+    # by a long run of spaces and no pipe backtracked polynomially (CodeQL
+    # py/polynomial-redos) on untrusted README text. `[^\n|]*` alone, anchored on the
+    # word, matches the same "curl ... |" shape without the overlap.
+    r"curl\b[^\n|]*\|\s*(sh|bash)|wget\b[^\n|]*\|\s*(sh|bash)|"
     r"iex\s*\(|invoke-expression|-enc(odedcommand)?\b|frombase64string|"
     r"certutil\s+-urlcache",
     re.IGNORECASE,
