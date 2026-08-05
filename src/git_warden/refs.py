@@ -4,7 +4,12 @@ from __future__ import annotations
 
 import re
 
-_GH = re.compile(r"github\.com[/:]+([^/\s]+)/([^/\s#?]+)", re.IGNORECASE)
+# The separator run is BOUNDED ({1,3}) on purpose. An unbounded `[/:]+` overlaps
+# with the following `[^/\s]+` group on ':', so a crafted ref like
+# "github.com::::::::::::::::" forces polynomial backtracking (CodeQL py/polynomial
+# -redos). refs come from untrusted repo/feed data, so that is a real DoS. A real
+# URL has one or two separators (`github.com/`, `git@github.com:`).
+_GH = re.compile(r"github\.com[/:]{1,3}([^/\s]+)/([^/\s#?]+)", re.IGNORECASE)
 
 
 def split_repo_ref(ref: str | None) -> tuple[str, str] | None:
