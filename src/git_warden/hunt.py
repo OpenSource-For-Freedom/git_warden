@@ -73,6 +73,24 @@ def _decide(finding, decision: str, reason: str, **extra) -> None:
                                 "reason": reason, **extra}})
 
 
+def _build_spread_intel(mal_packages: dict):
+    """Combine OSM's package feed with the bundled incident manifest into the
+    package-spread intel. The OSM half is pulled in during ingest (per-ecosystem
+    query-latest) and reaches here as ``mal_packages``; the manifest half is the
+    Chaindrop / Shai-Hulud export in intel/incidents. A missing manifest is fine;
+    the OSM half still measures spread."""
+    from .scanning.lockfile_audit import load_compromised
+    from .scanning.package_spread import build_intel
+
+    manifest = None
+    try:
+        if config.COMPROMISED_MANIFEST_PATH.exists():
+            manifest = load_compromised(config.COMPROMISED_MANIFEST_PATH)
+    except OSError:
+        manifest = None
+    return build_intel(mal_packages, manifest)
+
+
 def _osm_iocs(db: Database) -> IocSet:
     agg = IocSet()
     for row in db.list_artifacts():
@@ -485,6 +503,8 @@ def hunt(
     confirmed_by_method: Counter = Counter()
     rejected_mirrors = 0
     redteam_breadcrumbs = 0  # red-team tooling kept as a breadcrumb, not confirmed
+    spread_sources = 0       # repos that PUBLISH a compromised package version
+    spread_vectors = 0       # repos that DEPEND on a compromised package version
     _total = len(candidates)
     for _idx, finding in enumerate(candidates.values(), start=1):
         owner, _, name = finding.full_name.partition("/")
@@ -550,6 +570,11 @@ def hunt(
         # OSM-flagged packages: a repo declaring one as a dependency installs
         # known malware (the fake-interview / crypto-task lure delivery vector).
         mal_packages = db.malicious_dependency_names()
+        # Package-spread intel: OSM's package feed combined with the bundled incident
+        # manifest. Measured against every scanned repo to surface repos that PUBLISH
+        # or ship a compromised package version and so spread the payload, not just
+        # those that depend on one. See scanning/package_spread.
+        spread_intel = _build_spread_intel(mal_packages)
         _t2_total = len(screened)
         try:
             for _t2_idx, finding in enumerate(screened, start=1):
@@ -589,6 +614,7 @@ def hunt(
                     continue
                 kwargs = {"clone": clone} if clone else {}
                 kwargs["malicious_packages"] = mal_packages
+                kwargs["spread_intel"] = spread_intel
                 restrict = None
                 confirm_cats = None
                 # P1: red-team forks confirm only on weaponization (added install
@@ -653,6 +679,23 @@ def hunt(
                                           "reason": "clone_failed_or_bounds"})
                     _decide(finding, "CLONE_FAILED", "404/taken-down or exceeded size bounds")
                 elif not result.confirmed:
+                    # A repo whose own code did not confirm can still be a spread
+                    # node: if it PUBLISHES a compromised package version, installing
+                    # that package propagates the payload regardless of the repo's
+                    # other code. Surface it (the ServiceTitan/Chaindrop shape) rather
+                    # than lose it as a plain near-miss.
+                    if result.package_spread:
+                        n_src = sum(1 for x in result.package_spread
+                                    if x["relationship"] == "source")
+                        spread_sources += n_src
+                        spread_vectors += len(result.package_spread) - n_src
+                        if n_src:
+                            finding.raw_payload["package_spread"] = result.package_spread
+                            db.upsert_finding(finding, run_id)
+                            _decide(finding, "SPREAD_SOURCE",
+                                    f"ships {n_src} compromised package version(s); "
+                                    f"a supply-chain spread node even though its code "
+                                    f"did not otherwise confirm")
                     # Scanned but did not meet the confirmation bar: a near-miss. This
                     # is the false-NEGATIVE / recall-gap signal -- what static signal it
                     # DID trip, so an operator can see which rules almost fired.
@@ -701,6 +744,23 @@ def hunt(
                         for bf in ordered[:20]
                     ]
                     finding.raw_payload["scanners"] = result.scanners
+                    # Package spread: repos this finding publishes/depends-on that are
+                    # on the malicious-package feeds, so it propagates the payload.
+                    if result.package_spread:
+                        finding.raw_payload["package_spread"] = result.package_spread
+                        n_src = sum(1 for x in result.package_spread
+                                    if x["relationship"] == "source")
+                        n_vec = len(result.package_spread) - n_src
+                        spread_sources += n_src
+                        spread_vectors += n_vec
+                        finding.signals = sorted(set(finding.signals) | {
+                            "package-spread:source" if n_src else "package-spread:vector"})
+                        from .scanning.package_spread import SpreadLink, describe_spread
+                        finding.reasoning = (finding.reasoning or "") + " | " + describe_spread(
+                            [SpreadLink(**x) for x in result.package_spread])
+                        log.info("package spread",
+                                 extra={"context": {"repo": finding.full_name,
+                                                    "sources": n_src, "vectors": n_vec}})
                     db.upsert_finding(finding, run_id)
                     confirmed += 1
                     confirmed_by_method[finding.detection_method.value] += 1
@@ -777,6 +837,8 @@ def hunt(
         "redteam_breadcrumbs": redteam_breadcrumbs,  # red-team tooling kept as lead
         "clones_failed": len(failed_clones),   # could not Tier-2 scan (continued)
         "gold_delivered": delivered,
+        "spread_sources": spread_sources,  # repos publishing a compromised pkg version
+        "spread_vectors": spread_vectors,  # repos depending on a compromised pkg version
     }
     db.finish_run(run_id, datetime.now(UTC), RunStatus.COMPLETED, counts)
     summary = {"run_id": run_id, "counts": counts, "failed_clones": failed_clones}

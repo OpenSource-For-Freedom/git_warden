@@ -617,6 +617,42 @@ def _cmd_audit_deps(args: argparse.Namespace) -> int:
     return 1
 
 
+def _cmd_package_spread(args: argparse.Namespace) -> int:
+    """Report the package-spread links in an already-cloned repo directory.
+
+    Scrapes the repo's package.json files and measures what it publishes and depends
+    on against the malicious-package intel (OSM's package feed from the DB plus the
+    bundled incident manifest). A SOURCE link means the repo publishes a compromised
+    package version and so propagates the payload; a VECTOR link means it depends on
+    one. Static and offline over a local directory."""
+    configure_logging(json_output=False)
+    from .scanning.lockfile_audit import load_compromised
+    from .scanning.package_spread import analyze_spread, build_intel, describe_spread
+
+    db = Database.open(args.db)
+    try:
+        mal = db.malicious_dependency_names()
+    finally:
+        db.close()
+    manifest = None
+    mpath = Path(args.manifest) if args.manifest else config.COMPROMISED_MANIFEST_PATH
+    if mpath.exists():
+        manifest = load_compromised(mpath)
+    intel = build_intel(mal, manifest)
+    print(f"intel: {intel.total()} malicious package name(s) "
+          f"(OSM feed + {mpath.name if manifest else 'no manifest'})")
+    links = analyze_spread(args.path, intel)
+    if not links:
+        print(f"no package-spread links under {args.path}")
+        return 0
+    print(f"\n{len(links)} spread link(s):\n")
+    for x in links:
+        print(f"  [{x.relationship.upper():6}] {x.package}@{x.version}  "
+              f"({x.ecosystem}, intel: {x.intel})  in {x.file}")
+    print("\n" + describe_spread(links))
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="git-warden", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -698,6 +734,15 @@ def build_parser() -> argparse.ArgumentParser:
                        help="name,version CSV of compromised packages "
                             "(default: the bundled Chaindrop/Shai-Hulud export).")
     audit.set_defaults(func=_cmd_audit_deps)
+
+    spread = sub.add_parser(
+        "package-spread",
+        help="Report package-spread links (publishes/depends-on a malicious package).")
+    spread.add_argument("path", help="A cloned repo directory to analyze.")
+    spread.add_argument("--db", default=config.DB_PATH, help="SQLite path (OSM intel).")
+    spread.add_argument("--manifest", default=None,
+                       help="Compromised-package CSV (default: bundled incident export).")
+    spread.set_defaults(func=_cmd_package_spread)
 
     rp = sub.add_parser("resolve-packages",
                         help="Resolve malicious packages to their GitHub source repos.")

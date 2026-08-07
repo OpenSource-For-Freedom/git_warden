@@ -129,6 +129,9 @@
   <div style="grid-column:span 2"><h3>Rejected (false positives)</h3><div id="rejected"></div></div>
   <div style="grid-column:span 2"><h3>Attack vectors (how the payload runs)</h3><div id="vectors"></div></div>
   <div style="grid-column:span 2"><h3>C2 / payload infrastructure</h3><div id="c2infra"></div></div>
+  <div style="grid-column:span 2"><h3>Package spread <span class="muted"
+    style="text-transform:none">(repos that publish or pull a malicious package)</span></h3>
+    <div id="spread"></div></div>
   <div style="grid-column:span 2"><h3>GitHub API health</h3><div id="apihealth"></div></div>
   <div style="grid-column:span 2"><h3>Search telemetry <span class="muted"
     style="text-transform:none">(live, what the hunt is querying)</span></h3>
@@ -475,8 +478,17 @@ async function loadSearch(){
   }).join('') : '<span class="muted">no searches recorded yet (starts with the next hunt)</span>';
 }
 
-loadMeta(); loadFunnel(); loadRuns(); loadGraph(false); loadSearch();
+async function loadSpread(){
+  let d; try{ d=await j('/api/spread'); }catch(e){ return; }
+  $('spread').innerHTML = d.length ? d.map(x=>{
+    const src=x.sources.length?`<span class="bad">source:</span> ${x.sources.map(esc).join(', ')}`:'';
+    const vec=x.vectors.length?`<span class="muted">vector:</span> ${x.vectors.map(esc).join(', ')}`:'';
+    return `<div class="vecrow"><b>${esc(x.repo)}</b> <small>${src}${src&&vec?' &middot; ':''}${vec}</small></div>`;
+  }).join('') : '<span class="muted">no package-spread nodes yet (populated by the hunt)</span>';
+}
+loadMeta(); loadFunnel(); loadRuns(); loadGraph(false); loadSearch(); loadSpread();
 setInterval(loadSearch, 5000);
+setInterval(loadSpread, 20000);
 setInterval(()=>{loadMeta(); loadFunnel(); loadRuns();}, 15000);
 setInterval(()=>loadGraph(true), 12000);   // live mapping: new inclusions pop in
 window.addEventListener('resize',()=>{const[W,H]=size();});
