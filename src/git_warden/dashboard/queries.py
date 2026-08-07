@@ -268,6 +268,31 @@ def c2_infrastructure(db: Database) -> list[dict[str, Any]]:
     return out
 
 
+def package_spread(db: Database) -> list[dict[str, Any]]:
+    """Repos that spread a malicious package: each with the package versions it
+    publishes (source) or depends on (vector) that are on the malicious feeds.
+
+    The supply-chain propagation map: a source node ships a compromised package so
+    installing it carries the payload; a vector node pulls one in. Populated by the
+    hunt from OSM's package feed combined with the incident manifest."""
+    out: list[dict[str, Any]] = []
+    for r in db.conn.execute(
+        "SELECT full_name, raw_payload FROM repo_findings "
+        "WHERE raw_payload LIKE '%package_spread%'"
+    ):
+        links = (json.loads(r["raw_payload"] or "{}") or {}).get("package_spread") or []
+        if not links:
+            continue
+        sources = [f"{x['package']}@{x['version']}" for x in links
+                   if x.get("relationship") == "source"]
+        vectors = [f"{x['package']}@{x['version']}" for x in links
+                   if x.get("relationship") == "vector"]
+        out.append({"repo": r["full_name"], "sources": sources, "vectors": vectors,
+                    "total": len(links)})
+    out.sort(key=lambda x: (-len(x["sources"]), -x["total"]))
+    return out
+
+
 def bad_owners(db: Database) -> list[dict[str, Any]]:
     """Owner-association repos (no own evidence) with owner provenance.
 

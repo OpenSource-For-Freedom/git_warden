@@ -244,6 +244,7 @@ class Tier2Result:
     learned_iocs: IocSet = field(default_factory=IocSet)  # IOCs mined from the code
     learned_signatures: list[str] = field(default_factory=list)  # code sigs mined
     confirming_findings: list[BashFinding] = field(default_factory=list)  # what confirmed
+    package_spread: list[dict] = field(default_factory=list)  # SOURCE/VECTOR spread links
 
     def signal_summary(self) -> list[str]:
         cats = sorted({f.category for f in self.bash_findings})
@@ -433,6 +434,7 @@ def analyze_repo(
     restrict_paths: set[str] | None = None,
     confirm_categories: frozenset[str] | None = None,
     malicious_packages: dict[str, dict[str, frozenset[str]]] | None = None,
+    spread_intel=None,
 ) -> Tier2Result:
     """Run Tier-2 STATIC analysis on an already-cloned repo (never executes it).
 
@@ -523,6 +525,20 @@ def analyze_repo(
     # trusted ground truth; the signatures hunt sibling repos of this campaign.
     learned = extract_repo_iocs(root) if confirmed else IocSet()
     learned_sigs = extract_code_signatures(root) if confirmed else []
+    # Package spread: which packages this repo publishes or depends on are on the
+    # malicious-package feeds, so the repo is a node in the supply-chain spread.
+    # Measured on every scanned repo (not only confirmed ones): a repo that ships a
+    # compromised package version is itself evidence of the spread even if its own
+    # code did not otherwise confirm.
+    spread: list[dict] = []
+    if spread_intel is not None and spread_intel.total():
+        from .package_spread import analyze_spread
+        spread = [
+            {"relationship": link.relationship, "package": link.package,
+             "version": link.version, "ecosystem": link.ecosystem,
+             "file": link.file, "intel": link.intel}
+            for link in analyze_spread(root, spread_intel)
+        ]
     return Tier2Result(
         full_name=full_name,
         code_hash=repo_code_hash(root),
@@ -534,6 +550,7 @@ def analyze_repo(
         learned_iocs=learned,
         learned_signatures=learned_sigs,
         confirming_findings=confirming,
+        package_spread=spread,
     )
 
 
@@ -546,6 +563,7 @@ def scan_candidate(
     restrict_paths: set[str] | None = None,
     confirm_categories: frozenset[str] | None = None,
     malicious_packages: dict[str, dict[str, frozenset[str]]] | None = None,
+    spread_intel=None,
 ) -> Tier2Result | None:
     """Clone + STATICALLY analyze a candidate. None if the clone fails/too big.
 
@@ -566,7 +584,8 @@ def scan_candidate(
         result = analyze_repo(cloned, full_name, runner=runner,
                               restrict_paths=restrict_paths,
                               confirm_categories=confirm_categories,
-                              malicious_packages=malicious_packages)
+                              malicious_packages=malicious_packages,
+                              spread_intel=spread_intel)
         # Pin the exact commit so evidence links survive the file being removed later.
         result.commit_sha = _read_head_sha(cloned, runner=runner)
         return result

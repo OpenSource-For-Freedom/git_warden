@@ -165,6 +165,24 @@ Chaindrop / Shai-Hulud incident export in `intel/incidents/`; point `--manifest`
 any other `name,version` list. Static and offline: nothing is executed and no
 network is touched.
 
+### Package spread (`git-warden package-spread`)
+Measure how a found repository propagates a malicious package. The manifest scanner
+already flags a repo that DEPENDS on a known-malicious package, which is the victim
+side. This adds the source side: a repo that PUBLISHES or ships a package whose exact
+version is on the malicious feeds is a node that spreads the payload, because whoever
+installs that package, or builds from the repo, inherits the ability. That is how the
+Chaindrop and Shai-Hulud waves moved, one compromised token publishing a bad version
+across a whole organisation's packages. The malicious set is measured from two feeds
+combined: OSM's labelled package intel, pulled in during ingest, and the bundled
+incident manifest in `intel/incidents`. Every match is version scoped, never name
+only, so a legitimate package that merely shares a name with a compromised one is
+never flagged. The hunt runs this on every scanned repo and records a source or
+vector link on the finding, counts them in the run summary (`spread_sources`,
+`spread_vectors`), and surfaces them on the dashboard and in the gold reasoning. A
+repo that ships a compromised version is recorded as a spread node even when its own
+code did not otherwise confirm. The `package-spread` command runs the same analysis
+over a local clone. Static and offline over `package.json` files.
+
 ### DB hygiene (`git-warden revalidate`)
 Re-scan confirmed but unsubmitted findings under the current rules. Anything that no
 longer confirms, or now reads as a security tool, is demoted to `rejected`, and the
