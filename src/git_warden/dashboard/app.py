@@ -169,6 +169,10 @@ def create_app(db_path=DB_PATH):
     def api_c2():
         return _q(queries.c2_infrastructure)
 
+    @app.get("/api/spread")
+    def api_spread():
+        return _q(queries.package_spread)
+
     @app.get("/")
     def index():
         return FileResponse(_STATIC / "index.html")
