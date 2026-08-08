@@ -359,6 +359,19 @@ _PATTERN_DEF = re.compile(
     r"new\s+RegExp|Pattern\.compile|Regex\.new|preg_match|RegexBuilder",
     re.I)
 
+# A line that TESTS FOR an indicator string is a detector, not an attack. A
+# guardrail `if "webhook.site" in payload:` checks whether input is malicious; it
+# does not exfiltrate. The cataclypsme/ai-engineering-from-scratch FP (2026-08-07)
+# confirmed on exactly that line, an educational repo's own safety check. This is
+# the inline-rule idea (`_PATTERN_DEF`) widened to a membership / substring test.
+_DETECTION_TEST = re.compile(
+    r"""["'][^"'\n]{0,80}["']\s+(?:not\s+)?in\s+\w"""              # "ioc" in payload
+    r"""|\bin\s+(?:payload|cmd|command|text|line|content|body|data|input|url|"""
+    r"""args?|out(?:put)?|stdout|response|resp|raw|blob|str|string|msg|message)\b"""
+    r"""|\.(?:includes|indexOf|contains|search|match|test|find|startswith|endswith)"""
+    r"""\s*\(""",
+    re.I)
+
 # `/etc/shadow` under a variable or staged prefix (`"$tmp"/etc/shadow`,
 # `${DESTDIR}/etc/shadow`, `$ROOTFS/etc/shadow`) is a path INSIDE an image being
 # built, not the running host's password file. Distro tooling edits it constantly:
@@ -405,7 +418,8 @@ def is_benign_construct(rule: str, line: str) -> bool:
     came from. Each branch cites the false positive that motivated it. Shared with
     the content scanner so a detector's inline rule table is neutral in both.
     """
-    if _PATTERN_DEF.search(line) or _SEARCH_QUERY_LITERAL.search(line):
+    if (_PATTERN_DEF.search(line) or _SEARCH_QUERY_LITERAL.search(line)
+            or _DETECTION_TEST.search(line)):
         return True
     if rule == "curl-pipe-shell":
         return _all_hosts_reputable(line)
