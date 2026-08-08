@@ -99,3 +99,26 @@ def test_review_tier_never_reaches_the_public_wall(tmp_path):
     assert "legacy/capture" in published, "pre-tiering captures are kept"
     assert "photoprism/photoprism" not in published, "REVIEW must never be published"
     db.close()
+
+
+def test_truncated_host_is_merged_not_reported():
+    from git_warden.osm_submit import _merge_truncated_hosts
+    # A snippet cut mid-domain leaves 'vscode-production-setting.ve'; it must fold
+    # into the full host, not become its own (invalid) domain report.
+    hr = {
+        "vscode-production-setting.ve": {"a/1"},
+        "vscode-production-setting.vercel.app": {"b/2", "c/3"},
+        "default-configuration.vercel.app": {"d/4"},
+    }
+    merged = _merge_truncated_hosts(hr)
+    assert "vscode-production-setting.ve" not in merged
+    assert merged["vscode-production-setting.vercel.app"] == {"a/1", "b/2", "c/3"}
+    assert merged["default-configuration.vercel.app"] == {"d/4"}  # untouched
+
+
+def test_distinct_domains_are_not_merged():
+    from git_warden.osm_submit import _merge_truncated_hosts
+    # A real host and a subdomain are not prefixes of each other; both survive.
+    hr = {"example.com": {"a/1"}, "api.example.com": {"b/2"}}
+    merged = _merge_truncated_hosts(hr)
+    assert set(merged) == {"example.com", "api.example.com"}

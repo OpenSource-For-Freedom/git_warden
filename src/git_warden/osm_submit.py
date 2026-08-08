@@ -590,10 +590,33 @@ def corroborated_c2(db, min_repos: int = 2) -> list[dict]:
             # keep the strongest attribution seen carrying this host (for its tags)
             if h not in host_attr or (a.attributed and not host_attr[h].attributed):
                 host_attr[h] = a
-    out = [{"host": h, "repos": sorted(reps), "attr": host_attr[h]}
-           for h, reps in host_repos.items() if len(reps) >= min_repos]
+    host_repos = _merge_truncated_hosts(host_repos)
+    out = [{"host": h, "repos": sorted(reps), "attr": host_attr.get(h)}
+           for h, reps in host_repos.items() if len(reps) >= min_repos and host_attr.get(h)]
     out.sort(key=lambda d: -len(d["repos"]))
     return out
+
+
+def _merge_truncated_hosts(host_repos: dict[str, set]) -> dict[str, set]:
+    """Fold a truncation-artifact host into the full one it is a prefix of.
+
+    A stored evidence snippet is capped, so a URL cut mid-domain leaves a partial
+    host: ``vscode-production-setting.ve`` for ``vscode-production-setting.vercel.app``.
+    Both would be reported as separate C2 domains, the short one invalid. A host that
+    is a strict prefix of another AND is continued by a letter (cut mid-label, not a
+    real subdomain boundary) is merged into the longer one so the count stays right.
+    """
+    hosts = list(host_repos)
+    dropped: set[str] = set()
+    for short in hosts:
+        for long in hosts:
+            if long is short or len(long) <= len(short):
+                continue
+            if long.startswith(short) and long[len(short)].isalpha():
+                host_repos[long] |= host_repos[short]
+                dropped.add(short)
+                break
+    return {h: r for h, r in host_repos.items() if h not in dropped}
 
 
 def domain_ioc_report(host: str, repos: list[str], attr) -> dict:
