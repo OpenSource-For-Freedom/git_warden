@@ -256,7 +256,57 @@ def _campaign_sentence(vectors: list[str], c2: list[str]) -> str:
     return s
 
 
-def _threat_description(row, assessment=None) -> str:
+def campaign_context(db, row) -> str:
+    """A sentence placing this repo inside the wider campaign cluster it belongs to.
+
+    Counts the other confirmed repositories that deliver the SAME dropper signature,
+    the distinct command-and-control hosts that cluster spreads across, and the URL
+    path fingerprints they share. This is the finding that a single repo cannot show
+    on its own: one operator rotating infrastructure while reusing a delivery shape.
+    Returns "" when the repo is not part of a cluster of at least three.
+    """
+    from .dprk import c2_hosts_from_flags
+    from .scanning.signatures import _DROPPER_URL, _FETCH_CONTEXT
+
+    payload = json.loads(row["raw_payload"] or "{}") or {}
+    bash = payload.get("bash_findings") or []
+    rule = (bash[0].get("rule") if bash else "") or ""
+    if not rule:
+        return ""
+    peers: set[str] = set()
+    hosts: set[str] = set()
+    paths: set[str] = set()
+    for r in db.conn.execute(
+        "SELECT full_name, raw_payload FROM repo_findings WHERE status='confirmed'"
+    ):
+        flags = (json.loads(r["raw_payload"] or "{}") or {}).get("bash_findings") or []
+        if not any(f.get("rule") == rule for f in flags):
+            continue
+        peers.add(r["full_name"])
+        for h in c2_hosts_from_flags(flags):
+            if _reportable_domain(h):
+                hosts.add(h)
+        for f in flags:
+            line = f.get("snippet") or ""
+            if _FETCH_CONTEXT.search(line):
+                for m in _DROPPER_URL.finditer(line):
+                    paths.add(m.group("path").lstrip("/"))
+    peers.discard(row["full_name"])
+    if len(peers) < 2 or len(hosts) < 2:
+        return ""
+    host_sample = ", ".join(sorted(hosts)[:6])
+    path_clause = ""
+    if paths:
+        path_clause = (" while reusing the same URL path fingerprints ("
+                       + ", ".join(sorted(paths)[:4]) + ")")
+    return (f"This repository is one of {len(peers) + 1} that git_warden has confirmed "
+            f"delivering this same dropper, a single campaign that rotates its "
+            f"command-and-control infrastructure across {len(hosts)} distinct hosts "
+            f"(for example {host_sample}){path_clause}. Matching only a host would miss "
+            f"most of the cluster; matching the delivery shape found all of it.")
+
+
+def _threat_description(row, assessment=None, campaign_ctx: str = "") -> str:
     """A long, plainly written explanation of why the repository is malicious."""
     payload = json.loads(row["raw_payload"] or "{}") or {}
     bash = payload.get("bash_findings") or []
@@ -305,6 +355,8 @@ def _threat_description(row, assessment=None) -> str:
     campaign = _campaign_sentence(_vectors(bash), _c2_hosts(bash))
     if campaign:
         text += " " + campaign
+    if campaign_ctx:
+        text += " " + campaign_ctx
     attribution = _attribution_paragraph(assessment)
     if attribution:
         text += " " + attribution
@@ -427,7 +479,7 @@ def _payload_description(row) -> str:
     return f"The malicious payload sits {where}. {base}{extra}{more}"
 
 
-def build_report(row, dprk_infra=None) -> dict:
+def build_report(row, dprk_infra=None, campaign_ctx: str = "") -> dict:
     """Map a confirmed repo_findings row to an OSM submit-threat request body.
 
     ``row`` is a sqlite3.Row (or any mapping) with the repo_findings columns.
@@ -451,7 +503,7 @@ def build_report(row, dprk_infra=None) -> dict:
         # OSM wants the full URL with scheme (per maintainer): https://github.com/...
         "resource_identifier": f"https://github.com/{full}",
         "version_info": "all",
-        "threat_description": _threat_description(row, assessment),
+        "threat_description": _threat_description(row, assessment, campaign_ctx),
         "payload_description": _payload_description(row),
         "publisher": owner,
         "severity_level": severity_level(row),
@@ -923,7 +975,8 @@ def _osm_repo_url(full_name: str) -> str:
 def _enrich_walkthrough(db, name: str, tid, ask, pause) -> None:
     """Print copy-paste-ready field values + where each goes in OSM's Update form."""
     r = db.get_finding(name)
-    report = build_report(r, dprk_infra=db.dprk_infra_hosts(exclude=name))
+    report = build_report(r, dprk_infra=db.dprk_infra_hosts(exclude=name),
+                          campaign_ctx=campaign_context(db, r))
     flags = json.loads(r["raw_payload"] or "{}").get("bash_findings") or []
     from .dprk import c2_hosts_from_flags
     iocs = sorted({h for h in c2_hosts_from_flags(flags) if not _is_shortener(h)})
@@ -1028,7 +1081,8 @@ def wizard(db, args) -> int:
         go = ask(f"  Review and submit {len(new_rows)} new report(s) now? [y/N]: ", "n")
         if go.lower() == "y":
             for r in new_rows:
-                report = build_report(r, dprk_infra=db.dprk_infra_hosts(exclude=r["full_name"]))
+                report = build_report(r, dprk_infra=db.dprk_infra_hosts(exclude=r["full_name"]),
+                                      campaign_ctx=campaign_context(db, r))
                 print(f"\n  Repo: {r['full_name']}")
                 print(f"    severity: {report['severity_level']} | "
                       f"tags: {', '.join(report['tags'])}")
@@ -1421,7 +1475,8 @@ def main(argv: list[str] | None = None) -> int:
         if rows:
             print(f"\n{len(rows)} NEW confirmed true positive(s), most severe first:")
             for i, r in enumerate(rows):
-                report = build_report(r, dprk_infra=db.dprk_infra_hosts(exclude=r["full_name"]))
+                report = build_report(r, dprk_infra=db.dprk_infra_hosts(exclude=r["full_name"]),
+                                      campaign_ctx=campaign_context(db, r))
                 if not args.confirm:
                     print(json.dumps(report, indent=2, ensure_ascii=False) + "\n")
                     continue
