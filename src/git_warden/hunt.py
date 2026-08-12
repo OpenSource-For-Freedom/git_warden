@@ -73,6 +73,63 @@ def _decide(finding, decision: str, reason: str, **extra) -> None:
                                 "reason": reason, **extra}})
 
 
+def _knorr_c2_seeds() -> list[str]:
+    """C2 hosts knorr found on malicious containers, as warden search seeds.
+
+    Best effort: an empty list when the shared bus is absent or knorr has never run,
+    so warden hunts fine on its own. A host is searchable as a literal string.
+    """
+    try:
+        from . import intel_exchange as bus
+        return bus.values("c2_host", exclude_tool=bus.TOOL)
+    except Exception:                                    # pragma: no cover - defensive
+        return []
+
+
+def _publish_breadcrumbs(finding, result) -> None:
+    """Publish a confirmed repo's breadcrumbs to the shared warden<->knorr bus.
+
+    Best effort and never raises. Carries the campaign's C2 hosts, the malicious
+    package versions the repo publishes or depends on, the dropper URL path
+    fingerprints, mined code signatures, and, if the repo ships a Dockerfile or a
+    GHCR image, the repo->image link so knorr scans the built image. knorr reads
+    these to seed its container hunt from the same campaign.
+    """
+    try:
+        from . import intel_exchange as bus
+        from .dprk import c2_hosts_from_flags
+        from .scanning.containers import is_container_threat
+        from .scanning.signatures import _DROPPER_URL, _FETCH_CONTEXT
+
+        name = finding.full_name
+        payload = finding.raw_payload or {}
+        flags = payload.get("bash_findings") or []
+        tags = sorted(set(finding.signals or []))[:6]
+
+        bus.record_many("c2_host", c2_hosts_from_flags(flags), artifact=name, tags=tags)
+
+        for link in payload.get("package_spread") or []:
+            bus.record("package", f"{link['ecosystem']}/{link['package']}@{link['version']}",
+                       artifact=name, tags=[f"spread:{link.get('relationship','')}"])
+
+        paths = set()
+        for f in flags:
+            line = f.get("snippet") or ""
+            if _FETCH_CONTEXT.search(line):
+                for m in _DROPPER_URL.finditer(line):
+                    paths.add(m.group("path").lstrip("/"))
+        bus.record_many("path_fp", paths, artifact=name)
+        bus.record_many("code_sig", result.learned_signatures, artifact=name)
+
+        # A repo whose build recipe is malicious (or that publishes a GHCR image of
+        # the same name) is a container lead: hand the link to knorr.
+        if is_container_threat(flags):
+            bus.record("link", f"repo:{name}", artifact=name,
+                       image=f"ghcr.io/{name}", tags=["container-threat"])
+    except Exception:                                    # pragma: no cover - defensive
+        log.debug("breadcrumb publish failed", exc_info=True)
+
+
 def _build_spread_intel(mal_packages: dict):
     """Combine OSM's package feed with the bundled incident manifest into the
     package-spread intel. The OSM half is pulled in during ingest (per-ecosystem
@@ -372,10 +429,13 @@ def hunt(
         _seen = len(candidates)
 
     if do_ioc:
-        # IOC code search: learned IOCs (prior confirmed repos) + OSM IOCs.
+        # IOC code search: learned IOCs (prior confirmed repos) + OSM IOCs + the C2
+        # hosts knorr found on malicious CONTAINERS (the shared bus). A host knorr
+        # saw on an image seeds a search for repos referencing the same campaign.
         learned = db.learned_search_terms()
         base = build_search_terms(_osm_iocs(db), max_iocs)
-        ioc_terms = list(dict.fromkeys(learned + base))[:max_iocs]
+        cross = _knorr_c2_seeds()
+        ioc_terms = list(dict.fromkeys(cross + learned + base))[:max_iocs]
         for hit in search_iocs(client, ioc_terms, known=known, per_term=10,
                                pace_seconds=search_pace):
             if classify_hit(hit) == "suspicious":
@@ -783,6 +843,11 @@ def hunt(
                     # campaign's sibling repos (the novel-discovery loop).
                     for sig in result.learned_signatures:
                         db.record_learned_ioc(sig, "code_sig", finding.full_name, run_id)
+                    # Publish this confirmation's breadcrumbs to the shared bus so
+                    # knorr (containers) can seed its own hunt from the same
+                    # campaign's C2 hosts, packages, path fingerprints, and, when the
+                    # repo ships a Docker image, the repo->image link.
+                    _publish_breadcrumbs(finding, result)
         finally:
             _force_rmtree(workdir)
         progress.tier2_end(confirmed)

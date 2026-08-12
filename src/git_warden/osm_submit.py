@@ -1437,6 +1437,12 @@ def main(argv: list[str] | None = None) -> int:
             if hit:
                 pre_domains[d["host"]] = hit
         domains = [d for d in domains if d["host"] not in pre_domains]
+        # Cross-tool dedup: skip a C2 host knorr already submitted from a container.
+        from . import intel_exchange as bus
+        _bus_dom = {d["host"] for d in domains if bus.is_submitted("domain", d["host"])}
+        for host in sorted(_bus_dom):
+            print(f"  [skip] domain {host}: already submitted by knorr (shared bus)")
+        domains = [d for d in domains if d["host"] not in _bus_dom]
         for host, hit in pre_domains.items():
             print(f"  [skip] domain {host}: ALREADY in OSM full history -- "
                   f"{hit.get('status')}, id {str(hit.get('id'))[:8]}  (NOT re-submitting)")
@@ -1499,6 +1505,8 @@ def main(argv: list[str] | None = None) -> int:
                 except Exception:  # noqa: BLE001
                     pass
                 sent += 1
+                bus.mark_submitted("repository", f"https://github.com/{r['full_name']}",
+                                   threat_id=resp.get("threat_id"))
                 print(f"  [OK]   {r['full_name']} -> {resp.get('threat_id')} "
                       f"({resp.get('status', 'submitted')})")
 
@@ -1521,6 +1529,7 @@ def main(argv: list[str] | None = None) -> int:
                     print(f"  [FAIL] domain {d['host']}: {exc}")
                     continue
                 domains_sent += 1
+                bus.mark_submitted("domain", d["host"], threat_id=resp.get("threat_id"))
                 try:
                     _mark_domain_submitted(db, d["host"], d["repos"][0], resp.get("threat_id"))
                 except Exception:  # noqa: BLE001
