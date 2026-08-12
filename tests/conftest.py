@@ -26,6 +26,20 @@ def _isolate_search_telemetry(tmp_path, monkeypatch):
     monkeypatch.setattr(telemetry, "SEARCH_LOG", tmp_path / "search_telemetry.jsonl")
 
 
+@pytest.fixture(autouse=True)
+def _isolate_intel_bus(tmp_path, monkeypatch):
+    """Keep test breadcrumbs out of the real shared warden<->knorr bus.
+
+    The submit tests call bus.mark_submitted and read is_submitted; without this
+    they would write to (and read stale state from) the operator's real
+    shared_intel/breadcrumbs.jsonl, so a domain a prior test marked submitted would
+    make a later run skip a genuinely-new one.
+    """
+    from git_warden import intel_exchange
+
+    monkeypatch.setattr(intel_exchange, "SHARED_INTEL_PATH", tmp_path / "bus.jsonl")
+
+
 def utcnow() -> datetime:
     return datetime(2026, 6, 18, tzinfo=UTC)
 
