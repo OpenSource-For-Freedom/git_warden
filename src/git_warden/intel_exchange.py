@@ -80,9 +80,9 @@ def record(kind: str, value: str, *, tool: str = TOOL, artifact: str | None = No
             with SHARED_INTEL_PATH.open("a", encoding="utf-8") as fh:
                 fh.write(json.dumps(row, default=str) + "\n")
             _writes += 1
-            if _writes % 200 == 0 and SHARED_INTEL_PATH.exists():
-                if SHARED_INTEL_PATH.stat().st_size > _MAX_BYTES:
-                    _compact()
+            if (_writes % 200 == 0 and SHARED_INTEL_PATH.exists()
+                    and SHARED_INTEL_PATH.stat().st_size > _MAX_BYTES):
+                _compact()
     except Exception:                                    # pragma: no cover - defensive
         log.debug("shared intel write failed", exc_info=True)
 
