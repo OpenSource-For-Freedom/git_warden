@@ -92,6 +92,33 @@ positive.
 
 <p align="center"><img src="docs/sculk-divider.png" alt="" width="900"></p>
 
+## Working with Knörr
+
+Git Warden hunts malicious **repositories**. Its sibling, **Knörr**, hunts malicious
+**container images**. The same campaigns show up on both surfaces, so the two tools
+share what they learn instead of each starting cold.
+
+They pass leads through a shared breadcrumb file that both read and write. Neither
+tool needs the other to run, and either one works fine when the file is empty.
+
+What crosses between them:
+
+- **C2 hosts.** A host Warden finds in a repo dropper, or Knörr finds in an image,
+  is searched by the other tool to find more of the same campaign.
+- **Malicious packages.** A bad package one tool confirms is measured against the
+  other, so a container that installs it and a repo that ships it are both caught.
+- **Discovered malware signatures.** The dropper fingerprints Warden mines are
+  available to Knörr, and the reverse.
+- **Repo and image links.** A repo whose build recipe is a container threat points
+  Knörr at the image, and a Knörr image points Warden at its source repo.
+- **What was submitted.** Each tool records what it sent to OpenSourceMalware, so
+  the other never files a duplicate.
+
+The result is one shared picture of a campaign across repos and containers, built
+from leads that used to stop at the edge of each tool.
+
+<p align="center"><img src="docs/sculk-divider.png" alt="" width="900"></p>
+
 ## Wall of Shame
 
 <p align="center">
@@ -105,20 +132,20 @@ steal-and-send); threat-intel leads (a malicious owner, a shared signature) only
 *seed* which repos get scanned, never confirm one alone.
 
 <!-- git-warden:registry:start -->
-_Top 10 of 41 repositories confirmed malicious by static analysis this run, ranked by severity. The full list ships as the run's CSV artifact and to the Discord feed; every row's evidence (file, line, rule) is in that CSV. Dispute: open an issue and we will re-review._
+_Top 10 of 52 repositories confirmed malicious by static analysis this run, ranked by severity. The full list ships as the run's CSV artifact and to the Discord feed; every row's evidence (file, line, rule) is in that CSV. Dispute: open an issue and we will re-review._
 
 | Repository | Detection | Score | Attribution | Proof (file:line rule) |
 |------------|-----------|-------|-------------|------------------------|
+| [`goldendragon68/bullana`](https://github.com/goldendragon68/bullana) | signature_match | 16 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+19 more) |
 | [`gauravraisharma/ticketting-system`](https://github.com/gauravraisharma/ticketting-system) | signature_match | 15 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+19 more) |
 | [`alexsander532/projeto_dashboard_versao1`](https://github.com/alexsander532/projeto_dashboard_versao1) | signature_match | 14 | DPRK (North Korea) (per OSM) | frontend/vite.config.js:36 obfuscation/eval-decoded  (+3 more) |
-| [`allzone-technologies/canteen-pwa`](https://github.com/allzone-technologies/canteen-pwa) | signature_match | 13 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+19 more) |
 | [`solarpy/caroline119-defi-property-4e3a113352e3`](https://github.com/solarpy/caroline119-defi-property-4e3a113352e3) | osm_repository | 13 | DPRK (North Korea) (per OSM) | caroline119-defi-property-4e3a113352e3/.vscode/tasks.json:0 install_hook/vscode-autorun  (+12 more) |
 | [`lfirsl/morphix`](https://github.com/lfirsl/morphix) | osm_repository | 12 | DPRK (North Korea) (per OSM) | .vscode/tasks.json:0 install_hook/vscode-autorun  (+13 more) |
 | [`usmanaliashraf/portfolio`](https://github.com/usmanaliashraf/portfolio) | signature_match | 12 | DPRK (North Korea) (per OSM) | postcss.config.mjs:12 obfuscation/eval-decoded  (+8 more) |
 | [`icecoldjay/bri`](https://github.com/icecoldjay/bri) | signature_match | 11 | unattributed | client/tailwind.config.js:61 obfuscation/eval-decoded  (+3 more) |
+| [`mentarishub121/tokenpresaleapp`](https://github.com/mentarishub121/tokenpresaleapp) | signature_match | 11 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+4 more) |
 | [`mts-services/olabisiolai_frontend_react`](https://github.com/mts-services/olabisiolai_frontend_react) | signature_match | 11 | unattributed | vite.config.ts:107 obfuscation/eval-decoded  (+4 more) |
 | [`novaremix-tech/vault-new-phase`](https://github.com/novaremix-tech/vault-new-phase) | package_ref | 11 | unattributed | packages/console/package.json:0 install_hook/npm-preinstall  (+18 more) |
-| [`rajaxcodes/token-presale-dapp`](https://github.com/rajaxcodes/token-presale-dapp) | signature_match | 11 | unattributed | tasks.json:0 install_hook/vscode-autorun  (+5 more) |
 <!-- git-warden:registry:end -->
 
 > [!NOTE]
@@ -141,6 +168,7 @@ _These repositories are NOT confirmed malicious on their own code. They appear o
 
 | Repository | Owner | Owner provenance (repos confirmed on evidence) | Score |
 |------------|-------|------------------------------------------------|-------|
+| [`mts-services/asalmiah_nextjs_fixing`](https://github.com/mts-services/asalmiah_nextjs_fixing) | mts-services | [`mts-services/olabisiolai_frontend_react`](https://github.com/mts-services/olabisiolai_frontend_react) | 18 |
 | [`mts-services/kenndavi2_bbq_sauce_15_02_26_laravel`](https://github.com/mts-services/kenndavi2_bbq_sauce_15_02_26_laravel) | mts-services | [`mts-services/olabisiolai_frontend_react`](https://github.com/mts-services/olabisiolai_frontend_react) | 17 |
 | [`mts-services/kenndavi2_clothing_15_02_26_laravel`](https://github.com/mts-services/kenndavi2_clothing_15_02_26_laravel) | mts-services | [`mts-services/olabisiolai_frontend_react`](https://github.com/mts-services/olabisiolai_frontend_react) | 17 |
 | [`mts-services/kenndavi2_react`](https://github.com/mts-services/kenndavi2_react) | mts-services | [`mts-services/olabisiolai_frontend_react`](https://github.com/mts-services/olabisiolai_frontend_react) | 17 |
@@ -150,7 +178,6 @@ _These repositories are NOT confirmed malicious on their own code. They appear o
 | [`mts-services/mikylepersad_tow_truck_laravel`](https://github.com/mts-services/mikylepersad_tow_truck_laravel) | mts-services | [`mts-services/olabisiolai_frontend_react`](https://github.com/mts-services/olabisiolai_frontend_react) | 17 |
 | [`mts-services/ok2wg5c6d_tareenhossain`](https://github.com/mts-services/ok2wg5c6d_tareenhossain) | mts-services | [`mts-services/olabisiolai_frontend_react`](https://github.com/mts-services/olabisiolai_frontend_react) | 17 |
 | [`mts-services/timescape_laravel_26`](https://github.com/mts-services/timescape_laravel_26) | mts-services | [`mts-services/olabisiolai_frontend_react`](https://github.com/mts-services/olabisiolai_frontend_react) | 17 |
-| [`mts-services/tungsol_dictionary_1_26`](https://github.com/mts-services/tungsol_dictionary_1_26) | mts-services | [`mts-services/olabisiolai_frontend_react`](https://github.com/mts-services/olabisiolai_frontend_react) | 17 |
 <!-- git-warden:badowners:end -->
 
 <p align="center"><img src="docs/sculk-divider.png" alt="" width="900"></p>
