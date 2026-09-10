@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import tempfile
 from collections import Counter
 from datetime import UTC, datetime
@@ -73,15 +74,26 @@ def _decide(finding, decision: str, reason: str, **extra) -> None:
                                 "reason": reason, **extra}})
 
 
+# A real host to seed a GitHub code search: a dotted name, no spaces or path
+# separators, a real-looking TLD, and NOT a file/archive name. knorr's IOC bucket
+# also holds malware family tags and filenames (Unix.Trojan.Gafgyt.elf,
+# SRBMiner-Multi.tar.xz); searching those wastes the code-search budget on garbage.
+_HOSTLIKE = re.compile(r"^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,24}$", re.I)
+_FILE_EXT = (".tar", ".xz", ".gz", ".zip", ".elf", ".exe", ".bin", ".sh", ".js",
+             ".py", ".json", ".txt", ".so", ".dll")
+
+
 def _knorr_c2_seeds() -> list[str]:
-    """C2 hosts knorr found on malicious containers, as warden search seeds.
+    """Real C2 hosts knorr found on malicious containers, as warden search seeds.
 
     Best effort: an empty list when the shared bus is absent or knorr has never run,
-    so warden hunts fine on its own. A host is searchable as a literal string.
+    so warden hunts fine on its own. Filtered to genuine hostnames so a filename or
+    malware-family tag in knorr's IOC bucket never becomes a search term.
     """
     try:
         from . import intel_exchange as bus
-        return bus.values("c2_host", exclude_tool=bus.TOOL)
+        return [h for h in bus.values("c2_host", exclude_tool=bus.TOOL)
+                if _HOSTLIKE.match(h) and not h.lower().endswith(_FILE_EXT)]
     except Exception:                                    # pragma: no cover - defensive
         return []
 
@@ -97,8 +109,8 @@ def _publish_breadcrumbs(finding, result) -> None:
     """
     try:
         from . import intel_exchange as bus
+        from .containers import is_container_threat
         from .dprk import c2_hosts_from_flags
-        from .scanning.containers import is_container_threat
         from .scanning.signatures import _DROPPER_URL, _FETCH_CONTEXT
 
         name = finding.full_name
