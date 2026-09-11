@@ -115,6 +115,61 @@ def test_timeout_returns_none():
     assert scan_candidate_sandboxed("x/y", runner=run) is None
 
 
+def test_timeout_reaps_the_orphaned_container():
+    # --rm only fires on a clean exit, so a timed-out container keeps running. The
+    # scanner must force-remove the SAME container it started, or malware is left
+    # alive on the daemon (the leak that put a container "Up 5 minutes" on the host).
+    seen = {}
+
+    def runner(argv, capture_output=True, text=True, timeout=None):
+        assert argv[:2] == ["docker", "run"]
+        seen["name"] = argv[argv.index("--name") + 1]
+        raise subprocess.TimeoutExpired(argv, timeout)
+
+    reaps = []
+
+    def reaper(argv, capture_output=True, text=True, timeout=None):
+        reaps.append(argv)
+        return subprocess.CompletedProcess(argv, 0, "", "")
+
+    assert scan_candidate_sandboxed("big/repo", runner=runner, reaper=reaper) is None
+    assert reaps and reaps[0][:3] == ["docker", "rm", "-f"]
+    assert reaps[0][3] == seen["name"]                 # reaped the container it ran
+    assert reaps[0][3].startswith("warden-scan-")
+
+
+def test_spawn_failure_also_reaps():
+    reaps = []
+
+    def runner(argv, capture_output=True, text=True, timeout=None):
+        raise OSError("docker not found")
+
+    def reaper(argv, capture_output=True, text=True, timeout=None):
+        reaps.append(argv)
+        return subprocess.CompletedProcess(argv, 0, "", "")
+
+    assert scan_candidate_sandboxed("x/y", runner=runner, reaper=reaper) is None
+    assert reaps and reaps[0][:3] == ["docker", "rm", "-f"]
+
+
+def test_clean_run_does_not_reap():
+    # A container that exited on its own is already gone via --rm; no reap needed.
+    reaps = []
+
+    def reaper(argv, capture_output=True, text=True, timeout=None):
+        reaps.append(argv)
+        return subprocess.CompletedProcess(argv, 0, "", "")
+
+    r = scan_candidate_sandboxed("attacker/dropper",
+                                 runner=_fake(0, json.dumps(_GOOD)), reaper=reaper)
+    assert r is not None and not reaps
+
+
+def test_build_run_argv_honours_an_explicit_name():
+    argv = build_run_argv("o/r", name="warden-scan-deadbeef")
+    assert argv[argv.index("--name") + 1] == "warden-scan-deadbeef"
+
+
 def test_docker_available_true_and_false():
     assert docker_available(  ) in (True, False)         # smoke: never raises
 
