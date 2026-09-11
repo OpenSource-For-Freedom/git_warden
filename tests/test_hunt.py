@@ -33,7 +33,7 @@ class FakeClient:
     def search_repositories(self, query, per_page=10):
         return []
 
-    def search_code(self, query, per_page=20):
+    def search_code(self, query, per_page=20, *, page=1, sort=None):
         return []
 
     def get_readme(self, owner, name):
@@ -70,7 +70,7 @@ def test_hunt_signature_match_finds_novel_repo(tmp_path, monkeypatch):
     monkeypatch.setattr(cfg, "MALWARE_SIGNATURES_PATH", sig_file)
 
     class SigClient(FakeClient):
-        def search_code(self, query, per_page=20):
+        def search_code(self, query, per_page=20, *, page=1, sort=None):
             if "OBFUSTUB" in query:
                 return [{"repository": {
                     "full_name": "attacker/infected", "owner": {"login": "attacker"},
@@ -553,7 +553,7 @@ def test_hunt_redteam_tool_via_nonlineage_pivot_is_breadcrumb(tmp_path, monkeypa
     monkeypatch.setattr(cfg, "MALWARE_SIGNATURES_PATH", sig_file)
 
     class SigClient(FakeClient):
-        def search_code(self, query, per_page=20):
+        def search_code(self, query, per_page=20, *, page=1, sort=None):
             if "SLIVERSIG" in query:
                 return [{"repository": {
                     "full_name": "mallory/sliver", "owner": {"login": "mallory"},
@@ -597,7 +597,7 @@ def test_hunt_trojaned_impersonation_still_confirms(tmp_path, monkeypatch):
     monkeypatch.setattr(cfg, "MALWARE_SIGNATURES_PATH", sig_file)
 
     class SigClient(FakeClient):
-        def search_code(self, query, per_page=20):
+        def search_code(self, query, per_page=20, *, page=1, sort=None):
             if "SLIVERSIG" in query:
                 return [{"repository": {  # "sl1ver": typosquat, raw name != "sliver"
                     "full_name": "mallory/sl1ver", "owner": {"login": "mallory"},

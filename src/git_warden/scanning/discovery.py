@@ -156,12 +156,44 @@ def _code_query(term: str) -> str:
     return f'"{term}"' if ("@" in term or "/" in term) else term
 
 
+# GitHub code search serves at most 1000 results per query, whatever per_page is.
+_MAX_RESULTS = 1000
+
+
+def _search_one_page(client, query: str, *, per_term: int, page: int, sort: str | None,
+                     max_backoff: float, sleeper) -> list[dict] | None:
+    """One page of a code search with a single backoff-and-retry.
+
+    Returns the items, or ``None`` on a hard failure (so the caller stops this
+    term without advancing its cursor and retries the same page next run).
+    """
+    for attempt in range(2):  # initial try + one retry after a backoff
+        try:
+            return client.search_code(query, per_page=per_term, page=page, sort=sort)
+        except Exception as exc:  # one page failing must not abort the sweep
+            retry_after = getattr(exc, "retry_after", None)
+            if retry_after is not None and attempt == 0:
+                wait = min(float(retry_after), max_backoff)
+                log.info("code search rate-limited; backing off",
+                         extra={"context": {"term": query, "wait": round(wait, 1)}})
+                sleeper(wait)
+                continue
+            level = "rate-limited" if retry_after is not None else "failed"
+            log.warning(f"code search {level}",
+                        extra={"context": {"term": query, "err": str(exc)}})
+            return None
+    return None
+
+
 def search_iocs(
     client,
     terms: list[str],
     *,
     known: set[str],
     per_term: int = 20,
+    pages: int = 1,
+    cursor=None,
+    sort: str | None = None,
     pace_seconds: float = 0.0,
     max_backoff: float = 90.0,
     sleeper=time.sleep,
@@ -172,45 +204,58 @@ def search_iocs(
     pinned tools), so results are genuinely new discoveries. ``pace_seconds``
     spaces calls to respect code search's ~10/min limit (0 in tests). On a
     rate-limit (an exception carrying ``retry_after``), we wait the requested
-    time; capped at ``max_backoff``; and retry the term once before moving on,
+    time; capped at ``max_backoff``; and retry the page once before moving on,
     so a burst throttle no longer silently drops IOCs.
+
+    ``pages`` walks that many result pages per term this call. GitHub serves the
+    same stable top hits for a query every run, so fetching only page 1 re-finds
+    the same repos and dedup discards them all; walking deeper surfaces the rest
+    (a query can match thousands, capped at 1000 returnable). An optional
+    ``cursor`` persists how far each term has been walked ACROSS runs, so
+    successive hunts advance into new pages instead of re-flipping the same
+    stones; a term the cursor reports exhausted (start page 0) is skipped.
     """
     by_repo: dict[str, RepoHit] = {}
-    for index, term in enumerate(terms):
-        if pace_seconds and index:
-            sleeper(pace_seconds)
-        items = None
-        for attempt in range(2):  # initial try + one retry after a backoff
-            try:
-                items = client.search_code(_code_query(term), per_page=per_term)
+    max_page = max(1, _MAX_RESULTS // max(per_term, 1))
+    searched = 0
+    for term in terms:
+        query = _code_query(term)
+        start = cursor.start(query) if cursor else 1
+        if start == 0:                       # cursor marks this term fully walked
+            continue
+        page = start
+        exhausted = False
+        failed = False
+        while page < start + pages and page <= max_page:
+            if pace_seconds and searched:
+                sleeper(pace_seconds)
+            searched += 1
+            items = _search_one_page(client, query, per_term=per_term, page=page,
+                                     sort=sort, max_backoff=max_backoff, sleeper=sleeper)
+            if items is None:                # hard failure: retry this page next run
+                failed = True
                 break
-            except Exception as exc:  # one IOC failing must not abort the sweep
-                retry_after = getattr(exc, "retry_after", None)
-                if retry_after is not None and attempt == 0:
-                    wait = min(float(retry_after), max_backoff)
-                    log.info("code search rate-limited; backing off",
-                             extra={"context": {"term": term, "wait": round(wait, 1)}})
-                    sleeper(wait)
+            for item in items:
+                repo = item.get("repository") or {}
+                full = repo.get("full_name")
+                if not full or full.casefold() in known:
                     continue
-                level = "rate-limited" if retry_after is not None else "failed"
-                log.warning(f"code search {level}",
-                            extra={"context": {"term": term, "err": str(exc)}})
+                hit = by_repo.get(full)
+                if hit is None:
+                    hit = RepoHit(
+                        full_name=full,
+                        owner=(repo.get("owner") or {}).get("login", ""),
+                        html_url=repo.get("html_url", ""),
+                    )
+                    by_repo[full] = hit
+                if term not in hit.matched_iocs:
+                    hit.matched_iocs.append(term)
+                if item.get("path"):
+                    hit.paths.append(item["path"])
+            page += 1
+            if len(items) < per_term:        # ran out of results for this query
+                exhausted = True
                 break
-        for item in items or ():
-            repo = item.get("repository") or {}
-            full = repo.get("full_name")
-            if not full or full.casefold() in known:
-                continue
-            hit = by_repo.get(full)
-            if hit is None:
-                hit = RepoHit(
-                    full_name=full,
-                    owner=(repo.get("owner") or {}).get("login", ""),
-                    html_url=repo.get("html_url", ""),
-                )
-                by_repo[full] = hit
-            if term not in hit.matched_iocs:
-                hit.matched_iocs.append(term)
-            if item.get("path"):
-                hit.paths.append(item["path"])
+        if cursor and not failed:
+            cursor.advance(query, next_page=page, exhausted=exhausted or page > max_page)
     return list(by_repo.values())

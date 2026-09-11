@@ -57,6 +57,31 @@ from .scanning.tier2 import WEAPONIZATION_CATEGORIES, _force_rmtree
 
 log = logging.getLogger(__name__)
 
+# Pages of code-search results to walk per term each run. GitHub serves the same
+# stable top hits for a query every run, so a persisted cursor advances this many
+# pages deeper each run instead of re-fetching page 1 (GW_SEARCH_PAGES overrides).
+_SEARCH_PAGES = max(1, int(os.environ.get("GW_SEARCH_PAGES", "3")))
+_SEARCH_PER_PAGE = 100          # GitHub max per page; 1000-result ceiling per query
+
+
+class _DbPageCursor:
+    """Adapts Database's page cursor to what ``search_iocs`` expects.
+
+    Lets a hunt walk deeper into each query's results across runs, so we stop
+    re-flipping the same top hits every run.
+    """
+
+    def __init__(self, db: Database, run_id: str):
+        self._db = db
+        self._run_id = run_id
+
+    def start(self, query: str) -> int:
+        return self._db.next_search_page(query)
+
+    def advance(self, query: str, *, next_page: int, exhausted: bool) -> None:
+        self._db.advance_search_page(query, next_page, exhausted=exhausted,
+                                     run_id=self._run_id)
+
 
 def _decide(finding, decision: str, reason: str, **extra) -> None:
     """Emit a per-candidate Tier-2 decision to the run log.
@@ -442,6 +467,9 @@ def hunt(
         progress.source(name, len(candidates) - _seen, len(candidates))
         _seen = len(candidates)
 
+    # Walk each code-search query deeper every run instead of re-fetching page 1.
+    page_cursor = _DbPageCursor(db, run_id)
+
     if do_ioc:
         # IOC code search: learned IOCs (prior confirmed repos) + OSM IOCs + the C2
         # hosts knorr found on malicious CONTAINERS (the shared bus). A host knorr
@@ -450,7 +478,8 @@ def hunt(
         base = build_search_terms(_osm_iocs(db), max_iocs)
         cross = _knorr_c2_seeds()
         ioc_terms = list(dict.fromkeys(cross + learned + base))[:max_iocs]
-        for hit in search_iocs(client, ioc_terms, known=known, per_term=10,
+        for hit in search_iocs(client, ioc_terms, known=known, per_term=_SEARCH_PER_PAGE,
+                               pages=_SEARCH_PAGES, cursor=page_cursor,
                                pace_seconds=search_pace):
             if classify_hit(hit) == "suspicious":
                 candidates.setdefault(hit.full_name.casefold(), _finding_from_hit(hit))
@@ -545,7 +574,8 @@ def hunt(
         sig_terms = list(dict.fromkeys(
             db.learned_signatures() + load_seed_signatures(config.MALWARE_SIGNATURES_PATH)
         ))[:max_signatures]
-        for hit in search_iocs(client, sig_terms, known=known, per_term=20,
+        for hit in search_iocs(client, sig_terms, known=known, per_term=_SEARCH_PER_PAGE,
+                               pages=_SEARCH_PAGES, cursor=page_cursor,
                                pace_seconds=search_pace):
             if classify_hit(hit) == "suspicious":
                 finding = _finding_from_hit(hit)

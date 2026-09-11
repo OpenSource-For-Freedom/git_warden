@@ -54,6 +54,16 @@ def test_init_is_idempotent(tmp_path):
     Database.open(path).close()  # second open must not raise
 
 
+def test_search_page_cursor_advances_then_exhausts(db):
+    db.start_run("run-1", _now())
+    assert db.next_search_page("q1") == 1                        # unknown query -> page 1
+    db.advance_search_page("q1", 4, exhausted=False, run_id="run-1")
+    assert db.next_search_page("q1") == 4                        # resumes where it stopped
+    db.advance_search_page("q1", 7, exhausted=True, run_id="run-1")
+    assert db.next_search_page("q1") == 0                        # exhausted -> skip it
+    assert db.next_search_page("other") == 1                     # unrelated query untouched
+
+
 def test_record_observation_returns_rowid(db):
     db.start_run("run-1", _now())
     obs = _observation(FeedSource.GOOGLE_RSS)
