@@ -171,20 +171,30 @@ class GitHubClient:
             return 60.0
         return None
 
-    def search_code(self, query: str, per_page: int = 20) -> list[dict]:
+    def search_code(self, query: str, per_page: int = 20, *, page: int = 1,
+                    sort: str | None = None, order: str = "desc") -> list[dict]:
         """Search code for a literal IOC/string; returns ``items`` (may be empty).
+
+        ``page`` walks deeper into the result set (GitHub serves up to 1000
+        results, so ``page * per_page`` beyond 1000 just returns empty). ``sort``
+        may be ``"indexed"`` to bias toward recently-indexed code instead of the
+        stable best-match order; ``None`` keeps best-match.
 
         Code search requires authentication and has a tight rate limit
         (~10 req/min) plus a secondary burst limit. A throttling 403/429 raises
         :class:`GitHubRateLimitError` (with the wait); a genuine 403 (bad token)
         raises ``RuntimeError`` so the caller doesn't retry a hopeless request.
         """
+        params: dict = {"q": query, "per_page": per_page, "page": page}
+        if sort:
+            params["sort"] = sort
+            params["order"] = order
         for attempt in range(4):   # initial try + up to 3 backoff-and-retry rounds
             # Self-pace: wait out the minimum interval since the last search.
             gap = self._search_interval - (time.monotonic() - self._last_search)
             if gap > 0:
                 self._sleep(gap)
-            resp = self._get("/search/code", params={"q": query, "per_page": per_page})
+            resp = self._get("/search/code", params=params)
             self._last_search = time.monotonic()
             if resp.status_code in (403, 429):
                 wait = self._rate_limit_wait(resp)

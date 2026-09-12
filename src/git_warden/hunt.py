@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
 import tempfile
 from collections import Counter
@@ -55,6 +56,31 @@ from .scanning.signatures import load_seed_signatures
 from .scanning.tier2 import WEAPONIZATION_CATEGORIES, _force_rmtree
 
 log = logging.getLogger(__name__)
+
+# Pages of code-search results to walk per term each run. GitHub serves the same
+# stable top hits for a query every run, so a persisted cursor advances this many
+# pages deeper each run instead of re-fetching page 1 (GW_SEARCH_PAGES overrides).
+_SEARCH_PAGES = max(1, int(os.environ.get("GW_SEARCH_PAGES", "3")))
+_SEARCH_PER_PAGE = 100          # GitHub max per page; 1000-result ceiling per query
+
+
+class _DbPageCursor:
+    """Adapts Database's page cursor to what ``search_iocs`` expects.
+
+    Lets a hunt walk deeper into each query's results across runs, so we stop
+    re-flipping the same top hits every run.
+    """
+
+    def __init__(self, db: Database, run_id: str):
+        self._db = db
+        self._run_id = run_id
+
+    def start(self, query: str) -> int:
+        return self._db.next_search_page(query)
+
+    def advance(self, query: str, *, next_page: int, exhausted: bool) -> None:
+        self._db.advance_search_page(query, next_page, exhausted=exhausted,
+                                     run_id=self._run_id)
 
 
 def _decide(finding, decision: str, reason: str, **extra) -> None:
@@ -413,6 +439,7 @@ def hunt(
     osm_live_known: set[str] | None = None,
     resume: bool = False,
     progress=None,
+    sandbox: bool | None = None,
 ) -> dict:
     """Run the hunt and return a summary. Persists findings into the registry.
 
@@ -440,6 +467,9 @@ def hunt(
         progress.source(name, len(candidates) - _seen, len(candidates))
         _seen = len(candidates)
 
+    # Walk each code-search query deeper every run instead of re-fetching page 1.
+    page_cursor = _DbPageCursor(db, run_id)
+
     if do_ioc:
         # IOC code search: learned IOCs (prior confirmed repos) + OSM IOCs + the C2
         # hosts knorr found on malicious CONTAINERS (the shared bus). A host knorr
@@ -448,7 +478,8 @@ def hunt(
         base = build_search_terms(_osm_iocs(db), max_iocs)
         cross = _knorr_c2_seeds()
         ioc_terms = list(dict.fromkeys(cross + learned + base))[:max_iocs]
-        for hit in search_iocs(client, ioc_terms, known=known, per_term=10,
+        for hit in search_iocs(client, ioc_terms, known=known, per_term=_SEARCH_PER_PAGE,
+                               pages=_SEARCH_PAGES, cursor=page_cursor,
                                pace_seconds=search_pace):
             if classify_hit(hit) == "suspicious":
                 candidates.setdefault(hit.full_name.casefold(), _finding_from_hit(hit))
@@ -543,7 +574,8 @@ def hunt(
         sig_terms = list(dict.fromkeys(
             db.learned_signatures() + load_seed_signatures(config.MALWARE_SIGNATURES_PATH)
         ))[:max_signatures]
-        for hit in search_iocs(client, sig_terms, known=known, per_term=20,
+        for hit in search_iocs(client, sig_terms, known=known, per_term=_SEARCH_PER_PAGE,
+                               pages=_SEARCH_PAGES, cursor=page_cursor,
                                pace_seconds=search_pace):
             if classify_hit(hit) == "suspicious":
                 finding = _finding_from_hit(hit)
@@ -633,10 +665,22 @@ def hunt(
                     if f.score >= scan_min_score or f.status is RepoFindingStatus.SCREENED]
         progress.phase("Analyze (Tier-2)", "clone + static scan, never executed")
         progress.tier2_start(len(screened))
-        # Tier-2 STATICALLY analyzes each clone (never executes it). Scratch goes
-        # to config.WORK_DIR when set, to keep large/ephemeral clones off a
-        # near-full system drive; dir=None uses system temp (correct for CI/Linux).
-        # Force-removed in finally so git's read-only pack files don't leave husks.
+        # Tier-2 STATICALLY analyzes each clone (never executes it). By default this
+        # runs INSIDE a hardened Docker container so a downloaded repo's malware
+        # never touches the host filesystem. If the sandbox is required (the default)
+        # but Docker is unavailable, Tier-2 is DISABLED rather than cloning onto the
+        # host. Set GW_SANDBOX=0 (or sandbox=False) only for a trusted CI box.
+        from .scanning.sandbox_runner import docker_available, scan_candidate_sandboxed
+        want_sandbox = sandbox if sandbox is not None else (
+            os.environ.get("GW_SANDBOX", "1") != "0")
+        use_sandbox = want_sandbox and docker_available()
+        if want_sandbox and not use_sandbox:
+            log.error("sandbox required but Docker is unavailable; Tier-2 clone-on-host "
+                      "is DISABLED so no repo is downloaded to the host this run")
+        elif use_sandbox:
+            log.info("Tier-2 runs in the hardened sandbox container (host stays clean)")
+        # Scratch for the NON-sandboxed path only (trusted CI). Force-removed in
+        # finally so git's read-only pack files don't leave husks.
         workdir = tempfile.mkdtemp(dir=config.WORK_DIR)
         anchor_default: dict[str, str] = {}
         # OSM-flagged packages: a repo declaring one as a dependency installs
@@ -738,9 +782,19 @@ def hunt(
                 # must never abort the whole run -- treat it as an unscannable clone
                 # and move on (a full 2h pipeline died this way on 2026-07-07).
                 try:
-                    result = scan_candidate(
-                        finding.full_name, workdir, restrict_paths=restrict,
-                        confirm_categories=confirm_cats, **kwargs)
+                    if use_sandbox:
+                        # Clone + scan inside the throwaway container; the repo's
+                        # files live only in its tmpfs, never on the host.
+                        result = scan_candidate_sandboxed(finding.full_name)
+                    elif want_sandbox:
+                        # Sandbox required but Docker is down: never clone on host.
+                        _decide(finding, "SANDBOX_UNAVAILABLE",
+                                "skipped: sandbox required but Docker unavailable")
+                        continue
+                    else:
+                        result = scan_candidate(
+                            finding.full_name, workdir, restrict_paths=restrict,
+                            confirm_categories=confirm_cats, **kwargs)
                 except Exception as exc:  # noqa: BLE001
                     result = None
                     log.warning("scan_candidate crashed; skipping repo",
