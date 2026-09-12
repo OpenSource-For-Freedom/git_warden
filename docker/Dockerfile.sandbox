@@ -1,0 +1,27 @@
+# Hardened, throwaway image for a sandboxed Tier-2 scan. The container clones a
+# target repo into its own tmpfs and STATICALLY analyzes it; the malware never
+# touches the host. The host runs it with the isolation flags in
+# git_warden.scanning.sandbox_runner (read-only root, non-root, cap-drop ALL,
+# tmpfs scratch, --rm). See README "Sandboxed scanning".
+FROM python:3.12-slim
+
+# git is needed for the in-container clone; nothing else is installed, so the
+# attack surface stays minimal. No compilers, no shells beyond the base.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends git ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install warden so the full scanning import chain resolves. Only the package and
+# its declared runtime deps land in the image; the optional OSS scanners
+# (semgrep/guarddog/yara) are absent and degrade to "skipped" by design.
+WORKDIR /opt/warden
+COPY pyproject.toml README.md ./
+COPY src ./src
+COPY intel ./intel
+RUN pip install --no-cache-dir . \
+    && python -c "import git_warden.sandbox_entry"    # fail the build if the entry cannot import
+
+# Drop to the unprivileged user the host also pins; scratch is a tmpfs at runtime.
+USER 65534:65534
+WORKDIR /work
+ENTRYPOINT ["python", "-m", "git_warden.sandbox_entry"]

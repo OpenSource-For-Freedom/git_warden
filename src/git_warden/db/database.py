@@ -844,6 +844,33 @@ class Database:
                 [(t, run_id) for t in terms],
             )
 
+    #; code-search pagination cursor (walk deeper each run, not the same stones) --
+    def next_search_page(self, query: str) -> int:
+        """The next result page to walk for a code-search query.
+
+        1 for a query never searched, the stored next page otherwise, and 0 when
+        the query is fully walked (so the caller skips it and spends its budget
+        on queries with results left).
+        """
+        row = self.conn.execute(
+            "SELECT next_page, exhausted FROM search_term_cursor WHERE query = ?", (query,)
+        ).fetchone()
+        if row is None:
+            return 1
+        return 0 if row["exhausted"] else int(row["next_page"])
+
+    def advance_search_page(self, query: str, next_page: int, *, exhausted: bool,
+                            run_id: str) -> None:
+        """Persist how far a query has been walked, so the next run continues."""
+        with self.transaction() as c:
+            c.execute(
+                "INSERT INTO search_term_cursor (query, next_page, exhausted, last_run) "
+                "VALUES (?, ?, ?, ?) "
+                "ON CONFLICT(query) DO UPDATE SET next_page = excluded.next_page, "
+                "exhausted = excluded.exhausted, last_run = excluded.last_run",
+                (query, int(next_page), 1 if exhausted else 0, run_id),
+            )
+
     def cross_platform_clusters(self) -> dict[str, list[dict]]:
         """Confirmed findings grouped by code_hash (doc 04 section 6).
 

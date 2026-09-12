@@ -23,11 +23,16 @@ def _item(full_name, path="src/x.js"):
 class FakeClient:
     def __init__(self, by_term):
         self.by_term = by_term
-        self.calls = []
+        self.calls = []            # query only (kept for existing assertions)
+        self.page_calls = []       # (query, page) for pagination assertions
 
-    def search_code(self, query, per_page=20):
+    def search_code(self, query, per_page=20, *, page=1, sort=None):
         self.calls.append(query)
-        return self.by_term.get(query, [])
+        self.page_calls.append((query, page))
+        val = self.by_term.get(query, [])
+        if isinstance(val, dict):       # {page: [items]} for paginated fakes
+            return val.get(page, [])
+        return val if page == 1 else []  # a flat list is page-1 only
 
 
 def test_finds_new_repos_excluding_known():
@@ -52,10 +57,10 @@ def test_dedupes_repo_across_iocs_and_aggregates_matches():
 
 def test_one_failing_ioc_does_not_abort():
     class Boom(FakeClient):
-        def search_code(self, query, per_page=20):
+        def search_code(self, query, per_page=20, *, page=1, sort=None):
             if query == "bad":
                 raise RuntimeError("rate limited")
-            return super().search_code(query, per_page)
+            return super().search_code(query, per_page, page=page, sort=sort)
 
     client = Boom({"good.example": [_item("attacker/x")]})
     hits = search_iocs(client, ["bad", "good.example"], known=set())
@@ -72,11 +77,11 @@ def test_rate_limit_backs_off_then_retries_term():
             super().__init__(by_term)
             self.first = True
 
-        def search_code(self, query, per_page=20):
+        def search_code(self, query, per_page=20, *, page=1, sort=None):
             if self.first:
                 self.first = False
                 raise Throttle("secondary rate limit")
-            return super().search_code(query, per_page)
+            return super().search_code(query, per_page, page=page, sort=sort)
 
     waits = []
     client = Limited({"good.example": [_item("attacker/x")]})
@@ -91,12 +96,67 @@ def test_rate_limit_wait_is_capped():
         retry_after = 100000.0
 
     class Limited(FakeClient):
-        def search_code(self, query, per_page=20):
+        def search_code(self, query, per_page=20, *, page=1, sort=None):
             raise Throttle("limited")
 
     waits = []
     search_iocs(Limited({}), ["x"], known=set(), max_backoff=90.0, sleeper=waits.append)
     assert waits == [90.0]  # capped, not the absurd server value
+
+
+class FakeCursor:
+    """A per-query page cursor for pagination tests (no DB)."""
+
+    def __init__(self, starts=None):
+        self.starts = starts or {}
+        self.advances = []
+
+    def start(self, query):
+        return self.starts.get(query, 1)
+
+    def advance(self, query, *, next_page, exhausted):
+        self.advances.append((query, next_page, exhausted))
+
+
+def test_walks_pages_until_a_short_page_then_marks_exhausted():
+    # A query matches thousands of repos; one page re-finds the same top hits.
+    # Walking deeper surfaces the rest, and a short page means the query is spent.
+    client = FakeClient({"evil.tld": {1: [_item("a/1"), _item("a/2")],
+                                      2: [_item("a/3")]}})
+    cur = FakeCursor()
+    hits = search_iocs(client, ["evil.tld"], known=set(), per_term=2, pages=5, cursor=cur)
+    assert {h.full_name for h in hits} == {"a/1", "a/2", "a/3"}
+    assert client.page_calls == [("evil.tld", 1), ("evil.tld", 2)]  # stopped at short page
+    assert cur.advances == [("evil.tld", 3, True)]                  # exhausted, resume n/a
+
+
+def test_limited_pages_leave_the_cursor_midway_for_next_run():
+    # pages=2 walks only two pages this run; the cursor resumes at page 3 next run,
+    # so successive runs advance instead of re-flipping page 1.
+    client = FakeClient({"q.tld": {1: [_item("a/1"), _item("a/2")],
+                                   2: [_item("a/3"), _item("a/4")],
+                                   3: [_item("a/5"), _item("a/6")]}})
+    cur = FakeCursor()
+    hits = search_iocs(client, ["q.tld"], known=set(), per_term=2, pages=2, cursor=cur)
+    assert {h.full_name for h in hits} == {"a/1", "a/2", "a/3", "a/4"}
+    assert client.page_calls == [("q.tld", 1), ("q.tld", 2)]
+    assert cur.advances == [("q.tld", 3, False)]                    # not exhausted, resume at 3
+
+
+def test_cursor_resumes_from_a_stored_page():
+    client = FakeClient({"z.tld": {5: [_item("a/5")]}})
+    cur = FakeCursor(starts={"z.tld": 5})
+    hits = search_iocs(client, ["z.tld"], known=set(), per_term=100, pages=1, cursor=cur)
+    assert client.page_calls == [("z.tld", 5)]                      # began at 5, not 1
+    assert {h.full_name for h in hits} == {"a/5"}
+
+
+def test_exhausted_term_is_skipped_entirely():
+    client = FakeClient({"done.tld": [_item("a/1")]})
+    cur = FakeCursor(starts={"done.tld": 0})                        # 0 == fully walked
+    hits = search_iocs(client, ["done.tld"], known=set(), pages=3, cursor=cur)
+    assert hits == [] and client.page_calls == []                  # never searched
+    assert cur.advances == []
 
 
 def test_package_name_terms_are_quoted():

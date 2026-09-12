@@ -175,3 +175,15 @@ CREATE TABLE IF NOT EXISTS searched_package_terms (
     term               TEXT PRIMARY KEY,
     first_searched_run TEXT REFERENCES runs(run_id)
 );
+
+-- Per-query pagination cursor for code search. GitHub returns the same stable
+-- top hits for a query every run, so fetching only page 1 re-finds the same
+-- repos forever. This records the next result page to walk for each query, so
+-- successive runs advance deeper (up to GitHub's 1000-result ceiling) instead
+-- of re-flipping the same stones. exhausted=1 means the query is fully walked.
+CREATE TABLE IF NOT EXISTS search_term_cursor (
+    query      TEXT PRIMARY KEY,
+    next_page  INTEGER NOT NULL DEFAULT 1,
+    exhausted  INTEGER NOT NULL DEFAULT 0,
+    last_run   TEXT REFERENCES runs(run_id)
+);

@@ -40,6 +40,17 @@ def _isolate_intel_bus(tmp_path, monkeypatch):
     monkeypatch.setattr(intel_exchange, "SHARED_INTEL_PATH", tmp_path / "bus.jsonl")
 
 
+@pytest.fixture(autouse=True)
+def _sandbox_off_in_tests(monkeypatch):
+    """Unit tests scan in-process with injected fakes; they must never spawn Docker.
+
+    Production defaults the Tier-2 sandbox ON (GW_SANDBOX unset -> "1"); the offline
+    suite sets it OFF so hunt() uses the injected ``clone`` instead of a real
+    container. The sandbox itself is covered by test_sandbox_runner.
+    """
+    monkeypatch.setenv("GW_SANDBOX", "0")
+
+
 def utcnow() -> datetime:
     return datetime(2026, 6, 18, tzinfo=UTC)
 
