@@ -1,0 +1,8 @@
+rules:
+  unpinned-uses:
+    config:
+      policies:
+        # Third-party and GitHub-owned actions must be pinned to a full commit SHA.
+        "*": hash-pin
+        # The Legion hardening runner is trusted and pinned to a release tag.
+        "Wraith-security/legion_runner": ref-pin
