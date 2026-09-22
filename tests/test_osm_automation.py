@@ -33,6 +33,13 @@ def test_full_history_precheck_fails_closed_on_http_error(monkeypatch):
         auto._search_full_history("https://github.com/evil/dropper")
 
 
+def test_rejected_api_key_names_the_secret_to_rotate(monkeypatch):
+    monkeypatch.setattr(auto.config, "OSM_API_KEY", "osm_expired")
+    monkeypatch.setattr(auto.requests, "get", lambda *a, **k: _Response(401))
+    with pytest.raises(auto.OSMPrecheckError, match="rotate the OSM_KEY secret"):
+        auto._search_full_history("https://github.com/evil/dropper")
+
+
 def test_existing_repo_matches_any_canonical_spelling(monkeypatch):
     monkeypatch.setattr(
         auto,
