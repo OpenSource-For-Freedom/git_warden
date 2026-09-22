@@ -38,6 +38,18 @@ class OSMPrecheckError(RuntimeError):
     """The authoritative novelty check could not prove the resource is novel."""
 
 
+class AutomationBlocked(RuntimeError):
+    """The run cannot validate anything (no hunt data, no sandbox): fail loudly
+    instead of reporting a misleading "nothing found"."""
+
+
+# A candidate that failed validation is not re-scanned for this long, so repos
+# whose payload was removed cannot pin the top of the queue forever. Transient
+# failures (sandbox produced nothing, liveness check could not run) retry sooner.
+RETRY_AFTER_SECONDS = 7 * 24 * 3600
+TRANSIENT_RETRY_SECONDS = 24 * 3600
+
+
 def _validate_policy(policy: dict) -> dict:
     """Refuse policy changes that weaken unattended-submission safety."""
     if policy.get("schema_version") != 1:
@@ -88,6 +100,48 @@ def _resource_key(resource: str) -> str:
         if len(parts) >= 2:
             return "/".join(parts[:2])
     return r
+
+
+def _bus_submitted(full_name: str) -> bool:
+    """Shared-intel dedup under ANY spelling either tool may have recorded
+    (scheme or not, trailing slash, case)."""
+    want = full_name.strip().strip("/").casefold()
+    for target in bus.submitted_targets():
+        kind, _, value = target.partition(":")
+        if kind == "repository" and _resource_key(value) == want:
+            return True
+    return False
+
+
+def _ensure_attempts_table(db) -> None:
+    with db.transaction() as c:
+        c.execute(
+            "CREATE TABLE IF NOT EXISTS osm_automation_attempts ("
+            "full_name TEXT PRIMARY KEY, retry_at REAL NOT NULL, reason TEXT)")
+
+
+def _recently_failed(db, full_name: str, now: float) -> str | None:
+    row = db.conn.execute(
+        "SELECT retry_at, reason FROM osm_automation_attempts WHERE full_name = ?",
+        (full_name,)).fetchone()
+    if row and now < float(row["retry_at"]):
+        return row["reason"] or "failed validation"
+    return None
+
+
+def _record_failure(db, full_name: str, reason: str, now: float, *,
+                    transient: bool = False) -> None:
+    wait = TRANSIENT_RETRY_SECONDS if transient else RETRY_AFTER_SECONDS
+    with db.transaction() as c:
+        c.execute(
+            "INSERT OR REPLACE INTO osm_automation_attempts "
+            "(full_name, retry_at, reason) VALUES (?, ?, ?)",
+            (full_name, now + wait, reason))
+
+
+def _clear_failure(db, full_name: str) -> None:
+    with db.transaction() as c:
+        c.execute("DELETE FROM osm_automation_attempts WHERE full_name = ?", (full_name,))
 
 
 def _search_full_history(term: str) -> list[dict]:
@@ -249,11 +303,13 @@ def validated_markdown(
 
 def run_summary_markdown(
     sections: list[str], skipped: list[tuple[str, str]], *, dry_run: bool,
+    notes: list[str] | None = None,
 ) -> str:
     mode = ("validate-only — nothing was submitted to OSM" if dry_run
             else "submit — validated repos were POSTed to OSM")
     out = ["## Warden OSM automation", "", f"Mode: **{mode}**", "",
            f"Validated malicious repos: **{len(sections)}**", ""]
+    out += [f"> {n}\n" for n in (notes or [])]
     if not sections:
         out += ["No repository passed every gate this run.", ""]
     out += sections
@@ -273,41 +329,79 @@ def _write_summary(path: Path | None, text: str) -> None:
         fh.write(text)
 
 
+def _effective_limits(policy: dict, limit: int | None, pace: float | None):
+    """CLI/caller overrides may only TIGHTEN the policy, never loosen it."""
+    cap = int(policy["max_submissions_per_run"])
+    floor = float(policy["pace_seconds"])
+    limit = cap if limit is None else min(max(1, int(limit)), cap)
+    pace = floor if pace is None else max(float(pace), floor)
+    return limit, pace
+
+
 def run(
     db: Database, *, limit: int | None = None, pace: float | None = None,
     dry_run: bool = False, summary_path: Path | None = None,
-) -> int:
+    now: float | None = None,
+) -> tuple[int, int]:
     """Validate AUTO-tier candidates and (unless ``dry_run``) submit them.
 
-    Every repo that passes all gates gets a "Validated malicious repo" section
-    in the markdown summary appended to ``summary_path``. A ``dry_run`` never
-    claims or POSTs, so each section records the repo as not yet reported.
+    Returns ``(submitted, errors)``. ``limit`` caps the sandbox re-scans per run
+    (the expensive step); cheap skips (already in OSM / shared intel / recently
+    failed) do not consume it, so they cannot starve the queue. Every repo that
+    passes all gates gets a "Validated malicious repo" section in the markdown
+    summary appended to ``summary_path``. A ``dry_run`` never claims or POSTs.
+
+    Raises :class:`AutomationBlocked` when there is no hunt data or no sandbox,
+    and :class:`OSMPrecheckError` when OSM cannot prove novelty (both after
+    writing the summary).
     """
     policy = load_policy()
-    limit = int(policy["max_submissions_per_run"]) if limit is None else limit
-    pace = float(policy["pace_seconds"]) if pace is None else pace
-    rows = gold_for_submission(db, limit=limit)
+    limit, pace = _effective_limits(policy, limit, pace)
+    now = time.time() if now is None else now
     sections: list[str] = []
     skipped: list[tuple[str, str]] = []
+    notes: list[str] = []
+    errors = 0
+    sent = 0
 
     def skip(name: str, reason: str) -> None:
         print(f"[skip] {name}: {reason}")
         skipped.append((name, reason))
 
-    if not rows:
-        print("Warden OSM automation: no AUTO-tier novel candidates.")
-        _write_summary(summary_path, run_summary_markdown([], [], dry_run=dry_run))
-        return 0
-
-    sent = 0
     try:
+        total = db.conn.execute("SELECT COUNT(*) FROM repo_findings").fetchone()[0]
+        if not total:
+            raise AutomationBlocked(
+                "no hunt data: repo_findings is empty (data cache not restored or "
+                "evicted?) -- run The Warden hunt first")
+
+        rows = gold_for_submission(db)  # all of them; `limit` caps sandbox scans
+        if not rows:
+            print("Warden OSM automation: no AUTO-tier novel candidates.")
+            notes.append(f"No AUTO-tier novel candidates among {total} findings.")
+            return 0, 0
+
+        from .scanning.sandbox_runner import docker_available
+        if not docker_available():
+            raise AutomationBlocked("Docker sandbox unavailable; cannot re-validate")
+
+        _ensure_attempts_table(db)
+        scans = 0
         for row in rows:
             full_name = row["full_name"]
             resource = f"https://github.com/{full_name}"
 
-            if bus.is_submitted("repository", resource):
+            if _bus_submitted(full_name):
                 skip(full_name, "shared intelligence already marks it submitted")
                 continue
+            recent = _recently_failed(db, full_name, now)
+            if recent:
+                skip(full_name, f"cooling down after a failed validation: {recent}")
+                continue
+            if scans >= limit:
+                notes.append(f"Scan limit ({limit}) reached; remaining candidates "
+                             "wait for the next run.")
+                break
 
             hit = _existing_repo(full_name)
             if hit:
@@ -318,14 +412,19 @@ def run(
                 )
                 continue
 
+            scans += 1
             valid, reason, result = _deep_validate(full_name)
             if not valid:
-                skip(full_name, f"deep validation failed closed: {reason}")
+                reason = f"deep validation failed closed: {reason}"
+                _record_failure(db, full_name, reason, now, transient=result is None)
+                skip(full_name, reason)
                 continue
 
             live = repo_payload_live(row)
             if live is not True:
-                skip(full_name, "current payload liveness was not positively confirmed")
+                reason = "current payload liveness was not positively confirmed"
+                _record_failure(db, full_name, reason, now, transient=live is None)
+                skip(full_name, reason)
                 continue
 
             # Close the race window: check OSM again immediately before the claim/POST.
@@ -337,10 +436,11 @@ def run(
                     "repository", resource, threat_id=str(hit.get("id") or "")
                 )
                 continue
-            if bus.is_submitted("repository", resource):
+            if _bus_submitted(full_name):
                 skip(full_name, "shared intelligence changed during validation")
                 continue
 
+            _clear_failure(db, full_name)
             report = build_report(
                 row,
                 dprk_infra=db.dprk_infra_hosts(exclude=full_name),
@@ -356,10 +456,12 @@ def run(
             mark_osm_submitted(db, full_name, None)
             try:
                 response = submit_threat(report)
-            except Exception:
+            except Exception as exc:  # noqa: BLE001 - one bad POST must not stop the rest
                 unmark_osm_submitted(db, full_name)
                 sections.append(validated_markdown(row, result, report, status="submit_failed"))
-                raise
+                print(f"[error] {full_name}: OSM submission failed: {exc}")
+                errors += 1
+                continue
 
             threat_id = response.get("threat_id")
             mark_osm_submitted(db, full_name, threat_id)
@@ -368,24 +470,47 @@ def run(
                 row, result, report, status="submitted", threat_id=threat_id))
             sent += 1
             print(f"[submitted] {full_name} -> {threat_id or 'OSM'}")
-            if pace and row is not rows[-1]:
-                time.sleep(pace)
+            time.sleep(pace)
+    except (AutomationBlocked, OSMPrecheckError) as exc:
+        notes.append(f"**Run blocked:** {exc}")
+        raise
     finally:
-        _write_summary(summary_path, run_summary_markdown(sections, skipped, dry_run=dry_run))
+        _write_summary(summary_path, run_summary_markdown(
+            sections, skipped, dry_run=dry_run, notes=notes))
 
     if dry_run:
         print(f"Warden OSM automation: validated {len(sections)} repository report(s); "
               "none submitted (validate-only).")
     else:
-        print(f"Warden OSM automation: submitted {sent} repository report(s).")
-    return sent
+        print(f"Warden OSM automation: submitted {sent} repository report(s), "
+              f"{errors} failed.")
+    return sent, errors
+
+
+def _acquire_run_lock(path: Path):
+    """Exclusive, non-blocking lock so overlapping cron runs cannot double-submit.
+    Returns the open handle (keep it alive) or None if another run holds it."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    handle = path.open("a+")
+    try:
+        import fcntl
+    except ImportError:  # Windows: rely on the scheduler not overlapping runs
+        return handle
+    try:
+        fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        handle.close()
+        return None
+    return handle
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--db", type=Path, default=config.DB_PATH)
-    parser.add_argument("--limit", type=int, default=None)
-    parser.add_argument("--pace", type=float, default=None)
+    parser.add_argument("--limit", type=int, default=None,
+                        help="Max sandbox re-scans this run (capped by the policy).")
+    parser.add_argument("--pace", type=float, default=None,
+                        help="Seconds between submissions (never below the policy).")
     parser.add_argument("--check-config", action="store_true")
     parser.add_argument(
         "--dry-run", action="store_true",
@@ -402,15 +527,31 @@ def main(argv: list[str] | None = None) -> int:
         print("Warden OSM automation policy: PASS")
         return 0
 
-    db = Database.open(args.db)
+    if not Path(args.db).exists():
+        msg = (f"no hunt data: {args.db} does not exist (data cache not restored or "
+               "evicted?) -- run The Warden hunt first")
+        _write_summary(args.summary_md, run_summary_markdown(
+            [], [], dry_run=args.dry_run, notes=[f"**Run blocked:** {msg}"]))
+        print(f"Warden OSM automation BLOCKED: {msg}")
+        return 2
+
+    lock = _acquire_run_lock(Path(args.db).with_name("osm_automation.lock"))
+    if lock is None:
+        print("Warden OSM automation: another run holds the lock; exiting.")
+        return 0
     try:
-        limit = None if args.limit is None else max(0, args.limit)
-        pace = None if args.pace is None else max(0.0, args.pace)
-        run(db, limit=limit, pace=pace, dry_run=args.dry_run,
-            summary_path=args.summary_md)
+        db = Database.open(args.db)
+        try:
+            _, errors = run(db, limit=args.limit, pace=args.pace, dry_run=args.dry_run,
+                            summary_path=args.summary_md)
+        except (AutomationBlocked, OSMPrecheckError) as exc:
+            print(f"Warden OSM automation BLOCKED: {exc}")
+            return 2
+        finally:
+            db.close()
     finally:
-        db.close()
-    return 0
+        lock.close()
+    return 1 if errors else 0
 
 
 if __name__ == "__main__":
