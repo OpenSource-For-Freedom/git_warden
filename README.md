@@ -140,20 +140,20 @@ steal-and-send); threat-intel leads (a malicious owner, a shared signature) only
 *seed* which repos get scanned, never confirm one alone.
 
 <!-- git-warden:registry:start -->
-_Top 10 of 36 repositories confirmed malicious by static analysis this run, ranked by severity. The full list ships as the run's CSV artifact and to the Discord feed; every row's evidence (file, line, rule) is in that CSV. Dispute: open an issue and we will re-review._
+_Top 10 of 58 repositories confirmed malicious by static analysis this run, ranked by severity. The full list ships as the run's CSV artifact and to the Discord feed; every row's evidence (file, line, rule) is in that CSV. Dispute: open an issue and we will re-review._
 
 | Repository | Detection | Score | Attribution | Proof (file:line rule) |
 |------------|-----------|-------|-------------|------------------------|
-| [`saifullah-max/elevate-backend`](https://github.com/saifullah-max/elevate-backend) | signature_match | 14 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+10 more) |
-| [`allzone-technologies/canteen-pwa`](https://github.com/allzone-technologies/canteen-pwa) | signature_match | 13 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+19 more) |
-| [`findusman/pos_backend`](https://github.com/findusman/pos_backend) | signature_match | 13 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+19 more) |
-| [`nurfarazi/node-sql-playground`](https://github.com/nurfarazi/node-sql-playground) | signature_match | 12 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+17 more) |
-| [`cyber-advance-solutions/rtcserver`](https://github.com/cyber-advance-solutions/rtcserver) | signature_match | 11 | unattributed | node_scripts/.vscode/tasks.json:0 install_hook/vscode-autorun  (+5 more) |
-| [`simalchaudhari/real-estate`](https://github.com/simalchaudhari/real-estate) | signature_match | 10 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+19 more) |
-| [`dawit212119/3js-electronic-pcb-editor-`](https://github.com/dawit212119/3js-electronic-pcb-editor-) | signature_match | 9 | unattributed | 3js/.vscode/tasks.json:0 install_hook/vscode-autorun  (+13 more) |
-| [`dawit212119/ecommerce-backend`](https://github.com/dawit212119/ecommerce-backend) | signature_match | 9 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+19 more) |
-| [`haroldcalvo/workshop`](https://github.com/haroldcalvo/workshop) | signature_match | 9 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+19 more) |
-| [`hvmgeeks/frontendengine1`](https://github.com/hvmgeeks/frontendengine1) | signature_match | 9 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+19 more) |
+| [`lolminerxmrig0001/git`](https://github.com/lolminerxmrig0001/git) | ioc_search | 56 | unattributed | CVE-2022-22963\springCloud.sh:14 reverse_shell/bash-i-socket  (+19 more) |
+| [`caprico1/docker-botnets`](https://github.com/caprico1/docker-botnets) | ioc_search | 53 | unattributed | alduro\alduro.sh:47 download_exec/fetch-then-exec  (+19 more) |
+| [`zusyaku/script-nuyul-termux`](https://github.com/zusyaku/script-nuyul-termux) | ioc_search | 28 | unattributed | nuyul-bestmining\bestmining.sh:2 reverse_shell/nc-exec  (+19 more) |
+| [`goldendragon68/bullana`](https://github.com/goldendragon68/bullana) | signature_match | 16 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+19 more) |
+| [`gauravraisharma/ticketting-system`](https://github.com/gauravraisharma/ticketting-system) | signature_match | 15 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+19 more) |
+| [`alexsander532/projeto_dashboard_versao1`](https://github.com/alexsander532/projeto_dashboard_versao1) | signature_match | 14 | DPRK (North Korea) (per OSM) | frontend/vite.config.js:36 obfuscation/eval-decoded  (+3 more) |
+| [`solarpy/caroline119-defi-property-4e3a113352e3`](https://github.com/solarpy/caroline119-defi-property-4e3a113352e3) | osm_repository | 13 | DPRK (North Korea) (per OSM) | caroline119-defi-property-4e3a113352e3/.vscode/tasks.json:0 install_hook/vscode-autorun  (+12 more) |
+| [`lfirsl/morphix`](https://github.com/lfirsl/morphix) | osm_repository | 12 | DPRK (North Korea) (per OSM) | .vscode/tasks.json:0 install_hook/vscode-autorun  (+13 more) |
+| [`usmanaliashraf/portfolio`](https://github.com/usmanaliashraf/portfolio) | signature_match | 12 | DPRK (North Korea) (per OSM) | postcss.config.mjs:12 obfuscation/eval-decoded  (+8 more) |
+| [`berry2012/amazon-ecs-demo`](https://github.com/berry2012/amazon-ecs-demo) | ioc_search | 11 | unattributed | demo.sh:117 reverse_shell/bash-i-socket  (+1 more) |
 <!-- git-warden:registry:end -->
 
 > [!NOTE]
@@ -176,7 +176,16 @@ _These repositories are NOT confirmed malicious on their own code. They appear o
 
 | Repository | Owner | Owner provenance (repos confirmed on evidence) | Score |
 |------------|-------|------------------------------------------------|-------|
-| _none_ |  |  |  |
+| [`zusyaku/termux-and-kali-linux-v3`](https://github.com/zusyaku/termux-and-kali-linux-v3) | zusyaku | [`zusyaku/script-nuyul-termux`](https://github.com/zusyaku/script-nuyul-termux) | 43 |
+| [`zusyaku/hacking-software-v3`](https://github.com/zusyaku/hacking-software-v3) | zusyaku | [`zusyaku/script-nuyul-termux`](https://github.com/zusyaku/script-nuyul-termux) | 27 |
+| [`mts-services/asalmiah_nextjs_fixing`](https://github.com/mts-services/asalmiah_nextjs_fixing) | mts-services | [`mts-services/olabisiolai_frontend_react`](https://github.com/mts-services/olabisiolai_frontend_react) | 18 |
+| [`mts-services/kenndavi2_bbq_sauce_15_02_26_laravel`](https://github.com/mts-services/kenndavi2_bbq_sauce_15_02_26_laravel) | mts-services | [`mts-services/olabisiolai_frontend_react`](https://github.com/mts-services/olabisiolai_frontend_react) | 17 |
+| [`mts-services/kenndavi2_clothing_15_02_26_laravel`](https://github.com/mts-services/kenndavi2_clothing_15_02_26_laravel) | mts-services | [`mts-services/olabisiolai_frontend_react`](https://github.com/mts-services/olabisiolai_frontend_react) | 17 |
+| [`mts-services/kenndavi2_react`](https://github.com/mts-services/kenndavi2_react) | mts-services | [`mts-services/olabisiolai_frontend_react`](https://github.com/mts-services/olabisiolai_frontend_react) | 17 |
+| [`mts-services/macktech_laravel`](https://github.com/mts-services/macktech_laravel) | mts-services | [`mts-services/olabisiolai_frontend_react`](https://github.com/mts-services/olabisiolai_frontend_react) | 17 |
+| [`mts-services/may_writes`](https://github.com/mts-services/may_writes) | mts-services | [`mts-services/olabisiolai_frontend_react`](https://github.com/mts-services/olabisiolai_frontend_react) | 17 |
+| [`mts-services/michaelalleva_04_march_26`](https://github.com/mts-services/michaelalleva_04_march_26) | mts-services | [`mts-services/olabisiolai_frontend_react`](https://github.com/mts-services/olabisiolai_frontend_react) | 17 |
+| [`mts-services/mikylepersad_tow_truck_laravel`](https://github.com/mts-services/mikylepersad_tow_truck_laravel) | mts-services | [`mts-services/olabisiolai_frontend_react`](https://github.com/mts-services/olabisiolai_frontend_react) | 17 |
 <!-- git-warden:badowners:end -->
 
 <p align="center"><img src="docs/sculk-divider.png" alt="" width="900"></p>
