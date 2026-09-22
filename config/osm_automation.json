@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "required_confidence": "auto",
+  "require_docker_sandbox": true,
+  "require_positive_liveness": true,
+  "require_intrinsic_evidence": true,
+  "osm_full_history_prechecks": 2,
+  "max_submissions_per_run": 10,
+  "pace_seconds": 8,
+  "submit_domains": false,
+  "fail_closed": true,
+  "require_shared_intel_dedup": true
+}
