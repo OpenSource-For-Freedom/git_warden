@@ -106,7 +106,7 @@ GITHUB_API_VERSION = "2022-11-28"
 # OSM: RESTful API, Bearer auth ("Authorization: Bearer osm_..."). Endpoints are
 # appended to the base URL, e.g. "query-latest" (100 most recent verified
 # reports; the free ingestion endpoint).
-OSM_API_KEY = os.environ.get("GW_OSM_API_KEY")
+OSM_API_KEY = os.environ.get("GW_OSM_API_KEY") or os.environ.get("OSM_API_KEY")
 OSM_BASE_URL = os.environ.get(
     "GW_OSM_BASE_URL", "https://api.opensourcemalware.com/functions/v1/"
 )

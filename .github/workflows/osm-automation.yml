@@ -1,0 +1,78 @@
+name: Warden OSM Automation
+on:
+  # On-demand for now. Default is validate-only: every gate runs and each repo
+  # that passes is written to the run summary as "Validated malicious repo"
+  # (not yet reported to OSM). Tick "submit" to POST validated repos to OSM.
+  workflow_dispatch:
+    inputs:
+      submit:
+        description: "POST validated repos to OSM (unchecked = validate-only)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+# Shares the hunt's group: never overlaps a hunt (same data cache) or another
+# OSM run (which could double-submit a repo).
+concurrency:
+  group: git-warden-run
+  cancel-in-progress: false
+
+jobs:
+  osm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install -e .
+
+      - name: Validate OSM automation policy
+        run: python -m git_warden.osm_automation --check-config
+
+      - name: Build Tier-2 sandbox
+        run: docker build -f docker/Dockerfile.sandbox -t warden-sandbox:latest .
+
+      # Same cache the hunt (run.yml) writes: the confirmed findings to validate,
+      # plus the submitted_osm marks this job records.
+      - name: Restore data
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: data
+          key: git-warden-data-${{ github.run_id }}
+          restore-keys: git-warden-data-
+
+      - name: Validate (and optionally submit) to OSM
+        env:
+          GW_GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          GW_OSM_API_KEY: ${{ secrets.OSM_KEY }}
+          GW_OSM_BASE_URL: ${{ secrets.GW_OSM_BASE_URL }}
+          GW_SHARED_INTEL: data/shared_intel/breadcrumbs.jsonl
+          SUBMIT: ${{ inputs.submit }}
+        run: |
+          if [ "$SUBMIT" = "true" ]; then
+            python -m git_warden.osm_automation --summary-md osm_summary.md
+          else
+            python -m git_warden.osm_automation --dry-run --summary-md osm_summary.md
+          fi
+
+      - name: Publish run summary
+        if: always()
+        run: |
+          if [ -f osm_summary.md ]; then
+            cat osm_summary.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload run summary
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: osm-automation-summary
+          path: osm_summary.md
+          if-no-files-found: ignore
