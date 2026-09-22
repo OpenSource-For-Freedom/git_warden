@@ -34,6 +34,12 @@ jobs:
       - name: Install
         run: pip install -e . semgrep guarddog
 
+      # Tier-2 clones and scans every candidate inside this container (GW_SANDBOX
+      # defaults on). Without the image every scan fails and the hunt confirms
+      # nothing.
+      - name: Build Tier-2 sandbox
+        run: docker build -f docker/Dockerfile.sandbox -t warden-sandbox:latest .
+
       - name: Restore data
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
