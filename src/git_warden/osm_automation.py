@@ -161,6 +161,11 @@ def _search_full_history(term: str) -> list[dict]:
         )
     except requests.RequestException as exc:
         raise OSMPrecheckError(f"OSM full-history search failed for {term!r}: {exc}") from exc
+    if response.status_code in (401, 403):
+        raise OSMPrecheckError(
+            f"OSM rejected the API key (HTTP {response.status_code}); rotate the "
+            "OSM_KEY secret (GW_OSM_API_KEY / OSM_API_KEY)"
+        )
     if response.status_code != 200:
         raise OSMPrecheckError(
             f"OSM full-history search returned HTTP {response.status_code} for {term!r}"
