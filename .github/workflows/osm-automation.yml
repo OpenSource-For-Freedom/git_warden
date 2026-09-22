@@ -3,6 +3,11 @@ on:
   # On-demand for now. Default is validate-only: every gate runs and each repo
   # that passes is written to the run summary as "Validated malicious repo"
   # (not yet reported to OSM). Tick "submit" to POST validated repos to OSM.
+  # TEMPORARY: lets this branch exercise the workflow before it exists on the
+  # default branch (workflow_dispatch needs that). Push runs are validate-only
+  # because `inputs.submit` is empty. Remove before merge.
+  push:
+    branches: [claude/git-warden-osm-automation-pwjcna]
   workflow_dispatch:
     inputs:
       submit:
