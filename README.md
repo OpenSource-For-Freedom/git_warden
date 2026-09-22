@@ -140,11 +140,20 @@ steal-and-send); threat-intel leads (a malicious owner, a shared signature) only
 *seed* which repos get scanned, never confirm one alone.
 
 <!-- git-warden:registry:start -->
-_0 repositories confirmed malicious by static analysis, regenerated each run. Every row's evidence (file, line, rule) is in the run artifacts CSV. Dispute: open an issue and we will re-review._
+_Top 10 of 36 repositories confirmed malicious by static analysis this run, ranked by severity. The full list ships as the run's CSV artifact and to the Discord feed; every row's evidence (file, line, rule) is in that CSV. Dispute: open an issue and we will re-review._
 
 | Repository | Detection | Score | Attribution | Proof (file:line rule) |
 |------------|-----------|-------|-------------|------------------------|
-| _none yet_ |  |  |  |  |
+| [`saifullah-max/elevate-backend`](https://github.com/saifullah-max/elevate-backend) | signature_match | 14 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+10 more) |
+| [`allzone-technologies/canteen-pwa`](https://github.com/allzone-technologies/canteen-pwa) | signature_match | 13 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+19 more) |
+| [`findusman/pos_backend`](https://github.com/findusman/pos_backend) | signature_match | 13 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+19 more) |
+| [`nurfarazi/node-sql-playground`](https://github.com/nurfarazi/node-sql-playground) | signature_match | 12 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+17 more) |
+| [`cyber-advance-solutions/rtcserver`](https://github.com/cyber-advance-solutions/rtcserver) | signature_match | 11 | unattributed | node_scripts/.vscode/tasks.json:0 install_hook/vscode-autorun  (+5 more) |
+| [`simalchaudhari/real-estate`](https://github.com/simalchaudhari/real-estate) | signature_match | 10 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+19 more) |
+| [`dawit212119/3js-electronic-pcb-editor-`](https://github.com/dawit212119/3js-electronic-pcb-editor-) | signature_match | 9 | unattributed | 3js/.vscode/tasks.json:0 install_hook/vscode-autorun  (+13 more) |
+| [`dawit212119/ecommerce-backend`](https://github.com/dawit212119/ecommerce-backend) | signature_match | 9 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+19 more) |
+| [`haroldcalvo/workshop`](https://github.com/haroldcalvo/workshop) | signature_match | 9 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+19 more) |
+| [`hvmgeeks/frontendengine1`](https://github.com/hvmgeeks/frontendengine1) | signature_match | 9 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+19 more) |
 <!-- git-warden:registry:end -->
 
 > [!NOTE]
