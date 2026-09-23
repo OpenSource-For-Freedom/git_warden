@@ -152,3 +152,15 @@ def test_finish_run_records_status_and_counts(db):
     row = db.conn.execute("SELECT * FROM runs WHERE run_id = ?", ("run-1",)).fetchone()
     assert row["status"] == RunStatus.COMPLETED.value
     assert '"observations": 3' in row["counts"]
+
+
+def test_open_creates_missing_data_dir(tmp_path):
+    """Cold start (fresh checkout / evicted CI cache): data/ does not exist yet."""
+    from git_warden.db import Database
+
+    db_path = tmp_path / "data" / "git_warden.sqlite"
+    db = Database.open(db_path)
+    try:
+        assert db_path.exists()
+    finally:
+        db.close()

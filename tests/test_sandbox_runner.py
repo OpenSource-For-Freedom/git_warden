@@ -200,3 +200,35 @@ def test_entry_serialization_round_trips():
         [("install_hook", "vscode-autorun")]
     assert "c2.example" in rebuilt.learned_iocs.domains
     assert "123456" in rebuilt.learned_iocs.webhooks
+
+
+class _Proc:
+    def __init__(self, returncode, stdout=""):
+        self.returncode, self.stdout, self.stderr = returncode, stdout, ""
+
+
+def test_docker_available_requires_the_sandbox_image():
+    """A running daemon without the image is NOT a usable sandbox (exit 125 on
+    every scan was misread as 67 failed clones in a real hunt)."""
+    def runner(argv, **kw):
+        if argv[:2] == ["docker", "info"]:
+            return _Proc(0, "27.0.1\n")
+        return _Proc(1)  # docker image inspect: no such image
+
+    assert docker_available("warden-sandbox:latest", runner=runner) is False
+
+
+def test_docker_available_with_daemon_and_image():
+    assert docker_available("warden-sandbox:latest",
+                            runner=lambda argv, **kw: _Proc(0, "ok\n")) is True
+
+
+def test_docker_available_false_without_daemon():
+    calls = []
+
+    def runner(argv, **kw):
+        calls.append(argv)
+        return _Proc(1)
+
+    assert docker_available("warden-sandbox:latest", runner=runner) is False
+    assert len(calls) == 1  # never inspects the image without a daemon
