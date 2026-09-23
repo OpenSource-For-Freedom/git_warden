@@ -555,7 +555,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--pace", type=float, default=None,
                         help="Seconds between submissions (never below the policy).")
     parser.add_argument("--check-config", action="store_true")
-    parser.add_argument("--check-api", action="store_true",\n                        help="Read-only live OSM API contract check; never submits.")\n    parser.add_argument(
+    parser.add_argument(
+        "--check-api", action="store_true",
+        help="Read-only live OSM API contract check; never submits.",
+    )
+    parser.add_argument(
         "--dry-run", action="store_true",
         help="Run every gate but never claim or POST; report validated repos only.")
     parser.add_argument(
