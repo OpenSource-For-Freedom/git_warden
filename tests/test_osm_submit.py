@@ -162,7 +162,7 @@ def test_full_history_gate_catches_old_report_query_latest_misses(monkeypatch):
     stored = {"id": "6e001ebb-old", "status": "verified",
               "resource_identifier": "https://github.com/hvmgeeks/frontendengine1/"}
 
-    def fake_search(term, *, token=None, http=None):
+    def fake_search(term, *, token=None, http=None, **kwargs):
         return [stored] if term == "https://github.com/hvmgeeks/frontendengine1/" else []
 
     monkeypatch.setattr(osm, "OSM_API_KEY", "osm_test")
