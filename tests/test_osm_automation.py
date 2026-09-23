@@ -89,7 +89,7 @@ def test_check_malicious_positive_response_normalizes_details(monkeypatch):
 def test_rejected_api_key_names_the_secret_to_rotate(monkeypatch):
     monkeypatch.setattr(auto.config, "OSM_API_KEY", "osm_expired")
     monkeypatch.setattr(auto.requests, "get", lambda *a, **k: _Response(401))
-    with pytest.raises(auto.OSMPrecheckError, match="rotate the OSM_KEY secret"):
+    with pytest.raises(auto.OSMPrecheckError, match="verify OSM_KEY"):
         auto._search_full_history("https://github.com/evil/dropper")
 
 
