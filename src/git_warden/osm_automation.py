@@ -10,6 +10,7 @@ immediately before POST. Any uncertainty blocks submission.
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import time
@@ -346,7 +347,8 @@ def _effective_limits(policy: dict, limit: int | None, pace: float | None):
 def run(
     db: Database, *, limit: int | None = None, pace: float | None = None,
     dry_run: bool = False, summary_path: Path | None = None,
-    now: float | None = None,
+    now: float | None = None, only: set[str] | None = None,
+    validated_out: list[str] | None = None,
 ) -> tuple[int, int]:
     """Validate AUTO-tier candidates and (unless ``dry_run``) submit them.
 
@@ -355,6 +357,10 @@ def run(
     failed) do not consume it, so they cannot starve the queue. Every repo that
     passes all gates gets a "Validated malicious repo" section in the markdown
     summary appended to ``summary_path``. A ``dry_run`` never claims or POSTs.
+
+    ``only`` restricts the run to those repos (the approval flow submits exactly
+    what a human approved, never a newer candidate). Every repo that passes all
+    gates is appended to ``validated_out``.
 
     Raises :class:`AutomationBlocked` when there is no hunt data or no sandbox,
     and :class:`OSMPrecheckError` when OSM cannot prove novelty (both after
@@ -381,6 +387,8 @@ def run(
                 "evicted?) -- run The Warden hunt first")
 
         rows = gold_for_submission(db)  # all of them; `limit` caps sandbox scans
+        if only is not None:
+            rows = [r for r in rows if r["full_name"].casefold() in only]
         if not rows:
             print("Warden OSM automation: no AUTO-tier novel candidates.")
             notes.append(f"No AUTO-tier novel candidates among {total} findings.")
@@ -452,6 +460,8 @@ def run(
                 campaign_ctx=campaign_context(db, row),
             )
             print(f"[validated] {full_name}: {reason}; OSM full history clear")
+            if validated_out is not None:
+                validated_out.append(full_name)
 
             if dry_run:
                 sections.append(validated_markdown(row, result, report, status="not_reported"))
@@ -492,6 +502,21 @@ def run(
     return sent, errors
 
 
+_REPO_NAME = re.compile(r"^[a-z0-9_.-]+/[a-z0-9_.-]+$")
+
+
+def _read_only_file(path: Path) -> set[str]:
+    """The approved repo list, normalized; anything malformed is dropped."""
+    try:
+        names = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise SystemExit(f"cannot read approved repo list {path}: {exc}") from exc
+    if not isinstance(names, list):
+        raise SystemExit(f"approved repo list {path} must be a JSON array")
+    out = {str(n).strip().strip("/").casefold() for n in names}
+    return {n for n in out if _REPO_NAME.match(n)}
+
+
 def _acquire_run_lock(path: Path):
     """Exclusive, non-blocking lock so overlapping cron runs cannot double-submit.
     Returns the open handle (keep it alive) or None if another run holds it."""
@@ -521,6 +546,13 @@ def main(argv: list[str] | None = None) -> int:
         "--dry-run", action="store_true",
         help="Run every gate but never claim or POST; report validated repos only.")
     parser.add_argument(
+        "--validated-json", type=Path, default=None,
+        help="Write the repos that passed every gate to this JSON list.")
+    parser.add_argument(
+        "--only-file", type=Path, default=None,
+        help="JSON list of owner/repo: restrict the run to exactly these repos "
+             "(the ones a reviewer approved).")
+    parser.add_argument(
         "--summary-md", type=Path,
         default=Path(os.environ["GITHUB_STEP_SUMMARY"])
         if os.environ.get("GITHUB_STEP_SUMMARY") else None,
@@ -540,6 +572,13 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Warden OSM automation BLOCKED: {msg}")
         return 2
 
+    only = None
+    if args.only_file is not None:
+        only = _read_only_file(args.only_file)
+        if not only:
+            print("Warden OSM automation: approved list is empty; nothing to do.")
+            return 0
+
     lock = _acquire_run_lock(Path(args.db).with_name("osm_automation.lock"))
     if lock is None:
         print("Warden OSM automation: another run holds the lock; exiting.")
@@ -547,8 +586,12 @@ def main(argv: list[str] | None = None) -> int:
     try:
         db = Database.open(args.db)
         try:
+            validated: list[str] = []
             _, errors = run(db, limit=args.limit, pace=args.pace, dry_run=args.dry_run,
-                            summary_path=args.summary_md)
+                            summary_path=args.summary_md, only=only,
+                            validated_out=validated)
+            if args.validated_json is not None:
+                args.validated_json.write_text(json.dumps(validated), encoding="utf-8")
         except (AutomationBlocked, OSMPrecheckError) as exc:
             print(f"Warden OSM automation BLOCKED: {exc}")
             return 2
