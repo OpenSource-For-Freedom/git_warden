@@ -141,7 +141,7 @@ def test_submit_threat_posts_to_endpoint_with_auth():
 
     resp = submit_threat({"report_type": "repository"}, token="osm_tok", http=FakeHttp())
     assert resp["threat_id"] == "abc-123"
-    assert calls["url"].endswith("/submit-threat-report")
+    assert calls["url"].endswith("/submit-threat")
     assert calls["headers"]["Authorization"] == "Bearer osm_tok"
 
 
