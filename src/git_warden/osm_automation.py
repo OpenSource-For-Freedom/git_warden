@@ -146,39 +146,52 @@ def _clear_failure(db, full_name: str) -> None:
 
 
 def _search_full_history(term: str) -> list[dict]:
+    """Authoritative per-resource lookup via OSM's current check-malicious API."""
     token = config.OSM_API_KEY
     if not token:
         raise OSMPrecheckError("OSM API key is missing")
     try:
         response = requests.get(
-            config.osm_endpoint("search"),
-            params={"q": term},
+            config.osm_endpoint("check-malicious"),
+            params={
+                "report_type": "repository",
+                "resource_identifier": term,
+            },
             headers={
                 "Authorization": f"Bearer {token}",
-                "apikey": token,
                 "Accept": "application/json",
             },
             timeout=config.HTTP_TIMEOUT,
         )
     except requests.RequestException as exc:
-        raise OSMPrecheckError(f"OSM full-history search failed for {term!r}: {exc}") from exc
+        raise OSMPrecheckError(
+            f"OSM check-malicious request failed for {term!r}: {exc}"
+        ) from exc
     if response.status_code in (401, 403):
         raise OSMPrecheckError(
-            f"OSM rejected the API key (HTTP {response.status_code}); rotate the "
-            "OSM_KEY secret (GW_OSM_API_KEY / OSM_API_KEY)"
+            f"OSM rejected the API key (HTTP {response.status_code}) at "
+            f"{config.osm_endpoint('check-malicious')}; verify OSM_KEY and the OSM base URL"
         )
     if response.status_code != 200:
         raise OSMPrecheckError(
-            f"OSM full-history search returned HTTP {response.status_code} for {term!r}"
+            f"OSM check-malicious returned HTTP {response.status_code} for {term!r}"
         )
     try:
         payload = response.json() if response.content else {}
     except ValueError as exc:
-        raise OSMPrecheckError("OSM full-history search returned malformed JSON") from exc
-    rows = payload.get("data") if isinstance(payload, dict) else payload
-    if not isinstance(rows, list):
-        raise OSMPrecheckError("OSM full-history search returned an unexpected response shape")
-    return [row for row in rows if isinstance(row, dict)]
+        raise OSMPrecheckError("OSM check-malicious returned malformed JSON") from exc
+    if not isinstance(payload, dict) or not isinstance(payload.get("malicious"), bool):
+        raise OSMPrecheckError("OSM check-malicious returned an unexpected response shape")
+    if payload["malicious"] is False:
+        return []
+
+    details = payload.get("details")
+    row = dict(details) if isinstance(details, dict) else {}
+    row.setdefault("resource_identifier", str(payload.get("resource_identifier") or term))
+    row.setdefault("report_type", str(payload.get("report_type") or "repository"))
+    if payload.get("status") and not row.get("status"):
+        row["status"] = payload["status"]
+    return [row]
 
 
 def _existing_repo(full_name: str) -> dict | None:
@@ -542,7 +555,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--pace", type=float, default=None,
                         help="Seconds between submissions (never below the policy).")
     parser.add_argument("--check-config", action="store_true")
-    parser.add_argument(
+    parser.add_argument("--check-api", action="store_true",\n                        help="Read-only live OSM API contract check; never submits.")\n    parser.add_argument(
         "--dry-run", action="store_true",
         help="Run every gate but never claim or POST; report validated repos only.")
     parser.add_argument(
@@ -562,6 +575,11 @@ def main(argv: list[str] | None = None) -> int:
     if args.check_config:
         load_policy()
         print("Warden OSM automation policy: PASS")
+        return 0
+
+    if args.check_api:
+        _search_full_history("https://github.com/torvalds/linux")
+        print("Warden OSM API contract: PASS (GET /check-malicious)")
         return 0
 
     if not Path(args.db).exists():
