@@ -80,14 +80,28 @@ def _reap(name: str, reaper) -> None:
         log.debug("sandbox container reap failed", exc_info=True)
 
 
-def docker_available() -> bool:
-    """True if a Docker daemon is reachable. The sandbox is useless without it."""
+def docker_available(image: str = SANDBOX_IMAGE, *, runner=subprocess.run) -> bool:
+    """True if a Docker daemon is reachable AND the sandbox image is present.
+
+    A reachable daemon without the image is not a usable sandbox: every scan would
+    exit 125 ("Unable to find image") and be misread as a failed clone, so a run
+    silently confirms nothing. Treat a missing image as "sandbox unavailable".
+    """
     try:
-        r = subprocess.run(["docker", "info", "--format", "{{.ServerVersion}}"],
-                           capture_output=True, text=True, timeout=15)
-        return r.returncode == 0 and bool(r.stdout.strip())
+        r = runner(["docker", "info", "--format", "{{.ServerVersion}}"],
+                   capture_output=True, text=True, timeout=15)
+        if r.returncode != 0 or not r.stdout.strip():
+            return False
+        img = runner(["docker", "image", "inspect", "--format", "{{.Id}}", image],
+                     capture_output=True, text=True, timeout=15)
     except (OSError, subprocess.SubprocessError):
         return False
+    if img.returncode != 0:
+        log.error("sandbox image missing; build it first "
+                  "(docker build -f docker/Dockerfile.sandbox -t %s .)", image,
+                  extra={"context": {"image": image}})
+        return False
+    return True
 
 
 def _result_from_dict(d: dict) -> Tier2Result:

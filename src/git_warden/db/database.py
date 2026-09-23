@@ -127,6 +127,10 @@ class Database:
     #; lifecycle ---------------------------------------------------------
     @classmethod
     def open(cls, db_path: Path | str = DB_PATH) -> Database:
+        # A cold start (fresh checkout, evicted CI cache) has no data/ dir yet, and
+        # sqlite cannot create one: "unable to open database file".
+        if str(db_path) != ":memory:":
+            Path(db_path).parent.mkdir(parents=True, exist_ok=True)
         conn = connect(db_path)
         init_db(conn)
         return cls(conn)
