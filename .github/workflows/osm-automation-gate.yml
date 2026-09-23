@@ -5,12 +5,14 @@ on:
     branches: ['**']
     paths:
       - 'src/git_warden/osm_automation.py'
+      - 'src/git_warden/config.py'
       - 'config/osm_automation.json'
       - 'tests/test_osm_automation.py'
       - '.github/workflows/osm-automation-gate.yml'
   pull_request:
     paths:
       - 'src/git_warden/osm_automation.py'
+      - 'src/git_warden/config.py'
       - 'config/osm_automation.json'
       - 'tests/test_osm_automation.py'
       - '.github/workflows/osm-automation-gate.yml'
