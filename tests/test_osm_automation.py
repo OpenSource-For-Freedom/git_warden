@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from git_warden import osm_automation as auto
@@ -319,3 +321,72 @@ def test_run_lock_rejects_overlapping_run(tmp_path):
         assert auto._acquire_run_lock(tmp_path / "osm.lock") is None
     finally:
         first.close()
+
+
+# --- Approval flow: validate job -> reviewer approves -> submit job -------------
+
+
+def test_only_restricts_run_to_approved_repos(monkeypatch, db):
+    rows = [{"full_name": "evil/approved"}, {"full_name": "evil/newer"}]
+    scanned, validated = [], []
+    monkeypatch.setattr(auto, "gold_for_submission", lambda db, limit=0: rows)
+    monkeypatch.setattr(auto, "_existing_repo", lambda name: None)
+    monkeypatch.setattr(
+        auto, "_deep_validate",
+        lambda name: (scanned.append(name), (False, "n/a", None))[1])
+    auto.run(db, dry_run=True, only={"evil/approved"}, validated_out=validated)
+    assert scanned == ["evil/approved"]  # a newer, unapproved candidate is never touched
+
+
+def test_validated_out_lists_repos_that_passed(monkeypatch, tmp_path, db):
+    validated = []
+    monkeypatch.setattr(auto, "gold_for_submission",
+                        lambda db, limit=0: [{"full_name": "evil/dropper", "score": 9,
+                                              "detection_method": "signature_match"}])
+    monkeypatch.setattr(auto, "_existing_repo", lambda name: None)
+    monkeypatch.setattr(auto, "_deep_validate", lambda name: (True, "AUTO", _Tier2([])))
+    monkeypatch.setattr(auto, "repo_payload_live", lambda row: True)
+    monkeypatch.setattr(auto, "build_report", lambda row, **k: {})
+    monkeypatch.setattr(auto, "campaign_context", lambda db, row: "")
+    auto.run(db, dry_run=True, validated_out=validated)
+    assert validated == ["evil/dropper"]
+
+
+def test_read_only_file_normalizes_and_drops_malformed(tmp_path):
+    f = tmp_path / "approved.json"
+    f.write_text('["Evil/Dropper/", "a/b", "../../etc/passwd", "no-slash", 7]')
+    assert auto._read_only_file(f) == {"evil/dropper", "a/b"}
+
+
+def test_cli_wires_only_file_and_validated_json(monkeypatch, tmp_path):
+    from git_warden.db import Database
+
+    db_path = tmp_path / "w.sqlite"
+    Database.open(db_path).close()
+    approved = tmp_path / "approved.json"
+    approved.write_text('["evil/dropper"]')
+    out = tmp_path / "validated.json"
+    seen = {}
+
+    def fake_run(db, **kw):
+        seen.update(kw)
+        kw["validated_out"].append("evil/dropper")
+        return 0, 0
+
+    monkeypatch.setattr(auto, "run", fake_run)
+    code = auto.main(["--db", str(db_path), "--only-file", str(approved),
+                      "--validated-json", str(out)])
+    assert code == 0
+    assert seen["only"] == {"evil/dropper"} and seen["dry_run"] is False
+    assert json.loads(out.read_text()) == ["evil/dropper"]
+
+
+def test_cli_empty_approved_list_does_nothing(monkeypatch, tmp_path):
+    from git_warden.db import Database
+
+    db_path = tmp_path / "w.sqlite"
+    Database.open(db_path).close()
+    approved = tmp_path / "approved.json"
+    approved.write_text("[]")
+    monkeypatch.setattr(auto, "run", lambda *a, **k: pytest.fail("must not run"))
+    assert auto.main(["--db", str(db_path), "--only-file", str(approved)]) == 0
