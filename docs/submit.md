@@ -21,11 +21,10 @@ include and how to describe threat behavior, see the reporting guidelines.
 
 ## Endpoint
 
-The working create endpoint is `submit-threat-report`. The public docs list
-`submit-threat`, which returns 404, so use the one below.
+The current public create endpoint is `submit-threat`.
 
 ```
-POST https://api.opensourcemalware.com/functions/v1/submit-threat-report
+POST https://api.opensourcemalware.com/functions/v1/submit-threat
 ```
 ## Required headers
 ```

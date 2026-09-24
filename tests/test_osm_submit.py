@@ -141,7 +141,7 @@ def test_submit_threat_posts_to_endpoint_with_auth():
 
     resp = submit_threat({"report_type": "repository"}, token="osm_tok", http=FakeHttp())
     assert resp["threat_id"] == "abc-123"
-    assert calls["url"].endswith("/submit-threat-report")
+    assert calls["url"].endswith("/submit-threat")
     assert calls["headers"]["Authorization"] == "Bearer osm_tok"
 
 
@@ -162,7 +162,7 @@ def test_full_history_gate_catches_old_report_query_latest_misses(monkeypatch):
     stored = {"id": "6e001ebb-old", "status": "verified",
               "resource_identifier": "https://github.com/hvmgeeks/frontendengine1/"}
 
-    def fake_search(term, *, token=None, http=None):
+    def fake_search(term, *, token=None, http=None, **kwargs):
         return [stored] if term == "https://github.com/hvmgeeks/frontendengine1/" else []
 
     monkeypatch.setattr(osm, "OSM_API_KEY", "osm_test")
