@@ -106,7 +106,21 @@ GITHUB_API_VERSION = "2022-11-28"
 # OSM: RESTful API, Bearer auth ("Authorization: Bearer osm_..."). Endpoints are
 # appended to the base URL, e.g. "query-latest" (100 most recent verified
 # reports; the free ingestion endpoint).
-OSM_API_KEY = os.environ.get("GW_OSM_API_KEY") or os.environ.get("OSM_API_KEY")
+def _normalize_osm_token(value: str | None) -> str | None:
+    """Normalize common secret-copy formats without weakening authentication."""
+    if not value:
+        return None
+    token = value.strip()
+    if token.casefold().startswith("bearer "):
+        token = token[7:].strip()
+    if len(token) >= 2 and token[0] == token[-1] and token[0] in {"\"", "'"}:
+        token = token[1:-1].strip()
+    return token or None
+
+
+OSM_API_KEY = _normalize_osm_token(
+    os.environ.get("GW_OSM_API_KEY") or os.environ.get("OSM_API_KEY")
+)
 OSM_BASE_URL = os.environ.get(
     "GW_OSM_BASE_URL", "https://api.opensourcemalware.com/functions/v1/"
 )

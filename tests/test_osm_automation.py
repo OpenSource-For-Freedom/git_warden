@@ -35,10 +35,61 @@ def test_full_history_precheck_fails_closed_on_http_error(monkeypatch):
         auto._search_full_history("https://github.com/evil/dropper")
 
 
+def test_check_malicious_contract_uses_current_endpoint_and_bearer_only(monkeypatch):
+    calls = {}
+    monkeypatch.setattr(auto.config, "OSM_API_KEY", "osm_test")
+
+    def fake_get(url, **kwargs):
+        calls.update(url=url, **kwargs)
+        return _Response(
+            200,
+            {
+                "malicious": False,
+                "report_type": "repository",
+                "resource_identifier": "https://github.com/torvalds/linux",
+                "message": "No malicious reports found",
+            },
+        )
+
+    monkeypatch.setattr(auto.requests, "get", fake_get)
+    assert auto._search_full_history("https://github.com/torvalds/linux") == []
+    assert calls["url"].endswith("/check-malicious")
+    assert calls["params"] == {
+        "report_type": "repository",
+        "resource_identifier": "https://github.com/torvalds/linux",
+    }
+    assert calls["headers"]["Authorization"] == "Bearer osm_test"
+    assert "apikey" not in calls["headers"]
+
+
+def test_check_malicious_positive_response_normalizes_details(monkeypatch):
+    monkeypatch.setattr(auto.config, "OSM_API_KEY", "osm_test")
+    monkeypatch.setattr(
+        auto.requests,
+        "get",
+        lambda *a, **k: _Response(
+            200,
+            {
+                "malicious": True,
+                "report_type": "repository",
+                "resource_identifier": "https://github.com/evil/dropper",
+                "details": {"id": "t1", "status": "verified"},
+            },
+        ),
+    )
+    rows = auto._search_full_history("https://github.com/evil/dropper")
+    assert rows == [{
+        "id": "t1",
+        "status": "verified",
+        "resource_identifier": "https://github.com/evil/dropper",
+        "report_type": "repository",
+    }]
+
+
 def test_rejected_api_key_names_the_secret_to_rotate(monkeypatch):
     monkeypatch.setattr(auto.config, "OSM_API_KEY", "osm_expired")
     monkeypatch.setattr(auto.requests, "get", lambda *a, **k: _Response(401))
-    with pytest.raises(auto.OSMPrecheckError, match="rotate the OSM_KEY secret"):
+    with pytest.raises(auto.OSMPrecheckError, match="verify OSM_KEY"):
         auto._search_full_history("https://github.com/evil/dropper")
 
 

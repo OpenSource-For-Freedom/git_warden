@@ -13,7 +13,7 @@ Run it directly (or via ``make submit``):
     python -m git_warden.osm_submit --reconcile    # our reports vs OSM (read-only)
     python -m git_warden.osm_submit --confirm      # actually POST to OSM
 
-The live function is ``submit-threat-report`` (the public docs say
+The live function is ``submit-threat`` (the public docs say
 ``submit-threat``, which 404s). Only NOVEL confirmed findings are eligible
 (:func:`gold_for_submission`): intrinsic-evidence finds OSM does not already
 have. Each report carries its proof -- the detection method and the confirming
@@ -797,33 +797,54 @@ def _repo_id_variants(full_name: str) -> list[str]:
             f"github.com/{o}/", f"github.com/{o}"]
 
 
-def osm_search(term: str, *, token: str | None = None, http=None) -> list[dict]:
-    """Full-history EXACT-match lookup via ``functions/v1/search``.
+def osm_search(
+    term: str, *, report_type: str | None = None,
+    token: str | None = None, http=None,
+) -> list[dict]:
+    """Authoritative exact-resource lookup via OSM check-malicious.
 
-    Unlike ``query-latest`` (a recent-window firehose that is blind to months-old
-    and pending reports), this endpoint searches OSM's whole corpus by the exact
-    ``resource_identifier`` string (case-insensitive). It is the authoritative
-    "is this already in OSM?" check. Returns the list of matching records (each a
-    dict with id/status/resource_identifier/...), or ``[]`` on any error/miss.
+    The current public API accepts report_type and resource_identifier
+    and returns malicious: true|false. A positive response is normalized to
+    the historical list-of-records shape used by the rest of Warden.
     """
     import requests
 
     token = token or OSM_API_KEY
     if not token:
         return []
+    report_type = report_type or (
+        "repository" if "github.com/" in term.casefold() else "domain"
+    )
     try:
         resp = requests.get(
-            osm_endpoint("search"), params={"q": term},
-            headers={"Authorization": f"Bearer {token}", "apikey": token,
-                     "Accept": "application/json"},
-            timeout=HTTP_TIMEOUT)
+            osm_endpoint("check-malicious"),
+            params={
+                "report_type": report_type,
+                "resource_identifier": term,
+            },
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Accept": "application/json",
+            },
+            timeout=HTTP_TIMEOUT,
+        )
         if resp.status_code != 200:
             return []
         data = resp.json() if resp.content else {}
     except Exception:  # noqa: BLE001
         return []
-    rows = data.get("data") if isinstance(data, dict) else data
-    return [r for r in (rows or []) if isinstance(r, dict)]
+    if not isinstance(data, dict) or not isinstance(data.get("malicious"), bool):
+        return []
+    if data["malicious"] is False:
+        return []
+
+    details = data.get("details")
+    row = dict(details) if isinstance(details, dict) else {}
+    row.setdefault("resource_identifier", str(data.get("resource_identifier") or term))
+    row.setdefault("report_type", str(data.get("report_type") or report_type))
+    if data.get("status") and not row.get("status"):
+        row["status"] = data["status"]
+    return [row]
 
 
 def osm_existing_repo(full_name: str, *, token: str | None = None, http=None) -> dict | None:
@@ -836,7 +857,7 @@ def osm_existing_repo(full_name: str, *, token: str | None = None, http=None) ->
     """
     want = full_name.strip().strip("/").casefold()
     for variant in _repo_id_variants(full_name):
-        for row in osm_search(variant, token=token, http=http):
+        for row in osm_search(variant, report_type="repository", token=token, http=http):
             rid = str(row.get("resource_identifier") or "")
             if _osm_resource_key(rid) == want:
                 return row
@@ -849,7 +870,7 @@ def osm_existing_resource(term: str, *, token: str | None = None, http=None) -> 
     (case-insensitive), or ``None``. Backs the domain-IOC dedup the same way
     :func:`osm_existing_repo` backs repos."""
     want = term.strip().casefold()
-    for row in osm_search(term, token=token, http=http):
+    for row in osm_search(term, report_type="domain", token=token, http=http):
         rid = str(row.get("resource_identifier") or row.get("package_name") or "")
         if rid.strip().casefold() == want:
             return row
@@ -900,7 +921,7 @@ def repo_payload_live(row, *, fetch=_http_get) -> bool | None:
 def audit(db, *, limit: int | None = None) -> int:
     """Read-only: report each submission's CURRENT standing in OSM.
 
-    For every repo we marked submitted, ask OSM's full-history search what it says
+    For every repo we marked submitted, ask OSM's authoritative resource check what it says
     now (verified / pending / false-positive / absent) and whether OSM's canonical
     id matches the one we stored (a mismatch means our report is a duplicate of
     another researcher's, or was superseded). Turns eyeballing the web dashboard
@@ -915,7 +936,7 @@ def audit(db, *, limit: int | None = None) -> int:
         print("No submissions marked in the local ledger yet (nothing to audit).")
         return 0
     print(f"Auditing {len(rows)} submission(s) against OSM full history "
-          f"(search endpoint)...\n")
+          f"(check-malicious endpoint)...\n")
     from collections import Counter
     tally: Counter = Counter()
     dupes, gone = [], []
@@ -1059,9 +1080,9 @@ def wizard(db, args) -> int:
     b = reconcile(db, osm_now)["buckets"]
     candidate_rows = [r for r in gold_for_submission(db)
                       if r["full_name"].casefold() not in osm_now]
-    # AUTHORITATIVE full-history gate (search endpoint) on top of the recent-window
+    # AUTHORITATIVE full-history gate (check-malicious endpoint) on top of the recent-window
     # filter: catches months-old / other-researcher reports query-latest can't see.
-    print("  Cross-checking OSM full history (search endpoint)...")
+    print("  Cross-checking OSM full history (check-malicious endpoint)...")
     new_rows = []
     for r in candidate_rows:
         hit = osm_existing_repo(r["full_name"])
@@ -1173,7 +1194,7 @@ class _RequestsPoster:
 
 
 def submit_threat(report: dict, *, token: str | None = None, http=None) -> dict:
-    """POST one report to OSM submit-threat-report. Returns the parsed response.
+    """POST one report to OSM submit-threat. Returns the parsed response.
 
     Raises if no token, or on an HTTP error (the caller logs and continues).
     """
@@ -1182,7 +1203,7 @@ def submit_threat(report: dict, *, token: str | None = None, http=None) -> dict:
         raise RuntimeError("GW_OSM_API_KEY is not set; cannot submit to OSM.")
     http = http or _RequestsPoster()
     return http.post_json(
-        osm_endpoint("submit-threat-report"),
+        osm_endpoint("submit-threat"),
         json=report,
         headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
     )
@@ -1329,7 +1350,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--audit", action="store_true",
                    help="Report each of your submissions' CURRENT standing in OSM "
                         "(verified / pending / false-positive / absent) via the "
-                        "full-history search, and flag duplicates. Read-only.")
+                        "authoritative resource check, and flag duplicates. Read-only.")
     p.add_argument("--no-liveness", action="store_true",
                    help="Skip the pre-send liveness recheck (by default each repo's "
                         "payload is re-fetched at HEAD before submitting, so a repo "
@@ -1419,7 +1440,7 @@ def main(argv: list[str] | None = None) -> int:
         # blindness is what let us duplicate already-verified reports. The search
         # endpoint checks OSM's whole corpus by exact resource_identifier (all format
         # spellings), so a hit here is a real "already reported, do not re-submit".
-        print("Cross-checking OSM full history (search endpoint, all id spellings)...")
+        print("Cross-checking OSM full history (check-malicious endpoint, all id spellings)...")
         pre_existing = {}
         for r in list(rows):
             hit = osm_existing_repo(r["full_name"])
@@ -1447,7 +1468,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  [skip] domain {host}: ALREADY in OSM full history -- "
                   f"{hit.get('status')}, id {str(hit.get('id'))[:8]}  (NOT re-submitting)")
 
-        # ENRICHMENT: re-POSTing to submit-threat-report CREATES A DUPLICATE (the
+        # ENRICHMENT: re-POSTing to submit-threat CREATES A DUPLICATE (the
         # endpoint is create-only). A true update needs OSM's update-report route,
         # which is not wired yet, so refuse rather than duplicate.
         if args.enrich:

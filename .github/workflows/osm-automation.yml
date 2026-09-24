@@ -51,7 +51,6 @@ jobs:
         env:
           GW_GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           GW_OSM_API_KEY: ${{ secrets.OSM_KEY }}
-          GW_OSM_BASE_URL: ${{ secrets.GW_OSM_BASE_URL }}
           GW_SHARED_INTEL: data/shared_intel/breadcrumbs.jsonl
         run: >-
           python -m git_warden.osm_automation --dry-run
@@ -133,7 +132,6 @@ jobs:
         env:
           GW_GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           GW_OSM_API_KEY: ${{ secrets.OSM_KEY }}
-          GW_OSM_BASE_URL: ${{ secrets.GW_OSM_BASE_URL }}
           GW_SHARED_INTEL: data/shared_intel/breadcrumbs.jsonl
           APPROVED: ${{ needs.validate.outputs.repos }}
         run: |
