@@ -23,8 +23,9 @@ A defensive threat-intelligence engine that discovers, analyzes, and catalogs
 are *provenance breadcrumbs*; they help find and attribute the repos. The product
 is the registry of malicious repos.
 
-See [docs/](docs/) for the design and [docs/IMPLEMENTATION.md](docs/IMPLEMENTATION.md)
-for what's built vs. planned. Guiding principle: **accuracy over volume.**
+The root README is the product overview. The engineering contract lives in
+[docs/README.md](docs/README.md): architecture, finding storage, team-hunt
+orchestration, and OSM submission. Guiding principle: **accuracy over volume.**
 
 <p align="center"><img src="docs/sculk-divider.png" alt="" width="900"></p>
 
@@ -102,28 +103,23 @@ positive.
 
 ## Working with Knörr
 
-Git Warden hunts malicious **repositories**. Its sibling, **Knörr**, hunts malicious
-**container images**. The same campaigns show up on both surfaces, so the two tools
-share what they learn instead of each starting cold.
+Git Warden and KNÖRR are separate detectors joined by a narrow intelligence bus.
+Warden owns **repository findings**. KNÖRR owns **container findings**. Neither
+tool inherits the other's verdict.
 
-They pass leads through a shared breadcrumb file that both read and write. Neither
-tool needs the other to run, and either one works fine when the file is empty.
+During a joint hunt, Warden writes repository state to
+`ci-state/git_warden.sqlite`, KNÖRR writes container state to
+`ci-state/knorr.sqlite`, and both exchange campaign breadcrumbs through
+`ci-state/breadcrumbs.jsonl`.
 
-What crosses between them:
+The bus carries C2 hosts, malicious packages, code/path fingerprints,
+repository↔image links, and prior-submission markers. A breadcrumb can start a new
+search; it cannot confirm a target. Each tool must independently validate the
+surface it owns.
 
-- **C2 hosts.** A host Warden finds in a repo dropper, or Knörr finds in an image,
-  is searched by the other tool to find more of the same campaign.
-- **Malicious packages.** A bad package one tool confirms is measured against the
-  other, so a container that installs it and a repo that ships it are both caught.
-- **Discovered malware signatures.** The dropper fingerprints Warden mines are
-  available to Knörr, and the reverse.
-- **Repo and image links.** A repo whose build recipe is a container threat points
-  Knörr at the image, and a Knörr image points Warden at its source repo.
-- **What was submitted.** Each tool records what it sent to OpenSourceMalware, so
-  the other never files a duplicate.
-
-The result is one shared picture of a campaign across repos and containers, built
-from leads that used to stop at the edge of each tool.
+The production joint workflow, approval boundary, and storage model are documented
+in [docs/team-hunt.md](docs/team-hunt.md) and
+[docs/finding-storage.md](docs/finding-storage.md).
 
 <p align="center"><img src="docs/sculk-divider.png" alt="" width="900"></p>
 
@@ -292,52 +288,44 @@ bearer token on `/api/*` (every request is logged).
 
 ## Submit to OSM
 
-Contribute your confirmed findings back to
-[OpenSourceMalware](https://opensourcemalware.com). The submitter is **safe by
-design**: it is dry-run by default, uses *your* OSM API key (`GW_OSM_API_KEY`) and
-contributor name (`GW_OSM_CONTRIBUTOR`), and runs three checks before any send. It
-cross-checks OSM's **full history** (not just the recent window) across every
-resource-identifier spelling so it never duplicates an existing report, it re-fetches
-each repo's payload at HEAD so a taken-down repo is not sent, and it marks the IOCs
-(C2 host, payload URL, dropper command, path) in the report so OSM indexes them.
+Warden's production reporting path is fail-closed and runs through the joint
+KNÖRR workflow. A normal hunt only produces an OSM preview. A submission run must
+be explicitly dispatched with submission enabled and then approved through the
+protected `osm-submission` GitHub Environment.
 
-```bash
-make queue                           # the AUTO-tier submit queue: what is ready to review
-make submit                          # dry run: prints exactly what WOULD be sent
-make submit ARGS="--audit"           # each of your submissions' current standing in OSM
-make submit ARGS="--wizard"          # interactive, step-by-step (newcomer-friendly)
-make submit ARGS="--reconcile"       # read-only: your reports vs OSM's live state
-make submit ARGS="--confirm"         # actually POST new reports + corroborated C2 IOCs
-```
+After approval, Warden accepts only the exact repository list shown in the
+preview, re-runs the hardened static validation, checks the current repository,
+calls OSM's `check-malicious` endpoint again, and only then may call
+`POST /submit-threat`. A changed, removed, already-reported, or inconclusive
+repository is dropped.
 
-Or directly: `python -m git_warden.osm_submit [--queue|--audit|--wizard|--reconcile|--confirm]`.
-
-Only **novel** AUTO-tier findings with their own `file:line` evidence are eligible.
-REVIEW-tier findings, OSM re-validations, and un-evidenced associations are never
-sent. Each report carries full proof: the country attribution with signals, every
-confirming evidence link, the marked IOCs, and a plain-language writeup. `--wizard`
-walks a non-technical user through it step by
-step, including exactly what to paste into OSM's web form.
+Local analyst tooling remains available through `python -m git_warden.osm_submit`.
+The unattended policy and joint CI path are documented separately in
+[docs/submit.md](docs/submit.md).
 
 ## Deployment
 
-GitHub Actions ([.github/workflows/](.github/workflows/)): `ci.yml` runs
-lint+tests; `run.yml` runs ingest then hunt on demand (workflow_dispatch only,
-no schedule), with an optional registry reconcile before publishing. Every
-workflow hardens the runner first (Legion egress audit).
+GitHub Actions are split by responsibility:
 
-Add these **repo Actions secrets**; the workflow maps them onto the `GW_*` env
-vars the code reads (local `.env` uses the `GW_*` names directly):
+| Workflow | Responsibility |
+|---|---|
+| `ci.yml` | lint and tests |
+| `security.yml` / Zizmor checks | repository and workflow security checks |
+| `run.yml` | Warden ingest/hunt execution |
+| `osm-automation-gate.yml` | deterministic OSM policy/tests/lint/sandbox gate |
+| `osm-automation.yml` | manual recovery path for standalone Warden OSM automation |
+| KNÖRR `joint-threat-hunt.yml` | canonical joint hunt and production OSM preview/submission |
 
-| Repo secret | Maps to env var.  |
-|-------------|-----------------  |
-| `GH_TOKEN`  | `GW_GITHUB_TOKEN` |
-| `OSM_KEY`   | `GW_OSM_API_KEY`  |
-| `GW_OSM_BASE_URL` | `GW_OSM_BASE_URL` (optional; overrides the default OSM host) |
-| `DISCORD_WEBHOOK` | `GW_DISCORD_WEBHOOK` |
+The joint workflow runs on GitHub-hosted runners hardened with Legion. It supplies
+the shared OSM credential to both engines, restores their separate SQLite state,
+and points both intelligence variables at the same append-only JSONL bus.
 
-Orchestration knobs live in [config/settings.yaml](config/settings.yaml) and
-[config/trigger.yaml](config/trigger.yaml).
+Local configuration uses `GW_*` environment variables. Repository secret names are
+workflow plumbing and are intentionally kept out of the core configuration
+contract.
+
+See [docs/architecture.md](docs/architecture.md) and
+[docs/team-hunt.md](docs/team-hunt.md) for the control-plane design.
 
 ## Development
 
