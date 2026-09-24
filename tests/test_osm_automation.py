@@ -93,18 +93,24 @@ def test_rejected_api_key_names_the_secret_to_rotate(monkeypatch):
         auto._search_full_history("https://github.com/evil/dropper")
 
 
-def test_existing_repo_matches_any_canonical_spelling(monkeypatch):
-    monkeypatch.setattr(
-        auto,
-        "_search_full_history",
-        lambda term: (
+def test_existing_repo_checks_only_url_form_identifiers(monkeypatch):
+    calls = []
+
+    def fake_search(term):
+        calls.append(term)
+        return (
             [{"resource_identifier": "https://github.com/Evil/Dropper/", "id": "t1"}]
             if term.endswith("evil/dropper/")
             else []
-        ),
-    )
+        )
+
+    monkeypatch.setattr(auto, "_search_full_history", fake_search)
     hit = auto._existing_repo("evil/dropper")
     assert hit and hit["id"] == "t1"
+    assert calls == [
+        "https://github.com/evil/dropper",
+        "https://github.com/evil/dropper/",
+    ]
 
 def test_versioned_policy_keeps_all_fail_closed_guards():
     policy = auto.load_policy()

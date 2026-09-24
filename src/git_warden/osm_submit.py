@@ -785,16 +785,15 @@ def osm_current_reports(token: str | None = None, http=None) -> dict:
 
 
 def _repo_id_variants(full_name: str) -> list[str]:
-    """Every ``resource_identifier`` spelling OSM might have stored for a repo.
+    """Repository identifier spellings accepted by OSM check-malicious.
 
-    OSM does NOT canonicalize resource_identifier, so ``https://github.com/o/r``,
-    ``https://github.com/o/r/``, ``github.com/o/r`` and ``github.com/o/r/`` are all
-    DISTINCT resources to it -- which is exactly how format drift creates duplicate
-    reports of the same repo. We therefore probe all four when checking novelty.
+    The current API requires URL-form repository identifiers. A trailing slash is
+    still a distinct historical spelling, so both URL forms are checked. The old
+    scheme-less spellings are deliberately excluded because the live endpoint
+    rejects them with HTTP 400.
     """
     o = full_name.strip().strip("/")
-    return [f"https://github.com/{o}/", f"https://github.com/{o}",
-            f"github.com/{o}/", f"github.com/{o}"]
+    return [f"https://github.com/{o}", f"https://github.com/{o}/"]
 
 
 def osm_search(
