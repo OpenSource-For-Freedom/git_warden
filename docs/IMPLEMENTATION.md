@@ -124,30 +124,21 @@ or a reverse shell at build time. Benign idioms never qualify. A reputable-insta
 excluded at the scanner and again by a host-gated classifier. It is reported to OSM
 as a repository report, docker-tagged.
 
-### OSM submission (`osm_submit.py`)
-Contribute confirmed findings back to OpenSourceMalware. The submitter is safe by
-design: dry-run by default, it uses your own API key and contributor name, and it
-runs several checks before any send.
+### OSM submission
 
-- **Full-history dedup**: OSM's `query-latest` is only a recent window, so a
-  months-old or another researcher's report was invisible to it and produced
-  duplicates. The submitter now cross-checks OSM's full history through the search
-  endpoint across every `resource_identifier` spelling before sending.
-- **Liveness recheck**: each repo's payload is re-fetched at HEAD before sending, so
-  a repo whose payload was removed is never submitted only to fail OSM review.
-- **Verified IOCs**: each report carries a `verified_iocs` field (C2 host, exact
-  payload URL, the download-and-run command, and the dropper file path) so OSM
-  indexes them as pivotable indicators instead of leaving them in prose.
-- **SHA-pinned evidence**: evidence links pin to the scanned commit, so proof stays
-  valid even after the file is removed.
-- Only novel AUTO-tier findings with their own `file:line` evidence are eligible.
-  Corroborated C2 hosts (seen in two or more confirmed repos, no shorteners) are
-  emitted as linked domain IOC reports.
+`git_warden.osm_submit` is the analyst-oriented local interface.
+`git_warden.osm_automation` is the fail-closed unattended path used by the joint
+workflow.
 
-Supporting commands: `--queue` shows the AUTO submit queue ready for review,
-`--audit` reports each submission's current standing in OSM and flags duplicates,
-`--reconcile` compares your reports against OSM's live state, and `--wizard` walks a
-non-technical operator through it step by step.
+The unattended path checks the exact repository through OSM
+`GET /check-malicious`, re-runs Tier-2 in the hardened sandbox, verifies repository
+liveness, checks shared submission state, checks OSM again immediately before the
+write, and only then may call `POST /submit-threat`.
+
+Only AUTO findings with intrinsic repository evidence are eligible. Any network,
+authentication, sandbox, liveness, or response-contract failure blocks publication.
+The canonical production path is the KNÖRR joint workflow, where the exact Warden
+preview is reviewed before final revalidation. See [submit.md](submit.md).
 
 ### Dependency audit (`git-warden audit-deps`)
 Check a project's lockfiles against a known-compromised package manifest. After a
@@ -214,12 +205,16 @@ that groups the same malicious core (shared code hash) across platforms into one
 tracked entity. The scanning pipeline is client-agnostic (duck-typed), so adding
 GitLab or Gitea is a parallel client class plus a new `Platform` value.
 
-### Orchestration and CI (doc 05)
-A self-healing executor (`orchestration/`) reads YAML playbooks
-(`config/settings.yaml`, `trigger.yaml`) and classifies each failure into retry,
-backoff, queue, defer, skip, or flag-for-manual, with `RunHealth` thresholds that
-raise Discord alerts. GitHub Actions: `ci.yml` runs lint and tests, `run.yml` runs
-ingest then hunt on demand. Every workflow hardens the runner first.
+### Orchestration and CI
+
+The local orchestration layer reads `config/settings.yaml` and
+`config/trigger.yaml` and classifies operational failures into retry, backoff,
+queue, defer, skip, or manual review.
+
+GitHub Actions separates code validation from live integration: `ci.yml` runs lint
+and tests, `run.yml` runs Warden ingest/hunt, `osm-automation-gate.yml` validates
+OSM policy and sandbox behavior, and KNÖRR's `joint-threat-hunt.yml` is the
+canonical live team hunt and gated OSM reporting path.
 
 ### Resumable long runs (`hunt --resume`)
 A long sweep can be killed or rate-limited. With `--resume`, a re-run skips any repo
