@@ -1,119 +1,117 @@
-# Report a malicious asset via API
+# OSM submission design
 
-This is OpenSourceMalware's own API reference, kept here for operators who build
-their own tooling. Git Warden's built-in submitter (`python -m git_warden.osm_submit`)
-already wraps all of this with full-history dedup, a liveness recheck, and verified
-IOCs. See the "Submit to OSM" section of the README.
+Git Warden reports only repository findings that survive a second, current validation pass.
 
-Submit threat reports programmatically instead of using the web UI. Submitted reports
-enter the community verification process and are only published after passing review.
-Use this endpoint to:
+The reporting path is deliberately separate from discovery. A repository can remain a confirmed Warden finding even when it is not eligible for OSM submission.
 
-- Automate reporting from your tooling: flag suspicious packages the moment your
-  internal detection systems identify them.
-- Integrate with security pipelines: trigger submissions from CI/CD workflows,
-  dependency scanners, or SIEM alerts.
-- Contribute at scale: research teams can submit structured reports in bulk.
+## API contract
 
-You can track the status of your submissions from your profile on opensourcemalware.com.
-For guidance on writing high-quality threat reports, including what evidence to
-include and how to describe threat behavior, see the reporting guidelines.
+The live integration uses the OSM functions API:
 
-## Endpoint
+- exact resource check: `GET /check-malicious`
+- create report: `POST /submit-threat`
+- authentication: `Authorization: Bearer <token>`
 
-The current public create endpoint is `submit-threat`.
+Repository checks use:
+
+```text
+report_type=repository
+resource_identifier=https://github.com/<owner>/<repo>
+```
+
+An authentication error, network failure, malformed response, or unexpected response shape blocks submission.
+
+## Eligibility
+
+A repository is eligible for unattended reporting only when all of the following are true:
+
+1. its current Warden confidence is AUTO;
+2. the repository has intrinsic confirming evidence;
+3. the Tier-2 sandbox is available;
+4. the repository still exists and can be revalidated;
+5. the current scan still confirms the finding;
+6. OSM does not already report the repository;
+7. the shared intelligence bus does not contain a prior submission marker for the same resource;
+8. the repository appears in the exact preview approved by the operator.
+
+REVIEW findings are never promoted by the submitter.
+
+## Joint submission flow
+
+Production Warden reporting is coordinated by KNÖRR's joint workflow.
+
+```mermaid
+sequenceDiagram
+    participant H as Joint hunt
+    participant W as Warden
+    participant O as OSM
+    participant R as Reviewer
+
+    H->>W: dry-run validation
+    W->>O: check-malicious(repository)
+    O-->>W: malicious true/false
+    W-->>H: exact validated repository list
+    H-->>R: preview + evidence
+    R->>H: approve osm-submission environment
+    H->>W: only-file approved list
+    W->>W: sandbox revalidation
+    W->>O: check-malicious(repository) again
+    alt still novel and confirmed
+        W->>O: POST /submit-threat
+        O-->>W: threat id
+        W->>W: record local state + submitted breadcrumb
+    else changed, duplicate, or inconclusive
+        W-->>H: skip
+    end
+```
+
+The preview list is a ceiling, not a command to submit. The second pass may submit fewer items.
+
+## Human approval boundary
+
+The protected GitHub Environment is named:
 
 ```
-POST https://api.opensourcemalware.com/functions/v1/submit-threat
+osm-submission
 ```
-## Required headers
-```
-Authorization: Bearer osm_your_token
-Content-Type: application/json
-​```
-```
-## Request body
-```
-{
-  "report_type": "package",           // Required: "package" | "repository" | "url" | "domain" | "ip" | "wallet" | "container"
-  "resource_identifier": "npm/malicious-pkg",  // Required: Package/repo identifier
-  "threat_description": "Cryptocurrency miner in postinstall script",  // Required
-  
-  // Optional fields
-  "package_name": "malicious-pkg",
-  "registry": "npm",
-  "publisher": "evil-user",
-  "payload_description": "Downloads and executes mining binary",
-  "severity_level": "critical",       // "critical" | "high" | "medium" | "low"
-  "evidence_references": "https://github.com/evidence/repo",
-  "contact_email": "reporter@example.com",
-  "tags": ["cryptocurrency", "miner", "postinstall"],
-  "version_info": "All versions affected",
-  "first_seen": "2024-01-01T00:00:00Z",
-  "last_seen": "2024-01-02T00:00:00Z",
-  "osv_advisory_url": "https://osv.dev/vulnerability/OSV-2024-001",
-  "contributors": ["security-researcher"],
-  "download_count": 50000
-}
-```
-## Response examples
 
-- Success (201)
+The operator reviews the uploaded Warden and KNÖRR previews before approving the deployment. Approval does not bypass confidence, novelty, liveness, sandbox, or evidence checks.
 
-```
-{
-  "message": "Threat report submitted successfully",
-  "threat_id": "123e4567-e89b-12d3-a456-426614174000",
-  "status": "pending"
-}
+## Standalone Warden workflow
 
-​```
-## Error (400)
-```
-{
-  "error": "Missing required fields: report_type, resource_identifier, and threat_description are required"
-}
-​```
-## cURL examples
-```
-Package report
-curl -X POST "https://api.opensourcemalware.com/functions/v1/submit-threat" \
-  -H "Authorization: Bearer osm_your_token" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "report_type": "package",
-    "resource_identifier": "npm/malicious-package",
-    "threat_description": "Package contains cryptocurrency mining code",
-    "package_name": "malicious-package",
-    "registry": "npm",
-    "severity_level": "critical",
-    "tags": ["cryptocurrency", "miner"]
-  }'
-```
-## Repository report
-```
-curl -X POST "https://api.opensourcemalware.com/functions/v1/submit-threat" \
-  -H "Authorization: Bearer osm_your_token" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "report_type": "repository",
-    "resource_identifier": "github.com/malicious-user/evil-repo",
-    "threat_description": "Repository contains info-stealer malware",
-    "publisher": "malicious-user",
-    "severity_level": "high",
-    "tags": ["infostealer", "lazarus"]
-  }'
-  ```
-## Domain report
-```
-curl -X POST "https://api.opensourcemalware.com/functions/v1/submit-threat" \
-  -H "Authorization: Bearer osm_your_token" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "report_type": "domain",
-    "resource_identifier": "evil-c2-server.com",
-    "threat_description": "C2 server used by cryptocurrency miner malware",
-    "severity_level": "critical",
-    "tags": ["c2", "cryptominer"]
-  }'
-```
+`.github/workflows/osm-automation.yml` remains available as a manual recovery path.
+
+It is not the canonical production scheduler. The joint KNÖRR workflow is the preferred live path because both engines use the same validated OSM credential and the same shared-intelligence state.
+
+## Duplicate prevention
+
+Duplicate prevention is layered:
+
+1. canonical resource variants are normalized;
+2. OSM is queried before deep validation;
+3. the target is revalidated;
+4. OSM is queried again immediately before POST;
+5. the shared bus is checked for a submission marker;
+6. successful submission writes both local state and a shared `submitted` record.
+
+No single local marker is treated as authoritative over OSM.
+
+## Failure semantics
+
+Submission is fail-closed.
+
+| Failure | Result |
+|---|---|
+| Docker unavailable | skip |
+| repository removed or unreadable | skip |
+| current scan no longer confirms | skip |
+| confidence below AUTO | skip |
+| OSM 401/403 | stop |
+| OSM network error | stop |
+| unexpected OSM response | stop |
+| duplicate found | skip |
+| POST fails | release local claim; do not mark submitted |
+
+## Local tooling
+
+The local `osm_submit` command remains useful for analyst-driven review and manual reporting. The automated joint workflow uses `git_warden.osm_automation`, which enforces the unattended policy separately from the interactive path.
