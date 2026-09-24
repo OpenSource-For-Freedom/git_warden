@@ -152,13 +152,12 @@ def test_submit_threat_requires_a_token(monkeypatch):
 
 
 def test_full_history_gate_catches_old_report_query_latest_misses(monkeypatch):
-    """The authoritative novelty gate must flag a repo already in OSM even when it
-    is a months-old report (invisible to query-latest's recent window), matching
-    on ANY resource_identifier spelling -- the exact gap that caused duplicates."""
+    """The authoritative novelty gate catches old reports across both URL-form
+    repository identifiers accepted by the current check-malicious endpoint."""
     import git_warden.osm_submit as osm
 
-    # OSM stored this repo months ago as scheme+trailing-slash; our submit uses
-    # scheme+no-slash, so only a multi-variant search finds it.
+    # OSM stored this repo months ago with a trailing slash; the current API
+    # accepts both URL spellings, so the novelty gate checks both.
     stored = {"id": "6e001ebb-old", "status": "verified",
               "resource_identifier": "https://github.com/hvmgeeks/frontendengine1/"}
 
@@ -177,8 +176,17 @@ def test_full_history_gate_catches_old_report_query_latest_misses(monkeypatch):
         if term.rstrip("/").casefold() == "https://github.com/findusman/pos_backend" else []))
     assert osm.osm_existing_repo("findusman/pos_backend")["id"] == "dae93423"
     # a genuinely novel repo is NOT blocked
-    monkeypatch.setattr(osm, "osm_search", lambda term, **k: [])
+    calls = []
+    monkeypatch.setattr(
+        osm,
+        "osm_search",
+        lambda term, **k: calls.append(term) or [],
+    )
     assert osm.osm_existing_repo("torvalds/linux") is None
+    assert calls == [
+        "https://github.com/torvalds/linux",
+        "https://github.com/torvalds/linux/",
+    ]
 
 
 def test_evidence_pins_to_commit_sha_when_present():
