@@ -196,11 +196,12 @@ def _search_full_history(term: str) -> list[dict]:
 
 def _existing_repo(full_name: str) -> dict | None:
     wanted = full_name.strip().strip("/").casefold()
+    # OSM's current check-malicious contract requires a URL-form repository
+    # identifier. Scheme-less historical spellings return HTTP 400 and must not
+    # be sent to the live endpoint. Probe the two accepted URL spellings only.
     variants = (
         f"https://github.com/{wanted}",
         f"https://github.com/{wanted}/",
-        f"github.com/{wanted}",
-        f"github.com/{wanted}/",
     )
     for variant in variants:
         for row in _search_full_history(variant):
