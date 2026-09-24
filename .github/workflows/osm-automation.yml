@@ -1,9 +1,8 @@
 name: Warden OSM Automation
 on:
-  # Validate daily; anything that passes every gate waits for a human to approve
-  # the `osm-submission` environment before a single report is sent to OSM.
-  schedule:
-    - cron: "0 13 * * *"
+  # Manual recovery path only. Production Warden OSM validation/submission runs
+  # inside KNORR's joint workflow so both engines share one proven OSM credential,
+  # one intelligence bus, and one approval boundary.
   workflow_dispatch:
 
 permissions:
