@@ -40,6 +40,12 @@ jobs:
         run: python -m pip install -e '.[dev]'
       - name: Validate OSM automation policy
         run: python -m git_warden.osm_automation --check-config
+      - name: Diagnose OSM bearer token on query-latest
+        if: github.event_name != 'pull_request'
+        env:
+          GW_OSM_API_KEY: ${{ secrets.OSM_KEY }}
+        run: python gw.py probe --feed osm --ecosystem repositories --limit 1
+
       - name: Live OSM API contract smoke test
         if: github.event_name != 'pull_request'
         env:
