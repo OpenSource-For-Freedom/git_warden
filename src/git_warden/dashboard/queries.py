@@ -12,7 +12,7 @@ import re
 from collections import Counter
 from typing import Any
 
-from ..correlate import payload_key as _payload_key
+from ..correlate import campaign_id, campaign_key
 from ..db import Database
 
 
@@ -304,7 +304,9 @@ def bad_owners(db: Database) -> list[dict[str, Any]]:
 
 
 def campaign_clusters(db: Database) -> dict[str, Any]:
-    """Correlate repos into campaigns by shared signature / owner / code-hash."""
+    """Correlate repos into campaigns by shared signature / owner / code-hash /
+    campaign fingerprint (loader payload or host-free dropper shape)."""
+    from ..correlate import campaigns
     c = db.conn
     by_signature: dict[str, list[str]] = {}
     for r in c.execute("SELECT full_name, matched_iocs FROM repo_findings "
@@ -323,7 +325,14 @@ def campaign_clusters(db: Database) -> dict[str, Any]:
         by_code_hash.setdefault(r["code_hash"][:16], []).append(r["full_name"])
     by_code_hash = {h: reps for h, reps in by_code_hash.items() if len(reps) > 1}
 
-    return {"by_signature": by_signature, "by_owner": by_owner, "by_code_hash": by_code_hash}
+    by_campaign = {
+        camp.id: {"fingerprint": camp.fingerprint, "kind": camp.kind,
+                  "repos": camp.members, "owners": len(camp.owners),
+                  "c2_hosts": sorted(camp.c2_hosts)}
+        for camp in campaigns(db, statuses=("confirmed",))
+    }
+    return {"by_signature": by_signature, "by_owner": by_owner,
+            "by_code_hash": by_code_hash, "by_campaign": by_campaign}
 
 
 def flag_telemetry(db: Database) -> list[dict[str, Any]]:
@@ -406,8 +415,8 @@ def graph(db: Database, scope: str = "confirmed") -> dict[str, Any]:
     shared_infra = {h for h, reps in host_repos.items() if len(reps) >= 2}
 
     by_hash: dict[str, list[str]] = {}
-    camp_members: dict[str, list[str]] = {}   # payload fingerprint -> repos
-    camp_actors: dict[str, set[str]] = {}     # payload fingerprint -> attributed origins
+    camp_members: dict[str, list[str]] = {}   # campaign fingerprint -> repos
+    camp_actors: dict[str, set[str]] = {}     # campaign fingerprint -> attributed origins
     for r in rows:
         repo, owner = r["full_name"], _owner(r["full_name"])
         flags = flags_by[repo]
@@ -431,7 +440,7 @@ def graph(db: Database, scope: str = "confirmed") -> dict[str, Any]:
             edges.append({"s": f"actor:{a.origin}", "t": f"repo:{repo}", "kind": "actor"})
         if r["code_hash"]:
             by_hash.setdefault(r["code_hash"], []).append(repo)
-        pk = _payload_key(r["raw_payload"])
+        pk = campaign_key(r["raw_payload"])
         if pk:
             camp_members.setdefault(pk, []).append(repo)
             if a.attributed and a.origin:
@@ -439,15 +448,16 @@ def graph(db: Database, scope: str = "confirmed") -> dict[str, Any]:
     for reps in by_hash.values():
         for a, b in zip(reps, reps[1:], strict=False):
             edges.append({"s": f"repo:{a}", "t": f"repo:{b}", "kind": "codehash"})
-    # Payload campaigns: repos sharing one eval(atob) payload are one campaign by
-    # the same actor (across owners + signature labels). Wire any actor seen on a
-    # member to the WHOLE campaign, so one OSM attribution (corex -> DPRK) lights up
-    # every repo in the cluster.
+    # Campaigns: repos sharing one eval(atob) payload, or one host-free dropper
+    # shape (the rotating-C2 tasks.json lures), across owners + signature labels.
+    # Wire any actor seen on a member to the WHOLE campaign, so one OSM attribution
+    # (corex -> DPRK) lights up every repo in the cluster.
     for pk, members in camp_members.items():
         if len(members) < 2:
             continue
         cid = f"camp:{pk}"
-        add(cid, "campaign", f"payload {pk[:6]}", repos=len(members))
+        add(cid, "campaign", campaign_id(pk), repos=len(members),
+            fingerprint=pk.split(":", 1)[1])
         for m in members:
             edges.append({"s": cid, "t": f"repo:{m}", "kind": "campaign"})
         for actor in camp_actors.get(pk, ()):

