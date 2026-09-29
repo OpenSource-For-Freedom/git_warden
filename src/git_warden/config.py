@@ -89,6 +89,10 @@ _DEFAULT_GOOD_OWNERS = (
     # patterns (the microsoft/vscode, posit-dev/positron, che-incubator/che-code FPs)
     "posit-dev", "che-incubator", "eclipse-che", "gitpod-io", "coder", "cdr",
     "vscodium", "theia-ide", "eclipse-theia", "microsoft-dev", "gitpod-samples",
+    # AI-safety research: BashArena ships deliberate red-team "side tasks"
+    # (disable_firewall, exfiltration) as benchmark fixtures, not malware
+    # (redwoodresearch/basharena_public reached an approved OSM batch).
+    "redwoodresearch",
 )
 KNOWN_GOOD_OWNERS = frozenset(
     o.strip().casefold()

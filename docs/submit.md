@@ -9,7 +9,8 @@ The reporting path is deliberately separate from discovery. A repository can rem
 The live integration uses the OSM functions API:
 
 - exact resource check: `GET /check-malicious`
-- create report: `POST /submit-threat`
+- create report: `POST /submit-threat-report` (OSM's public docs name this
+  `submit-threat`, but that path returns 404 in production)
 - authentication: `Authorization: Bearer <token>`
 
 Repository checks use:
@@ -57,7 +58,7 @@ sequenceDiagram
     W->>W: sandbox revalidation
     W->>O: check-malicious(repository) again
     alt still novel and confirmed
-        W->>O: POST /submit-threat
+        W->>O: POST /submit-threat-report
         O-->>W: threat id
         W->>W: record local state + submitted breadcrumb
     else changed, duplicate, or inconclusive
