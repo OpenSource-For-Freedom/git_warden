@@ -13,8 +13,10 @@ Run it directly (or via ``make submit``):
     python -m git_warden.osm_submit --reconcile    # our reports vs OSM (read-only)
     python -m git_warden.osm_submit --confirm      # actually POST to OSM
 
-The live function is ``submit-threat`` (the public docs say
-``submit-threat``, which 404s). Only NOVEL confirmed findings are eligible
+Reads use ``check-malicious``; writes POST to the live function
+``submit-threat-report``. The public docs name the write endpoint
+``submit-threat``, but that 404s in production (joint hunt, 2026-09-28: every
+POST to ``/functions/v1/submit-threat`` returned 404). Only NOVEL confirmed findings are eligible
 (:func:`gold_for_submission`): intrinsic-evidence finds OSM does not already
 have. Each report carries its proof -- the detection method and the confirming
 file:line + rule -- so reviewers can verify. Operator notes (cleanup, run-
@@ -1188,12 +1190,17 @@ class _RequestsPoster:
         import requests
 
         resp = requests.post(url, json=json, headers=headers, timeout=HTTP_TIMEOUT)
-        resp.raise_for_status()
+        if resp.status_code >= 400:
+            # Keep OSM's own error text: a bare "404 Not Found" hid which endpoint
+            # or field was wrong.
+            raise requests.HTTPError(
+                f"{resp.status_code} from {url}: {(resp.text or '').strip()[:300]}",
+                response=resp)
         return resp.json() if resp.content else {}
 
 
 def submit_threat(report: dict, *, token: str | None = None, http=None) -> dict:
-    """POST one report to OSM submit-threat. Returns the parsed response.
+    """POST one report to OSM ``submit-threat-report``. Returns the parsed response.
 
     Raises if no token, or on an HTTP error (the caller logs and continues).
     """
@@ -1202,7 +1209,7 @@ def submit_threat(report: dict, *, token: str | None = None, http=None) -> dict:
         raise RuntimeError("GW_OSM_API_KEY is not set; cannot submit to OSM.")
     http = http or _RequestsPoster()
     return http.post_json(
-        osm_endpoint("submit-threat"),
+        osm_endpoint("submit-threat-report"),
         json=report,
         headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
     )

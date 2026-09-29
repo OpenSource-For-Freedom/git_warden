@@ -133,7 +133,7 @@ workflow.
 The unattended path checks the exact repository through OSM
 `GET /check-malicious`, re-runs Tier-2 in the hardened sandbox, verifies repository
 liveness, checks shared submission state, checks OSM again immediately before the
-write, and only then may call `POST /submit-threat`.
+write, and only then may call `POST /submit-threat-report`.
 
 Only AUTO findings with intrinsic repository evidence are eligible. Any network,
 authentication, sandbox, liveness, or response-contract failure blocks publication.
