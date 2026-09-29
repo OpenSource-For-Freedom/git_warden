@@ -136,7 +136,7 @@ steal-and-send); threat-intel leads (a malicious owner, a shared signature) only
 *seed* which repos get scanned, never confirm one alone.
 
 <!-- git-warden:registry:start -->
-_Top 10 of 43 repositories confirmed malicious by static analysis this run, ranked by severity. The full list ships as the run's CSV artifact and to the Discord feed; every row's evidence (file, line, rule) is in that CSV. Dispute: open an issue and we will re-review._
+_Top 10 of 103 repositories confirmed malicious by static analysis this run, ranked by severity. The full list ships as the run's CSV artifact and to the Discord feed; every row's evidence (file, line, rule) is in that CSV. Dispute: open an issue and we will re-review._
 
 | Repository | Detection | Score | Attribution | Proof (file:line rule) |
 |------------|-----------|-------|-------------|------------------------|
@@ -144,12 +144,12 @@ _Top 10 of 43 repositories confirmed malicious by static analysis this run, rank
 | [`gauravraisharma/ticketting-system`](https://github.com/gauravraisharma/ticketting-system) | signature_match | 15 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+19 more) |
 | [`huncholane/defi_property`](https://github.com/huncholane/defi_property) | signature_match | 15 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+12 more) |
 | [`mohamedeturki/shigud-clone`](https://github.com/mohamedeturki/shigud-clone) | signature_match | 15 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+4 more) |
+| [`ta3pks/decentralized-social`](https://github.com/ta3pks/decentralized-social) | signature_match | 15 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+19 more) |
+| [`usmankhan16677/messageforge`](https://github.com/usmankhan16677/messageforge) | signature_match | 15 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+19 more) |
+| [`uribresler/elevated-spaces-backend`](https://github.com/uribresler/elevated-spaces-backend) | signature_match | 14 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+11 more) |
 | [`agrawalchirag/corex`](https://github.com/agrawalchirag/corex) | signature_match | 13 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+4 more) |
-| [`ricardomartins9899/smartpay-demo`](https://github.com/ricardomartins9899/smartpay-demo) | signature_match | 13 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+5 more) |
-| [`icecoldjay/bri`](https://github.com/icecoldjay/bri) | signature_match | 12 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+6 more) |
-| [`lfirsl/morphix`](https://github.com/lfirsl/morphix) | signature_match | 12 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+13 more) |
-| [`nelsondev19/defi-property`](https://github.com/nelsondev19/defi-property) | signature_match | 12 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+12 more) |
-| [`itsmeblackops/wisepanda-bot-main`](https://github.com/itsmeblackops/wisepanda-bot-main) | signature_match | 11 | unattributed | .cursor/tasks.json:0 install_hook/vscode-autorun  (+5 more) |
+| [`allzone-technologies/canteen-pwa`](https://github.com/allzone-technologies/canteen-pwa) | signature_match | 13 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+19 more) |
+| [`findusman/pos_backend`](https://github.com/findusman/pos_backend) | signature_match | 13 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+19 more) |
 <!-- git-warden:registry:end -->
 
 > [!NOTE]
