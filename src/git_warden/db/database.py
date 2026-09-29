@@ -261,6 +261,25 @@ class Database:
                 (actor_key, canonical_name, category, run_id, run_id),
             )
 
+    def record_campaign_members(
+        self, members: list[tuple[str, str, str]], run_id: str,
+    ) -> None:
+        """Upsert ``(campaign_id, fingerprint, full_name)`` rows seen this run.
+
+        ``first_seen_run`` is kept from the first sighting; ``last_seen_run`` moves.
+        """
+        with self.transaction() as c:
+            c.executemany(
+                """
+                INSERT INTO campaign_members
+                    (campaign_id, fingerprint, full_name, first_seen_run, last_seen_run)
+                VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT(campaign_id, full_name)
+                    DO UPDATE SET last_seen_run = excluded.last_seen_run
+                """,
+                [(cid, fp, name, run_id, run_id) for cid, fp, name in members],
+            )
+
     def set_attribution(self, full_name: str, actor_key: str) -> None:
         """Stamp a threat-actor attribution onto a finding (campaign propagation).
 

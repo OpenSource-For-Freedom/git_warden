@@ -75,6 +75,19 @@ Confidence then determines disposition:
 
 A threat-intel feed, owner reputation, or campaign association may raise priority. It does not substitute for intrinsic evidence.
 
+### Campaign correlation
+
+`correlate.py` groups confirmed repositories into campaigns by one of two fingerprints. Each campaign gets a stable id, `GW-C-<hash>`.
+
+| Fingerprint | Example | Propagates attribution |
+|---|---|---|
+| `payload` | first 96 base64 characters of an `eval(atob(...))` loader stub | yes, from an already-attributed member |
+| `dropper` | `vscode-folderopen:settings/{os}?flag=`: delivery vector plus the dropper URL path, with host, OS segment and parameter values removed | no |
+
+The dropper fingerprint catches the folderOpen `tasks.json` lures. Those lures rotate to a throwaway C2 host per repository, so clustering by host splits them into one-repository groups. Reputable install hosts never produce a dropper fingerprint.
+
+Every hunt records membership in `campaign_members`, which keeps the first and last run each repository was seen. The OSM automation run summary opens with a **Campaign correlation** table. It groups that run's validated repositories with every other confirmed member of the same campaign, and lists owners, C2 hosts and a representative command. The dashboard graph and `/api/campaigns` show the same clusters.
+
 ## Trust boundaries
 
 ### GitHub

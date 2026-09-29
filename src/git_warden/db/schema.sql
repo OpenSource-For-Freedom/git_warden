@@ -149,6 +149,20 @@ CREATE TABLE IF NOT EXISTS repo_findings (
 CREATE INDEX IF NOT EXISTS idx_finding_status ON repo_findings(status);
 CREATE INDEX IF NOT EXISTS idx_finding_method ON repo_findings(detection_method);
 CREATE INDEX IF NOT EXISTS idx_finding_actor ON repo_findings(actor_key);
+
+-- Campaign membership (correlate.py): confirmed repos sharing one campaign
+-- fingerprint (loader payload or host-free dropper shape), kept across runs so a
+-- campaign's first sighting and growth survive later takedowns.
+CREATE TABLE IF NOT EXISTS campaign_members (
+    campaign_id    TEXT NOT NULL,             -- GW-C-<sha1(fingerprint)[:8]>
+    fingerprint    TEXT NOT NULL,             -- e.g. dropper:vscode-folderopen:settings/{os}?flag=
+    full_name      TEXT NOT NULL,
+    first_seen_run TEXT REFERENCES runs(run_id),
+    last_seen_run  TEXT REFERENCES runs(run_id),
+    PRIMARY KEY (campaign_id, full_name)
+);
+
+CREATE INDEX IF NOT EXISTS idx_campaign_member_repo ON campaign_members(full_name);
 -- NOTE: the code_hash index (doc 04 6 cross-platform dedup) is created in
 -- init_db() AFTER the column migration, since on an upgraded store the column
 -- is added by ALTER TABLE and would not yet exist when this script runs.

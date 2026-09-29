@@ -21,6 +21,7 @@ import requests
 
 from . import config
 from . import intel_exchange as bus
+from .correlate import Campaign, campaign_index
 from .db import Database
 from .osm_submit import (
     build_report,
@@ -258,6 +259,7 @@ def _code(text) -> str:
 
 def validated_markdown(
     row, result, report: dict, *, status: str, threat_id: str | None = None,
+    campaign: Campaign | None = None,
 ) -> str:
     """One "Validated malicious repo" section for the run summary.
 
@@ -292,6 +294,10 @@ def validated_markdown(
         f"| Detection method | {_cell(row['detection_method'])} |",
         f"| Tags | {_cell(', '.join(report.get('tags') or []))} |",
     ]
+    if campaign is not None:
+        lines.append(
+            f"| Campaign | {_code(campaign.id)}: one of {len(campaign.members)} confirmed "
+            f"repos sharing {_code(campaign.fingerprint)} ({campaign.kind}) |")
     flagged = sorted(n for n, s in (getattr(result, "scanners", None) or {}).items()
                      if s == "flagged")
     if flagged:
@@ -321,9 +327,43 @@ def validated_markdown(
     return "\n".join(lines) + "\n"
 
 
+def campaigns_markdown(found: dict[str, tuple[Campaign, list[str]]]) -> list[str]:
+    """The "Campaign correlation" block: this run's validated repos grouped by the
+    campaign fingerprint they share with every other confirmed repo."""
+    if not found:
+        return []
+    ordered = sorted(found.values(), key=lambda cv: (-len(cv[1]), cv[0].key))
+    out = ["### Campaign correlation", "",
+           "Validated repos in this run that share a campaign fingerprint with other "
+           "confirmed repos (across owner accounts and rotating C2 hosts).", "",
+           "| Campaign | Fingerprint | Validated this run | Confirmed repos | Owners "
+           "| C2 hosts | Attribution |",
+           "|---|---|---|---|---|---|---|"]
+    for camp, names in ordered:
+        out.append(
+            f"| {_code(camp.id)} | {_code(camp.fingerprint)} ({camp.kind}) "
+            f"| {len(names)} | {len(camp.members)} | {len(camp.owners)} "
+            f"| {len(camp.c2_hosts)} | {_cell(', '.join(sorted(camp.actors)) or 'none')} |")
+    for camp, names in ordered:
+        others = [m for m in camp.members if m not in names]
+        out += ["", f"**{_code(camp.id)}**: " + ", ".join(_code(n) for n in names)]
+        if others:
+            shown = ", ".join(_code(n) for n in others[:10])
+            more = f" and {len(others) - 10} more" if len(others) > 10 else ""
+            out += ["", f"Other confirmed members: {shown}{more}"]
+        if camp.c2_hosts:
+            hosts = sorted(camp.c2_hosts)
+            more = f" and {len(hosts) - 10} more" if len(hosts) > 10 else ""
+            out += ["", "C2 hosts: " + ", ".join(_code(h) for h in hosts[:10]) + more]
+        if camp.snippet:
+            out += ["", "Representative command:", "", _fence(camp.snippet)]
+    return out + [""]
+
+
 def run_summary_markdown(
     sections: list[str], skipped: list[tuple[str, str]], *, dry_run: bool,
     notes: list[str] | None = None,
+    campaigns: dict[str, tuple[Campaign, list[str]]] | None = None,
 ) -> str:
     mode = ("validate-only — nothing was submitted to OSM" if dry_run
             else "submit — validated repos were POSTed to OSM")
@@ -332,6 +372,7 @@ def run_summary_markdown(
     out += [f"> {n}\n" for n in (notes or [])]
     if not sections:
         out += ["No repository passed every gate this run.", ""]
+    out += campaigns_markdown(campaigns or {})
     out += sections
     if skipped:
         out += ["", "<details><summary>Skipped candidates "
@@ -386,6 +427,7 @@ def run(
     sections: list[str] = []
     skipped: list[tuple[str, str]] = []
     notes: list[str] = []
+    found: dict[str, tuple[Campaign, list[str]]] = {}
     errors = 0
     sent = 0
 
@@ -413,6 +455,7 @@ def run(
             raise AutomationBlocked("Docker sandbox unavailable; cannot re-validate")
 
         _ensure_attempts_table(db)
+        by_repo = campaign_index(db)
         scans = 0
         for row in rows:
             full_name = row["full_name"]
@@ -481,9 +524,13 @@ def run(
             print(f"[validated] {full_name}: {reason}; OSM full history clear")
             if validated_out is not None:
                 validated_out.append(full_name)
+            camp = by_repo.get(full_name)
+            if camp is not None:
+                found.setdefault(camp.key, (camp, []))[1].append(full_name)
 
             if dry_run:
-                sections.append(validated_markdown(row, result, report, status="not_reported"))
+                sections.append(validated_markdown(
+                    row, result, report, status="not_reported", campaign=camp))
                 print(f"[validated-only] {full_name}: not reported to OSM (validate-only run)")
                 continue
 
@@ -492,7 +539,8 @@ def run(
                 response = submit_threat(report)
             except Exception as exc:  # noqa: BLE001 - one bad POST must not stop the rest
                 unmark_osm_submitted(db, full_name)
-                sections.append(validated_markdown(row, result, report, status="submit_failed"))
+                sections.append(validated_markdown(
+                    row, result, report, status="submit_failed", campaign=camp))
                 print(f"[error] {full_name}: OSM submission failed: {exc}")
                 errors += 1
                 continue
@@ -501,7 +549,8 @@ def run(
             mark_osm_submitted(db, full_name, threat_id)
             bus.mark_submitted("repository", resource, threat_id=threat_id)
             sections.append(validated_markdown(
-                row, result, report, status="submitted", threat_id=threat_id))
+                row, result, report, status="submitted", threat_id=threat_id,
+                campaign=camp))
             sent += 1
             print(f"[submitted] {full_name} -> {threat_id or 'OSM'}")
             time.sleep(pace)
@@ -510,7 +559,7 @@ def run(
         raise
     finally:
         _write_summary(summary_path, run_summary_markdown(
-            sections, skipped, dry_run=dry_run, notes=notes))
+            sections, skipped, dry_run=dry_run, notes=notes, campaigns=found))
 
     if dry_run:
         print(f"Warden OSM automation: validated {len(sections)} repository report(s); "
