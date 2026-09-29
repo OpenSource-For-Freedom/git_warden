@@ -447,3 +447,14 @@ def test_cli_empty_approved_list_does_nothing(monkeypatch, tmp_path):
     approved.write_text("[]")
     monkeypatch.setattr(auto, "run", lambda *a, **k: pytest.fail("must not run"))
     assert auto.main(["--db", str(db_path), "--only-file", str(approved)]) == 0
+
+
+def test_known_good_owner_is_never_submitted(monkeypatch, db):
+    rows = [{"full_name": "redwoodresearch/basharena_public"}]
+    monkeypatch.setattr(auto, "gold_for_submission", lambda db, limit=0: rows)
+    monkeypatch.setattr(auto, "_existing_repo",
+                        lambda name: pytest.fail("known-good owner must not reach OSM"))
+    monkeypatch.setattr(auto, "submit_threat", lambda report: pytest.fail("must not POST"))
+    validated = []
+    auto.run(db, only={"redwoodresearch/basharena_public"}, validated_out=validated)
+    assert validated == []

@@ -418,6 +418,11 @@ def run(
             full_name = row["full_name"]
             resource = f"https://github.com/{full_name}"
 
+            if full_name.split("/", 1)[0].casefold() in config.KNOWN_GOOD_OWNERS:
+                # Defense in depth: reconcile should already have rejected it,
+                # but a known-good owner is never reported to OSM.
+                skip(full_name, "owner is on the known-good list (never reported)")
+                continue
             if _bus_submitted(full_name):
                 skip(full_name, "shared intelligence already marks it submitted")
                 continue

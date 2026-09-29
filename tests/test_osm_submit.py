@@ -141,7 +141,9 @@ def test_submit_threat_posts_to_endpoint_with_auth():
 
     resp = submit_threat({"report_type": "repository"}, token="osm_tok", http=FakeHttp())
     assert resp["threat_id"] == "abc-123"
-    assert calls["url"].endswith("/submit-threat")
+    # The documented `submit-threat` 404s in production; the live write
+    # function is `submit-threat-report`.
+    assert calls["url"].endswith("/submit-threat-report")
     assert calls["headers"]["Authorization"] == "Bearer osm_tok"
 
 
@@ -423,3 +425,18 @@ def test_submit_main_keeps_claim_when_post_succeeds(tmp_path, monkeypatch):
     assert row["submitted_osm"] == 1 and row["osm_threat_id"] == "tid-9"
     assert gold_for_submission(db) == []      # sent -> never re-selected (no duplicate)
     db.close()
+
+
+def test_submit_error_keeps_osm_response_body(monkeypatch):
+    import requests
+
+    from git_warden.osm_submit import _RequestsPoster
+
+    class Resp:
+        status_code = 404
+        text = '{"error":"Requested function was not found"}'
+        content = text.encode()
+
+    monkeypatch.setattr(requests, "post", lambda *a, **k: Resp())
+    with pytest.raises(requests.HTTPError, match="Requested function was not found"):
+        _RequestsPoster().post_json("https://osm.example/functions/v1/x", json={})

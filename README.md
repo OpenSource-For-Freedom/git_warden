@@ -296,7 +296,7 @@ protected `osm-submission` GitHub Environment.
 After approval, Warden accepts only the exact repository list shown in the
 preview, re-runs the hardened static validation, checks the current repository,
 calls OSM's `check-malicious` endpoint again, and only then may call
-`POST /submit-threat`. A changed, removed, already-reported, or inconclusive
+`POST /submit-threat-report`. A changed, removed, already-reported, or inconclusive
 repository is dropped.
 
 Local analyst tooling remains available through `python -m git_warden.osm_submit`.
