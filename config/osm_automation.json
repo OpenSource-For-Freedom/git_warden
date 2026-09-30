@@ -5,7 +5,7 @@
   "require_positive_liveness": true,
   "require_intrinsic_evidence": true,
   "osm_full_history_prechecks": 2,
-  "max_submissions_per_run": 10,
+  "max_submissions_per_run": 25,
   "pace_seconds": 8,
   "submit_domains": false,
   "fail_closed": true,
