@@ -431,6 +431,7 @@ def _cmd_hunt(args: argparse.Namespace) -> int:
             max_packages=args.max_packages,
             max_osm=args.max_osm,
             max_signatures=args.max_signatures,
+            signature_family=args.signature_family or None,
             max_news=args.max_news,
             max_package_repos=args.max_package_repos,
             search_pace=args.pace,
@@ -783,6 +784,9 @@ def build_parser() -> argparse.ArgumentParser:
                         help="Skip malware code-signature search (novel-repo discovery).")
     hunt_p.add_argument("--max-signatures", type=int, default=14,
                         help="Malware code signatures to code-search (novel-repo engine).")
+    hunt_p.add_argument("--signature-family", default="",
+                        help="Search this seed family first (the 'family' tag in "
+                             "malware_signatures.json, e.g. minecraft).")
     hunt_p.add_argument("--no-news", action="store_true",
                         help="Skip the Hacker News / Google News discovery pivot.")
     hunt_p.add_argument("--max-news", type=int, default=6,
