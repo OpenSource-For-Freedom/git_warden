@@ -478,3 +478,32 @@ def test_cli_runs_each_registry(monkeypatch, tmp_path, capsys):
     assert cli.main(["extensions", "--db", str(tmp_path / "w.sqlite"),
                      "--registry", "marketplace"]) == 0
     assert seen == ["vsmarketplace"]
+
+
+def test_marketplace_retries_transient_errors(monkeypatch):
+    monkeypatch.setattr(marketplace.time, "sleep", lambda s: None)
+
+    class Seq:
+        def __init__(self, statuses):
+            self.statuses, self.calls = list(statuses), 0
+
+        def post(self, url, json=None, **kw):
+            self.calls += 1
+            code = self.statuses.pop(0)
+
+            class R:
+                status_code = code
+
+                def json(self):
+                    return {"results": [{"extensions": [GALLERY_EXT]}]}
+            return R()
+
+    ok = Seq([503, 429, 200])
+    assert len(marketplace.MarketplaceClient(session=ok, pace=0).recent(1)) == 1
+    assert ok.calls == 3
+    down = Seq([503, 503, 503])
+    assert marketplace.MarketplaceClient(session=down, pace=0).search("x") == []
+    assert down.calls == 3
+    bad = Seq([400])
+    assert marketplace.MarketplaceClient(session=bad, pace=0).search("x") == []
+    assert bad.calls == 1
