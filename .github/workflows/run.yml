@@ -6,6 +6,23 @@ on:
   # The DB for these dispatch runs persists in the Actions cache between runs
   # (best-effort: GitHub evicts a cache after ~7 idle days).
   workflow_dispatch:
+    inputs:
+      limit:
+        description: "Max candidates to Tier-2 scan this run"
+        type: number
+        default: 75
+      timeout_minutes:
+        description: "Hunt job timeout in minutes (GitHub-hosted cap is 360)"
+        type: number
+        default: 60
+      max_signatures:
+        description: "Malware code-signature searches this run"
+        type: number
+        default: 14
+      resume:
+        description: "Skip repos already Tier-2 scanned (continue a long sweep)"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -17,7 +34,7 @@ concurrency:
 jobs:
   hunt:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: ${{ fromJSON(inputs.timeout_minutes) }}
     steps:
       - name: Legion Harden Runner
         uses: Wraith-security/legion_runner@v1.0.61
@@ -64,11 +81,16 @@ jobs:
           GW_GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           GW_OSM_API_KEY: ${{ secrets.OSM_KEY }}
           GW_DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          HUNT_LIMIT: ${{ inputs.limit }}
+          HUNT_MAX_SIGNATURES: ${{ inputs.max_signatures }}
+          HUNT_RESUME: ${{ inputs.resume && '--resume' || '' }}
 
-        # Top 75 candidates per weekly run (ranked by signature/owner/signal
-        # priority), not every possible repo. Keeps the run well inside the
-        # timeout; each week surfaces the next batch of new finds.
-        run: python gw.py hunt --scan --gold --limit 75
+        # Top N candidates per run (ranked by signature/owner/signal priority),
+        # not every possible repo. Discovery skips repos already in the DB, so
+        # back-to-back long runs each surface the next batch of new finds.
+        run: >-
+          python gw.py hunt --scan --gold --limit "$HUNT_LIMIT"
+          --max-signatures "$HUNT_MAX_SIGNATURES" $HUNT_RESUME
 
       - name: Publish registry table to README
         if: always()
