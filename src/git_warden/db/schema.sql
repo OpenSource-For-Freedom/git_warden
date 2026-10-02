@@ -163,6 +163,27 @@ CREATE TABLE IF NOT EXISTS campaign_members (
 );
 
 CREATE INDEX IF NOT EXISTS idx_campaign_member_repo ON campaign_members(full_name);
+
+-- VS Code extensions (extensions/hunt.py): one row per registry extension, the
+-- latest version Warden screened or scanned in the sandbox.
+CREATE TABLE IF NOT EXISTS extension_findings (
+    ext_key         TEXT PRIMARY KEY,         -- openvsx:publisher.name (casefolded)
+    registry        TEXT NOT NULL,            -- openvsx
+    namespace       TEXT NOT NULL,
+    name            TEXT NOT NULL,
+    version         TEXT,
+    url             TEXT,
+    status          TEXT NOT NULL DEFAULT 'candidate',  -- candidate|not_confirmed|confirmed|fetch_failed
+    confidence      TEXT NOT NULL DEFAULT 'none',       -- auto|review|none
+    score           INTEGER NOT NULL DEFAULT 0,         -- Tier-2 static score
+    screen_score    INTEGER NOT NULL DEFAULT 0,         -- Tier-1 metadata score
+    reasons         TEXT NOT NULL DEFAULT '[]',         -- JSON: why it was a candidate
+    raw_payload     TEXT NOT NULL DEFAULT '{}',         -- JSON: sandbox result
+    first_seen_run  TEXT REFERENCES runs(run_id),
+    last_seen_run   TEXT REFERENCES runs(run_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_extension_status ON extension_findings(status);
 -- NOTE: the code_hash index (doc 04 6 cross-platform dedup) is created in
 -- init_db() AFTER the column migration, since on an upgraded store the column
 -- is added by ALTER TABLE and would not yet exist when this script runs.

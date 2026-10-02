@@ -6,7 +6,9 @@ analysis, and prints the result as one JSON line on stdout. The malware bytes ne
 leave the container; only this JSON telemetry crosses back to the host, which is the
 git_paca sandbox contract applied to warden's static scan.
 
-Usage (inside the container): ``python -m git_warden.sandbox_entry <owner/name>``.
+Usage (inside the container): ``python -m git_warden.sandbox_entry <owner/name>``,
+or ``python -m git_warden.sandbox_entry --vsix-stdin`` with ``{"id": ..., "url": ...}``
+on stdin to fetch and analyze one VS Code extension from an allowlisted registry host.
 """
 
 from __future__ import annotations
@@ -46,11 +48,44 @@ def _result_to_dict(result) -> dict:
     }
 
 
+def _main_vsix(ext_id: str, url: str) -> int:
+    """Fetch one .vsix into tmpfs, unpack it safely, and analyze it statically."""
+    from .extensions.vsix import VsixError, analyze_extension, download, safe_extract
+
+    work = Path(tempfile.mkdtemp(dir="/work" if Path("/work").exists() else None))
+    try:
+        archive = download(url, work / "ext.vsix")
+        root = safe_extract(archive, work / "unpacked")
+    except VsixError as exc:
+        print(json.dumps({"full_name": ext_id, "fetch_failed": True, "reason": str(exc)}))
+        return 0
+    ext_root = root / "extension"
+    if not (ext_root / "package.json").is_file():
+        print(json.dumps({"full_name": ext_id, "fetch_failed": True,
+                          "reason": "no extension/package.json in archive"}))
+        return 0
+    print(json.dumps(analyze_extension(ext_root, ext_id, runner=subprocess.run)))
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     argv = argv if argv is not None else sys.argv[1:]
     if not argv:
         print(json.dumps({"error": "no repo given"}))
         return 2
+    if argv[0] == "--vsix-stdin":
+        try:
+            target = json.loads(sys.stdin.read() or "{}")
+            ext_id, url = str(target["id"]), str(target["url"])
+        except (ValueError, KeyError, TypeError):
+            print(json.dumps({"error": "expected {\"id\", \"url\"} JSON on stdin"}))
+            return 2
+        from .extensions.vsix import host_allowed
+        if not host_allowed(url):
+            print(json.dumps({"full_name": ext_id, "fetch_failed": True,
+                              "reason": "download host not allowlisted"}))
+            return 0
+        return _main_vsix(ext_id, url)
     full_name = argv[0]
     spread_intel = None
     # Optional package-spread intel: the host may bundle the incident manifest into
