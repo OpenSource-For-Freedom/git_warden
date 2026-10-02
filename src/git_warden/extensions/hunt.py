@@ -49,16 +49,19 @@ def _similar(a: str, b: str) -> float:
     return difflib.SequenceMatcher(None, a, b).ratio()
 
 
-def lookalike_of(ext: Extension, popular: list[dict]) -> str | None:
+def lookalike_of(ext: Extension, popular: list[dict],
+                 genuine: set[str] | None = None) -> str | None:
     """The popular extension id this one imitates, or None.
 
     Same display name or near-identical extension name under a DIFFERENT
-    publisher. The genuine extension (same id) is never a lookalike of itself.
+    publisher. A genuine extension (any id on the popular list, e.g. the official
+    prettier.prettier-vscode next to esbenp.prettier-vscode) is never a lookalike.
     """
+    genuine = genuine if genuine is not None else {p["id"].casefold() for p in popular}
+    if ext.ext_id.casefold() in genuine:
+        return None
     for pop in popular:
         pop_id = pop["id"].casefold()
-        if ext.ext_id.casefold() == pop_id:
-            return None
         pop_name = pop_id.split(".", 1)[1]
         if (_similar(ext.name, pop_name) >= 0.85
                 or _similar(ext.display_name, pop.get("display", "")) >= 0.9):
@@ -96,10 +99,11 @@ def collect_candidates(client: OpenVsxClient, db, *, recent: int = 100,
     for ext in client.recent(recent):
         _add(pool, ext, "recently published", 1)
 
+    genuine = {p["id"].casefold() for p in popular}
     for pop in popular:
         query = pop.get("display") or pop["id"].split(".", 1)[1]
         for ext in client.search(query, size=25):
-            target = lookalike_of(ext, [pop])
+            target = lookalike_of(ext, [pop], genuine)
             if target:
                 _add(pool, ext, f"lookalike of {target}", 3)
 

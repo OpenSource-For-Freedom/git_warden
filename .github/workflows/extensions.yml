@@ -53,7 +53,7 @@ jobs:
       - name: Hunt extensions
         env:
           GW_SHARED_INTEL: data/shared_intel/breadcrumbs.jsonl
-          LIMIT: ${{ inputs.limit || '15' }}
+          LIMIT: ${{ inputs.limit || '40' }}
           RECENT: ${{ inputs.recent || '100' }}
         run: >-
           python gw.py extensions --limit "$LIMIT" --recent "$RECENT"

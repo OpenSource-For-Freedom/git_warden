@@ -28,5 +28,7 @@
   {"id": "ms-azuretools.vscode-docker", "display": "Docker"},
   {"id": "hashicorp.terraform", "display": "HashiCorp Terraform"},
   {"id": "github.vscode-pull-request-github", "display": "GitHub Pull Requests"},
-  {"id": "ms-vscode.cpptools", "display": "C/C++"}
+  {"id": "ms-vscode.cpptools", "display": "C/C++"},
+  {"id": "prettier.prettier-vscode", "display": "Prettier - Code formatter"},
+  {"id": "ms-vscode.live-server", "display": "Live Preview"}
 ]
