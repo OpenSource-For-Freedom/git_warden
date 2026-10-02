@@ -81,6 +81,9 @@ plugin malware (Forge, Fabric, Bukkit/Paper):
 Discovery seeds in `config/malware_signatures.json` (`mc-*`) code-search GitHub
 for token-read + webhook pairs. Seeds whose result pages are all walked rotate
 out of the `--max-signatures` budget so later seeds get searched.
+Seeds carry an optional `family` tag; `hunt --signature-family <name>` (the
+`signature_family` input on `run.yml`) searches that family first, ahead of
+learned signatures, so a focused hunt such as `minecraft` always runs.
 
 The OSS scanners **GuardDog** (ecosystem-aware) and **YARA** may confirm on their
 own; **Semgrep** runs as enrichment only. Confirmation is precision-first: one

@@ -116,11 +116,13 @@ def _mine_dropper_paths(root: Path) -> set[str]:
     return out
 
 
-def load_seed_signatures(path) -> list[str]:
+def load_seed_signatures(path, family: str | None = None) -> list[str]:
     """Load curated malware-signature search queries from a JSON file.
 
-    Format: a JSON array of objects ``{"name", "query", "note"?}``. Returns the
-    list of ``query`` strings; missing/invalid file yields an empty list.
+    Format: a JSON array of objects ``{"name", "query", "family"?, "note"?}``.
+    Returns the list of ``query`` strings; missing/invalid file yields an empty
+    list. With ``family``, only seeds tagged with that family (case-insensitive)
+    are returned, so a hunt can be focused on one malware family.
     """
     try:
         raw = json.loads(Path(path).read_text(encoding="utf-8"))
@@ -129,6 +131,8 @@ def load_seed_signatures(path) -> list[str]:
     out: list[str] = []
     for entry in raw if isinstance(raw, list) else []:
         if isinstance(entry, dict) and isinstance(entry.get("query"), str):
+            if family and str(entry.get("family", "")).casefold() != family.casefold():
+                continue
             q = entry["query"].strip()
             if q:
                 out.append(q)

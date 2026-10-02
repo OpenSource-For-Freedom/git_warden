@@ -23,6 +23,10 @@ on:
         description: "Skip repos already Tier-2 scanned (continue a long sweep)"
         type: boolean
         default: false
+      signature_family:
+        description: "Search this signature family first (e.g. minecraft); blank for none"
+        type: string
+        default: ""
 
 permissions:
   contents: read
@@ -84,6 +88,7 @@ jobs:
           HUNT_LIMIT: ${{ inputs.limit }}
           HUNT_MAX_SIGNATURES: ${{ inputs.max_signatures }}
           HUNT_RESUME: ${{ inputs.resume && '--resume' || '' }}
+          HUNT_SIGNATURE_FAMILY: ${{ inputs.signature_family }}
 
         # Top N candidates per run (ranked by signature/owner/signal priority),
         # not every possible repo. Discovery skips repos already in the DB, so
@@ -91,6 +96,7 @@ jobs:
         run: >-
           python gw.py hunt --scan --gold --limit "$HUNT_LIMIT"
           --max-signatures "$HUNT_MAX_SIGNATURES" $HUNT_RESUME
+          --signature-family "$HUNT_SIGNATURE_FAMILY"
 
       - name: Publish registry table to README
         if: always()
