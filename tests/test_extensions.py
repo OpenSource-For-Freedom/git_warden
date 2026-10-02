@@ -55,6 +55,8 @@ def _vsix_bytes(files: dict[str, str]) -> bytes:
 @pytest.mark.parametrize("url,ok", [
     ("https://open-vsx.org/api/a/b/1.0.0/file/a.b-1.0.0.vsix", True),
     ("https://openvsxorg.blob.core.windows.net/resources/a/b/a.b.vsix", True),
+    ("https://openvsx.eclipsecontent.org/a/b/1.0.0/a.b-1.0.0.vsix", True),
+    ("https://eclipsecontent.org/x.vsix", False),
     ("http://open-vsx.org/api/a/b/file.vsix", False),          # not https
     ("https://open-vsx.org.evil.com/x.vsix", False),            # suffix spoof
     ("https://evil.com/open-vsx.org/x.vsix", False),

@@ -24,7 +24,8 @@ Tier 2. A version already scanned is skipped unless `--rescan` is given.
 Each candidate is fetched and analyzed inside the hardened `warden-sandbox`
 container (`sandbox_entry --vsix-stdin`, with the extension id and URL passed as JSON on stdin rather than the command line):
 
-- The download is accepted only from `open-vsx.org` and its blob storage, over
+- The download is accepted only from `open-vsx.org` and its content hosts
+  (`openvsx.eclipsecontent.org`, the older Azure blob storage), over
   HTTPS, following redirects only to those hosts, with a 150 MB cap.
 - The archive is unpacked into the container's tmpfs, with checks against path
   traversal, absolute paths, symlinks, too many entries and zip bombs.

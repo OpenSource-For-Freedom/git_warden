@@ -18,8 +18,10 @@ from urllib.parse import urljoin, urlsplit
 from ..scanning.bash_scanner import BashFinding
 
 # Registry hosts a download (or its redirect) may come from. Open VSX serves the
-# API on open-vsx.org and redirects file downloads to its blob storage.
-ALLOWED_HOSTS = ("open-vsx.org", "openvsxorg.blob.core.windows.net")
+# API on open-vsx.org and redirects file downloads to the Eclipse Foundation's
+# content host (formerly its Azure blob storage).
+ALLOWED_HOSTS = ("open-vsx.org", "openvsx.eclipsecontent.org",
+                 "openvsxorg.blob.core.windows.net")
 MAX_VSIX_BYTES = 150_000_000
 MAX_UNPACKED_BYTES = 400_000_000
 MAX_ENTRIES = 30_000
