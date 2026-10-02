@@ -34,7 +34,7 @@ _TIMEOUT = int(os.environ.get("GW_SANDBOX_TIMEOUT", "300"))
 
 
 def build_run_argv(full_name: str, image: str = SANDBOX_IMAGE, *,
-                   name: str | None = None) -> list[str]:
+                   name: str | None = None, args: list[str] | None = None) -> list[str]:
     """The hardened ``docker run`` argv for one repo. Pure; printable for review.
 
     Network is ON only because the clone fetches from GitHub; the target is never
@@ -43,6 +43,8 @@ def build_run_argv(full_name: str, image: str = SANDBOX_IMAGE, *,
 
     ``name`` lets the caller know the container name so it can force-reap a
     container that outlived its scan (a timeout kills the client before ``--rm``).
+    ``args`` replaces the entrypoint arguments (default: just the repo name), e.g.
+    ``["--vsix", ext_id, url]`` for an extension scan.
     """
     name = name or f"warden-scan-{uuid.uuid4().hex[:12]}"
     return [
@@ -63,7 +65,7 @@ def build_run_argv(full_name: str, image: str = SANDBOX_IMAGE, *,
         # The image ENTRYPOINT is already `python -m git_warden.sandbox_entry`,
         # so only the repo name is passed here.
         image,
-        full_name,
+        *(args if args is not None else [full_name]),
     ]
 
 
@@ -127,6 +129,48 @@ def _result_from_dict(d: dict) -> Tier2Result:
         confirming_findings=[bf(x) for x in d.get("confirming_findings", [])],
         package_spread=list(d.get("package_spread", [])),
     )
+
+
+def _run_sandbox(target: str, argv: list[str], name: str, runner, reaper) -> dict | None:
+    """Run one hardened container and parse its single JSON result line."""
+    try:
+        proc = runner(argv, capture_output=True, text=True, timeout=_TIMEOUT)
+    except subprocess.TimeoutExpired:
+        log.warning("sandbox scan timed out; reaping container",
+                    extra={"context": {"target": target, "container": name}})
+        _reap(name, reaper)
+        return None
+    except (OSError, subprocess.SubprocessError) as exc:
+        log.warning("sandbox scan failed to run; reaping container",
+                    extra={"context": {"target": target, "err": str(exc)}})
+        _reap(name, reaper)
+        return None
+    if proc.returncode != 0:
+        log.warning("sandbox container exited non-zero",
+                    extra={"context": {"target": target, "code": proc.returncode,
+                                       "stderr": (proc.stderr or "")[:300]}})
+        return None
+    line = (proc.stdout or "").strip().splitlines()[-1] if proc.stdout.strip() else ""
+    try:
+        return json.loads(line)
+    except ValueError:
+        log.warning("sandbox produced no parseable result",
+                    extra={"context": {"target": target}})
+        return None
+
+
+def scan_extension_sandboxed(ext_id: str, download_url: str, *, image: str = SANDBOX_IMAGE,
+                             runner=subprocess.run, reaper=None) -> dict | None:
+    """Fetch + STATICALLY analyze one .vsix inside the hardened container.
+
+    Returns the container's JSON (Tier-2 wire shape plus an ``extension`` block),
+    or None when the container could not produce a result. ``fetch_failed`` in the
+    returned dict means the archive was refused or missing. The extension's bytes
+    exist only in the container's tmpfs; the host receives only this JSON.
+    """
+    name = f"warden-vsix-{uuid.uuid4().hex[:12]}"
+    argv = build_run_argv(ext_id, image, name=name, args=["--vsix", ext_id, download_url])
+    return _run_sandbox(ext_id, argv, name, runner, reaper or runner)
 
 
 def scan_candidate_sandboxed(full_name: str, *, image: str = SANDBOX_IMAGE,

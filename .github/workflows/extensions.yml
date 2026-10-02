@@ -1,0 +1,79 @@
+name: Warden VS Code Extension Hunt
+on:
+  # On-demand for now. Screens Open VSX metadata, then fetches and statically
+  # analyzes the top candidates inside the Tier-2 sandbox container. Nothing is
+  # submitted anywhere; confirmed extensions are listed in the run summary.
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: Max extensions to fetch and scan in the sandbox
+        required: false
+        default: "15"
+      recent:
+        description: Recently published extensions to screen
+        required: false
+        default: "100"
+
+permissions:
+  contents: read
+
+jobs:
+  hunt:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    # Shares the hunt's group: never overlaps a hunt (same data cache).
+    concurrency:
+      group: git-warden-run
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install -e .
+
+      - name: Build Tier-2 sandbox
+        run: docker build -f docker/Dockerfile.sandbox -t warden-sandbox:latest .
+
+      # Same cache the hunt writes: OSM-reported extension publishers (from
+      # ingest) seed the screen, and extension verdicts persist between runs.
+      - name: Restore data
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: data
+          key: git-warden-data-${{ github.run_id }}
+          restore-keys: git-warden-data-
+
+      - name: Hunt extensions
+        env:
+          GW_SHARED_INTEL: data/shared_intel/breadcrumbs.jsonl
+          LIMIT: ${{ inputs.limit }}
+          RECENT: ${{ inputs.recent }}
+        run: >-
+          python gw.py extensions --limit "$LIMIT" --recent "$RECENT"
+          --summary-md ext_summary.md
+
+      - name: Save data
+        if: always() && hashFiles('data/*.sqlite') != ''
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: data
+          key: git-warden-data-${{ github.run_id }}
+
+      - name: Publish run summary
+        if: always()
+        run: |
+          if [ -f ext_summary.md ]; then
+            cat ext_summary.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload run summary
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: extension-hunt-summary
+          path: ext_summary.md
+          if-no-files-found: ignore
