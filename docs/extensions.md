@@ -22,7 +22,7 @@ Tier 2. A version already scanned is skipped unless `--rescan` is given.
 ## Tier 2: sandboxed static scan
 
 Each candidate is fetched and analyzed inside the hardened `warden-sandbox`
-container (`sandbox_entry --vsix <publisher.name> <url>`):
+container (`sandbox_entry --vsix-stdin`, with the extension id and URL passed as JSON on stdin rather than the command line):
 
 - The download is accepted only from `open-vsx.org` and its blob storage, over
   HTTPS, following redirects only to those hosts, with a 150 MB cap.

@@ -38,7 +38,8 @@ _VALID_VSIX_URL = re.compile(r"https://[A-Za-z0-9.-]+/[A-Za-z0-9._~%/+@-]{1,1024
 
 
 def build_run_argv(full_name: str, image: str = SANDBOX_IMAGE, *,
-                   name: str | None = None, args: list[str] | None = None) -> list[str]:
+                   name: str | None = None, args: list[str] | None = None,
+                   stdin: bool = False) -> list[str]:
     """The hardened ``docker run`` argv for one repo. Pure; printable for review.
 
     Network is ON only because the clone fetches from GitHub; the target is never
@@ -48,11 +49,12 @@ def build_run_argv(full_name: str, image: str = SANDBOX_IMAGE, *,
     ``name`` lets the caller know the container name so it can force-reap a
     container that outlived its scan (a timeout kills the client before ``--rm``).
     ``args`` replaces the entrypoint arguments (default: just the repo name), e.g.
-    ``["--vsix", ext_id, url]`` for an extension scan.
+    ``["--vsix-stdin"]`` for an extension scan. ``stdin`` keeps the container's
+    stdin open (``-i``) so the caller can pass the target as JSON instead of argv.
     """
     name = name or f"warden-scan-{uuid.uuid4().hex[:12]}"
     return [
-        "docker", "run", "--rm", "--name", name,
+        "docker", "run", *(["-i"] if stdin else []), "--rm", "--name", name,
         "--read-only",
         "--cap-drop", "ALL",
         "--security-opt", "no-new-privileges",
@@ -135,10 +137,12 @@ def _result_from_dict(d: dict) -> Tier2Result:
     )
 
 
-def _run_sandbox(target: str, argv: list[str], name: str, runner, reaper) -> dict | None:
+def _run_sandbox(target: str, argv: list[str], name: str, runner, reaper,
+                 stdin_data: str | None = None) -> dict | None:
     """Run one hardened container and parse its single JSON result line."""
     try:
-        proc = runner(argv, capture_output=True, text=True, timeout=_TIMEOUT)
+        proc = runner(argv, input=stdin_data, capture_output=True, text=True,
+                      timeout=_TIMEOUT)
     except subprocess.TimeoutExpired:
         log.warning("sandbox scan timed out; reaping container",
                     extra={"context": {"target": target, "container": name}})
@@ -172,21 +176,22 @@ def scan_extension_sandboxed(ext_id: str, download_url: str, *, image: str = SAN
     returned dict means the archive was refused or missing. The extension's bytes
     exist only in the container's tmpfs; the host receives only this JSON.
     """
-    # Both values come from registry JSON: allowlist them before they reach the
-    # container's argv (no shell is involved, but nothing untrusted may be read
-    # as an option or point the in-container fetch somewhere unexpected).
+    # Both values come from registry JSON. They never reach the command line: the
+    # argv is constant and the target travels as JSON on stdin, re-validated in
+    # the container. They are also allowlisted here so a bad value is refused
+    # before a container starts.
     from ..extensions.vsix import host_allowed
 
-    id_m = _VALID_EXT_ID.fullmatch(ext_id or "")
-    url_m = _VALID_VSIX_URL.fullmatch(download_url or "")
-    if not id_m or not url_m or not host_allowed(download_url):
+    if (not _VALID_EXT_ID.fullmatch(ext_id or "")
+            or not _VALID_VSIX_URL.fullmatch(download_url or "")
+            or not host_allowed(download_url)):
         log.warning("extension scan rejected: invalid id or download url",
                     extra={"context": {"ext": ext_id}})
         return None
-    ext_id, download_url = id_m.group(0), url_m.group(0)
     name = f"warden-vsix-{uuid.uuid4().hex[:12]}"
-    argv = build_run_argv(ext_id, image, name=name, args=["--vsix", ext_id, download_url])
-    return _run_sandbox(ext_id, argv, name, runner, reaper or runner)
+    argv = build_run_argv("vsix", image, name=name, args=["--vsix-stdin"], stdin=True)
+    payload = json.dumps({"id": ext_id, "url": download_url})
+    return _run_sandbox(ext_id, argv, name, runner, reaper or runner, stdin_data=payload)
 
 
 def scan_candidate_sandboxed(full_name: str, *, image: str = SANDBOX_IMAGE,

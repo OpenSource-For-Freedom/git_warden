@@ -7,8 +7,8 @@ leave the container; only this JSON telemetry crosses back to the host, which is
 git_paca sandbox contract applied to warden's static scan.
 
 Usage (inside the container): ``python -m git_warden.sandbox_entry <owner/name>``,
-or ``python -m git_warden.sandbox_entry --vsix <publisher.name> <download-url>`` to
-fetch and analyze one VS Code extension from an allowlisted registry host.
+or ``python -m git_warden.sandbox_entry --vsix-stdin`` with ``{"id": ..., "url": ...}``
+on stdin to fetch and analyze one VS Code extension from an allowlisted registry host.
 """
 
 from __future__ import annotations
@@ -73,11 +73,19 @@ def main(argv: list[str] | None = None) -> int:
     if not argv:
         print(json.dumps({"error": "no repo given"}))
         return 2
-    if argv[0] == "--vsix":
-        if len(argv) != 3:
-            print(json.dumps({"error": "usage: --vsix <publisher.name> <url>"}))
+    if argv[0] == "--vsix-stdin":
+        try:
+            target = json.loads(sys.stdin.read() or "{}")
+            ext_id, url = str(target["id"]), str(target["url"])
+        except (ValueError, KeyError, TypeError):
+            print(json.dumps({"error": "expected {\"id\", \"url\"} JSON on stdin"}))
             return 2
-        return _main_vsix(argv[1], argv[2])
+        from .extensions.vsix import host_allowed
+        if not host_allowed(url):
+            print(json.dumps({"full_name": ext_id, "fetch_failed": True,
+                              "reason": "download host not allowlisted"}))
+            return 0
+        return _main_vsix(ext_id, url)
     full_name = argv[0]
     spread_intel = None
     # Optional package-spread intel: the host may bundle the incident manifest into

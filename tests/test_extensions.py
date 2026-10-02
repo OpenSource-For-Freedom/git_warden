@@ -291,21 +291,28 @@ def test_hunt_stores_results_records_intel_and_skips_rescans(tmp_path, monkeypat
 # --- sandbox plumbing -------------------------------------------------------------
 
 
-def test_extension_sandbox_argv_keeps_isolation_and_passes_vsix_args():
-    argv = build_run_argv("a.b", args=["--vsix", "a.b", "https://open-vsx.org/x.vsix"])
-    assert argv[-3:] == ["--vsix", "a.b", "https://open-vsx.org/x.vsix"]
+def test_extension_sandbox_argv_is_constant_and_keeps_isolation():
+    argv = build_run_argv("vsix", args=["--vsix-stdin"], stdin=True)
+    assert argv[:3] == ["docker", "run", "-i"] and argv[-1] == "--vsix-stdin"
     assert "--read-only" in argv and "65534:65534" in argv
     assert not any(a.startswith("-v") or a == "--volume" for a in argv)
 
 
-def test_scan_extension_sandboxed_parses_result():
+def test_scan_extension_sandboxed_sends_target_on_stdin_not_argv():
+    seen = {}
+
     class P:
         returncode, stderr = 0, ""
         stdout = "log line\n" + json.dumps({"confirmed": True, "confidence": "auto"})
 
-    r = scan_extension_sandboxed("a.b", "https://open-vsx.org/x.vsix",
-                                 runner=lambda *a, **k: P())
+    def runner(argv, **kw):
+        seen.update(argv=argv, input=kw.get("input"))
+        return P()
+
+    r = scan_extension_sandboxed("a.b", "https://open-vsx.org/x.vsix", runner=runner)
     assert r == {"confirmed": True, "confidence": "auto"}
+    assert "a.b" not in seen["argv"] and not any("open-vsx" in a for a in seen["argv"])
+    assert json.loads(seen["input"]) == {"id": "a.b", "url": "https://open-vsx.org/x.vsix"}
 
 
 def test_sandbox_entry_vsix_mode(tmp_path, monkeypatch, capsys):
@@ -320,10 +327,18 @@ def test_sandbox_entry_vsix_mode(tmp_path, monkeypatch, capsys):
         return dest
 
     monkeypatch.setattr(vsix, "download", fake_download)
-    assert sandbox_entry.main(["--vsix", "a.b", "https://open-vsx.org/x.vsix"]) == 0
+    stdin = io.StringIO(json.dumps({"id": "a.b", "url": "https://open-vsx.org/x.vsix"}))
+    monkeypatch.setattr("sys.stdin", stdin)
+    assert sandbox_entry.main(["--vsix-stdin"]) == 0
     out = json.loads(capsys.readouterr().out.strip().splitlines()[-1])
     assert out["confirmed"] and out["extension"]["entry_points"] == ["./dist/extension.js"]
-    assert sandbox_entry.main(["--vsix", "a.b"]) == 2
+
+    monkeypatch.setattr("sys.stdin", io.StringIO(json.dumps(
+        {"id": "a.b", "url": "https://evil.example/x.vsix"})))
+    assert sandbox_entry.main(["--vsix-stdin"]) == 0
+    assert "not allowlisted" in capsys.readouterr().out
+    monkeypatch.setattr("sys.stdin", io.StringIO("not json"))
+    assert sandbox_entry.main(["--vsix-stdin"]) == 2
 
 
 def test_cli_fails_closed_without_sandbox(monkeypatch, tmp_path):
