@@ -56,6 +56,10 @@ _NAME_TOKENS = (
     "exfil",
     "weaponized",
     "weaponised",
+    # Minecraft community terms for session-token stealer mods.
+    "ratter",
+    "tokenlogger",
+    "token-logger",
 )
 
 # README heuristics (case-insensitive).

@@ -48,7 +48,7 @@ from .scanning import (
     search_iocs,
 )
 from .scanning.actor_search import AccountRepo
-from .scanning.discovery import RepoHit, is_security_tool
+from .scanning.discovery import RepoHit, _code_query, is_security_tool
 from .scanning.enrichment import OwnerRepo
 from .scanning.newsdiscovery import DEFAULT_NEWS_TERMS, NewsHit
 from .scanning.package_resolver import find_package_source_repos
@@ -571,9 +571,14 @@ def hunt(
         # NOVEL-repo engine: code-search GitHub for a confirmed malware's reusable
         # signature (a deobfuscator stub mined from prior confirmations + curated
         # seeds) to find sibling infected repos OSM never catalogued.
-        sig_terms = list(dict.fromkeys(
-            db.learned_signatures() + load_seed_signatures(config.MALWARE_SIGNATURES_PATH)
-        ))[:max_signatures]
+        # Terms whose result pages are all walked are dropped BEFORE the budget cut,
+        # so later seeds (e.g. the Minecraft stealer family) rotate in instead of
+        # the same first N exhausted queries holding every slot forever.
+        sig_terms = [
+            t for t in dict.fromkeys(
+                db.learned_signatures() + load_seed_signatures(config.MALWARE_SIGNATURES_PATH))
+            if page_cursor.start(_code_query(t)) != 0
+        ][:max_signatures]
         for hit in search_iocs(client, sig_terms, known=known, per_term=_SEARCH_PER_PAGE,
                                pages=_SEARCH_PAGES, cursor=page_cursor,
                                pace_seconds=search_pace):

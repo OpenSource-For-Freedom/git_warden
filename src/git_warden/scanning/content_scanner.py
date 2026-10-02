@@ -19,13 +19,17 @@ from .bash_scanner import BashFinding, is_benign_construct, is_ignored_path
 
 _JS_EXT = {".js", ".mjs", ".cjs", ".ts", ".tsx", ".jsx"}
 _PY_EXT = {".py"}
-_SOURCE_EXT = _JS_EXT | _PY_EXT | {".rb", ".php", ".go", ".ps1"}
+# Minecraft mods and server plugins (Forge/Fabric/Bukkit/Paper/Velocity) are JVM
+# code, so session-token stealers, remote-jar loaders and plugin backdoors live in
+# Java/Kotlin source that no other rule family reads.
+_JVM_EXT = {".java", ".kt"}
+_SOURCE_EXT = _JS_EXT | _PY_EXT | _JVM_EXT | {".rb", ".php", ".go", ".ps1"}
 _MAX_BYTES = 1_000_000
 
 # Each rule carries the language family it applies to so a Python pattern can't
 # match a JavaScript file (the tiledesk FP fired ``py-dyn``; ``compile(``; on
 # ``index.js``). "any" rules are language-agnostic (webhook URLs, key paths).
-# Rules tuple: (rule_name, lang, pattern). lang in {"js", "py", "any"}.
+# Rules tuple: (rule_name, lang, pattern). lang in {"js", "py", "jvm", "any"}.
 _RULES: dict[str, list[tuple[str, str, re.Pattern]]] = {
     "obfuscation": [
         ("eval-decoded", "js", re.compile(
@@ -36,6 +40,11 @@ _RULES: dict[str, list[tuple[str, str, re.Pattern]]] = {
         ("py-decode-exec", "py", re.compile(
             r"(?:exec|eval)\s*\(\s*(?:base64|marshal|zlib|__import__)", re.I)),
         ("hex-blob", "any", re.compile(r"(?:\\x[0-9a-fA-F]{2}){12,}")),
+        # An in-memory class defined straight from a base64 literal/decoder is a
+        # hidden stager: the bytecode never exists as a file a reviewer could read.
+        # Mod/plugin loaders define classes from jar entries, never from base64.
+        ("jvm-decode-defineclass", "jvm", re.compile(
+            r"\bdefineClass\s*\([^\n]*(?:Base64|getDecoder|decodeBase64|parseBase64Binary)")),
     ],
     "code_execution": [
         ("node-child-process", "js",
@@ -43,6 +52,16 @@ _RULES: dict[str, list[tuple[str, str, re.Pattern]]] = {
         ("js-exec", "js", re.compile(r"\b(?:execSync|spawnSync|spawn|exec)\s*\(", re.I)),
         ("py-system", "py", re.compile(r"\bos\.system\(|subprocess\.(?:Popen|run|call)", re.I)),
         ("py-dyn", "py", re.compile(r"\b__import__\s*\(|\bcompile\s*\(|\bmarshal\.loads\(", re.I)),
+        ("jvm-runtime-exec", "jvm",
+         re.compile(r"Runtime\.getRuntime\(\)\s*\.\s*exec\s*\(|\bnew\s+ProcessBuilder\s*\(")),
+    ],
+    "download_exec": [
+        # A mod/plugin that builds a class loader over a hard-coded remote URL runs
+        # whatever jar that host serves (the fractureiser / Skyrage loader shape).
+        # Library loaders do the same against Maven Central, so this is HOST-GATED in
+        # Tier-2: it confirms only against an attacker host (public IP, paste site).
+        ("jvm-remote-classload", "jvm",
+         re.compile(r"\bnew\s+URLClassLoader\s*\([^\n]*https?://")),
     ],
     "network_exfil": [
         ("discord-webhook", "any", re.compile(r"discord(?:app)?\.com/api/webhooks/", re.I)),
@@ -70,6 +89,29 @@ _RULES: dict[str, list[tuple[str, str, re.Pattern]]] = {
         # theft signal. A bare ``.env`` reference is NOT here: every dotenv app
         # has one, and it manufactured the tiledesk false positives.
         ("keyfiles", "any", re.compile(r"\.ssh/id_|\.aws/credentials|\.config/gcloud", re.I)),
+        # Minecraft session-token theft (the "ratter" stealers spread as cracked
+        # clients, cheat mods and fake plugins). The access token logs in as the
+        # victim's Microsoft/Mojang account. Covers the MCP/SRG name (func_148254_d
+        # getToken, func_111286_b getSessionID), Yarn (getSession().getAccessToken())
+        # and Mojang mappings (getUser().getAccessToken()). getAccessToken() is a
+        # generic OAuth accessor, so that branch needs a Minecraft receiver
+        # (Minecraft*.getX(), mc, minecraft, client) or a Spring/OAuth web app would
+        # match. Account-switcher mods read the token too, so on its own this only
+        # SCORES; it confirms in Tier-2 as steal-and-send, next to a webhook/bot
+        # exfil channel in the same file.
+        ("mc-session-token", "jvm", re.compile(
+            r"\b(?:getSession|func_110432_I)\s*\(\s*\)\s*\.\s*"
+            r"(?:getToken|getSessionID|func_148254_d|func_111286_b)\s*\("
+            r"|(?:\bMinecraft\w*\s*\.\s*\w+\s*\(\s*\)|\bmc|\bminecraft|\bclient)\s*\.\s*"
+            r"(?:getSession|getUser)\s*\(\s*\)\s*\.\s*getAccessToken\s*\(")),
+        # Launcher account stores holding refresh/access tokens: the vanilla launcher,
+        # Lunar, Feather and Essential. Language-agnostic because Python/JS stealers
+        # sweep them as well. launcher_profiles.json is deliberately absent: every
+        # Forge/Fabric installer legitimately writes it.
+        ("mc-launcher-accounts", "any", re.compile(
+            r"launcher_accounts(?:_microsoft_store)?\.json|"
+            r"lunarclient[/\\]+settings[/\\]+game[/\\]+accounts\.json|"
+            r"\.feather[/\\]+accounts\.json|essential[/\\]+microsoft_accounts\.json", re.I)),
     ],
 }
 
@@ -139,6 +181,8 @@ def _lang_for(suffix: str) -> str:
         return "js"
     if suffix in _PY_EXT:
         return "py"
+    if suffix in _JVM_EXT:
+        return "jvm"
     return "other"
 
 
