@@ -51,6 +51,8 @@ class Extension:
 
     @property
     def url(self) -> str:
+        if self.registry == "vsmarketplace":
+            return f"https://marketplace.visualstudio.com/items?itemName={self.ext_id}"
         return f"https://open-vsx.org/extension/{self.namespace}/{self.name}"
 
 
@@ -77,6 +79,8 @@ def _from_json(d: dict) -> Extension | None:
 
 class OpenVsxClient:
     """Paced JSON reads from the Open VSX API. Any failure returns empty."""
+
+    registry = "openvsx"
 
     def __init__(self, *, session=None, pace: float = 1.0, base: str = OPENVSX_API):
         self.session = session or requests.Session()

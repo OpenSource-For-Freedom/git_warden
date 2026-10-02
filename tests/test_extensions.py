@@ -369,3 +369,112 @@ def test_scan_extension_sandboxed_rejects_untrusted_argv(ext_id, url):
     calls = []
     r = scan_extension_sandboxed(ext_id, url, runner=lambda *a, **k: calls.append(a))
     assert r is None and calls == []
+
+
+# --- Visual Studio Marketplace ----------------------------------------------------
+
+from git_warden.extensions import marketplace  # noqa: E402
+
+GALLERY_EXT = {
+    "publisher": {"publisherName": "esbenp-dev", "displayName": "esbenp dev",
+                  "flags": "none", "isDomainVerified": False},
+    "extensionName": "prettier-vscode", "displayName": "Prettier - Code formatter",
+    "shortDescription": "Code formatter",
+    "versions": [{"version": "1.0.1", "lastUpdated": "2026-10-01T00:00:00Z",
+                  "files": [{"assetType": "Microsoft.VisualStudio.Code.Manifest",
+                             "source": "https://x.gallerycdn.vsassets.io/m"},
+                            {"assetType": "Microsoft.VisualStudio.Services.VSIXPackage",
+                             "source": "https://esbenp-dev.gallerycdn.vsassets.io/extensions/"
+                                       "esbenp-dev/prettier-vscode/1.0.1/123/"
+                                       "Microsoft.VisualStudio.Services.VSIXPackage"}]}],
+    "statistics": [{"statisticName": "install", "value": 12.0}],
+}
+
+
+class _PostSession:
+    def __init__(self, payload, status=200):
+        self.payload, self.status, self.bodies = payload, status, []
+
+    def post(self, url, json=None, **kw):
+        self.bodies.append(json)
+
+        class R:
+            status_code = self.status
+            payload = self.payload
+
+            def json(self):
+                return self.payload
+        return R()
+
+
+def test_marketplace_parses_gallery_response():
+    e = marketplace._from_json(GALLERY_EXT)
+    assert (e.ext_id, e.version, e.download_count, e.verified, e.registry) == (
+        "esbenp-dev.prettier-vscode", "1.0.1", 12, False, "vsmarketplace")
+    assert e.download_url.endswith("Microsoft.VisualStudio.Services.VSIXPackage")
+    assert vsix.host_allowed(e.download_url)
+    assert e.url == "https://marketplace.visualstudio.com/items?itemName=esbenp-dev.prettier-vscode"
+    assert e.key == "vsmarketplace:esbenp-dev.prettier-vscode"
+    verified = dict(GALLERY_EXT, publisher=dict(GALLERY_EXT["publisher"], flags="verified"))
+    assert marketplace._from_json(verified).verified is True
+    assert marketplace._from_json(dict(GALLERY_EXT, extensionName="../x")) is None
+
+
+def test_marketplace_query_shape_and_failures():
+    s = _PostSession({"results": [{"extensions": [GALLERY_EXT]}]})
+    client = marketplace.MarketplaceClient(session=s, pace=0)
+    assert [e.ext_id for e in client.search("Prettier")] == ["esbenp-dev.prettier-vscode"]
+    crit = s.bodies[0]["filters"][0]["criteria"]
+    assert {"filterType": 8, "value": "Microsoft.VisualStudio.Code"} in crit
+    assert {"filterType": 10, "value": "Prettier"} in crit
+    assert client.extension("esbenp-dev", "prettier-vscode").version == "1.0.1"
+    assert s.bodies[-1]["filters"][0]["criteria"][-1] == {
+        "filterType": 7, "value": "esbenp-dev.prettier-vscode"}
+    assert client.namespace_extensions("esbenp-dev") == ["prettier-vscode"]
+    assert client.namespace_extensions("someone-else") == []
+    assert marketplace.MarketplaceClient(session=_PostSession({}, 500), pace=0).search("x") == []
+
+
+@pytest.mark.parametrize("url,ok", [
+    ("https://esbenp.gallerycdn.vsassets.io/extensions/a/b/1/2/pkg", True),
+    ("https://marketplace.visualstudio.com/_apis/public/gallery/publishers/a/vsextensions/"
+     "b/1/vspackage", True),
+    ("https://gallerycdn.vsassets.io.evil.com/pkg", False),
+])
+def test_marketplace_download_hosts(url, ok):
+    assert vsix.host_allowed(url) is ok
+
+
+def test_gzip_wrapped_vsix_is_unwrapped(tmp_path):
+    import gzip
+
+    archive = tmp_path / "ext.vsix"
+    archive.write_bytes(gzip.compress(_vsix_bytes({"extension/package.json": "{}"})))
+    out = vsix.safe_extract(vsix.ensure_zip(archive), tmp_path / "out")
+    assert (out / "extension" / "package.json").is_file()
+    plain = tmp_path / "plain.vsix"
+    plain.write_bytes(_vsix_bytes({"extension/package.json": "{}"}))
+    assert vsix.ensure_zip(plain).read_bytes()[:2] == b"PK"
+
+
+def test_cli_runs_each_registry(monkeypatch, tmp_path, capsys):
+    from git_warden import cli
+    from git_warden.extensions import hunt as h
+    from git_warden.scanning import sandbox_runner
+
+    seen = []
+    monkeypatch.setattr(sandbox_runner, "docker_available", lambda: True)
+    monkeypatch.setattr(h, "run_extension_hunt", lambda db, client, **kw: (
+        seen.append(client.registry) or {"registry": client.registry, "counts": {
+            "candidates": 0, "scanned": 0, "confirmed": 0, "confirmed_auto": 0,
+            "review": 0, "fetch_failed": 0, "skipped_known": 0}, "_details": []}))
+    md = tmp_path / "s.md"
+    assert cli.main(["extensions", "--db", str(tmp_path / "w.sqlite"),
+                     "--summary-md", str(md)]) == 0
+    assert seen == ["openvsx", "vsmarketplace"]
+    text = md.read_text()
+    assert "hunt: Open VSX" in text and "hunt: Visual Studio Marketplace" in text
+    seen.clear()
+    assert cli.main(["extensions", "--db", str(tmp_path / "w.sqlite"),
+                     "--registry", "marketplace"]) == 0
+    assert seen == ["vsmarketplace"]
