@@ -426,6 +426,7 @@ def hunt(
     max_packages: int = 8,
     max_osm: int = 60,
     max_signatures: int = 14,
+    signature_family: str | None = None,
     max_news: int = 6,
     max_package_repos: int = 40,
     search_pace: float = 0.0,
@@ -574,9 +575,14 @@ def hunt(
         # Terms whose result pages are all walked are dropped BEFORE the budget cut,
         # so later seeds (e.g. the Minecraft stealer family) rotate in instead of
         # the same first N exhausted queries holding every slot forever.
+        # A focused family (e.g. "minecraft") goes FIRST so its seeds always get a
+        # slot, ahead of learned signatures that could otherwise fill the budget.
+        focus = (load_seed_signatures(config.MALWARE_SIGNATURES_PATH, signature_family)
+                 if signature_family else [])
         sig_terms = [
             t for t in dict.fromkeys(
-                db.learned_signatures() + load_seed_signatures(config.MALWARE_SIGNATURES_PATH))
+                focus + db.learned_signatures()
+                + load_seed_signatures(config.MALWARE_SIGNATURES_PATH))
             if page_cursor.start(_code_query(t)) != 0
         ][:max_signatures]
         for hit in search_iocs(client, sig_terms, known=known, per_term=_SEARCH_PER_PAGE,
