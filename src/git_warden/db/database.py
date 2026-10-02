@@ -280,6 +280,39 @@ class Database:
                 [(cid, fp, name, run_id, run_id) for cid, fp, name in members],
             )
 
+    #; VS Code extensions ------------------------------------------------
+    def upsert_extension(self, ext, run_id: str, *, status: str, confidence: str = "none",
+                         score: int = 0, payload: dict | None = None) -> None:
+        """Record the latest screen/scan of one extension (``extensions.Extension``)."""
+        with self.transaction() as c:
+            c.execute(
+                """
+                INSERT INTO extension_findings
+                    (ext_key, registry, namespace, name, version, url, status, confidence,
+                     score, screen_score, reasons, raw_payload, first_seen_run, last_seen_run)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(ext_key) DO UPDATE SET
+                    version = excluded.version, url = excluded.url,
+                    status = excluded.status, confidence = excluded.confidence,
+                    score = excluded.score, screen_score = excluded.screen_score,
+                    reasons = excluded.reasons, raw_payload = excluded.raw_payload,
+                    last_seen_run = excluded.last_seen_run
+                """,
+                (ext.key, ext.registry, ext.namespace, ext.name, ext.version, ext.url,
+                 status, confidence, score, ext.score, json.dumps(ext.reasons),
+                 json.dumps(payload or {}), run_id, run_id),
+            )
+
+    def get_extension(self, ext_key: str) -> sqlite3.Row | None:
+        return self.conn.execute("SELECT * FROM extension_findings WHERE ext_key = ?",
+                                 (ext_key.casefold(),)).fetchone()
+
+    def extensions(self, status: str | None = None) -> list[sqlite3.Row]:
+        if status is None:
+            return self.conn.execute("SELECT * FROM extension_findings").fetchall()
+        return self.conn.execute("SELECT * FROM extension_findings WHERE status = ?",
+                                 (status,)).fetchall()
+
     def set_attribution(self, full_name: str, actor_key: str) -> None:
         """Stamp a threat-actor attribution onto a finding (campaign propagation).
 

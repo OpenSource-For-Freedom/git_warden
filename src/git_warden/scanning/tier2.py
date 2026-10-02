@@ -126,6 +126,8 @@ _HOST_GATED_ALONE = frozenset({
     # A mod/plugin URLClassLoader over a remote jar: a dropper from a public IP or
     # paste host, a library loader from Maven Central (reputable, never confirms).
     ("download_exec", "jvm-remote-classload"),
+    # Node child_process running a fetch-to-shell (VS Code extension / npm dropper).
+    ("download_exec", "js-exec-fetch-shell"),
 })
 # CONFIDENCE TIERS. The confirming MECHANISM decides how much to trust a finding:
 #   auto   -- a delivery/exfil/dependency mechanism (fetch-and-run, install hook,
