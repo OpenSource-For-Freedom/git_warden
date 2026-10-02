@@ -121,3 +121,38 @@ def test_exhausted_signature_terms_rotate_out_of_the_budget(tmp_path, monkeypatc
          do_package_repos=False, do_signature=True, do_tier2=False, max_signatures=1)
     db.close()
     assert "SECOND" in searched and "FIRST" not in searched
+
+
+def test_seed_family_filter():
+    mc = load_seed_signatures(config.MALWARE_SIGNATURES_PATH, "minecraft")
+    assert len(mc) == 6
+    assert set(mc) < set(load_seed_signatures(config.MALWARE_SIGNATURES_PATH))
+    assert load_seed_signatures(config.MALWARE_SIGNATURES_PATH, "MINECRAFT") == mc
+    assert load_seed_signatures(config.MALWARE_SIGNATURES_PATH, "no-such-family") == []
+
+
+def test_signature_family_jumps_ahead_of_learned_signatures(tmp_path, monkeypatch):
+    # Learned signatures alone would fill the whole budget; the focused family
+    # must still be searched, and first.
+    sig_file = tmp_path / "sigs.json"
+    sig_file.write_text(json.dumps([
+        {"name": "x", "query": "OTHER"},
+        {"name": "mc", "query": "MCSEED", "family": "minecraft"},
+    ]), encoding="utf-8")
+    monkeypatch.setattr(config, "MALWARE_SIGNATURES_PATH", sig_file)
+    searched: list[str] = []
+
+    class Client(FakeClient):
+        def search_code(self, query, per_page=20, *, page=1, sort=None):
+            searched.append(query)
+            return []
+
+    db = Database.open(tmp_path / "fam.sqlite")
+    monkeypatch.setattr(db, "learned_signatures", lambda: ["L1", "L2", "L3"])
+    hunt(db, Client(), TOOLS, run_id="fam", now=utcnow(), do_news=False, do_ioc=False,
+         do_lineage=False, do_actor=False, do_enrich=False, do_osm=False,
+         do_package_repos=False, do_signature=True, do_tier2=False, max_signatures=2,
+         signature_family="minecraft")
+    db.close()
+    assert searched[0] == "MCSEED"
+    assert "OTHER" not in searched
