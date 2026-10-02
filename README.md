@@ -136,20 +136,20 @@ steal-and-send); threat-intel leads (a malicious owner, a shared signature) only
 *seed* which repos get scanned, never confirm one alone.
 
 <!-- git-warden:registry:start -->
-_Top 10 of 103 repositories confirmed malicious by static analysis this run, ranked by severity. The full list ships as the run's CSV artifact and to the Discord feed; every row's evidence (file, line, rule) is in that CSV. Dispute: open an issue and we will re-review._
+_Top 10 of 76 repositories confirmed malicious by static analysis this run, ranked by severity. The full list ships as the run's CSV artifact and to the Discord feed; every row's evidence (file, line, rule) is in that CSV. Dispute: open an issue and we will re-review._
 
 | Repository | Detection | Score | Attribution | Proof (file:line rule) |
 |------------|-----------|-------|-------------|------------------------|
+| [`aaryan121/code-conductor-fork`](https://github.com/aaryan121/code-conductor-fork) | signature_match | 25 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+19 more) |
 | [`eastmade/web3project-momo-token`](https://github.com/eastmade/web3project-momo-token) | signature_match | 22 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+11 more) |
+| [`syssec-utd/ccs25-walkingthelastmile-supplementary`](https://github.com/syssec-utd/ccs25-walkingthelastmile-supplementary) | signature_match | 21 | unattributed | challenges/f68aaa0b2ddafe64527a59d69cf4b5b28fdd4d428c033fc4a45f5b771f773eb7/decomp.py:570 credential_access/mc-launcher-accounts  (+19 more) |
+| [`moleclient/antirat`](https://github.com/moleclient/antirat) | signature_match | 19 | unattributed | src/main/java/com/antirat/scan/JarScanner.java:280 credential_access/mc-launcher-accounts  (+17 more) |
+| [`lunagrabber/luna-grabber-2.1`](https://github.com/lunagrabber/luna-grabber-2.1) | signature_match | 18 | unattributed | Luna-Grabber-main-2.1/Luna-Grabber-main/Builder.py:732 credential_access/mc-launcher-accounts  (+19 more) |
+| [`mulagoto/vespy-grabber-v2.0`](https://github.com/mulagoto/vespy-grabber-v2.0) | signature_match | 17 | unattributed | utils/Wallets.py:24 credential_access/env-dump  (+19 more) |
+| [`cev-api/java-triage`](https://github.com/cev-api/java-triage) | signature_match | 15 | unattributed | modules/behaviors.py:1317 credential_access/mc-launcher-accounts  (+13 more) |
+| [`fadi002/decompiled-stuff`](https://github.com/fadi002/decompiled-stuff) | signature_match | 15 | unattributed | loggers/Kraken.py:452 credential_access/mc-launcher-accounts  (+14 more) |
 | [`gauravraisharma/ticketting-system`](https://github.com/gauravraisharma/ticketting-system) | signature_match | 15 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+19 more) |
 | [`huncholane/defi_property`](https://github.com/huncholane/defi_property) | signature_match | 15 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+12 more) |
-| [`mohamedeturki/shigud-clone`](https://github.com/mohamedeturki/shigud-clone) | signature_match | 15 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+4 more) |
-| [`ta3pks/decentralized-social`](https://github.com/ta3pks/decentralized-social) | signature_match | 15 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+19 more) |
-| [`usmankhan16677/messageforge`](https://github.com/usmankhan16677/messageforge) | signature_match | 15 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+19 more) |
-| [`uribresler/elevated-spaces-backend`](https://github.com/uribresler/elevated-spaces-backend) | signature_match | 14 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+11 more) |
-| [`agrawalchirag/corex`](https://github.com/agrawalchirag/corex) | signature_match | 13 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+4 more) |
-| [`allzone-technologies/canteen-pwa`](https://github.com/allzone-technologies/canteen-pwa) | signature_match | 13 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+19 more) |
-| [`findusman/pos_backend`](https://github.com/findusman/pos_backend) | signature_match | 13 | unattributed | .vscode/tasks.json:0 install_hook/vscode-autorun  (+19 more) |
 <!-- git-warden:registry:end -->
 
 > [!NOTE]
