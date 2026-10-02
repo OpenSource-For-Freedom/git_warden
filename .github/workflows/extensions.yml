@@ -1,11 +1,11 @@
 name: Warden VS Code Extension Hunt
 on:
-  # On-demand for now. Screens Open VSX and/or VS Marketplace metadata, then fetches and statically
-  # analyzes the top candidates inside the Tier-2 sandbox container. Nothing is
-  # submitted anywhere; confirmed extensions are listed in the run summary.
-  # TEMPORARY: branch test run; removed before merge.
-  push:
-    branches: [feature/vscode-marketplace-hunt]
+  # Daily at 07:43 UTC, and on demand. Screens Open VSX and VS Marketplace
+  # metadata, then fetches and statically analyzes the top candidates inside
+  # the Tier-2 sandbox container. Nothing is submitted anywhere; confirmed
+  # extensions are listed in the run summary.
+  schedule:
+    - cron: '43 7 * * *'
   workflow_dispatch:
     inputs:
       registry:
@@ -59,8 +59,9 @@ jobs:
       - name: Hunt extensions
         env:
           GW_SHARED_INTEL: data/shared_intel/breadcrumbs.jsonl
-          REGISTRY: ${{ inputs.registry || 'marketplace' }}
-          LIMIT: ${{ inputs.limit || '30' }}
+          # Scheduled runs have no inputs; fall back to the dispatch defaults.
+          REGISTRY: ${{ inputs.registry || 'all' }}
+          LIMIT: ${{ inputs.limit || '15' }}
           RECENT: ${{ inputs.recent || '100' }}
         run: >-
           python gw.py extensions --registry "$REGISTRY" --limit "$LIMIT" --recent "$RECENT"
