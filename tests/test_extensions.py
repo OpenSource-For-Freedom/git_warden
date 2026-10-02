@@ -333,3 +333,16 @@ def test_cli_fails_closed_without_sandbox(monkeypatch, tmp_path):
     monkeypatch.setattr(sandbox_runner, "docker_available", lambda: False)
     assert cli.main(["extensions", "--db", str(tmp_path / "w.sqlite")]) == 2
     assert not (tmp_path / "w.sqlite").exists()
+
+
+@pytest.mark.parametrize("ext_id,url", [
+    ("--privileged.x", "https://open-vsx.org/x.vsix"),            # option-like id
+    ("a.b", "https://evil.example/x.vsix"),                         # host not allowed
+    ("a.b", "http://open-vsx.org/x.vsix"),                          # not https
+    ("a.b", "https://open-vsx.org/x.vsix --rm"),                    # smuggled token
+    ("a b.c", "https://open-vsx.org/x.vsix"),
+])
+def test_scan_extension_sandboxed_rejects_untrusted_argv(ext_id, url):
+    calls = []
+    r = scan_extension_sandboxed(ext_id, url, runner=lambda *a, **k: calls.append(a))
+    assert r is None and calls == []

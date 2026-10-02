@@ -17,6 +17,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import subprocess
 import uuid
 
@@ -31,6 +32,9 @@ _MEMORY = os.environ.get("GW_SANDBOX_MEMORY", "1g")
 _CPUS = os.environ.get("GW_SANDBOX_CPUS", "2")
 _PIDS = os.environ.get("GW_SANDBOX_PIDS", "512")
 _TIMEOUT = int(os.environ.get("GW_SANDBOX_TIMEOUT", "300"))
+# Untrusted registry values allowed onto the sandbox argv for an extension scan.
+_VALID_EXT_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]{0,127}\.[A-Za-z0-9][A-Za-z0-9_.-]{0,127}")
+_VALID_VSIX_URL = re.compile(r"https://[A-Za-z0-9.-]+/[A-Za-z0-9._~%/+@-]{1,1024}")
 
 
 def build_run_argv(full_name: str, image: str = SANDBOX_IMAGE, *,
@@ -168,6 +172,18 @@ def scan_extension_sandboxed(ext_id: str, download_url: str, *, image: str = SAN
     returned dict means the archive was refused or missing. The extension's bytes
     exist only in the container's tmpfs; the host receives only this JSON.
     """
+    # Both values come from registry JSON: allowlist them before they reach the
+    # container's argv (no shell is involved, but nothing untrusted may be read
+    # as an option or point the in-container fetch somewhere unexpected).
+    from ..extensions.vsix import host_allowed
+
+    id_m = _VALID_EXT_ID.fullmatch(ext_id or "")
+    url_m = _VALID_VSIX_URL.fullmatch(download_url or "")
+    if not id_m or not url_m or not host_allowed(download_url):
+        log.warning("extension scan rejected: invalid id or download url",
+                    extra={"context": {"ext": ext_id}})
+        return None
+    ext_id, download_url = id_m.group(0), url_m.group(0)
     name = f"warden-vsix-{uuid.uuid4().hex[:12]}"
     argv = build_run_argv(ext_id, image, name=name, args=["--vsix", ext_id, download_url])
     return _run_sandbox(ext_id, argv, name, runner, reaper or runner)
