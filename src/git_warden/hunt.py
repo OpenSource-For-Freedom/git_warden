@@ -568,6 +568,7 @@ def hunt(
                                   _finding_from_osm_repo(full, url, intel, db, run_id))
         _src("OSM-labeled repos")
 
+    focus: list[str] = []
     if do_signature:
         # NOVEL-repo engine: code-search GitHub for a confirmed malware's reusable
         # signature (a deobfuscator stub mined from prior confirmations + curated
@@ -600,8 +601,17 @@ def hunt(
     # README fetches + Tier-2 clones, ordered by empirical precision and capping
     # the noisy sources so they can't starve the good ones.
     if limit and len(candidates) > limit:
-        candidates = {f.full_name.casefold(): f
-                      for f in rank_and_cap_candidates(list(candidates.values()), limit)}
+        # Hits on the focused family are what the run was asked for: they keep
+        # their slots ahead of the precision ranking, which would otherwise let
+        # the far more numerous lure-repo hits crowd them out.
+        focus_set = set(focus)
+        pinned = [f for f in candidates.values()
+                  if focus_set & set(f.matched_iocs)][:limit]
+        pinned_keys = {f.full_name.casefold() for f in pinned}
+        rest = [f for k, f in candidates.items() if k not in pinned_keys]
+        room = limit - len(pinned)
+        kept = pinned + (rank_and_cap_candidates(rest, room) if room > 0 else [])
+        candidates = {f.full_name.casefold(): f for f in kept}
 
     # Observability: prove which sources are actually contributing candidates
     # (the enrichment check; not "just red-team").
