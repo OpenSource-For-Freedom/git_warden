@@ -21,7 +21,11 @@ from ..scanning.bash_scanner import BashFinding
 # API on open-vsx.org and redirects file downloads to the Eclipse Foundation's
 # content host (formerly its Azure blob storage).
 ALLOWED_HOSTS = ("open-vsx.org", "openvsx.eclipsecontent.org",
-                 "openvsxorg.blob.core.windows.net")
+                 "openvsxorg.blob.core.windows.net",
+                 # Visual Studio Marketplace: the gallery API and its asset CDN
+                 # (<publisher>.gallerycdn.vsassets.io / gallery.vsassets.io).
+                 "marketplace.visualstudio.com", "gallerycdn.vsassets.io",
+                 "gallery.vsassets.io")
 MAX_VSIX_BYTES = 150_000_000
 MAX_UNPACKED_BYTES = 400_000_000
 MAX_ENTRIES = 30_000
@@ -74,6 +78,32 @@ def download(url: str, dest: Path, *, session=None, max_bytes: int = MAX_VSIX_BY
                 fh.write(chunk)
         return dest
     raise VsixError("too many redirects")
+
+
+def ensure_zip(archive: Path, *, max_bytes: int = MAX_VSIX_BYTES) -> Path:
+    """Undo a gzip transfer wrapper the Marketplace sometimes leaves on a .vsix.
+
+    The gallery may serve the package gzip-compressed without a Content-Encoding
+    header, so the bytes on disk are gzip, not zip. Decompress (bounded) in place.
+    """
+    import gzip
+
+    with archive.open("rb") as fh:
+        if fh.read(2) != b"\x1f\x8b":
+            return archive
+    out = archive.with_suffix(".unzipped")
+    total = 0
+    try:
+        with gzip.open(archive, "rb") as src, out.open("wb") as dst:
+            while chunk := src.read(64 * 1024):
+                total += len(chunk)
+                if total > max_bytes:
+                    raise VsixError("vsix exceeds size limit")
+                dst.write(chunk)
+    except OSError as exc:
+        raise VsixError("corrupt gzip wrapper") from exc
+    out.replace(archive)
+    return archive
 
 
 def safe_extract(archive: Path, dest: Path) -> Path:

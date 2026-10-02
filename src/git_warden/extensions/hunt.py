@@ -34,6 +34,7 @@ EXTENSION_ECOSYSTEMS = {"vscode", "openvsx", "vscode-extension", "open-vsx"}
 _FEW_DOWNLOADS = 50
 # Open VSX's own namespace for VS Code's built-in extensions (vscode.go, ...).
 TRUSTED_NAMESPACES = {"vscode"}
+_REGISTRY_NAMES = {"openvsx": "Open VSX", "vsmarketplace": "Visual Studio Marketplace"}
 
 
 def load_popular(path: Path = POPULAR_PATH) -> list[dict]:
@@ -93,7 +94,7 @@ def osm_extension_publishers(db) -> dict[str, str]:
     return out
 
 
-def collect_candidates(client: OpenVsxClient, db, *, recent: int = 100,
+def collect_candidates(client, db, *, recent: int = 100,
                        popular: list[dict] | None = None,
                        max_publishers: int = 15) -> list[Extension]:
     """Tier 1: gather and rank candidates from metadata alone."""
@@ -101,7 +102,7 @@ def collect_candidates(client: OpenVsxClient, db, *, recent: int = 100,
     pool: dict[str, Extension] = {}
 
     for ext in client.recent(recent):
-        _add(pool, ext, "recently published", 1)
+        _add(pool, ext, "recently published or updated", 1)
 
     genuine = {p["id"].casefold() for p in popular}
     for pop in popular:
@@ -145,17 +146,22 @@ def _record_intel(ext: Extension, result: dict) -> None:
         bus.record_many("code_sig", sigs, artifact=ext.ext_id)
 
 
-def run_extension_hunt(db, *, client: OpenVsxClient | None = None, limit: int = 15,
+def run_extension_hunt(db, *, client=None, limit: int = 15,
                        recent: int = 100, rescan: bool = False, scan=None,
                        run_id: str | None = None) -> dict:
-    """Screen, scan the top ``limit`` candidates in the sandbox, and store results."""
+    """Screen, scan the top ``limit`` candidates in the sandbox, and store results.
+
+    ``client`` is an Open VSX or VS Marketplace client (same interface).
+    """
     from ..scanning.sandbox_runner import scan_extension_sandboxed
 
     client = client or OpenVsxClient()
     scan = scan or scan_extension_sandboxed
     run_id = run_id or (f"ext-{datetime.now(UTC).strftime('%Y%m%dT%H%M%SZ')}"
                         f"-{uuid.uuid4().hex[:6]}")
-    db.start_run(run_id, datetime.now(UTC), {"kind": "extensions", "limit": limit})
+    registry = getattr(client, "registry", "openvsx")
+    db.start_run(run_id, datetime.now(UTC),
+                 {"kind": "extensions", "registry": registry, "limit": limit})
 
     candidates = collect_candidates(client, db, recent=recent)
     counts = {"candidates": len(candidates), "scanned": 0, "confirmed": 0,
@@ -202,7 +208,7 @@ def run_extension_hunt(db, *, client: OpenVsxClient | None = None, limit: int = 
             _record_intel(ext, result)
 
     db.finish_run(run_id, datetime.now(UTC), RunStatus.COMPLETED, counts)
-    return {"run_id": run_id, "counts": counts,
+    return {"run_id": run_id, "registry": registry, "counts": counts,
             "confirmed": [{"extension": e.ext_id, "version": e.version, "url": e.url,
                            "confidence": r.get("confidence"), "reasons": e.reasons}
                           for e, r in confirmed],
@@ -215,7 +221,8 @@ def summary_markdown(report: dict) -> str:
     from ..osm_automation import _cell, _code, _fence
 
     c = report["counts"]
-    out = ["## Warden VS Code extension hunt", "",
+    registry = _REGISTRY_NAMES.get(report.get("registry"), report.get("registry") or "")
+    out = [f"## Warden VS Code extension hunt: {registry}", "",
            f"Candidates screened: **{c['candidates']}** · scanned in sandbox: "
            f"**{c['scanned']}** · confirmed: **{c['confirmed']}** "
            f"({c['confirmed_auto']} auto, {c['review']} review) · "

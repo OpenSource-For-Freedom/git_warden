@@ -1,16 +1,22 @@
 name: Warden VS Code Extension Hunt
 on:
-  # On-demand for now. Screens Open VSX metadata, then fetches and statically
+  # On-demand for now. Screens Open VSX and/or VS Marketplace metadata, then fetches and statically
   # analyzes the top candidates inside the Tier-2 sandbox container. Nothing is
   # submitted anywhere; confirmed extensions are listed in the run summary.
   workflow_dispatch:
     inputs:
+      registry:
+        description: Registry to hunt
+        required: false
+        default: all
+        type: choice
+        options: [all, openvsx, marketplace]
       limit:
-        description: Max extensions to fetch and scan in the sandbox
+        description: Max extensions to fetch and scan per registry
         required: false
         default: "15"
       recent:
-        description: Recently published extensions to screen
+        description: Recently published/updated extensions to screen per registry
         required: false
         default: "100"
 
@@ -20,7 +26,7 @@ permissions:
 jobs:
   hunt:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     # Shares the hunt's group: never overlaps a hunt (same data cache).
     concurrency:
       group: git-warden-run
@@ -50,10 +56,11 @@ jobs:
       - name: Hunt extensions
         env:
           GW_SHARED_INTEL: data/shared_intel/breadcrumbs.jsonl
+          REGISTRY: ${{ inputs.registry }}
           LIMIT: ${{ inputs.limit }}
           RECENT: ${{ inputs.recent }}
         run: >-
-          python gw.py extensions --limit "$LIMIT" --recent "$RECENT"
+          python gw.py extensions --registry "$REGISTRY" --limit "$LIMIT" --recent "$RECENT"
           --summary-md ext_summary.md
 
       - name: Save data
