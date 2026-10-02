@@ -201,6 +201,28 @@ def _is_minified(name: str) -> bool:
     return name.endswith((".min.js", ".min.mjs", ".min.cjs")) or ".bundle." in name
 
 
+# Minecraft anti-rat scanners and triage tools match the same token reads and
+# launcher account paths they look for, next to webhook patterns, so steal-and-
+# send would confirm them (moleclient/antirat JarScanner.java, cev-api/java-triage
+# behaviors.py, 2026-10-02). Inside detector code these two rules are detection
+# data. Scoped to the Minecraft rules only: renaming a stealer to Scanner.java
+# only drops the Minecraft credential evidence, never the webhook or loader rules.
+_MC_RULES = {"mc-session-token", "mc-launcher-accounts"}
+_DETECTOR_DIRS = {"scan", "scanner", "scanners", "detect", "detection", "detector",
+                  "detectors", "triage", "analysis", "analyzer", "analyzers",
+                  "heuristics", "antirat", "anti-rat", "antimalware", "antivirus"}
+_DETECTOR_STEM = re.compile(
+    r"scanner|scan$|detector|detection|detect$|triage|heuristic|behaviou?rs?$|"
+    r"analy[sz]er|anti-?rat", re.I)
+
+
+def _is_detector_path(rel: str) -> bool:
+    parts = rel.lower().split("/")
+    if _DETECTOR_DIRS & set(parts[:-1]):
+        return True
+    return bool(_DETECTOR_STEM.search(parts[-1].rsplit(".", 1)[0]))
+
+
 def scan_content(root) -> list[BashFinding]:
     """Scan first-party source files for obfuscation / exec / exfil. Static only."""
     root = Path(root)
@@ -219,10 +241,13 @@ def scan_content(root) -> list[BashFinding]:
         except OSError:
             continue
         rel = str(path.relative_to(root)).replace("\\", "/")
+        detector = _is_detector_path(rel)
         for lineno, line in enumerate(text.splitlines(), 1):
             for category, rules in _RULES.items():
                 for rule_name, rule_lang, pattern in rules:
                     if rule_lang != "any" and rule_lang != lang:
+                        continue
+                    if detector and rule_name in _MC_RULES:
                         continue
                     if pattern.search(line) and not is_benign_construct(rule_name, line):
                         snippet = line.strip()[:200]

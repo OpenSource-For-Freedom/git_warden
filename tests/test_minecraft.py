@@ -211,3 +211,26 @@ def test_focused_family_hits_survive_the_candidate_limit(tmp_path, monkeypatch):
     db.close()
     assert "modder/coolmod" in readmes
     assert len(readmes) == 2
+
+
+@pytest.mark.parametrize("rel,expected", [
+    ("src/main/java/com/antirat/scan/JarScanner.java", False),   # anti-rat scanner
+    ("modules/behaviors.py", False),                             # triage behaviors
+    ("src/main/java/me/client/mixin/SessionMixin.java", True),   # stealer mod
+    ("Luna-Grabber-main/Builder.py", True),                      # grabber builder
+])
+def test_minecraft_credential_rules_skip_detector_code(tmp_path, rel, expected):
+    # Anti-rat scanners carry the token read and launcher account paths as
+    # detection data; inside detector code those two rules must not fire, while
+    # the webhook rule (and a real stealer anywhere else) still does.
+    path = tmp_path / rel
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        'String t = mc.getSession().getToken(); String p = "launcher_accounts.json";\n'
+        'String w = "https://discord.com/api/webhooks/1/x";\n', encoding="utf-8")
+    rules = {f.rule for f in scan_content(tmp_path)}
+    mc = {"mc-session-token", "mc-launcher-accounts"}
+    if rel.endswith(".py"):
+        mc = {"mc-launcher-accounts"}  # the token rule is JVM-only
+    assert (mc <= rules) is expected
+    assert "discord-webhook" in rules
