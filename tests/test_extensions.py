@@ -200,6 +200,9 @@ def test_lookalike_detection():
     # Another genuine popular extension is never a lookalike of its neighbour.
     both = POPULAR + [{"id": "prettier.prettier-vscode", "display": "Prettier"}]
     assert ext_hunt.lookalike_of(_ext("prettier", "prettier-vscode"), both) is None
+    # Built-ins and the same publisher's companion extensions are not impersonation.
+    assert ext_hunt.lookalike_of(_ext("vscode", "prettier-vscode"), POPULAR) is None
+    assert ext_hunt.lookalike_of(_ext("esbenp", "prettier-vscode-legacy"), POPULAR) is None
 
 
 def test_from_json_rejects_unsafe_ids():

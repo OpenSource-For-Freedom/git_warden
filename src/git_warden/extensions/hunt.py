@@ -32,6 +32,8 @@ log = logging.getLogger(__name__)
 POPULAR_PATH = config.PROJECT_ROOT / "config" / "vscode_popular_extensions.json"
 EXTENSION_ECOSYSTEMS = {"vscode", "openvsx", "vscode-extension", "open-vsx"}
 _FEW_DOWNLOADS = 50
+# Open VSX's own namespace for VS Code's built-in extensions (vscode.go, ...).
+TRUSTED_NAMESPACES = {"vscode"}
 
 
 def load_popular(path: Path = POPULAR_PATH) -> list[dict]:
@@ -58,10 +60,12 @@ def lookalike_of(ext: Extension, popular: list[dict],
     prettier.prettier-vscode next to esbenp.prettier-vscode) is never a lookalike.
     """
     genuine = genuine if genuine is not None else {p["id"].casefold() for p in popular}
-    if ext.ext_id.casefold() in genuine:
+    if ext.ext_id.casefold() in genuine or ext.namespace.casefold() in TRUSTED_NAMESPACES:
         return None
     for pop in popular:
         pop_id = pop["id"].casefold()
+        if ext.namespace.casefold() == pop_id.split(".", 1)[0]:
+            continue  # same publisher's companion extension (e.g. a language pack)
         pop_name = pop_id.split(".", 1)[1]
         if (_similar(ext.name, pop_name) >= 0.85
                 or _similar(ext.display_name, pop.get("display", "")) >= 0.9):

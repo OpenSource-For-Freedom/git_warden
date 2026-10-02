@@ -3,9 +3,6 @@ on:
   # On-demand for now. Screens Open VSX metadata, then fetches and statically
   # analyzes the top candidates inside the Tier-2 sandbox container. Nothing is
   # submitted anywhere; confirmed extensions are listed in the run summary.
-  # TEMPORARY: branch test run; removed before merge.
-  push:
-    branches: [feature/vscode-extension-hunt]
   workflow_dispatch:
     inputs:
       limit:
@@ -53,8 +50,8 @@ jobs:
       - name: Hunt extensions
         env:
           GW_SHARED_INTEL: data/shared_intel/breadcrumbs.jsonl
-          LIMIT: ${{ inputs.limit || '40' }}
-          RECENT: ${{ inputs.recent || '100' }}
+          LIMIT: ${{ inputs.limit }}
+          RECENT: ${{ inputs.recent }}
         run: >-
           python gw.py extensions --limit "$LIMIT" --recent "$RECENT"
           --summary-md ext_summary.md
