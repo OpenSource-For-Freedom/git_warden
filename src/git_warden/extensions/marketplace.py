@@ -28,6 +28,7 @@ _UNPUBLISHED = "4096"
 # IncludeStatistics | IncludeLatestVersionOnly
 _FLAGS = 0x1 | 0x2 | 0x10 | 0x80 | 0x100 | 0x200
 _SORT_RELEVANCE, _SORT_LAST_UPDATED = 0, 1
+_RETRY_BACKOFF = (2.0, 6.0)
 
 
 def _from_json(d: dict) -> Extension | None:
@@ -76,18 +77,30 @@ class MarketplaceClient:
                          {"filterType": _F_EXCLUDE, "value": _UNPUBLISHED}, *criteria],
             "pageNumber": page, "pageSize": size, "sortBy": sort_by, "sortOrder": 0}],
             "flags": _FLAGS}
-        try:
-            r = self.session.post(
-                self.url, json=body, timeout=HTTP_TIMEOUT,
-                headers={"User-Agent": USER_AGENT,
-                         "Accept": "application/json;api-version=3.0-preview.1"})
-            if r.status_code != 200:
-                log.info("marketplace: non-200", extra={"context": {"status": r.status_code}})
+        data = None
+        for attempt, backoff in enumerate((*_RETRY_BACKOFF, None)):
+            try:
+                r = self.session.post(
+                    self.url, json=body, timeout=HTTP_TIMEOUT,
+                    headers={"User-Agent": USER_AGENT,
+                             "Accept": "application/json;api-version=3.0-preview.1"})
+                status = r.status_code
+                if status == 200:
+                    data = r.json()
+                    break
+            except requests.RequestException as exc:
+                status = f"error: {exc}"
+            except ValueError:
+                log.warning("marketplace: unparseable response")
                 return []
-            data = r.json()
-        except (requests.RequestException, ValueError) as exc:
-            log.warning("marketplace: query failed", extra={"context": {"err": str(exc)}})
-            return []
+            # The gallery sheds load with 429/5xx (the first live run's "recent"
+            # query got a 503); retry those with backoff, give up on anything else.
+            transient = not isinstance(status, int) or status == 429 or status >= 500
+            if backoff is None or not transient:
+                log.info("marketplace: query failed",
+                         extra={"context": {"status": status, "attempts": attempt + 1}})
+                return []
+            time.sleep(backoff)
         results = (data or {}).get("results") or [] if isinstance(data, dict) else []
         exts = (results[0] or {}).get("extensions") or [] if results else []
         out = [_from_json(e) for e in exts if isinstance(e, dict)]
