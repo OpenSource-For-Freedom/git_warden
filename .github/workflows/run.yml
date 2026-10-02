@@ -1,10 +1,12 @@
 name: The Warden
 on:
-  # On-demand ONLY -- no automatic schedule. Trigger via "Run workflow" in the
-  # Actions tab when you want a fresh scan, or run it locally:
+  # Daily at 09:23 UTC with the Minecraft mod/plugin stealer family searched
+  # first, and on demand via "Run workflow" in the Actions tab. Locally:
   #   gw ingest && gw hunt --scan --gold        (uses a local data/git_warden.sqlite)
-  # The DB for these dispatch runs persists in the Actions cache between runs
-  # (best-effort: GitHub evicts a cache after ~7 idle days).
+  # The DB persists in the Actions cache between runs (best-effort: GitHub
+  # evicts a cache after ~7 idle days).
+  schedule:
+    - cron: '23 9 * * *'
   workflow_dispatch:
     inputs:
       limit:
@@ -38,7 +40,7 @@ concurrency:
 jobs:
   hunt:
     runs-on: ubuntu-latest
-    timeout-minutes: ${{ fromJSON(inputs.timeout_minutes) }}
+    timeout-minutes: ${{ fromJSON(inputs.timeout_minutes || '60') }}
     steps:
       - name: Legion Harden Runner
         uses: Wraith-security/legion_runner@v1.0.61
@@ -85,10 +87,12 @@ jobs:
           GW_GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           GW_OSM_API_KEY: ${{ secrets.OSM_KEY }}
           GW_DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-          HUNT_LIMIT: ${{ inputs.limit }}
-          HUNT_MAX_SIGNATURES: ${{ inputs.max_signatures }}
+          # Scheduled runs have no inputs: fall back to the dispatch defaults,
+          # with the Minecraft family searched first.
+          HUNT_LIMIT: ${{ inputs.limit || '75' }}
+          HUNT_MAX_SIGNATURES: ${{ inputs.max_signatures || '14' }}
           HUNT_RESUME: ${{ inputs.resume && '--resume' || '' }}
-          HUNT_SIGNATURE_FAMILY: ${{ inputs.signature_family }}
+          HUNT_SIGNATURE_FAMILY: ${{ github.event_name == 'schedule' && 'minecraft' || inputs.signature_family }}
 
         # Top N candidates per run (ranked by signature/owner/signal priority),
         # not every possible repo. Discovery skips repos already in the DB, so

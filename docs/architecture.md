@@ -122,4 +122,6 @@ Git Warden fails closed where a failure could change a reporting decision.
 
 The Warden repository CI proves the code and sandbox contract: tests, lint, policy checks, and sandbox build.
 
+Scheduled hunts, all daily (UTC): the KNÖRR joint hunt with OSM submission at 05:17, the VS Code extension hunt at 07:43, and The Warden hunt at 09:23 with the Minecraft mod/plugin stealer family searched first. Seeds that are already full code-search queries (quoted phrases or qualifiers) are sent verbatim, and hits on the focused family keep their slots ahead of the per-run candidate limit.
+
 Live joint OSM validation is performed from the KNÖRR joint workflow with the shared production credential. Warden's standalone OSM workflow is retained as a manual recovery path, not the canonical production scheduler.

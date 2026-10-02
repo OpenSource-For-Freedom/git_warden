@@ -157,7 +157,16 @@ def _code_query(term: str) -> str:
     as an exact phrase improves the match. Plain IOCs (domains, webhook ids) are
     left unquoted so substring/subdomain matches still surface.
     """
+    # A curated seed that is already a full query (its own quoted phrases or
+    # search qualifiers) goes out verbatim: wrapping it again turns
+    # '"a" "b/c" language:Java' into one broken phrase that matches nothing.
+    if '"' in term or _QUALIFIER.search(term):
+        return term
     return f'"{term}"' if ("@" in term or "/" in term) else term
+
+
+_QUALIFIER = re.compile(
+    r"(?:^|\s)(?:language|filename|path|extension|repo|org|user|in|symbol|content):\S")
 
 
 # GitHub code search serves at most 1000 results per query, whatever per_page is.
