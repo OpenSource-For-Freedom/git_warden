@@ -27,10 +27,12 @@ from .tier2 import Tier2Result
 
 log = logging.getLogger(__name__)
 
-SANDBOX_IMAGE = os.environ.get("GW_SANDBOX_IMAGE", "warden-sandbox:latest")
-_MEMORY = os.environ.get("GW_SANDBOX_MEMORY", "1g")
-_CPUS = os.environ.get("GW_SANDBOX_CPUS", "2")
-_PIDS = os.environ.get("GW_SANDBOX_PIDS", "512")
+# The image is fixed (callers may pass another explicitly). Resource caps are
+# parsed as numbers so no free-form environment text reaches the docker argv.
+SANDBOX_IMAGE = "warden-sandbox:latest"
+_MEMORY = f"{int(os.environ.get('GW_SANDBOX_MEMORY_MB', '1024'))}m"
+_CPUS = f"{float(os.environ.get('GW_SANDBOX_CPUS', '2')):g}"
+_PIDS = str(int(os.environ.get("GW_SANDBOX_PIDS", "512")))
 _TIMEOUT = int(os.environ.get("GW_SANDBOX_TIMEOUT", "300"))
 # Untrusted registry values allowed onto the sandbox argv for an extension scan.
 _VALID_EXT_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]{0,127}\.[A-Za-z0-9][A-Za-z0-9_.-]{0,127}")
