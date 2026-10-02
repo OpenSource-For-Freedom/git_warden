@@ -154,6 +154,7 @@ def run_extension_hunt(db, *, client: OpenVsxClient | None = None, limit: int = 
               "confirmed_auto": 0, "review": 0, "fetch_failed": 0, "skipped_known": 0,
               "errors": 0}
     confirmed: list[tuple[Extension, dict]] = []
+    failures: list[tuple[Extension, str]] = []
     for ext in candidates:
         if counts["scanned"] >= limit:
             break
@@ -172,6 +173,10 @@ def run_extension_hunt(db, *, client: OpenVsxClient | None = None, limit: int = 
             continue
         if result.get("fetch_failed"):
             counts["fetch_failed"] += 1
+            reason = str(result.get("reason") or "unknown")[:200]
+            failures.append((ext, reason))
+            log.warning("extension fetch failed", extra={"context": {
+                "ext": ext.ext_id, "url": ext.download_url, "reason": reason}})
             db.upsert_extension(ext, run_id, status="fetch_failed", payload=result)
             continue
         ok = bool(result.get("confirmed"))
@@ -193,6 +198,7 @@ def run_extension_hunt(db, *, client: OpenVsxClient | None = None, limit: int = 
             "confirmed": [{"extension": e.ext_id, "version": e.version, "url": e.url,
                            "confidence": r.get("confidence"), "reasons": e.reasons}
                           for e, r in confirmed],
+            "fetch_failures": [{"extension": e.ext_id, "reason": why} for e, why in failures],
             "_details": confirmed}
 
 
@@ -224,4 +230,10 @@ def summary_markdown(report: dict) -> str:
             out += [f"- {_code(str(f.get('file')) + ':' + str(f.get('line')))} — "
                     f"{_cell(f.get('category'))} / {_cell(f.get('rule'))}", "",
                     _fence(f.get("snippet") or ""), ""]
+    fails = report.get("fetch_failures") or []
+    if fails:
+        out += ["", f"<details><summary>Fetch failures ({len(fails)})</summary>", "",
+                "| Extension | Reason |", "|---|---|"]
+        out += [f"| {_code(f['extension'])} | {_cell(f['reason'])} |" for f in fails]
+        out += ["", "</details>"]
     return "\n".join(out) + "\n"
