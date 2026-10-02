@@ -3,6 +3,9 @@ on:
   # On-demand for now. Screens Open VSX and/or VS Marketplace metadata, then fetches and statically
   # analyzes the top candidates inside the Tier-2 sandbox container. Nothing is
   # submitted anywhere; confirmed extensions are listed in the run summary.
+  # TEMPORARY: branch test run; removed before merge.
+  push:
+    branches: [feature/vscode-marketplace-hunt]
   workflow_dispatch:
     inputs:
       registry:
@@ -56,9 +59,9 @@ jobs:
       - name: Hunt extensions
         env:
           GW_SHARED_INTEL: data/shared_intel/breadcrumbs.jsonl
-          REGISTRY: ${{ inputs.registry }}
-          LIMIT: ${{ inputs.limit }}
-          RECENT: ${{ inputs.recent }}
+          REGISTRY: ${{ inputs.registry || 'marketplace' }}
+          LIMIT: ${{ inputs.limit || '30' }}
+          RECENT: ${{ inputs.recent || '100' }}
         run: >-
           python gw.py extensions --registry "$REGISTRY" --limit "$LIMIT" --recent "$RECENT"
           --summary-md ext_summary.md
