@@ -487,10 +487,11 @@ def _cmd_hunt(args: argparse.Namespace) -> int:
 
 
 def _cmd_extensions(args: argparse.Namespace) -> int:
-    """Hunt malicious VS Code extensions on Open VSX (sandboxed static scan)."""
+    """Hunt malicious VS Code extensions on Open VSX and/or the VS Marketplace."""
     configure_logging(json_output=not args.pretty_logs)
     config.ensure_dirs()
     from .extensions.hunt import run_extension_hunt, summary_markdown
+    from .extensions.marketplace import MarketplaceClient
     from .extensions.openvsx import OpenVsxClient
     from .scanning.sandbox_runner import docker_available
 
@@ -499,18 +500,24 @@ def _cmd_extensions(args: argparse.Namespace) -> int:
         print("Docker sandbox unavailable (build warden-sandbox:latest first); "
               "refusing to scan extensions on the host.")
         return 2
+    clients = {"openvsx": OpenVsxClient, "marketplace": MarketplaceClient}
+    names = list(clients) if args.registry == "all" else [args.registry]
+    reports = []
     db = Database.open(args.db)
     try:
-        report = run_extension_hunt(
-            db, client=OpenVsxClient(pace=args.pace), limit=args.limit,
-            recent=args.recent, rescan=args.rescan)
+        for name in names:
+            reports.append(run_extension_hunt(
+                db, client=clients[name](pace=args.pace), limit=args.limit,
+                recent=args.recent, rescan=args.rescan))
     finally:
         db.close()
     if args.summary_md:
         with Path(args.summary_md).open("a", encoding="utf-8") as fh:
-            fh.write(summary_markdown(report))
-    report.pop("_details", None)
-    print(json.dumps(report, indent=2))
+            for report in reports:
+                fh.write(summary_markdown(report))
+    for report in reports:
+        report.pop("_details", None)
+    print(json.dumps(reports, indent=2))
     return 0
 
 
@@ -795,12 +802,15 @@ def build_parser() -> argparse.ArgumentParser:
     discover.set_defaults(func=_cmd_discover)
 
     ext_p = sub.add_parser(
-        "extensions", help="Hunt malicious VS Code extensions on Open VSX (sandboxed).")
+        "extensions",
+        help="Hunt malicious VS Code extensions on Open VSX / the VS Marketplace (sandboxed).")
+    ext_p.add_argument("--registry", choices=("all", "openvsx", "marketplace"),
+                       default="all", help="Registry to hunt (default: both).")
     ext_p.add_argument("--db", type=Path, default=config.DB_PATH, help="SQLite path.")
     ext_p.add_argument("--limit", type=int, default=15,
-                       help="Max extensions to fetch and scan in the sandbox.")
+                       help="Max extensions to fetch and scan per registry.")
     ext_p.add_argument("--recent", type=int, default=100,
-                       help="Recently published extensions to screen.")
+                       help="Recently published/updated extensions to screen per registry.")
     ext_p.add_argument("--pace", type=float, default=1.0,
                        help="Seconds between Open VSX API calls.")
     ext_p.add_argument("--rescan", action="store_true",

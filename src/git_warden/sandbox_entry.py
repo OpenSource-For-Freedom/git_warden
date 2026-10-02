@@ -50,11 +50,17 @@ def _result_to_dict(result) -> dict:
 
 def _main_vsix(ext_id: str, url: str) -> int:
     """Fetch one .vsix into tmpfs, unpack it safely, and analyze it statically."""
-    from .extensions.vsix import VsixError, analyze_extension, download, safe_extract
+    from .extensions.vsix import (
+        VsixError,
+        analyze_extension,
+        download,
+        ensure_zip,
+        safe_extract,
+    )
 
     work = Path(tempfile.mkdtemp(dir="/work" if Path("/work").exists() else None))
     try:
-        archive = download(url, work / "ext.vsix")
+        archive = ensure_zip(download(url, work / "ext.vsix"))
         root = safe_extract(archive, work / "unpacked")
     except VsixError as exc:
         print(json.dumps({"full_name": ext_id, "fetch_failed": True, "reason": str(exc)}))
