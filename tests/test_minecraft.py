@@ -125,7 +125,7 @@ def test_exhausted_signature_terms_rotate_out_of_the_budget(tmp_path, monkeypatc
 
 def test_seed_family_filter():
     mc = load_seed_signatures(config.MALWARE_SIGNATURES_PATH, "minecraft")
-    assert len(mc) == 6
+    assert len(mc) == 11
     assert set(mc) < set(load_seed_signatures(config.MALWARE_SIGNATURES_PATH))
     assert load_seed_signatures(config.MALWARE_SIGNATURES_PATH, "MINECRAFT") == mc
     assert load_seed_signatures(config.MALWARE_SIGNATURES_PATH, "no-such-family") == []
@@ -156,3 +156,58 @@ def test_signature_family_jumps_ahead_of_learned_signatures(tmp_path, monkeypatc
     db.close()
     assert searched[0] == "MCSEED"
     assert "OTHER" not in searched
+
+
+def test_curated_seed_queries_are_sent_verbatim():
+    # Seeds that are already full queries (quoted phrases, qualifiers) must not be
+    # wrapped again: '"a" "b/c" language:Java' became one phrase matching nothing,
+    # which silently zeroed most Minecraft seeds.
+    for term in load_seed_signatures(config.MALWARE_SIGNATURES_PATH):
+        if '"' in term or ":" in term:
+            assert _code_query(term) == term, term
+    # Bare package names and webhook paths are still quoted as exact phrases.
+    assert _code_query("@evil/pkg") == '"@evil/pkg"'
+    assert _code_query("discord.com/api/webhooks/123") == '"discord.com/api/webhooks/123"'
+
+
+def test_focused_family_hits_survive_the_candidate_limit(tmp_path, monkeypatch):
+    # Lure-repo hits outnumber Minecraft hits; with a small limit the focused
+    # family must still keep its slots instead of being ranked out.
+    sig_file = tmp_path / "sigs.json"
+    sig_file.write_text(json.dumps([
+        {"name": "lure", "query": "LURE"},
+        {"name": "lure2", "query": "LURE2"},
+        {"name": "mc", "query": "MCSEED", "family": "minecraft"},
+    ]), encoding="utf-8")
+    monkeypatch.setattr(config, "MALWARE_SIGNATURES_PATH", sig_file)
+    readmes: list[str] = []
+
+    def _item(full: str) -> dict:
+        owner = full.split("/")[0]
+        return {"path": "src/Main.java", "repository": {
+            "full_name": full, "owner": {"login": owner},
+            "html_url": f"https://github.com/{full}"}}
+
+    class Client(FakeClient):
+        def search_code(self, query, per_page=20, *, page=1, sort=None):
+            if page != 1:
+                return []
+            if query == "MCSEED":
+                return [_item("modder/coolmod")]
+            if query in ("LURE", "LURE2"):  # two matched terms: ranks above mc
+                return [_item(f"lure{i}/app{i}") for i in range(6)]
+            return []
+
+        def get_readme(self, owner, name):
+            readmes.append(f"{owner}/{name}")
+            return super().get_readme(owner, name)
+
+    db = Database.open(tmp_path / "pin.sqlite")
+    monkeypatch.setattr(db, "learned_signatures", lambda: [])
+    hunt(db, Client(), TOOLS, run_id="pin", now=utcnow(), do_news=False, do_ioc=False,
+         do_lineage=False, do_actor=False, do_enrich=False, do_osm=False,
+         do_package_repos=False, do_signature=True, do_tier2=False, max_signatures=3,
+         signature_family="minecraft", limit=2)
+    db.close()
+    assert "modder/coolmod" in readmes
+    assert len(readmes) == 2
