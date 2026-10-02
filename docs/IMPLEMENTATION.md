@@ -67,6 +67,21 @@ Three first-party scanners run together:
 - the **JS and Python content scanner** (`content_scanner.py`: eval, atob, base64
   and marshal obfuscation, child_process, webhook exfil).
 
+The content scanner also reads **Java and Kotlin**, for Minecraft mod and server
+plugin malware (Forge, Fabric, Bukkit/Paper):
+
+- `mc-session-token` (session access token read, MCP/SRG/Yarn/Mojang names) and
+  `mc-launcher-accounts` (vanilla, Lunar, Feather, Essential account stores) are
+  Tier-B credential signals. They confirm only as steal-and-send, next to a
+  Discord/Telegram exfil in the same file, so account-switcher mods stay clean.
+- `jvm-remote-classload` (a `URLClassLoader` over a hard-coded remote jar) is
+  host-gated: a public IP or paste host confirms, Maven Central never does.
+- `jvm-decode-defineclass` (a class defined from base64) confirms at REVIEW.
+
+Discovery seeds in `config/malware_signatures.json` (`mc-*`) code-search GitHub
+for token-read + webhook pairs. Seeds whose result pages are all walked rotate
+out of the `--max-signatures` budget so later seeds get searched.
+
 The OSS scanners **GuardDog** (ecosystem-aware) and **YARA** may confirm on their
 own; **Semgrep** runs as enrichment only. Confirmation is precision-first: one
 high-signal Tier-A rule, or two distinct Tier-B signals in a steal-and-send pair.
@@ -102,7 +117,8 @@ brings back a known false positive fails CI instead of production. Classes cover
 include variable-fed decode-exec, folderOpen tasks that fetch reputable registries,
 localhost and private IPs, `python -m json.tool` piping, `2>/dev/null` redirects,
 installer allowlists, defensive-scanner self-match, vendored front-end libraries,
-and benign `node -e` package-manager guards.
+and benign `node -e` package-manager guards, plus Minecraft account switchers,
+Discord chat-bridge plugins, and Maven Central library loaders (`*_mc_*`).
 
 ### Threat attribution (`dprk.py`, `actors.py`)
 Multi-signal, country-level attribution across the 18 seeded actors mapped to five

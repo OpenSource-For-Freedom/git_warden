@@ -94,6 +94,9 @@ _CONFIRM_ALONE_RULES = frozenset({
     ("install_hook", "npm-postinstall"), ("install_hook", "npm-prepare"),
     ("install_hook", "npm-preuninstall"), ("install_hook", "py-setup-exec"),
     ("install_hook", "vscode-autorun"),  # VS Code task auto-running a fetch/decode on folderOpen
+    # JVM class defined straight from base64: a hidden in-memory stager in a mod or
+    # plugin. Obfuscation, so it lands at REVIEW for a human, never AUTO.
+    ("obfuscation", "jvm-decode-defineclass"),
 })
 # Tier B; CORROBORATED, split into two phases. Each is benign alone (a project's
 # own Discord/Telegram channel; an ops script reading creds). Confirmation needs
@@ -103,6 +106,9 @@ _CONFIRM_ALONE_RULES = frozenset({
 _TIERB_CRED = frozenset({
     ("credential_harvest", "ssh-keys"), ("credential_harvest", "cloud-creds"),
     ("credential_access", "keyfiles"),  # JS/py reading .ssh/id_ , .aws/credentials
+    # Minecraft account theft: the session access token, or a launcher's account
+    # store. A Discord/Telegram exfil in the SAME file is the classic "ratter" mod.
+    ("credential_access", "mc-session-token"), ("credential_access", "mc-launcher-accounts"),
 })
 _TIERB_EXFIL = frozenset({
     ("exfiltration", "discord-webhook"), ("exfiltration", "telegram-bot"),
@@ -117,6 +123,9 @@ _TIERB_EXFIL = frozenset({
 _HOST_GATED_ALONE = frozenset({
     ("download_exec", "curl-pipe-shell"), ("download_exec", "fetch-then-exec"),
     ("exfiltration", "curl-post-data"), ("exfiltration", "archive-then-send"),
+    # A mod/plugin URLClassLoader over a remote jar: a dropper from a public IP or
+    # paste host, a library loader from Maven Central (reputable, never confirms).
+    ("download_exec", "jvm-remote-classload"),
 })
 # CONFIDENCE TIERS. The confirming MECHANISM decides how much to trust a finding:
 #   auto   -- a delivery/exfil/dependency mechanism (fetch-and-run, install hook,
@@ -321,6 +330,8 @@ def _within_bounds(root: Path) -> bool:
 _SPARSE_PATTERNS = (
     "*.js", "*.mjs", "*.cjs", "*.ts", "*.tsx", "*.jsx", "*.vue", "*.astro",
     "*.py", "*.rb", "*.php", "*.go", "*.rs", "*.ps1", "*.bat",
+    # Minecraft mods/plugins are JVM source; built jars are never fetched.
+    "*.java", "*.kt",
     "*.sh", "*.bash", "*.ksh", "*.zsh",
     "*.json", "*.yml", "*.yaml", "*.toml", "*.cfg", "*.ini", "*.env", "*.html", "*.ipynb",
     "Dockerfile", "Makefile", "requirements*.txt",

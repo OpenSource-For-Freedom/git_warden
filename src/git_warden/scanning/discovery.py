@@ -36,7 +36,7 @@ _DEFENSIVE_NAME = re.compile(
 # Attackers reference the IOC from executable source...
 _SOURCE_EXT = {
     ".js", ".mjs", ".cjs", ".ts", ".tsx", ".jsx", ".py", ".go", ".rb", ".php",
-    ".sh", ".ps1", ".bat", ".rs", ".java", ".lua", ".c", ".cpp",
+    ".sh", ".ps1", ".bat", ".rs", ".java", ".kt", ".lua", ".c", ".cpp",
 }
 # ...or from config/markup that legitimately carries an exfil endpoint in a
 # malicious repo (eval finding #11). These also count as "use".
@@ -114,6 +114,10 @@ _SECURITY_TOOL_MARKERS = (
     "supply-chain attack", "supply chain attack", "typosquat", "detection engine",
     "detection rules", "detects malicious", "detect malicious", "threat detection",
     "static analysis", "indicators of compromise", "ioc match", "sarif",
+    # Minecraft mod/plugin malware scanners (the post-fractureiser detector wave)
+    # carry the same token-stealer and loader strings as detection data.
+    "fractureiser", "mod scanner", "jar scanner", "plugin scanner", "malicious mods",
+    "malicious plugins",
 )
 
 
