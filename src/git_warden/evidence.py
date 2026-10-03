@@ -11,7 +11,8 @@ and keeps two hand-edited columns untouched:
 Rows already in the CSV are never dropped, so the file survives a lost data
 cache. Each row points at ``evidence/<kind>/<id>.json``: the full static
 evidence (file, line, rule, snippet for every finding) and the exact OSM report
-body. ``evidence/osm_extension_ledger.json`` records submitted extensions.
+body. ``evidence/osm_extension_ledger.json`` and
+``evidence/osm_repository_ledger.json`` record what was submitted to OSM.
 """
 
 from __future__ import annotations
@@ -27,6 +28,7 @@ from .db import Database
 EVIDENCE_DIR = config.PROJECT_ROOT / "evidence"
 CSV_NAME = "findings.csv"
 LEDGER_NAME = "osm_extension_ledger.json"
+REPO_LEDGER_NAME = "osm_repository_ledger.json"
 EDITABLE = ("reviewer_decision", "notes")
 COLUMNS = [
     "key", "kind", "id", "url", "registry", "owner", "status", "confidence", "score",
@@ -80,6 +82,36 @@ def rejected_keys(evidence_dir: Path = EVIDENCE_DIR) -> set[str]:
 
 def ledger_path(evidence_dir: Path = EVIDENCE_DIR) -> Path:
     return evidence_dir / LEDGER_NAME
+
+
+def repo_ledger_path(evidence_dir: Path = EVIDENCE_DIR) -> Path:
+    return evidence_dir / REPO_LEDGER_NAME
+
+
+def _record_repo_submissions(db: Database, ledger: dict[str, dict]) -> int:
+    """Add repos this database submitted to OSM to the repository ledger.
+
+    Any database can carry submissions (Warden's own, or the KNORR joint hunt's),
+    so each export adds what it knows and the ledger accumulates them all. A
+    recorded submission is never removed.
+    """
+    have = {r[1] for r in db.conn.execute("PRAGMA table_info(repo_findings)")}
+    if "submitted_osm" not in have:
+        return 0
+    tid = "osm_threat_id" if "osm_threat_id" in have else "NULL"
+    added = 0
+    for row in db.conn.execute(
+            f"SELECT full_name, {tid} AS threat_id, last_seen_run FROM repo_findings "
+            "WHERE submitted_osm = 1"):
+        key = f"repository:{row['full_name']}".casefold()
+        cur = ledger.get(key)
+        if cur is None:
+            ledger[key] = {"key": key, "threat_id": row["threat_id"] or "",
+                           "seen_in_run": row["last_seen_run"] or ""}
+            added += 1
+        elif not cur.get("threat_id") and row["threat_id"]:
+            cur["threat_id"] = row["threat_id"]
+    return added
 
 
 def _repo_rows(db: Database, campaigns: dict) -> list[tuple[dict, dict]]:
@@ -160,13 +192,17 @@ def export(db: Database, evidence_dir: Path = EVIDENCE_DIR,
     (``[{"key", "report"}]``) to extension evidence files and marks them
     ``awaiting_approval``."""
     from .correlate import campaign_index
-    from .extensions.osm import _ledger_load
+    from .extensions.osm import _ledger_load, _ledger_save
 
     evidence_dir.mkdir(parents=True, exist_ok=True)
     csv_path = evidence_dir / CSV_NAME
     existing = read_csv(csv_path)
     ledger = _ledger_load(ledger_path(evidence_dir))
     previews = {p["key"].casefold(): p["report"] for p in (preview or [])}
+    repo_ledger = _ledger_load(repo_ledger_path(evidence_dir))
+    recorded = _record_repo_submissions(db, repo_ledger)
+    if recorded or repo_ledger:
+        _ledger_save(repo_ledger_path(evidence_dir), repo_ledger)
 
     rows = _repo_rows(db, campaign_index(db)) + _extension_rows(db, ledger)
     merged = dict(existing)
@@ -183,10 +219,18 @@ def export(db: Database, evidence_dir: Path = EVIDENCE_DIR,
         target.write_text(json.dumps(detail, indent=2, ensure_ascii=False, default=str)
                           + "\n", encoding="utf-8")
 
+    # The ledgers are authoritative for OSM status: a submission recorded by any
+    # run (including the KNORR joint hunt) is never shown as not submitted.
+    for key, row in merged.items():
+        sub = repo_ledger.get(key) or ledger.get(key)
+        if sub:
+            row["osm_status"] = "submitted"
+            row["osm_threat_id"] = row.get("osm_threat_id") or _cell(sub.get("threat_id"))
+
     with csv_path.open("w", newline="", encoding="utf-8") as fh:
         writer = csv.DictWriter(fh, fieldnames=COLUMNS, extrasaction="ignore")
         writer.writeheader()
         for key in sorted(merged, key=lambda k: (merged[k].get("kind", ""), k)):
             writer.writerow({c: merged[key].get(c, "") for c in COLUMNS})
-    return {"rows": len(merged), "refreshed": len(rows),
+    return {"rows": len(merged), "refreshed": len(rows), "submissions_recorded": recorded,
             "kept_from_previous": len(set(existing) - {r["key"] for r, _ in rows})}
