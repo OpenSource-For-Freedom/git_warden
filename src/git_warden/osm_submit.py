@@ -525,6 +525,17 @@ def _payload_description(row) -> str:
     return f"The malicious payload sits {where}. {base}{extra}{more}"
 
 
+_EM_DASH = re.compile(r"\s*[\u2014\u2015]\s*|\s+[\u2013]\s+|\s+--\s+")
+
+
+def _no_dashes(text: str) -> str:
+    """Prose sent to OSM never carries em dashes (house style): ' a — b ' and a
+    spaced en dash or double hyphen become ', '. Text pulled in from elsewhere
+    (attribution reasons, actor names) is covered too. A bare en dash in a range
+    becomes a hyphen. IOC fields are left byte-exact."""
+    return _EM_DASH.sub(", ", text or "").replace("\u2013", "-")
+
+
 def build_report(row, dprk_infra=None, campaign_ctx: str = "") -> dict:
     """Map a confirmed repo_findings row to an OSM submit-threat request body.
 
@@ -549,8 +560,9 @@ def build_report(row, dprk_infra=None, campaign_ctx: str = "") -> dict:
         # OSM wants the full URL with scheme (per maintainer): https://github.com/...
         "resource_identifier": f"https://github.com/{full}",
         "version_info": "all",
-        "threat_description": _threat_description(row, assessment, campaign_ctx),
-        "payload_description": _payload_description(row),
+        "threat_description": _no_dashes(
+            _threat_description(row, assessment, campaign_ctx)),
+        "payload_description": _no_dashes(_payload_description(row)),
         "publisher": owner,
         "severity_level": severity_level(row),
         "tags": _tags(row, assessment),

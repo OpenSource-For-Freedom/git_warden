@@ -466,3 +466,18 @@ def test_report_names_the_signature_that_found_the_repo():
     assert sig in r["threat_description"]
     assert "matching rule" not in r["threat_description"]  # links carry file+line only
     assert "confirmed malware signature" not in build_report(_row())["threat_description"]
+
+
+def test_report_prose_never_carries_em_dashes():
+    # Text pulled in from elsewhere (here an actor name) must not bring an em
+    # dash into the OSM write-up; IOC fields stay byte-exact.
+    r = build_report(_row(actor_key="Lazarus — per OSM", raw_payload=json.dumps({
+        "bash_findings": [{"file": "a.js", "line": 1, "category": "obfuscation",
+                           "rule": "eval-decoded", "snippet": "eval(atob('x'))"}]})))
+    for field in ("threat_description", "payload_description"):
+        assert "—" not in r[field] and "–" not in r[field]
+        assert " -- " not in r[field]
+    from git_warden.osm_submit import _no_dashes
+    assert _no_dashes("Lazarus \u2014 per OSM") == "Lazarus, per OSM"
+    assert _no_dashes("a\u2014b -- c") == "a, b, c"
+    assert _no_dashes("pages 1\u20133") == "pages 1-3"
