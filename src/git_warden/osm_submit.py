@@ -100,6 +100,19 @@ _BEHAVIOR_BY_RULE = {
         "victim never sees the command run. Suppressing output next to a fetch and "
         "pipe has no legitimate use and shows the intent is concealment."
     ),
+    "mc-session-token": (
+        "The code reads the Minecraft session access token from the running game "
+        "client. That token logs in as the victim's Microsoft or Mojang account "
+        "without a password. Stealer mods, cheat clients and fake plugins grab it "
+        "and post it to a webhook or bot the attacker controls, which hands over "
+        "the account."
+    ),
+    "mc-launcher-accounts": (
+        "The code reads the saved account store of a Minecraft launcher (the "
+        "vanilla launcher, Lunar Client, Feather Client or the Essential mod). "
+        "Those files hold refresh and access tokens for the victim's Microsoft "
+        "account, so copying them lets the attacker sign in as the victim."
+    ),
 }
 
 _BEHAVIOR = {
@@ -230,6 +243,8 @@ def _vectors(bash: list[dict]) -> list[str]:
         v.append("npm-install-hook")
     if "py-setup-exec" in rules:
         v.append("setup-py-fetch-and-run")
+    if {"mc-session-token", "mc-launcher-accounts"} & rules:
+        v.append("minecraft-account-stealer")
     return v
 
 
@@ -258,54 +273,77 @@ def _campaign_sentence(vectors: list[str], c2: list[str]) -> str:
     return s
 
 
+_MAX_LISTED_REPOS = 30
+_MAX_LISTED_HOSTS = 15
+
+
 def campaign_context(db, row) -> str:
-    """A sentence placing this repo inside the wider campaign cluster it belongs to.
+    """The campaign this repo belongs to, with every tied repository named.
 
-    Counts the other confirmed repositories that deliver the SAME dropper signature,
-    the distinct command-and-control hosts that cluster spreads across, and the URL
-    path fingerprints they share. This is the finding that a single repo cannot show
-    on its own: one operator rotating infrastructure while reusing a delivery shape.
-    Returns "" when the repo is not part of a cluster of at least three.
+    Uses the same fingerprints as the run summary and dashboard (``correlate``):
+    a shared payload loader stub, or a dropper URL shape with host, OS segment
+    and parameter values removed. Names the campaign id, the fingerprint, the
+    other confirmed repositories (up to ``_MAX_LISTED_REPOS``), their owners and
+    the union of their command-and-control hosts, so an OSM reviewer can pivot
+    to the whole operation from one report. "" when the repo is in no campaign.
     """
-    from .dprk import c2_hosts_from_flags
-    from .scanning.signatures import _DROPPER_URL, _FETCH_CONTEXT
+    from .correlate import campaign_index
 
-    payload = json.loads(row["raw_payload"] or "{}") or {}
-    bash = payload.get("bash_findings") or []
-    rule = (bash[0].get("rule") if bash else "") or ""
-    if not rule:
+    camp = campaign_index(db).get(row["full_name"])
+    if camp is None:
         return ""
-    peers: set[str] = set()
-    hosts: set[str] = set()
-    paths: set[str] = set()
-    for r in db.conn.execute(
-        "SELECT full_name, raw_payload FROM repo_findings WHERE status='confirmed'"
-    ):
-        flags = (json.loads(r["raw_payload"] or "{}") or {}).get("bash_findings") or []
-        if not any(f.get("rule") == rule for f in flags):
-            continue
-        peers.add(r["full_name"])
-        for h in c2_hosts_from_flags(flags):
-            if _reportable_domain(h):
-                hosts.add(h)
-        for f in flags:
-            line = f.get("snippet") or ""
-            if _FETCH_CONTEXT.search(line):
-                for m in _DROPPER_URL.finditer(line):
-                    paths.add(m.group("path").lstrip("/"))
-    peers.discard(row["full_name"])
-    if len(peers) < 2 or len(hosts) < 2:
+    peers = [m for m in camp.members if m != row["full_name"]]
+    if not peers:
         return ""
-    host_sample = ", ".join(sorted(hosts)[:6])
-    path_clause = ""
-    if paths:
-        path_clause = (" while reusing the same URL path fingerprints ("
-                       + ", ".join(sorted(paths)[:4]) + ")")
-    return (f"This repository is one of {len(peers) + 1} that git_warden has confirmed "
-            f"delivering this same dropper, a single campaign that rotates its "
-            f"command-and-control infrastructure across {len(hosts)} distinct hosts "
-            f"(for example {host_sample}){path_clause}. Matching only a host would miss "
-            f"most of the cluster; matching the delivery shape found all of it.")
+    hosts = sorted(h for h in camp.c2_hosts if _reportable_domain(h))
+    if camp.kind == "payload":
+        shape = ("the same obfuscated loader stub (first characters of the encoded "
+                 f"payload: {camp.fingerprint})")
+    else:
+        shape = f"the same dropper URL shape ({camp.fingerprint.split(':', 1)[-1]})"
+    listed = peers[:_MAX_LISTED_REPOS]
+    more = len(peers) - len(listed)
+    repos = ", ".join(f"https://github.com/{m}" for m in listed)
+    if more > 0:
+        repos += f", and {more} more"
+    text = (f"This repository is one of {len(camp.members)} that Git Warden has "
+            f"confirmed as campaign {camp.id}, which all deliver {shape}. "
+            f"The campaign spans {len(camp.owners)} GitHub accounts. "
+            f"The other confirmed repositories are: {repos}.")
+    if hosts:
+        shown = hosts[:_MAX_LISTED_HOSTS]
+        text += (f" Across the campaign the payload is served from {len(hosts)} "
+                 f"distinct hosts: {', '.join(shown)}"
+                 + (f", and {len(hosts) - len(shown)} more" if len(hosts) > len(shown)
+                    else "")
+                 + ". Matching only one host would miss most of the operation; "
+                 "matching the delivery shape found all of it.")
+    return text
+
+
+def _matched_signatures(row) -> list[str]:
+    """The code-search signatures that surfaced this repo (provenance)."""
+    try:
+        raw = row["matched_iocs"]
+    except (KeyError, IndexError):
+        return []
+    try:
+        terms = json.loads(raw) if isinstance(raw, str) else list(raw or [])
+    except ValueError:
+        return []
+    return [str(t) for t in terms if t][:5]
+
+
+def _rule_summary(bash: list[dict]) -> str:
+    """Every detection rule that fired, with how many files it fired in."""
+    files: dict[str, set] = {}
+    for b in bash:
+        if b.get("rule"):
+            key = f"{b.get('category') or 'other'}/{b['rule']}"
+            files.setdefault(key, set()).add(b.get("file") or "")
+    parts = [f"{k} ({len(v)} file{'s' if len(v) != 1 else ''})"
+             for k, v in sorted(files.items(), key=lambda kv: (-len(kv[1]), kv[0]))]
+    return ", ".join(parts)
 
 
 def _threat_description(row, assessment=None, campaign_ctx: str = "") -> str:
@@ -350,9 +388,16 @@ def _threat_description(row, assessment=None, campaign_ctx: str = "") -> str:
         "No legitimate project ships code like this. The repository was either "
         "compromised or purpose-built to deliver malware to anyone who clones or "
         "installs it.",
-        "The evidence references list the exact file, line, and matching rule, so a "
+        "The evidence references link the exact file and line of each finding, and "
+        "the payload description names every detection rule that fired, so a "
         "reviewer can open the repository and verify each one independently.",
     ]
+    signatures = _matched_signatures(row)
+    if signatures:
+        sentences.append(
+            "Git Warden found this repository by searching GitHub for code that "
+            "matches a confirmed malware signature: "
+            + "; ".join(signatures) + ".")
     text = " ".join(s for s in sentences if s.strip())
     campaign = _campaign_sentence(_vectors(bash), _c2_hosts(bash))
     if campaign:
@@ -475,10 +520,20 @@ def _payload_description(row) -> str:
                  "payload comes from outside the file rather than being written plainly "
                  "in it.")
 
-    other = sorted({b.get("category") for b in bash[1:] if b.get("category")})
-    more = (" The same repository also triggered these additional detections: "
-            + ", ".join(other) + ".") if other else ""
+    rules = _rule_summary(bash)
+    more = f" Detection rules that fired in this repository: {rules}." if rules else ""
     return f"The malicious payload sits {where}. {base}{extra}{more}"
+
+
+_EM_DASH = re.compile(r"\s*[\u2014\u2015]\s*|\s+[\u2013]\s+|\s+--\s+")
+
+
+def _no_dashes(text: str) -> str:
+    """Prose sent to OSM never carries em dashes (house style): ' a — b ' and a
+    spaced en dash or double hyphen become ', '. Text pulled in from elsewhere
+    (attribution reasons, actor names) is covered too. A bare en dash in a range
+    becomes a hyphen. IOC fields are left byte-exact."""
+    return _EM_DASH.sub(", ", text or "").replace("\u2013", "-")
 
 
 def build_report(row, dprk_infra=None, campaign_ctx: str = "") -> dict:
@@ -505,8 +560,9 @@ def build_report(row, dprk_infra=None, campaign_ctx: str = "") -> dict:
         # OSM wants the full URL with scheme (per maintainer): https://github.com/...
         "resource_identifier": f"https://github.com/{full}",
         "version_info": "all",
-        "threat_description": _threat_description(row, assessment, campaign_ctx),
-        "payload_description": _payload_description(row),
+        "threat_description": _no_dashes(
+            _threat_description(row, assessment, campaign_ctx)),
+        "payload_description": _no_dashes(_payload_description(row)),
         "publisher": owner,
         "severity_level": severity_level(row),
         "tags": _tags(row, assessment),

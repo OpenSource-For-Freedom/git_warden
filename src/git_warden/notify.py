@@ -67,11 +67,11 @@ def format_finding(row) -> str:
     # Label by detection class (P3): a weaponized red-team fork reads differently
     # from a malicious supply-chain repo, so reviewers triage correctly.
     label = {
-        "redteam_lineage": "⚠️ Git Warden — weaponized red-team tool fork",
-        "ioc_search": "🛡️ Git Warden — malicious repository (IOC match)",
-        "osm_repository": "🛡️ Git Warden — malicious repository (OSM)",
-        "actor_account": "🛡️ Git Warden — threat-actor repository",
-    }.get(row["detection_method"], "🛡️ Git Warden — confirmed malicious repository")
+        "redteam_lineage": "⚠️ Git Warden: weaponized red-team tool fork",
+        "ioc_search": "🛡️ Git Warden: malicious repository (IOC match)",
+        "osm_repository": "🛡️ Git Warden: malicious repository (OSM)",
+        "actor_account": "🛡️ Git Warden: threat-actor repository",
+    }.get(row["detection_method"], "🛡️ Git Warden: confirmed malicious repository")
 
     lines = [
         f"**{label}**",
@@ -84,7 +84,7 @@ def format_finding(row) -> str:
         f"**Matched IOCs:** {iocs}",
         *( [f"**Lead source (intel):** {intel_line}"] if intel_line else [] ),
         f"**Attribution:** {_safe(row['actor_key'] or 'unattributed')}",
-        "_Pending analyst validation — `git-warden review --approve/--reject`_",
+        "_Pending analyst validation: `git-warden review --approve/--reject`_",
     ]
     return "\n".join(lines)
 
@@ -180,13 +180,13 @@ def cluster_embed(rows: list) -> dict:
         listing = "\n".join(f"`{_safe(r['full_name'])}`" for r in rows[:15])
         if len(rows) > 15:
             listing += f"\n…+{len(rows) - 15} more"
-        fields.append({"name": f"🔗 Connected repos ({len(rows)}) — {_connection_label(rows)}",
+        fields.append({"name": f"🔗 Connected repos ({len(rows)}): {_connection_label(rows)}",
                        "value": listing[:1024], "inline": False})
     fields += [
         {"name": "Detection", "value": ", ".join(rules)[:1024], "inline": True},
         {"name": "Method · score", "value": f"{method} · {primary['score']}", "inline": True},
         {"name": "Class", "value": "🆕 novel" if novel else "OSM-validated", "inline": True},
-        {"name": f"Indicators — {_safe(name)} (file:line → rule)",
+        {"name": f"Indicators: {_safe(name)} (file:line → rule)",
          "value": ioc_lines[:1024], "inline": False},
     ]
     if osm:
@@ -197,8 +197,8 @@ def cluster_embed(rows: list) -> dict:
                    "value": _safe(primary["actor_key"] or "unattributed"), "inline": False})
 
     title = full if not connected else f"{full}  +{len(rows) - 1} connected"
-    author = ("🛡️ Git Warden — confirmed malicious campaign" if connected
-              else "🛡️ Git Warden — confirmed malicious repository")
+    author = ("🛡️ Git Warden: confirmed malicious campaign" if connected
+              else "🛡️ Git Warden: confirmed malicious repository")
     return {
         "author": {"name": author},
         "title": _safe(title)[:256],

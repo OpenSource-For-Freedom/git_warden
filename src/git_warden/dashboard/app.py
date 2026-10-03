@@ -68,7 +68,7 @@ def create_app(db_path=DB_PATH):
     from fastapi.responses import FileResponse, JSONResponse
     from fastapi.staticfiles import StaticFiles
 
-    app = FastAPI(title="Git Warden — Threat Telemetry", docs_url=None, redoc_url=None)
+    app = FastAPI(title="Git Warden: Threat Telemetry", docs_url=None, redoc_url=None)
     # Serve the dashboard's own assets (the watermark image, etc.) under /static.
     app.mount("/static", StaticFiles(directory=str(_STATIC)), name="static")
 

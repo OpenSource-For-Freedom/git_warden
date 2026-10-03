@@ -242,7 +242,7 @@ def summary_markdown(report: dict) -> str:
                 f"| Extension signals | {_cell(', '.join(info.get('signals') or []) or 'none')} |",
                 "", "**Confirming evidence (sandbox static scan)**", ""]
         for f in (result.get("confirming_findings") or [])[:10]:
-            out += [f"- {_code(str(f.get('file')) + ':' + str(f.get('line')))} — "
+            out += [f"- {_code(str(f.get('file')) + ':' + str(f.get('line')))}: "
                     f"{_cell(f.get('category'))} / {_cell(f.get('rule'))}", "",
                     _fence(f.get("snippet") or ""), ""]
     fails = report.get("fetch_failures") or []
