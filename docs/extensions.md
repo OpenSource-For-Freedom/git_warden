@@ -98,9 +98,11 @@ Studio Marketplace, `openvsx` for Open VSX), `package_name` and
 description with every rule that fired, tags, the registry page as evidence,
 and the C2 hosts and URLs as IOCs.
 
-Submitted extensions are recorded in a ledger (its own Actions cache, written
-only by the submit job) and on the shared intelligence bus, so none is offered
-twice. Any OSM lookup failure blocks the run.
+Submitted extensions are recorded in `evidence/osm_extension_ledger.json`
+(committed by the submit job) and on the shared intelligence bus, so none is
+offered twice. A `reject` in the `reviewer_decision` column of
+`evidence/findings.csv` keeps an extension out of every future preview. Any OSM
+lookup failure blocks the run. See [evidence.md](evidence.md).
 
 One-time setup:
 
