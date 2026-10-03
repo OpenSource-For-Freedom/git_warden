@@ -72,8 +72,8 @@ python gw.py extensions --registry all --limit 15 --recent 100 --summary-md ext_
 ```
 
 Without the sandbox image, the command exits 2 rather than scanning on the
-host. The `Warden VS Code Extension Hunt` workflow runs the same command daily
-at 07:43 UTC against both registries (15 scans each), and on demand, and
+host. The `Warden VS Code Extension Hunt` workflow runs the same command weekly
+on Mondays at 07:43 UTC against both registries (15 scans each), and on demand, and
 publishes the summary to the run page.
 
 ## OSM submission (approval gated)
