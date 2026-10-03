@@ -1,0 +1,80 @@
+{
+  "finding": {
+    "key": "repository:lordhaka/photo",
+    "kind": "repository",
+    "id": "lordhaka/photo",
+    "url": "https://github.com/LordHAKA/photo",
+    "registry": "github",
+    "owner": "lordhaka",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 8,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "credential_access/mc-launcher-accounts; network_exfil/discord-webhook",
+    "evidence_locations": "api/photo/load.py:597; api/photo/load.py:18",
+    "c2_hosts": "discord.com",
+    "iocs": "discord.com; https://discord.com/api/webhooks/1364110427172245514/zoJcBfe0nXVji-8MA_aCBqUQVHGVrSf21urcAB7w2YzEJxj0z3Vnn2mA_XHhZsrnR4IP; api/photo/load.py",
+    "matched_signatures": "\"launcher_accounts.json\" \"api/webhooks\"",
+    "reasons": "Shares a confirmed-malware code signature ['\"launcher_accounts.json\" \"api/webhooks\"'] | Tier-2 confirmed (bash score 7)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20261003T093317Z",
+    "last_seen": "hunt-20261003T093317Z",
+    "evidence_file": "repositories/lordhaka_photo.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "api/photo/load.py",
+      "line": 597,
+      "category": "credential_access",
+      "rule": "mc-launcher-accounts",
+      "snippet": "to_grab = ['launcher_accounts.json', 'launcher_profiles.json', 'usercache.json', 'launcher_log.txt']"
+    },
+    {
+      "file": "api/photo/load.py",
+      "line": 18,
+      "category": "network_exfil",
+      "rule": "discord-webhook",
+      "snippet": "'webhook': 'https://discord.com/api/webhooks/1364110427172245514/zoJcBfe0nXVji-8MA_aCBqUQVHGVrSf21urcAB7w2YzEJxj0z3Vnn2mA_XHhZsrnR4IP',"
+    },
+    {
+      "file": "api/photo/load.py",
+      "line": 18,
+      "category": "network_exfil",
+      "rule": "discord-webhook",
+      "snippet": "'webhook': 'https://discord.com/api/webhooks/1364110427172245514/zoJcBfe0nXVji-8MA_aCBqUQVHGVrSf21urcAB7w2YzEJxj0z3Vnn2mA_XHhZsrnR4IP',"
+    },
+    {
+      "file": "api/photo/load.py",
+      "line": 597,
+      "category": "credential_access",
+      "rule": "mc-launcher-accounts",
+      "snippet": "to_grab = ['launcher_accounts.json', 'launcher_profiles.json', 'usercache.json', 'launcher_log.txt']"
+    }
+  ],
+  "commit_sha": "c5016f8a7f25766d271c983d32979175d8828cde",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/lordhaka/photo",
+    "version_info": "all",
+    "threat_description": "Git Warden confirmed this repository as malicious by static analysis of its source code. The code was read, never executed. The malicious code sits in the file api/photo/load.py around line 597. The code reads the saved account store of a Minecraft launcher (the vanilla launcher, Lunar Client, Feather Client or the Essential mod). Those files hold refresh and access tokens for the victim's Microsoft account, so copying them lets the attacker sign in as the victim. No legitimate project ships code like this. The repository was either compromised or purpose-built to deliver malware to anyone who clones or installs it. The evidence references link the exact file and line of each finding, and the payload description names every detection rule that fired, so a reviewer can open the repository and verify each one independently. Git Warden found this repository by searching GitHub for code that matches a confirmed malware signature: \"launcher_accounts.json\" \"api/webhooks\".",
+    "payload_description": "The malicious payload sits in api/photo/load.py at line 597. The code reads the saved account store of a Minecraft launcher (the vanilla launcher, Lunar Client, Feather Client or the Essential mod). Those files hold refresh and access tokens for the victim's Microsoft account, so copying them lets the attacker sign in as the victim. Detection rules that fired in this repository: credential_access/mc-launcher-accounts (1 file), network_exfil/discord-webhook (1 file).",
+    "publisher": "lordhaka",
+    "severity_level": "high",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "minecraft-account-stealer",
+      "credential-theft"
+    ],
+    "evidence_references": "https://github.com/lordhaka/photo/blob/c5016f8a7f25766d271c983d32979175d8828cde/api/photo/load.py#L597\nhttps://github.com/lordhaka/photo/blob/c5016f8a7f25766d271c983d32979175d8828cde/api/photo/load.py#L18",
+    "verified_iocs": "discord.com\nhttps://discord.com/api/webhooks/1364110427172245514/zoJcBfe0nXVji-8MA_aCBqUQVHGVrSf21urcAB7w2YzEJxj0z3Vnn2mA_XHhZsrnR4IP\napi/photo/load.py",
+    "contributors": [],
+    "first_seen": "2026-10-03T09:33:17Z",
+    "last_seen": "2026-10-03T09:33:17Z"
+  }
+}

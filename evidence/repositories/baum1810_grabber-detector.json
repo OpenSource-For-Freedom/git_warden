@@ -1,0 +1,108 @@
+{
+  "finding": {
+    "key": "repository:baum1810/grabber-detector",
+    "kind": "repository",
+    "id": "baum1810/grabber-detector",
+    "url": "https://github.com/baum1810/grabber-detector",
+    "registry": "github",
+    "owner": "baum1810",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 14,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "credential_access/mc-launcher-accounts; network_exfil/discord-webhook",
+    "evidence_locations": "main.py:6; main.py:57; main.py:67; main.py:76; main.py:83; main.py:90",
+    "c2_hosts": "discord.com",
+    "iocs": "discord.com; https://discord.com/api/webhooks/{test}; https://discord.com/api/webhooks/{test[0]}; main.py",
+    "matched_signatures": "\"launcher_accounts.json\" \"api/webhooks\"",
+    "reasons": "Shares a confirmed-malware code signature ['\"launcher_accounts.json\" \"api/webhooks\"'] | Tier-2 confirmed (bash score 7)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20261003T093317Z",
+    "last_seen": "hunt-20261003T093317Z",
+    "evidence_file": "repositories/baum1810_grabber-detector.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "main.py",
+      "line": 6,
+      "category": "credential_access",
+      "rule": "mc-launcher-accounts",
+      "snippet": "files = [\"Loginvault.db\", \"passwords.txt\", \"cookies.txt\",\"\\\\Google\\\\Chrome\\\\User Data\\\\Default\\\\Cookies\", \"Local\\\\Google\\\\Chrome\\\\User Data\\\\Default\\\\History\", \"launcher_accounts.json\"]"
+    },
+    {
+      "file": "main.py",
+      "line": 57,
+      "category": "network_exfil",
+      "rule": "discord-webhook",
+      "snippet": "test = line.split(\"https://discord.com/api/webhooks/\")"
+    },
+    {
+      "file": "main.py",
+      "line": 6,
+      "category": "credential_access",
+      "rule": "mc-launcher-accounts",
+      "snippet": "files = [\"Loginvault.db\", \"passwords.txt\", \"cookies.txt\",\"\\\\Google\\\\Chrome\\\\User Data\\\\Default\\\\Cookies\", \"Local\\\\Google\\\\Chrome\\\\User Data\\\\Default\\\\History\", \"launcher_accounts.json\"]"
+    },
+    {
+      "file": "main.py",
+      "line": 57,
+      "category": "network_exfil",
+      "rule": "discord-webhook",
+      "snippet": "test = line.split(\"https://discord.com/api/webhooks/\")"
+    },
+    {
+      "file": "main.py",
+      "line": 67,
+      "category": "network_exfil",
+      "rule": "discord-webhook",
+      "snippet": "print(f'Webhook found https://discord.com/api/webhooks/{test} Line {counter}')"
+    },
+    {
+      "file": "main.py",
+      "line": 76,
+      "category": "network_exfil",
+      "rule": "discord-webhook",
+      "snippet": "print(f'Webhook found https://discord.com/api/webhooks/{test[0]} Line {counter}')"
+    },
+    {
+      "file": "main.py",
+      "line": 83,
+      "category": "network_exfil",
+      "rule": "discord-webhook",
+      "snippet": "print(f'Webhook found https://discord.com/api/webhooks/{test[0]} Line {counter}')"
+    },
+    {
+      "file": "main.py",
+      "line": 90,
+      "category": "network_exfil",
+      "rule": "discord-webhook",
+      "snippet": "print(f'Webhook found https://discord.com/api/webhooks/{test[0]} Line {counter}')"
+    }
+  ],
+  "commit_sha": "561e6690c6ee15b01faf847d0ed969d6790fc28a",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/baum1810/grabber-detector",
+    "version_info": "all",
+    "threat_description": "Git Warden confirmed this repository as malicious by static analysis of its source code. The code was read, never executed. The malicious code sits in the file main.py around line 6. The code reads the saved account store of a Minecraft launcher (the vanilla launcher, Lunar Client, Feather Client or the Essential mod). Those files hold refresh and access tokens for the victim's Microsoft account, so copying them lets the attacker sign in as the victim. No legitimate project ships code like this. The repository was either compromised or purpose-built to deliver malware to anyone who clones or installs it. The evidence references link the exact file and line of each finding, and the payload description names every detection rule that fired, so a reviewer can open the repository and verify each one independently. Git Warden found this repository by searching GitHub for code that matches a confirmed malware signature: \"launcher_accounts.json\" \"api/webhooks\".",
+    "payload_description": "The malicious payload sits in main.py at line 6. The code reads the saved account store of a Minecraft launcher (the vanilla launcher, Lunar Client, Feather Client or the Essential mod). Those files hold refresh and access tokens for the victim's Microsoft account, so copying them lets the attacker sign in as the victim. Detection rules that fired in this repository: credential_access/mc-launcher-accounts (1 file), network_exfil/discord-webhook (1 file).",
+    "publisher": "baum1810",
+    "severity_level": "high",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "minecraft-account-stealer",
+      "credential-theft"
+    ],
+    "evidence_references": "https://github.com/baum1810/grabber-detector/blob/561e6690c6ee15b01faf847d0ed969d6790fc28a/main.py#L6\nhttps://github.com/baum1810/grabber-detector/blob/561e6690c6ee15b01faf847d0ed969d6790fc28a/main.py#L57\nhttps://github.com/baum1810/grabber-detector/blob/561e6690c6ee15b01faf847d0ed969d6790fc28a/main.py#L67\nhttps://github.com/baum1810/grabber-detector/blob/561e6690c6ee15b01faf847d0ed969d6790fc28a/main.py#L76\nhttps://github.com/baum1810/grabber-detector/blob/561e6690c6ee15b01faf847d0ed969d6790fc28a/main.py#L83\nhttps://github.com/baum1810/grabber-detector/blob/561e6690c6ee15b01faf847d0ed969d6790fc28a/main.py#L90",
+    "verified_iocs": "discord.com\nhttps://discord.com/api/webhooks/{test}\nhttps://discord.com/api/webhooks/{test[0]}\nmain.py",
+    "contributors": [],
+    "first_seen": "2026-10-03T09:33:17Z",
+    "last_seen": "2026-10-03T09:33:17Z"
+  }
+}

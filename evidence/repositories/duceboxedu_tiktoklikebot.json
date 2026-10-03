@@ -1,0 +1,101 @@
+{
+  "finding": {
+    "key": "repository:duceboxedu/tiktoklikebot",
+    "kind": "repository",
+    "id": "duceboxedu/tiktoklikebot",
+    "url": "https://github.com/DuceBoxedU/TiktokLikeBot",
+    "registry": "github",
+    "owner": "duceboxedu",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 11,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "credential_access/mc-launcher-accounts; network_exfil/discord-webhook; code_execution/py-system",
+    "evidence_locations": "Tiktok Share Bot/Tiktok Like Bot.py:543; Tiktok Share Bot/Tiktok Like Bot.py:31; Tiktok Share Bot/Tiktok Like Bot.py:29; Tiktok Share Bot/Tiktok Like Bot.py:775; Tiktok Share Bot/Tiktok Like Bot.py:776",
+    "c2_hosts": "discordapp.com",
+    "iocs": "discordapp.com; https://discordapp.com/api/webhooks/992873629048119336/snYJx9G748I51KktdQrQCaRRc7BkNlBOmeHs3zOMVC4AFJIT5k0Mj1R9vKtSDx6nrskL; https://github.com/Rdimo/; Tiktok Share Bot/Tiktok Like Bot.py",
+    "matched_signatures": "\"launcher_accounts.json\" \"api/webhooks\"",
+    "reasons": "Shares a confirmed-malware code signature ['\"launcher_accounts.json\" \"api/webhooks\"'] | Tier-2 confirmed (bash score 10)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20261003T093317Z",
+    "last_seen": "hunt-20261003T093317Z",
+    "evidence_file": "repositories/duceboxedu_tiktoklikebot.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "Tiktok Share Bot/Tiktok Like Bot.py",
+      "line": 543,
+      "category": "credential_access",
+      "rule": "mc-launcher-accounts",
+      "snippet": "to_grab = ['launcher_accounts.json', 'launcher_profiles.json', 'usercache.json', 'launcher_log.txt']"
+    },
+    {
+      "file": "Tiktok Share Bot/Tiktok Like Bot.py",
+      "line": 31,
+      "category": "network_exfil",
+      "rule": "discord-webhook",
+      "snippet": "'webhook': \"https://discordapp.com/api/webhooks/992873629048119336/snYJx9G748I51KktdQrQCaRRc7BkNlBOmeHs3zOMVC4AFJIT5k0Mj1R9vKtSDx6nrskL\","
+    },
+    {
+      "file": "Tiktok Share Bot/Tiktok Like Bot.py",
+      "line": 29,
+      "category": "network_exfil",
+      "rule": "discord-webhook",
+      "snippet": "# replace https://discordapp.com/api/webhooks/992873629048119336/snYJx9G748I51KktdQrQCaRRc7BkNlBOmeHs3zOMVC4AFJIT5k0Mj1R9vKtSDx6nrskL with your webhook ↓↓ or use the api from https://github.com/Rdimo/"
+    },
+    {
+      "file": "Tiktok Share Bot/Tiktok Like Bot.py",
+      "line": 31,
+      "category": "network_exfil",
+      "rule": "discord-webhook",
+      "snippet": "'webhook': \"https://discordapp.com/api/webhooks/992873629048119336/snYJx9G748I51KktdQrQCaRRc7BkNlBOmeHs3zOMVC4AFJIT5k0Mj1R9vKtSDx6nrskL\","
+    },
+    {
+      "file": "Tiktok Share Bot/Tiktok Like Bot.py",
+      "line": 543,
+      "category": "credential_access",
+      "rule": "mc-launcher-accounts",
+      "snippet": "to_grab = ['launcher_accounts.json', 'launcher_profiles.json', 'usercache.json', 'launcher_log.txt']"
+    },
+    {
+      "file": "Tiktok Share Bot/Tiktok Like Bot.py",
+      "line": 775,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "reg1 = os.system(\"REG QUERY HKEY_LOCAL_MACHINE\\\\SYSTEM\\\\ControlSet001\\\\Control\\\\Class\\\\{4D36E968-E325-11CE-BFC1-08002BE10318}\\\\0000\\\\DriverDesc 2> nul\")"
+    },
+    {
+      "file": "Tiktok Share Bot/Tiktok Like Bot.py",
+      "line": 776,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "reg2 = os.system(\"REG QUERY HKEY_LOCAL_MACHINE\\\\SYSTEM\\\\ControlSet001\\\\Control\\\\Class\\\\{4D36E968-E325-11CE-BFC1-08002BE10318}\\\\0000\\\\ProviderName 2> nul\")"
+    }
+  ],
+  "commit_sha": "613a214f236c8b885d3b0eb1fb22d7f23ecabc05",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/duceboxedu/tiktoklikebot",
+    "version_info": "all",
+    "threat_description": "Git Warden confirmed this repository as malicious by static analysis of its source code. The code was read, never executed. The malicious code sits in the file Tiktok Share Bot/Tiktok Like Bot.py around line 543. The code reads the saved account store of a Minecraft launcher (the vanilla launcher, Lunar Client, Feather Client or the Essential mod). Those files hold refresh and access tokens for the victim's Microsoft account, so copying them lets the attacker sign in as the victim. No legitimate project ships code like this. The repository was either compromised or purpose-built to deliver malware to anyone who clones or installs it. The evidence references link the exact file and line of each finding, and the payload description names every detection rule that fired, so a reviewer can open the repository and verify each one independently. Git Warden found this repository by searching GitHub for code that matches a confirmed malware signature: \"launcher_accounts.json\" \"api/webhooks\".",
+    "payload_description": "The malicious payload sits in Tiktok Share Bot/Tiktok Like Bot.py at line 543. The code reads the saved account store of a Minecraft launcher (the vanilla launcher, Lunar Client, Feather Client or the Essential mod). Those files hold refresh and access tokens for the victim's Microsoft account, so copying them lets the attacker sign in as the victim. Detection rules that fired in this repository: code_execution/py-system (1 file), credential_access/mc-launcher-accounts (1 file), network_exfil/discord-webhook (1 file).",
+    "publisher": "duceboxedu",
+    "severity_level": "high",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "minecraft-account-stealer",
+      "credential-theft"
+    ],
+    "evidence_references": "https://github.com/duceboxedu/tiktoklikebot/blob/613a214f236c8b885d3b0eb1fb22d7f23ecabc05/Tiktok Share Bot/Tiktok Like Bot.py#L543\nhttps://github.com/duceboxedu/tiktoklikebot/blob/613a214f236c8b885d3b0eb1fb22d7f23ecabc05/Tiktok Share Bot/Tiktok Like Bot.py#L31\nhttps://github.com/duceboxedu/tiktoklikebot/blob/613a214f236c8b885d3b0eb1fb22d7f23ecabc05/Tiktok Share Bot/Tiktok Like Bot.py#L29\nhttps://github.com/duceboxedu/tiktoklikebot/blob/613a214f236c8b885d3b0eb1fb22d7f23ecabc05/Tiktok Share Bot/Tiktok Like Bot.py#L775\nhttps://github.com/duceboxedu/tiktoklikebot/blob/613a214f236c8b885d3b0eb1fb22d7f23ecabc05/Tiktok Share Bot/Tiktok Like Bot.py#L776",
+    "verified_iocs": "discordapp.com\nhttps://discordapp.com/api/webhooks/992873629048119336/snYJx9G748I51KktdQrQCaRRc7BkNlBOmeHs3zOMVC4AFJIT5k0Mj1R9vKtSDx6nrskL\nhttps://github.com/Rdimo/\nTiktok Share Bot/Tiktok Like Bot.py",
+    "contributors": [],
+    "first_seen": "2026-10-03T09:33:17Z",
+    "last_seen": "2026-10-03T09:33:17Z"
+  }
+}

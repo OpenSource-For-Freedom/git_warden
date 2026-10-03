@@ -1,0 +1,80 @@
+{
+  "finding": {
+    "key": "repository:vasillax12/vasillaxsms",
+    "kind": "repository",
+    "id": "vasillax12/vasillaxsms",
+    "url": "https://github.com/vasillax12/VasillaxSms",
+    "registry": "github",
+    "owner": "vasillax12",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 7,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "credential_access/mc-launcher-accounts; network_exfil/discord-webhook",
+    "evidence_locations": "vasillaxsms.py:478; vasillaxsms.py:20",
+    "c2_hosts": "discord.com",
+    "iocs": "discord.com; https://discord.com/api/webhooks/1113535070335148075/RC9hppbP9oQ2ZVkC0JjtzPERAjF29GYGU10QDNorS5kNyuSkUpLprctUD1H1yn6aUQeL; vasillaxsms.py",
+    "matched_signatures": "\"launcher_accounts.json\" \"api/webhooks\"",
+    "reasons": "Shares a confirmed-malware code signature ['\"launcher_accounts.json\" \"api/webhooks\"'] | Tier-2 confirmed (bash score 7)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20261003T093317Z",
+    "last_seen": "hunt-20261003T093317Z",
+    "evidence_file": "repositories/vasillax12_vasillaxsms.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "vasillaxsms.py",
+      "line": 478,
+      "category": "credential_access",
+      "rule": "mc-launcher-accounts",
+      "snippet": "O00OOOOO000O0O00O .accounts_path =\"\\\\.minecraft\\\\launcher_accounts.json\"#line:759"
+    },
+    {
+      "file": "vasillaxsms.py",
+      "line": 20,
+      "category": "network_exfil",
+      "rule": "discord-webhook",
+      "snippet": "__CONFIG__ ={'webhook':'https://discord.com/api/webhooks/1113535070335148075/RC9hppbP9oQ2ZVkC0JjtzPERAjF29GYGU10QDNorS5kNyuSkUpLprctUD1H1yn6aUQeL','ping':False ,'pingtype':'Here','error':False ,'start"
+    },
+    {
+      "file": "vasillaxsms.py",
+      "line": 20,
+      "category": "network_exfil",
+      "rule": "discord-webhook",
+      "snippet": "__CONFIG__ ={'webhook':'https://discord.com/api/webhooks/1113535070335148075/RC9hppbP9oQ2ZVkC0JjtzPERAjF29GYGU10QDNorS5kNyuSkUpLprctUD1H1yn6aUQeL','ping':False ,'pingtype':'Here','error':False ,'start"
+    },
+    {
+      "file": "vasillaxsms.py",
+      "line": 478,
+      "category": "credential_access",
+      "rule": "mc-launcher-accounts",
+      "snippet": "O00OOOOO000O0O00O .accounts_path =\"\\\\.minecraft\\\\launcher_accounts.json\"#line:759"
+    }
+  ],
+  "commit_sha": "7413cea11dd00b45b0380fbea8b397ed6dc13bdb",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/vasillax12/vasillaxsms",
+    "version_info": "all",
+    "threat_description": "Git Warden confirmed this repository as malicious by static analysis of its source code. The code was read, never executed. The malicious code sits in the file vasillaxsms.py around line 478. The code reads the saved account store of a Minecraft launcher (the vanilla launcher, Lunar Client, Feather Client or the Essential mod). Those files hold refresh and access tokens for the victim's Microsoft account, so copying them lets the attacker sign in as the victim. No legitimate project ships code like this. The repository was either compromised or purpose-built to deliver malware to anyone who clones or installs it. The evidence references link the exact file and line of each finding, and the payload description names every detection rule that fired, so a reviewer can open the repository and verify each one independently. Git Warden found this repository by searching GitHub for code that matches a confirmed malware signature: \"launcher_accounts.json\" \"api/webhooks\".",
+    "payload_description": "The malicious payload sits in vasillaxsms.py at line 478. The code reads the saved account store of a Minecraft launcher (the vanilla launcher, Lunar Client, Feather Client or the Essential mod). Those files hold refresh and access tokens for the victim's Microsoft account, so copying them lets the attacker sign in as the victim. Detection rules that fired in this repository: credential_access/mc-launcher-accounts (1 file), network_exfil/discord-webhook (1 file).",
+    "publisher": "vasillax12",
+    "severity_level": "high",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "minecraft-account-stealer",
+      "credential-theft"
+    ],
+    "evidence_references": "https://github.com/vasillax12/vasillaxsms/blob/7413cea11dd00b45b0380fbea8b397ed6dc13bdb/vasillaxsms.py#L478\nhttps://github.com/vasillax12/vasillaxsms/blob/7413cea11dd00b45b0380fbea8b397ed6dc13bdb/vasillaxsms.py#L20",
+    "verified_iocs": "discord.com\nhttps://discord.com/api/webhooks/1113535070335148075/RC9hppbP9oQ2ZVkC0JjtzPERAjF29GYGU10QDNorS5kNyuSkUpLprctUD1H1yn6aUQeL\nvasillaxsms.py",
+    "contributors": [],
+    "first_seen": "2026-10-03T09:33:17Z",
+    "last_seen": "2026-10-03T09:33:17Z"
+  }
+}
