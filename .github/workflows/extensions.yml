@@ -4,7 +4,7 @@ on:
   # metadata, then fetches and statically analyzes the top candidates inside
   # the Tier-2 sandbox container. Confirmed extensions are previewed for OSM
   # (exact report bodies in the run summary); the `submit` job sends only what
-  # a reviewer approves on the protected osm-extension-submission environment.
+  # a reviewer approves on the protected osm-submission environment.
   schedule:
     - cron: '43 7 * * *'
   workflow_dispatch:
@@ -130,22 +130,20 @@ jobs:
           path: ext_summary.md
           if-no-files-found: ignore
 
-  # OSM write phase for extensions. Two gates, both set by the repo owner:
-  #   1. the repository variable EXTENSION_OSM_SUBMIT must be 'on' (until it is,
-  #      this job never runs, so an unconfigured environment cannot submit), and
-  #   2. a required reviewer approves the protected osm-extension-submission
-  #      environment AFTER reading the preview in the hunt job's summary.
-  # The submitter re-fetches, re-scans and re-checks OSM for every approved
-  # extension before each POST, so approval never bypasses a safety gate.
+  # OSM write phase for extensions. Runs under the same protected
+  # osm-submission environment as the repository submitter: a required
+  # reviewer approves AFTER reading the preview in the hunt job's summary,
+  # and the approved extensions then go to OSM. The submitter re-fetches,
+  # re-scans and re-checks OSM for each one before every POST, so approval
+  # never bypasses a safety gate.
   submit:
     needs: hunt
     if: >-
-      ${{ vars.EXTENSION_OSM_SUBMIT == 'on'
-      && needs.hunt.outputs.validated != ''
+      ${{ needs.hunt.outputs.validated != ''
       && needs.hunt.outputs.validated != '[]' }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    environment: osm-extension-submission
+    environment: osm-submission
     concurrency:
       group: git-warden-ext-osm-submit
       cancel-in-progress: false
