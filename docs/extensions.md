@@ -84,9 +84,9 @@ Confirmed extensions go to OSM only after a person approves the exact batch.
    Each confirmed AUTO extension that is not already submitted is checked
    against OSM (`check-malicious`, `report_type=package`). The run summary shows
    its evidence and the exact report body that would be POSTed. Nothing is sent.
-2. **Approval.** The `submit` job runs only when the repository variable
-   `EXTENSION_OSM_SUBMIT` is `on` and a required reviewer approves the
-   protected `osm-extension-submission` environment.
+2. **Approval.** The `submit` job runs under the same protected
+   `osm-submission` environment as the repository submitter. Once a required
+   reviewer approves it, the approved extensions go to OSM.
 3. **Submit.** Restricted to the approved list. Each extension is fetched again
    from its registry, re-scanned in the sandbox, must still confirm at AUTO,
    and must still be absent from OSM immediately before the POST. At most 10
@@ -104,12 +104,8 @@ offered twice. A `reject` in the `reviewer_decision` column of
 `evidence/findings.csv` keeps an extension out of every future preview. Any OSM
 lookup failure blocks the run. See [evidence.md](evidence.md).
 
-One-time setup:
-
-1. Settings > Environments > New environment `osm-extension-submission`, add
-   yourself under Required reviewers. It needs the `OSM_KEY` secret (a
-   repository secret is inherited).
-2. Settings > Secrets and variables > Actions > Variables: add
-   `EXTENSION_OSM_SUBMIT` = `on`.
+The `osm-submission` environment must keep a required reviewer for this
+approval to happen; without one the submit job runs as soon as the preview
+finds something.
 
 Not yet covered: a step in the KNORR joint hunt.

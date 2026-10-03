@@ -6,7 +6,7 @@ First-round policy: nothing is sent without a person approving the exact batch.
    not already submitted is checked against OSM, and the exact report body that
    would be POSTed is written to the run summary and to ``--preview-json``. The
    ids that passed go to ``--validated-json``.
-2. Submit (``--only-file``, runs only after the ``osm-extension-submission``
+2. Submit (``--only-file``, runs only after the ``osm-submission``
    environment is approved): restricted to the approved ids. Every extension is
    fetched again from its registry, re-scanned in the sandbox, must still
    confirm at AUTO, and must still be absent from OSM immediately before POST.
@@ -334,7 +334,7 @@ def run(db: Database, *, dry_run: bool, ledger_path: Path | None = None,
 
 
 def summary_markdown(report: dict) -> str:
-    mode = ("preview: nothing is sent until the osm-extension-submission environment "
+    mode = ("preview: nothing is sent until the osm-submission environment "
             "is approved" if report["dry_run"] else "submit: approved extensions only")
     out = ["## VS Code extensions: OSM submission", "", f"Mode: {mode}", ""]
     if report["blocked"]:
