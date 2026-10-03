@@ -277,7 +277,7 @@ _MAX_LISTED_REPOS = 30
 _MAX_LISTED_HOSTS = 15
 
 
-def campaign_context(db, row) -> str:
+def campaign_context(db, row, index: dict | None = None) -> str:
     """The campaign this repo belongs to, with every tied repository named.
 
     Uses the same fingerprints as the run summary and dashboard (``correlate``):
@@ -289,7 +289,7 @@ def campaign_context(db, row) -> str:
     """
     from .correlate import campaign_index
 
-    camp = campaign_index(db).get(row["full_name"])
+    camp = (index if index is not None else campaign_index(db)).get(row["full_name"])
     if camp is None:
         return ""
     peers = [m for m in camp.members if m != row["full_name"]]

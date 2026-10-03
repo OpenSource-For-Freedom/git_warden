@@ -238,9 +238,12 @@ def build_extension_report(row, result: dict, ext) -> dict:
     return report
 
 
-def candidates(db: Database, ledger: dict[str, dict], only: set[str] | None = None):
+def candidates(db: Database, ledger: dict[str, dict], only: set[str] | None = None,
+               rejected: set[str] | None = None):
     rows = [r for r in db.extensions("confirmed") if r["confidence"] == "auto"]
     rows = [r for r in rows if not already_submitted(r, ledger)]
+    # A reviewer's "reject" in evidence/findings.csv keeps it out for good.
+    rows = [r for r in rows if r["ext_key"].casefold() not in (rejected or set())]
     if only is not None:
         rows = [r for r in rows if r["ext_key"].casefold() in only]
     return sorted(rows, key=lambda r: (-int(r["score"] or 0), r["ext_key"]))
@@ -263,7 +266,8 @@ def _section(row, status: str, reason: str, report: dict | None, result: dict | 
 
 
 def run(db: Database, *, dry_run: bool, ledger_path: Path | None = None,
-        only: set[str] | None = None, limit: int = MAX_PER_RUN,
+        only: set[str] | None = None, rejected: set[str] | None = None,
+        limit: int = MAX_PER_RUN,
         pace: float = PACE_SECONDS, scan=None, client_for=None, check=None,
         post=None, sleep=time.sleep) -> dict:
     """Preview (dry_run) or submit the approved extensions. Returns a report dict."""
@@ -281,7 +285,7 @@ def run(db: Database, *, dry_run: bool, ledger_path: Path | None = None,
     sent = errors = 0
     blocked = ""
     try:
-        for row in candidates(db, ledger, only)[:limit]:
+        for row in candidates(db, ledger, only, rejected)[:limit]:
             ext_id = _ext_id(row)
             if not _EXT_ID.fullmatch(ext_id):
                 continue
@@ -364,8 +368,9 @@ def main(argv: list[str] | None = None) -> int:
                         help="JSON list of approved extension keys (required to submit).")
     parser.add_argument("--validated-json", type=Path, default=None)
     parser.add_argument("--preview-json", type=Path, default=None)
-    parser.add_argument("--ledger", type=Path, default=None,
-                        help="Submitted-extension ledger (read, and appended on submit).")
+    parser.add_argument("--evidence-dir", type=Path, default=None,
+                        help="Committed evidence store: its ledger and reviewer "
+                             "decisions are honored, and it is refreshed after the run.")
     parser.add_argument("--limit", type=int, default=MAX_PER_RUN)
     parser.add_argument(
         "--summary-md", type=Path,
@@ -383,10 +388,16 @@ def main(argv: list[str] | None = None) -> int:
     if only is not None and not only:
         print("approved extension list is empty; nothing to do")
         return 0
+    from ..evidence import export, ledger_path, rejected_keys
+
+    ledger = ledger_path(args.evidence_dir) if args.evidence_dir else None
+    rejected = rejected_keys(args.evidence_dir) if args.evidence_dir else set()
     db = Database.open(args.db)
     try:
-        report = run(db, dry_run=args.dry_run, ledger_path=args.ledger, only=only,
-                     limit=args.limit)
+        report = run(db, dry_run=args.dry_run, ledger_path=ledger, only=only,
+                     rejected=rejected, limit=args.limit)
+        if args.evidence_dir:
+            export(db, args.evidence_dir, preview=report["previews"])
     finally:
         db.close()
     if args.validated_json:

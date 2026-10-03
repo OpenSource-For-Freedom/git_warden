@@ -486,6 +486,22 @@ def _cmd_hunt(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_evidence(args: argparse.Namespace) -> int:
+    """Refresh the committed evidence/ store (findings.csv + per-finding JSON)."""
+    from .evidence import export
+
+    if not Path(args.db).exists():
+        print(f"no hunt data at {args.db}; evidence/ left unchanged")
+        return 0
+    db = Database.open(args.db)
+    try:
+        counts = export(db, Path(args.out))
+    finally:
+        db.close()
+    print(json.dumps(counts))
+    return 0
+
+
 def _cmd_extensions(args: argparse.Namespace) -> int:
     """Hunt malicious VS Code extensions on Open VSX and/or the VS Marketplace."""
     configure_logging(json_output=not args.pretty_logs)
@@ -819,6 +835,13 @@ def build_parser() -> argparse.ArgumentParser:
                        help="Append a markdown run summary to this file.")
     ext_p.add_argument("--pretty-logs", action="store_true", help="Human-readable logs.")
     ext_p.set_defaults(func=_cmd_extensions)
+
+    ev_p = sub.add_parser(
+        "evidence",
+        help="Refresh evidence/: one editable CSV of every finding plus per-finding JSON.")
+    ev_p.add_argument("--db", type=Path, default=config.DB_PATH, help="SQLite path.")
+    ev_p.add_argument("--out", default="evidence", help="Evidence directory.")
+    ev_p.set_defaults(func=_cmd_evidence)
 
     hunt_p = sub.add_parser(
         "hunt", help="Full hunt: discover -> Tier-1 -> registry -> Tier-2 -> Discord gold."
