@@ -270,11 +270,11 @@ def validated_markdown(
     url = f"https://github.com/{full_name}"
     sha = getattr(result, "commit_sha", "") or ""
     osm_line = {
-        "not_reported": "**NOT YET REPORTED TO OSM** — full-history search found no "
+        "not_reported": "**NOT YET REPORTED TO OSM**: full-history search found no "
                         "record (checked before and after validation); nothing was submitted",
         "submitted": f"Was not in OSM at validation; **submitted** as "
                      f"{_code(threat_id or 'unknown id')}",
-        "submit_failed": "**NOT REPORTED TO OSM** — was not in OSM at validation, "
+        "submit_failed": "**NOT REPORTED TO OSM**: was not in OSM at validation, "
                          "but the submission POST failed; will retry next run",
     }[status]
 
@@ -313,7 +313,7 @@ def validated_markdown(
                 where_md = f"[{_code(where)}]({link})"
             else:
                 where_md = f"{_code(where)}"
-            lines += [f"- {where_md} — {_cell(f.category)} / {_cell(f.rule)}",
+            lines += [f"- {where_md}: {_cell(f.category)} / {_cell(f.rule)}",
                       "", _fence(f.snippet), ""]
         if len(findings) > 15:
             lines.append(f"- … {len(findings) - 15} more")
@@ -365,8 +365,8 @@ def run_summary_markdown(
     notes: list[str] | None = None,
     campaigns: dict[str, tuple[Campaign, list[str]]] | None = None,
 ) -> str:
-    mode = ("validate-only — nothing was submitted to OSM" if dry_run
-            else "submit — validated repos were POSTed to OSM")
+    mode = ("validate-only: nothing was submitted to OSM" if dry_run
+            else "submit: validated repos were POSTed to OSM")
     out = ["## Warden OSM automation", "", f"Mode: **{mode}**", "",
            f"Validated malicious repos: **{len(sections)}**", ""]
     out += [f"> {n}\n" for n in (notes or [])]

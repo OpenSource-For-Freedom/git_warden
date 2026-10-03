@@ -150,7 +150,12 @@ def test_campaign_context_reports_cluster_and_rotation(tmp_path):
     ctx = campaign_context(db, row)
     assert "one of 3" in ctx                       # 3 repos in the cluster
     assert "3 distinct hosts" in ctx               # rotation breadth
-    assert "settings/linux?flag=" in ctx           # shared path fingerprint
+    assert "settings/{os}?flag=" in ctx            # shared dropper fingerprint
+    assert "campaign GW-C-" in ctx                 # same id as summary/dashboard
+    # every tied repository is named, never just counted
+    assert "https://github.com/b/two" in ctx and "https://github.com/c/three" in ctx
+    assert "https://github.com/a/one" not in ctx   # not listed as its own peer
+    assert "host2.vercel.app" in ctx and "host3.vercel.app" in ctx
     assert "--" not in ctx and "—" not in ctx  # no dashes
     db.close()
 
