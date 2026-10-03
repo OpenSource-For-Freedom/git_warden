@@ -214,3 +214,33 @@ def test_evidence_file_names_are_safe(db, tmp_path):
     from git_warden.evidence import _safe_name
     assert _safe_name("../../etc/passwd") == "etc_passwd"
     assert _safe_name("vsmarketplace:a.b") == "vsmarketplace_a.b"
+
+
+def test_joint_hunt_submissions_survive_a_later_warden_export(tmp_path):
+    # The KNORR joint hunt keeps its own database. Its export records the repos
+    # it submitted; a later Warden export (whose database says not submitted,
+    # or lacks the repo entirely) must not undo that.
+    from git_warden.evidence import export, repo_ledger_path
+    from git_warden.osm_submit import mark_osm_submitted
+
+    out = tmp_path / "evidence"
+    joint = Database.open(tmp_path / "joint.sqlite")
+    _add_repo(joint, "evil/dropper")
+    _add_repo(joint, "joint/only")
+    mark_osm_submitted(joint, "evil/dropper", "threat-123")
+    mark_osm_submitted(joint, "joint/only", "threat-456")
+    counts = export(joint, out)
+    joint.close()
+    assert counts["submissions_recorded"] == 2
+    ledger = json.loads(repo_ledger_path(out).read_text())
+    assert {r["key"] for r in ledger} == {"repository:evil/dropper", "repository:joint/only"}
+
+    warden = Database.open(tmp_path / "warden.sqlite")
+    _add_repo(warden, "evil/dropper")          # same repo, never submitted here
+    export(warden, out)
+    warden.close()
+    rows = _csv(out)
+    assert rows["repository:evil/dropper"]["osm_status"] == "submitted"
+    assert rows["repository:evil/dropper"]["osm_threat_id"] == "threat-123"
+    assert rows["repository:joint/only"]["osm_status"] == "submitted"
+    assert rows["repository:joint/only"]["osm_threat_id"] == "threat-456"
