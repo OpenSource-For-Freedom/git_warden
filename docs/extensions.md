@@ -76,4 +76,38 @@ host. The `Warden VS Code Extension Hunt` workflow runs the same command daily
 at 07:43 UTC against both registries (15 scans each), and on demand, and
 publishes the summary to the run page.
 
-Not yet covered: OSM submission for extensions, and a step in the joint hunt.
+## OSM submission (approval gated)
+
+Confirmed extensions go to OSM only after a person approves the exact batch.
+
+1. **Preview.** Every hunt runs `python -m git_warden.extensions.osm --dry-run`.
+   Each confirmed AUTO extension that is not already submitted is checked
+   against OSM (`check-malicious`, `report_type=package`). The run summary shows
+   its evidence and the exact report body that would be POSTed. Nothing is sent.
+2. **Approval.** The `submit` job runs only when the repository variable
+   `EXTENSION_OSM_SUBMIT` is `on` and a required reviewer approves the
+   protected `osm-extension-submission` environment.
+3. **Submit.** Restricted to the approved list. Each extension is fetched again
+   from its registry, re-scanned in the sandbox, must still confirm at AUTO,
+   and must still be absent from OSM immediately before the POST. At most 10
+   per run, 8 seconds apart.
+
+Report body: `report_type: package`, `registry` (`vscode` for the Visual
+Studio Marketplace, `openvsx` for Open VSX), `package_name` and
+`resource_identifier` (`publisher.name`), `version_info`, a threat and payload
+description with every rule that fired, tags, the registry page as evidence,
+and the C2 hosts and URLs as IOCs.
+
+Submitted extensions are recorded in a ledger (its own Actions cache, written
+only by the submit job) and on the shared intelligence bus, so none is offered
+twice. Any OSM lookup failure blocks the run.
+
+One-time setup:
+
+1. Settings > Environments > New environment `osm-extension-submission`, add
+   yourself under Required reviewers. It needs the `OSM_KEY` secret (a
+   repository secret is inherited).
+2. Settings > Secrets and variables > Actions > Variables: add
+   `EXTENSION_OSM_SUBMIT` = `on`.
+
+Not yet covered: a step in the KNORR joint hunt.
