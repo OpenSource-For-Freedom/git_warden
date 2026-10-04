@@ -102,6 +102,14 @@ jobs:
           --max-signatures "$HUNT_MAX_SIGNATURES" $HUNT_RESUME
           --signature-family "$HUNT_SIGNATURE_FAMILY"
 
+      # Minecraft stealer findings go to their own Discord channel, once each;
+      # evidence/minecraft_alerts.json (committed below) records what was sent.
+      - name: Send Minecraft alerts
+        if: always()
+        env:
+          GW_MINECRAFT_DISCORD_WEBHOOK: ${{ secrets.MINECRAFT_DISCORD_WEBHOOK }}
+        run: python gw.py minecraft-alerts
+
       # Refresh evidence/ (one editable CSV of every finding plus per-finding
       # JSON) and push it with the README registry table. Hand edits to the
       # CSV's reviewer_decision and notes columns are preserved.
