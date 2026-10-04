@@ -377,7 +377,7 @@ def _cmd_hunt(args: argparse.Namespace) -> int:
 
     from .github import GitHubClient
     from .hunt import hunt
-    from .notify import cluster_embed, post_discord
+    from .notify import notify_cluster
     from .progress import ConsoleProgress, NullProgress
     from .redteam import load_redteam_tools
 
@@ -437,7 +437,7 @@ def _cmd_hunt(args: argparse.Namespace) -> int:
             search_pace=args.pace,
             limit=args.limit,
             gold=args.gold,
-            notifier=lambda cluster: post_discord(embeds=[cluster_embed(cluster)]),
+            notifier=notify_cluster,
         )
         # Spread threat-actor attribution across each shared-payload campaign: one
         # OSM-tagged repo (e.g. corex -> DPRK) lights up every repo injecting the
@@ -483,6 +483,22 @@ def _cmd_hunt(args: argparse.Namespace) -> int:
               f"see artifacts/{run_id}_failed_clones.csv")
     # Human wrap-up on stderr: the four newcomer buckets + the learning delta.
     progress.run_footer(corpus_before, corpus_after, summary["counts"])
+    return 0
+
+
+def _cmd_minecraft_alerts(args: argparse.Namespace) -> int:
+    """Post unsent Minecraft stealer findings to the Minecraft Discord webhook."""
+    from .notify import send_minecraft_alerts
+
+    if not Path(args.db).exists():
+        print(f"no hunt data at {args.db}; nothing to alert")
+        return 0
+    db = Database.open(args.db)
+    try:
+        result = send_minecraft_alerts(db, Path(args.ledger))
+    finally:
+        db.close()
+    print(json.dumps(result))
     return 0
 
 
@@ -842,6 +858,14 @@ def build_parser() -> argparse.ArgumentParser:
     ev_p.add_argument("--db", type=Path, default=config.DB_PATH, help="SQLite path.")
     ev_p.add_argument("--out", default="evidence", help="Evidence directory.")
     ev_p.set_defaults(func=_cmd_evidence)
+
+    mc_p = sub.add_parser(
+        "minecraft-alerts",
+        help="Post unsent Minecraft stealer findings to the Minecraft Discord webhook.")
+    mc_p.add_argument("--db", type=Path, default=config.DB_PATH, help="SQLite path.")
+    mc_p.add_argument("--ledger", default="evidence/minecraft_alerts.json",
+                      help="Committed list of repos already alerted.")
+    mc_p.set_defaults(func=_cmd_minecraft_alerts)
 
     hunt_p = sub.add_parser(
         "hunt", help="Full hunt: discover -> Tier-1 -> registry -> Tier-2 -> Discord gold."

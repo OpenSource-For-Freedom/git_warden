@@ -31,7 +31,7 @@ LEDGER_NAME = "osm_extension_ledger.json"
 REPO_LEDGER_NAME = "osm_repository_ledger.json"
 EDITABLE = ("reviewer_decision", "notes")
 COLUMNS = [
-    "key", "kind", "id", "url", "registry", "owner", "status", "confidence", "score",
+    "key", "kind", "family", "id", "url", "registry", "owner", "status", "confidence", "score",
     "detection_method", "attribution", "campaign_id", "rules", "evidence_locations",
     "c2_hosts", "iocs", "matched_signatures", "reasons", "osm_status", "osm_threat_id",
     "first_seen", "last_seen", "evidence_file", *EDITABLE,
@@ -116,6 +116,7 @@ def _record_repo_submissions(db: Database, ledger: dict[str, dict]) -> int:
 
 def _repo_rows(db: Database, campaigns: dict) -> list[tuple[dict, dict]]:
     from .dprk import c2_hosts_from_flags
+    from .notify import is_minecraft
     from .osm_submit import _verified_iocs, build_report, campaign_context
 
     out = []
@@ -129,7 +130,9 @@ def _repo_rows(db: Database, campaigns: dict) -> list[tuple[dict, dict]]:
         camp = campaigns.get(row["full_name"])
         key = f"repository:{row['full_name']}".casefold()
         rec = {
-            "key": key, "kind": "repository", "id": row["full_name"],
+            "key": key, "kind": "repository",
+            "family": "minecraft" if is_minecraft(row) else "",
+            "id": row["full_name"],
             "url": row["url"] or f"https://github.com/{row['full_name']}",
             "registry": "github", "owner": row["full_name"].split("/", 1)[0],
             "status": row["status"], "confidence": payload.get("confidence") or "",
@@ -165,7 +168,8 @@ def _extension_rows(db: Database, ledger: dict[str, dict]) -> list[tuple[dict, d
         ext_id = f"{row['namespace']}.{row['name']}"
         sub = ledger.get(row["ext_key"].casefold())
         rec = {
-            "key": row["ext_key"].casefold(), "kind": "vscode-extension", "id": ext_id,
+            "key": row["ext_key"].casefold(), "kind": "vscode-extension",
+            "family": "vscode-extension", "id": ext_id,
             "url": row["url"] or "", "registry": OSM_REGISTRY.get(row["registry"],
                                                                   row["registry"]),
             "owner": row["namespace"], "status": row["status"],

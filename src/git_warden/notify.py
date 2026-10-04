@@ -12,7 +12,7 @@ import json
 import logging
 import urllib.request
 
-from .config import DISCORD_WEBHOOK, USER_AGENT
+from .config import DISCORD_WEBHOOK, MINECRAFT_DISCORD_WEBHOOK, USER_AGENT
 
 log = logging.getLogger(__name__)
 
@@ -243,3 +243,64 @@ def post_discord(
     except Exception as exc:  # noqa: BLE001
         log.warning("discord post failed", extra={"context": {"err": str(exc)}})
         return False
+
+
+# --- Minecraft stealer alerts (their own Discord channel) ---------------------
+MC_RULES = ("mc-session-token", "mc-launcher-accounts")
+
+
+def is_minecraft(row) -> bool:
+    """True if a finding's evidence is Minecraft session-token or account theft."""
+    try:
+        bash = (json.loads(row["raw_payload"] or "{}") or {}).get("bash_findings") or []
+    except ValueError:
+        return False
+    return any(b.get("rule") in MC_RULES for b in bash)
+
+
+def minecraft_embed(row) -> dict:
+    """The standard report card, labelled as a Minecraft account stealer."""
+    embed = cluster_embed([row])
+    embed["author"] = {"name": "⛏️ Git Warden: Minecraft account stealer"}
+    embed["footer"] = {"text": "Saved to evidence/findings.csv for OSM submission"}
+    return embed
+
+
+def notify_cluster(cluster: list) -> bool:
+    """Hunt notifier: post a confirmed cluster to the main feed, leaving its
+    Minecraft findings to ``send_minecraft_alerts`` (their own channel)."""
+    rows = [r for r in cluster if not is_minecraft(r)]
+    if not rows:
+        return True  # all Minecraft: delivered through the Minecraft channel
+    return post_discord(embeds=[cluster_embed(rows)])
+
+
+def send_minecraft_alerts(db, ledger_path, *, webhook: str | None = None,
+                          post=None, limit: int = 50) -> dict:
+    """Post every confirmed AUTO Minecraft finding not yet alerted, one card each,
+    to the Minecraft webhook, and record it in a committed ledger so none repeats.
+    """
+    from pathlib import Path
+
+    post = post or post_discord
+    webhook = webhook or MINECRAFT_DISCORD_WEBHOOK
+    path = Path(ledger_path)
+    try:
+        sent = set(json.loads(path.read_text(encoding="utf-8")))
+    except (OSError, ValueError):
+        sent = set()
+    if not webhook:
+        log.info("discord: no Minecraft webhook configured; skipping")
+        return {"sent": 0, "pending": 0, "skipped": "no webhook"}
+    rows = [r for r in db.conn.execute(
+        "SELECT * FROM repo_findings WHERE status = 'confirmed' ORDER BY score DESC")
+        if is_minecraft(r) and r["full_name"].casefold() not in sent
+        and (json.loads(r["raw_payload"] or "{}").get("confidence") == "auto")]
+    count = 0
+    for r in rows[:limit]:
+        if post(embeds=[minecraft_embed(r)], webhook=webhook):
+            sent.add(r["full_name"].casefold())
+            count += 1
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(sorted(sent), indent=2) + "\n", encoding="utf-8")
+    return {"sent": count, "pending": len(rows) - count}
