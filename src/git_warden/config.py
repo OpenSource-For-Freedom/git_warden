@@ -130,6 +130,8 @@ OSM_BASE_URL = os.environ.get(
 )
 # NVD is descoped (free OSINT + OSM cover the sources); no key required.
 DISCORD_WEBHOOK = os.environ.get("GW_DISCORD_WEBHOOK")
+# Minecraft mod/plugin stealer alerts go to their own channel when set.
+MINECRAFT_DISCORD_WEBHOOK = os.environ.get("GW_MINECRAFT_DISCORD_WEBHOOK")
 
 # --- Feed endpoints (overridable so we can re-point or pin them) ------------
 GOOGLE_NEWS_RSS_URL = os.environ.get(

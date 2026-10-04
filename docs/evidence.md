@@ -9,11 +9,12 @@
 | `evidence/repositories/<owner>_<repo>.json` | Every finding (file, line, rule, snippet), the scanned commit and the exact OSM report body |
 | `evidence/extensions/<registry>_<publisher>.<name>.json` | Every finding, the extension manifest details and, while awaiting approval, the exact OSM report body |
 | `evidence/osm_extension_ledger.json` | Extensions submitted to OSM, with threat id, version and time |
+| `evidence/minecraft_alerts.json` | Minecraft stealer findings already posted to the Minecraft Discord channel |
 | `evidence/osm_repository_ledger.json` | Repositories submitted to OSM by any run, including the KNORR joint hunt, with threat id |
 
 ## Columns
 
-`key`, `kind`, `id`, `url`, `registry`, `owner`, `status`, `confidence`,
+`key`, `kind`, `family` (`minecraft`, `vscode-extension` or blank), `id`, `url`, `registry`, `owner`, `status`, `confidence`,
 `score`, `detection_method`, `attribution`, `campaign_id`, `rules`,
 `evidence_locations`, `c2_hosts`, `iocs`, `matched_signatures`, `reasons`,
 `osm_status` (`not_submitted`, `awaiting_approval`, `submitted`),
