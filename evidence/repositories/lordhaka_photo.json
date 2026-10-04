@@ -20,8 +20,8 @@
     "reasons": "Shares a confirmed-malware code signature ['\"launcher_accounts.json\" \"api/webhooks\"'] | Tier-2 confirmed (bash score 7)",
     "osm_status": "not_submitted",
     "osm_threat_id": "",
-    "first_seen": "hunt-20261003T093317Z",
-    "last_seen": "hunt-20261003T093317Z",
+    "first_seen": "hunt-20261004T210412Z",
+    "last_seen": "hunt-20261004T210412Z",
     "evidence_file": "repositories/lordhaka_photo.json",
     "reviewer_decision": "",
     "notes": ""
@@ -74,7 +74,7 @@
     "evidence_references": "https://github.com/lordhaka/photo/blob/c5016f8a7f25766d271c983d32979175d8828cde/api/photo/load.py#L597\nhttps://github.com/lordhaka/photo/blob/c5016f8a7f25766d271c983d32979175d8828cde/api/photo/load.py#L18",
     "verified_iocs": "discord.com\nhttps://discord.com/api/webhooks/1364110427172245514/zoJcBfe0nXVji-8MA_aCBqUQVHGVrSf21urcAB7w2YzEJxj0z3Vnn2mA_XHhZsrnR4IP\napi/photo/load.py",
     "contributors": [],
-    "first_seen": "2026-10-03T09:33:17Z",
-    "last_seen": "2026-10-03T09:33:17Z"
+    "first_seen": "2026-10-04T21:04:12Z",
+    "last_seen": "2026-10-04T21:04:12Z"
   }
 }

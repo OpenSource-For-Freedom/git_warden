@@ -1,0 +1,117 @@
+[
+  {
+    "key": "repository:777genius/review-router-ai",
+    "threat_id": "3f3503ce-b924-4180-9c4b-8b529e710393",
+    "seen_in_run": "hunt-20261003T060042Z"
+  },
+  {
+    "key": "repository:asad-ghafoor/python-setup",
+    "threat_id": "cf9a89fc-d41b-4b74-b81e-8cb3b2cd9613",
+    "seen_in_run": "hunt-20260928T024937Z"
+  },
+  {
+    "key": "repository:collebrusco/frontier",
+    "threat_id": "d0ed9765-3d3e-4c55-90c4-0a8812e63f54",
+    "seen_in_run": "hunt-20261004T210412Z"
+  },
+  {
+    "key": "repository:darkbl0x/ddos-ripper-v2.1",
+    "threat_id": "f22fb2cd-82b0-46d5-a2e6-a0a572608826",
+    "seen_in_run": "hunt-20261004T210412Z"
+  },
+  {
+    "key": "repository:dawit212119/nextebook",
+    "threat_id": "2fa736fd-2dfb-481b-bb33-c743b6e23b97",
+    "seen_in_run": "hunt-20260928T024937Z"
+  },
+  {
+    "key": "repository:duceboxedu/tiktoklikebot",
+    "threat_id": "0eb4b1ad-8658-4054-aa65-819a53eebf3a",
+    "seen_in_run": "hunt-20261004T210412Z"
+  },
+  {
+    "key": "repository:fadi002/decompiled-stuff",
+    "threat_id": "5d82f975-7bd5-45f9-b934-88e1d679181e",
+    "seen_in_run": "hunt-20261004T210412Z"
+  },
+  {
+    "key": "repository:httphypixelnet/ratmod",
+    "threat_id": "4bfe3d4d-161d-4693-801c-9e8635c8250c",
+    "seen_in_run": "hunt-20261004T210412Z"
+  },
+  {
+    "key": "repository:ilyavafin/lol",
+    "threat_id": "d3a6a526-88cc-4521-ab97-212553208a6e",
+    "seen_in_run": "hunt-20261004T210412Z"
+  },
+  {
+    "key": "repository:ishanrt119/nft-marketplace",
+    "threat_id": "09a0a32b-9700-487d-9c80-e10867d1cfc0",
+    "seen_in_run": "hunt-20260925T173032Z"
+  },
+  {
+    "key": "repository:jaxteller2016/social-app-mvp-poker-cra",
+    "threat_id": "7d584037-43c5-4fbc-9cbc-5719d7d26a6a",
+    "seen_in_run": "hunt-20261004T210412Z"
+  },
+  {
+    "key": "repository:juanmantica123/funtico-tech-assestment",
+    "threat_id": "cd1fd941-86a6-46bb-866f-b769efa33beb",
+    "seen_in_run": "hunt-20260925T173032Z"
+  },
+  {
+    "key": "repository:lordhaka/token-logger",
+    "threat_id": "96b592f9-27ef-450f-959e-540cf6fc1476",
+    "seen_in_run": "hunt-20261004T210412Z"
+  },
+  {
+    "key": "repository:lunagrabber/luna-grabber-2.1",
+    "threat_id": "52f396e5-b0a4-4a61-b006-5d05837c301f",
+    "seen_in_run": "hunt-20261004T210412Z"
+  },
+  {
+    "key": "repository:mentarishub121/tokenpresaleapp",
+    "threat_id": "2188b6e6-905c-4c5f-91fb-2aa82c46742c",
+    "seen_in_run": "hunt-20261004T210412Z"
+  },
+  {
+    "key": "repository:motia/goldencity",
+    "threat_id": "ba09a15e-cac6-4f07-bd7a-dfc0ebd1d78a",
+    "seen_in_run": "hunt-20260925T180103Z"
+  },
+  {
+    "key": "repository:multi-too/luna-graber-main",
+    "threat_id": "be9694c6-e3c3-4b70-8646-b0c4227470d4",
+    "seen_in_run": "hunt-20261004T210412Z"
+  },
+  {
+    "key": "repository:prahaladbelavadi/coinlocatordemo",
+    "threat_id": "65835d93-060a-49fe-985d-01da22f2fcb7",
+    "seen_in_run": "hunt-20260925T173032Z"
+  },
+  {
+    "key": "repository:sabbirnde/nava",
+    "threat_id": "688c6d68-016a-4063-815f-efe6fc16c2d2",
+    "seen_in_run": "hunt-20260925T173032Z"
+  },
+  {
+    "key": "repository:shimul-12/token-presale-dapp",
+    "threat_id": "a081a956-0c85-4bd9-b4e4-dbb5a025b3b8",
+    "seen_in_run": "hunt-20261004T210412Z"
+  },
+  {
+    "key": "repository:shubhojit-17/home-assessment",
+    "threat_id": "914c113f-a87f-42e8-b978-df3df6460f92",
+    "seen_in_run": "hunt-20260925T180103Z"
+  },
+  {
+    "key": "repository:user2745/web3aggregator",
+    "threat_id": "547943aa-17c0-4aa1-a901-91b12088a996",
+    "seen_in_run": "hunt-20260925T173032Z"
+  },
+  {
+    "key": "repository:yaroslav781/drainer",
+    "threat_id": "3bbd5ca7-4930-4a94-b1aa-bcdf210019bd",
+    "seen_in_run": "hunt-20260925T173032Z"
+  }
+]

