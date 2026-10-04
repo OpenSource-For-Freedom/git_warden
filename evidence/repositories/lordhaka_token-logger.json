@@ -18,10 +18,10 @@
     "iocs": "discord.com; https://discord.com/api/webhooks/1349662282648387665/YdLaV6Cm_oO34Pjv39MPjNrXG402bmnCmdEC9aS610NTLyt5wsP_TFWAkxY9RWnDR5jJ; api/file.py",
     "matched_signatures": "\"launcher_accounts.json\" \"api/webhooks\"",
     "reasons": "Shares a confirmed-malware code signature ['\"launcher_accounts.json\" \"api/webhooks\"'] | Tier-2 confirmed (bash score 7)",
-    "osm_status": "not_submitted",
-    "osm_threat_id": "",
-    "first_seen": "hunt-20261003T093317Z",
-    "last_seen": "hunt-20261003T093317Z",
+    "osm_status": "submitted",
+    "osm_threat_id": "96b592f9-27ef-450f-959e-540cf6fc1476",
+    "first_seen": "hunt-20261004T210412Z",
+    "last_seen": "hunt-20261004T210412Z",
     "evidence_file": "repositories/lordhaka_token-logger.json",
     "reviewer_decision": "",
     "notes": ""
@@ -74,7 +74,7 @@
     "evidence_references": "https://github.com/lordhaka/token-logger/blob/9222b52c75f759bb2ec8b46a822ce9948df3f17a/api/file.py#L597\nhttps://github.com/lordhaka/token-logger/blob/9222b52c75f759bb2ec8b46a822ce9948df3f17a/api/file.py#L18",
     "verified_iocs": "discord.com\nhttps://discord.com/api/webhooks/1349662282648387665/YdLaV6Cm_oO34Pjv39MPjNrXG402bmnCmdEC9aS610NTLyt5wsP_TFWAkxY9RWnDR5jJ\napi/file.py",
     "contributors": [],
-    "first_seen": "2026-10-03T09:33:17Z",
-    "last_seen": "2026-10-03T09:33:17Z"
+    "first_seen": "2026-10-04T21:04:12Z",
+    "last_seen": "2026-10-04T21:04:12Z"
   }
 }

