@@ -91,3 +91,19 @@ def test_evidence_tags_minecraft_family(tmp_path):
         fam = {r["id"]: r["family"] for r in csv.DictReader(fh)}
     assert fam["evil/ratmod"] == "minecraft" and fam["lure/app"] == ""
     db.close()
+
+
+def test_detector_repos_are_never_alerted(tmp_path):
+    # A finding confirmed before the detector fix must not reach the channel.
+    db = _db(tmp_path)
+    db.conn.execute(
+        "INSERT INTO repo_findings (full_name, url, detection_method, status, score, "
+        "raw_payload) VALUES (?,?,?,?,?,?)",
+        ("baum1810/grabber-detector", "https://github.com/baum1810/grabber-detector",
+         "signature_match", "confirmed", 20, json.dumps(MC)))
+    db.conn.commit()
+    titles = []
+    send_minecraft_alerts(db, tmp_path / "l.json", webhook="https://mc.hook",
+                          post=lambda embeds, webhook: titles.append(embeds[0]["title"]) or True)
+    assert titles == ["evil/ratmod"]
+    db.close()
