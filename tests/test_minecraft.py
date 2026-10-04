@@ -234,3 +234,30 @@ def test_minecraft_credential_rules_skip_detector_code(tmp_path, rel, expected):
         mc = {"mc-launcher-accounts"}  # the token rule is JVM-only
     assert (mc <= rules) is expected
     assert "discord-webhook" in rules
+
+
+@pytest.mark.parametrize("repo,expected", [
+    ("baum1810/grabber-detector", True), ("moleclient/antirat", True),
+    ("x/anti-grabber", True), ("x/rat-remover", True),
+    ("lunagrabber/luna-grabber-2.1", False), ("httphypixelnet/ratmod", False),
+    ("lordhaka/token-logger", False), (None, False),
+])
+def test_detector_repo_names(repo, expected):
+    from git_warden.scanning.content_scanner import is_detector_repo
+    assert is_detector_repo(repo) is expected
+
+
+def test_minecraft_rules_skip_detector_repos_and_attack_fixtures(tmp_path):
+    # A grabber DETECTOR lists the stealer's target files and webhook pattern.
+    (tmp_path / "main.py").write_text(
+        'files = ["launcher_accounts.json"]\n'
+        'test = line.split("https://discord.com/api/webhooks/")\n', encoding="utf-8")
+    fixture = tmp_path / "src/runtimeFixture/java/dev/RuntimeAttackFixture.java"
+    fixture.parent.mkdir(parents=True)
+    fixture.write_text('String t = mc.getSession().getToken();\n', encoding="utf-8")
+    mc = {"mc-launcher-accounts", "mc-session-token"}
+    as_detector = {f.rule for f in scan_content(tmp_path, repo_name="baum1810/grabber-detector")}
+    assert not (mc & as_detector)
+    as_stealer = {f.rule for f in scan_content(tmp_path, repo_name="evil/grabber")}
+    assert "mc-launcher-accounts" in as_stealer            # same code, stealer repo
+    assert "mc-session-token" not in as_stealer            # but never in a fixture dir
