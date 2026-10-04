@@ -282,6 +282,8 @@ def send_minecraft_alerts(db, ledger_path, *, webhook: str | None = None,
     """
     from pathlib import Path
 
+    from .scanning.content_scanner import is_detector_repo
+
     post = post or post_discord
     webhook = webhook or MINECRAFT_DISCORD_WEBHOOK
     path = Path(ledger_path)
@@ -295,6 +297,7 @@ def send_minecraft_alerts(db, ledger_path, *, webhook: str | None = None,
     rows = [r for r in db.conn.execute(
         "SELECT * FROM repo_findings WHERE status = 'confirmed' ORDER BY score DESC")
         if is_minecraft(r) and r["full_name"].casefold() not in sent
+        and not is_detector_repo(r["full_name"])
         and (json.loads(r["raw_payload"] or "{}").get("confidence") == "auto")]
     count = 0
     for r in rows[:limit]:
