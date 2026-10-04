@@ -462,7 +462,7 @@ def analyze_repo(
     lowercased) flags repos that declare one AT THAT VERSION as a dependency.
     """
     findings = (scan_repo(root) + scan_manifests(root, malicious_packages)
-                + scan_content(root))
+                + scan_content(root, repo_name=full_name))
     if restrict_paths is not None:
         allowed = {p.replace("\\", "/") for p in restrict_paths}
         findings = [f for f in findings if f.file.replace("\\", "/") in allowed]
