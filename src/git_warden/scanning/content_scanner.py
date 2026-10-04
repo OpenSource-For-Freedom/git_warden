@@ -216,17 +216,34 @@ _DETECTOR_STEM = re.compile(
     r"analy[sz]er|anti-?rat", re.I)
 
 
+# A repository whose own name says it is a detector (baum1810/grabber-detector,
+# moleclient/antirat, 2026-10-03): its whole tree is detection code, so the
+# Minecraft credential rules are detection data anywhere in it.
+_DETECTOR_REPO = re.compile(
+    r"detect|scanner|anti-?rat|anti-?grabber|anti-?stealer|antimalware|antivirus|"
+    r"triage|analy[sz]er|rat-?remover|grabber-?remover", re.I)
+
+
 def _is_detector_path(rel: str) -> bool:
     parts = rel.lower().split("/")
     if _DETECTOR_DIRS & set(parts[:-1]):
         return True
+    # Test fixtures that replay attacks (src/runtimeFixture/..., fixtures/).
+    if any("fixture" in p for p in parts[:-1]):
+        return True
     return bool(_DETECTOR_STEM.search(parts[-1].rsplit(".", 1)[0]))
 
 
-def scan_content(root) -> list[BashFinding]:
+def is_detector_repo(full_name: str | None) -> bool:
+    """True if the repository's own name marks it as a detection tool."""
+    return bool(full_name) and bool(_DETECTOR_REPO.search(full_name.split("/")[-1]))
+
+
+def scan_content(root, repo_name: str | None = None) -> list[BashFinding]:
     """Scan first-party source files for obfuscation / exec / exfil. Static only."""
     root = Path(root)
     findings: list[BashFinding] = []
+    detector_repo = is_detector_repo(repo_name)
     for path in root.rglob("*"):
         if not path.is_file() or is_ignored_path(path):
             continue
@@ -241,7 +258,7 @@ def scan_content(root) -> list[BashFinding]:
         except OSError:
             continue
         rel = str(path.relative_to(root)).replace("\\", "/")
-        detector = _is_detector_path(rel)
+        detector = detector_repo or _is_detector_path(rel)
         for lineno, line in enumerate(text.splitlines(), 1):
             for category, rules in _RULES.items():
                 for rule_name, rule_lang, pattern in rules:
