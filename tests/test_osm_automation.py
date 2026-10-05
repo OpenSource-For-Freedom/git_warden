@@ -10,13 +10,34 @@ from git_warden import osm_automation as auto
 
 
 class _Response:
-    def __init__(self, status_code: int, payload=None):
+    def __init__(self, status_code: int, payload=None, headers=None):
         self.status_code = status_code
+        self.headers = headers or {}
         self._payload = payload if payload is not None else {}
         self.content = b"{}"
 
     def json(self):
         return self._payload
+
+
+def test_full_history_precheck_backs_off_on_rate_limit(monkeypatch):
+    monkeypatch.setattr(auto.config, "OSM_API_KEY", "osm_test")
+    replies = [_Response(429, headers={"Retry-After": "7"}), _Response(429),
+               _Response(200, {"malicious": False})]
+    monkeypatch.setattr(auto.requests, "get", lambda *a, **k: replies.pop(0))
+    waits: list[float] = []
+    assert auto._search_full_history("https://github.com/evil/dropper",
+                                     sleep=waits.append) == []
+    assert waits == [7.0, 10.0]
+
+
+def test_full_history_precheck_fails_closed_when_rate_limit_persists(monkeypatch):
+    monkeypatch.setattr(auto.config, "OSM_API_KEY", "osm_test")
+    monkeypatch.setattr(auto.requests, "get", lambda *a, **k: _Response(429))
+    waits: list[float] = []
+    with pytest.raises(auto.OSMPrecheckError, match="429"):
+        auto._search_full_history("https://github.com/evil/dropper", sleep=waits.append)
+    assert len(waits) == auto.RATE_LIMIT_RETRIES
 
 
 def test_resource_key_normalizes_repo_variants():
