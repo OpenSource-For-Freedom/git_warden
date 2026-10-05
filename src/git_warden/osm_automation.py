@@ -146,28 +146,50 @@ def _clear_failure(db, full_name: str) -> None:
         c.execute("DELETE FROM osm_automation_attempts WHERE full_name = ?", (full_name,))
 
 
-def _search_full_history(term: str) -> list[dict]:
-    """Authoritative per-resource lookup via OSM's current check-malicious API."""
+RATE_LIMIT_RETRIES = 4
+RATE_LIMIT_MAX_WAIT = 60.0
+
+
+def _retry_after(response, attempt: int) -> float:
+    """Seconds to wait after HTTP 429: OSM's Retry-After, else 5, 10, 20, 40."""
+    header = (getattr(response, "headers", None) or {}).get("Retry-After")
+    try:
+        wait = float(header) if header is not None else 5.0 * (2 ** attempt)
+    except (TypeError, ValueError):
+        wait = 5.0 * (2 ** attempt)
+    return max(1.0, min(wait, RATE_LIMIT_MAX_WAIT))
+
+
+def _search_full_history(term: str, *, sleep=time.sleep) -> list[dict]:
+    """Authoritative per-resource lookup via OSM's current check-malicious API.
+
+    HTTP 429 is retried with backoff; if OSM is still rate limiting after
+    ``RATE_LIMIT_RETRIES`` waits, the lookup fails closed like any other error.
+    """
     token = config.OSM_API_KEY
     if not token:
         raise OSMPrecheckError("OSM API key is missing")
-    try:
-        response = requests.get(
-            config.osm_endpoint("check-malicious"),
-            params={
-                "report_type": "repository",
-                "resource_identifier": term,
-            },
-            headers={
-                "Authorization": f"Bearer {token}",
-                "Accept": "application/json",
-            },
-            timeout=config.HTTP_TIMEOUT,
-        )
-    except requests.RequestException as exc:
-        raise OSMPrecheckError(
-            f"OSM check-malicious request failed for {term!r}: {exc}"
-        ) from exc
+    for attempt in range(RATE_LIMIT_RETRIES + 1):
+        try:
+            response = requests.get(
+                config.osm_endpoint("check-malicious"),
+                params={
+                    "report_type": "repository",
+                    "resource_identifier": term,
+                },
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Accept": "application/json",
+                },
+                timeout=config.HTTP_TIMEOUT,
+            )
+        except requests.RequestException as exc:
+            raise OSMPrecheckError(
+                f"OSM check-malicious request failed for {term!r}: {exc}"
+            ) from exc
+        if response.status_code != 429 or attempt == RATE_LIMIT_RETRIES:
+            break
+        sleep(_retry_after(response, attempt))
     if response.status_code in (401, 403):
         raise OSMPrecheckError(
             f"OSM rejected the API key (HTTP {response.status_code}) at "
