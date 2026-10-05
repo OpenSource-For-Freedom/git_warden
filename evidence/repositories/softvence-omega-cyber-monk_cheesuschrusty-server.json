@@ -2,6 +2,7 @@
   "finding": {
     "key": "repository:softvence-omega-cyber-monk/cheesuschrusty-server",
     "kind": "repository",
+    "family": "",
     "id": "softvence-omega-cyber-monk/cheesuschrusty-server",
     "url": "https://github.com/softvence-omega-cyber-monk/cheesuschrusty-server",
     "registry": "github",

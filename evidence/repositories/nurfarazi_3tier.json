@@ -2,6 +2,7 @@
   "finding": {
     "key": "repository:nurfarazi/3tier",
     "kind": "repository",
+    "family": "",
     "id": "nurfarazi/3tier",
     "url": "https://github.com/nurfarazi/3Tier",
     "registry": "github",

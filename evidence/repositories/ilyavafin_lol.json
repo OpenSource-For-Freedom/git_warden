@@ -19,10 +19,10 @@
     "iocs": "discord.com; https://discord.com/api/webhooks/1485228331367661669/htJQ8zsFr9RsJVmRrXIuscUPhULv7zkq-GuCSS5bCDy69vydMOks5w7dTZDBOB4slk3D; a2.py",
     "matched_signatures": "\"launcher_accounts.json\" \"api/webhooks\"",
     "reasons": "Shares a confirmed-malware code signature ['\"launcher_accounts.json\" \"api/webhooks\"'] | Tier-2 confirmed (bash score 10)",
-    "osm_status": "not_submitted",
-    "osm_threat_id": "",
-    "first_seen": "hunt-20261003T093317Z",
-    "last_seen": "hunt-20261003T093317Z",
+    "osm_status": "submitted",
+    "osm_threat_id": "d3a6a526-88cc-4521-ab97-212553208a6e",
+    "first_seen": "hunt-20261004T210412Z",
+    "last_seen": "hunt-20261004T210412Z",
     "evidence_file": "repositories/ilyavafin_lol.json",
     "reviewer_decision": "",
     "notes": ""
@@ -103,7 +103,7 @@
     "evidence_references": "https://github.com/ilyavafin/lol/blob/76e5931653c656d31f61ab1148241a9ef396bd29/a2.py#L1328\nhttps://github.com/ilyavafin/lol/blob/76e5931653c656d31f61ab1148241a9ef396bd29/a2.py#L27\nhttps://github.com/ilyavafin/lol/blob/76e5931653c656d31f61ab1148241a9ef396bd29/a2.py#L1325\nhttps://github.com/ilyavafin/lol/blob/76e5931653c656d31f61ab1148241a9ef396bd29/a2.py#L1332\nhttps://github.com/ilyavafin/lol/blob/76e5931653c656d31f61ab1148241a9ef396bd29/a2.py#L1348\nhttps://github.com/ilyavafin/lol/blob/76e5931653c656d31f61ab1148241a9ef396bd29/a2.py#L1548",
     "verified_iocs": "discord.com\nhttps://discord.com/api/webhooks/1485228331367661669/htJQ8zsFr9RsJVmRrXIuscUPhULv7zkq-GuCSS5bCDy69vydMOks5w7dTZDBOB4slk3D\na2.py",
     "contributors": [],
-    "first_seen": "2026-10-03T09:33:17Z",
-    "last_seen": "2026-10-03T09:33:17Z"
+    "first_seen": "2026-10-04T21:04:12Z",
+    "last_seen": "2026-10-04T21:04:12Z"
   }
 }

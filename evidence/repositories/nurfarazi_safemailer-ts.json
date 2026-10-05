@@ -2,6 +2,7 @@
   "finding": {
     "key": "repository:nurfarazi/safemailer-ts",
     "kind": "repository",
+    "family": "",
     "id": "nurfarazi/safemailer-ts",
     "url": "https://github.com/nurfarazi/safemailer-ts",
     "registry": "github",

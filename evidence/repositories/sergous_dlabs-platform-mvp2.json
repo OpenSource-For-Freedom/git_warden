@@ -2,6 +2,7 @@
   "finding": {
     "key": "repository:sergous/dlabs-platform-mvp2",
     "kind": "repository",
+    "family": "",
     "id": "sergous/dlabs-platform-mvp2",
     "url": "https://github.com/sergous/DLabs-Platform-MVP2",
     "registry": "github",

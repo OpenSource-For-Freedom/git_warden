@@ -2,6 +2,7 @@
   "finding": {
     "key": "repository:arif1101/restaurant-management-server",
     "kind": "repository",
+    "family": "",
     "id": "arif1101/restaurant-management-server",
     "url": "https://github.com/arif1101/restaurant-management-server",
     "registry": "github",

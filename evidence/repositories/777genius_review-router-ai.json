@@ -2,6 +2,7 @@
   "finding": {
     "key": "repository:777genius/review-router-ai",
     "kind": "repository",
+    "family": "",
     "id": "777genius/review-router-ai",
     "url": "https://github.com/777genius/review-router-ai",
     "registry": "github",

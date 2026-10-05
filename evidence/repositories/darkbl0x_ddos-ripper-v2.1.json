@@ -19,10 +19,10 @@
     "iocs": "discord.com; https://discord.com/api/webhooks/1097561176004628480/kzNv7cvu6SHGPqEUo8nu58dOhsCMkaD4szZ2iIQt53ZTRg1eHawqLKkuL7oUfsUJXa_C; Ddos Ripper/Ddos Ripper v2.1.py",
     "matched_signatures": "\"launcher_accounts.json\" \"api/webhooks\"",
     "reasons": "Shares a confirmed-malware code signature ['\"launcher_accounts.json\" \"api/webhooks\"'] | Tier-2 confirmed (bash score 10)",
-    "osm_status": "not_submitted",
-    "osm_threat_id": "",
-    "first_seen": "hunt-20261003T093317Z",
-    "last_seen": "hunt-20261003T093317Z",
+    "osm_status": "submitted",
+    "osm_threat_id": "f22fb2cd-82b0-46d5-a2e6-a0a572608826",
+    "first_seen": "hunt-20261004T210412Z",
+    "last_seen": "hunt-20261004T210412Z",
     "evidence_file": "repositories/darkbl0x_ddos-ripper-v2.1.json",
     "reviewer_decision": "",
     "notes": ""
@@ -124,7 +124,7 @@
     "evidence_references": "https://github.com/darkbl0x/ddos-ripper-v2.1/blob/322761ce9b76a70e1d073d7db4786fcff15045bf/Ddos Ripper/Ddos Ripper v2.1.py#L759\nhttps://github.com/darkbl0x/ddos-ripper-v2.1/blob/322761ce9b76a70e1d073d7db4786fcff15045bf/Ddos Ripper/Ddos Ripper v2.1.py#L22\nhttps://github.com/darkbl0x/ddos-ripper-v2.1/blob/322761ce9b76a70e1d073d7db4786fcff15045bf/Ddos Ripper/Ddos Ripper v2.1.py#L129\nhttps://github.com/darkbl0x/ddos-ripper-v2.1/blob/322761ce9b76a70e1d073d7db4786fcff15045bf/Ddos Ripper/Ddos Ripper v2.1.py#L198\nhttps://github.com/darkbl0x/ddos-ripper-v2.1/blob/322761ce9b76a70e1d073d7db4786fcff15045bf/Ddos Ripper/Ddos Ripper v2.1.py#L199\nhttps://github.com/darkbl0x/ddos-ripper-v2.1/blob/322761ce9b76a70e1d073d7db4786fcff15045bf/Ddos Ripper/Ddos Ripper v2.1.py#L200\nhttps://github.com/darkbl0x/ddos-ripper-v2.1/blob/322761ce9b76a70e1d073d7db4786fcff15045bf/Ddos Ripper/Ddos Ripper v2.1.py#L201\nhttps://github.com/darkbl0x/ddos-ripper-v2.1/blob/322761ce9b76a70e1d073d7db4786fcff15045bf/Ddos Ripper/Ddos Ripper v2.1.py#L839\nhttps://github.com/darkbl0x/ddos-ripper-v2.1/blob/322761ce9b76a70e1d073d7db4786fcff15045bf/Ddos Ripper/Ddos Ripper v2.1.py#L893",
     "verified_iocs": "discord.com\nhttps://discord.com/api/webhooks/1097561176004628480/kzNv7cvu6SHGPqEUo8nu58dOhsCMkaD4szZ2iIQt53ZTRg1eHawqLKkuL7oUfsUJXa_C\nDdos Ripper/Ddos Ripper v2.1.py",
     "contributors": [],
-    "first_seen": "2026-10-03T09:33:17Z",
-    "last_seen": "2026-10-03T09:33:17Z"
+    "first_seen": "2026-10-04T21:04:12Z",
+    "last_seen": "2026-10-04T21:04:12Z"
   }
 }

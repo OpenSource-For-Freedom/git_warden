@@ -1,0 +1,192 @@
+{
+  "finding": {
+    "key": "repository:boundaryml/baml",
+    "kind": "repository",
+    "family": "",
+    "id": "boundaryml/baml",
+    "url": "https://github.com/BoundaryML/baml",
+    "registry": "github",
+    "owner": "boundaryml",
+    "status": "confirmed",
+    "confidence": "review",
+    "score": 44,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "credential_access/env-dump; persistence/rc-files; enumeration/host-recon; obfuscation/eval-subshell; download_exec/curl-pipe-shell",
+    "evidence_locations": "typescript/apps/vscode-ext/src/extension.ts:377; tools/update_macos_llvm.sh:8; tools/setup-cross-compile-env.sh:23; tools/setup-cross-compile-env.sh:53; scripts/setup-dev.sh:17; scripts/setup-dev.sh:80; scripts/setup-dev.sh:81; scripts/setup-dev.sh:84; scripts/setup-dev.sh:85; scripts/setup-dev.sh:90; scripts/setup-dev.sh:91; scripts/setup-dev.sh:94; scripts/setup-dev.sh:95; scripts/setup-dev.sh:102; scripts/setup-dev.sh:111; scripts/setup-dev.sh:120; scripts/setup-dev.sh:121; scripts/setup-dev.sh:123; scripts/setup-dev.sh:124; scripts/setup-dev.sh:130",
+    "c2_hosts": "mise.jdx.dev",
+    "iocs": "mise.jdx.dev; https://mise.jdx.dev/install.sh; curl https://mise.jdx.dev/install.sh | sh; typescript/apps/vscode-ext/src/extension.ts",
+    "matched_signatures": "eval \"Buffer.from\" \"base64\"",
+    "reasons": "Shares a confirmed-malware code signature ['eval \"Buffer.from\" \"base64\"'] | Tier-2 confirmed (bash score 44)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20261005T142728Z",
+    "last_seen": "hunt-20261005T142728Z",
+    "evidence_file": "repositories/boundaryml_baml.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "typescript/apps/vscode-ext/src/extension.ts",
+      "line": 377,
+      "category": "credential_access",
+      "rule": "env-dump",
+      "snippet": "console.log(`vscode env: ${JSON.stringify(process.env, null, 2)}`)"
+    },
+    {
+      "file": "tools/update_macos_llvm.sh",
+      "line": 8,
+      "category": "persistence",
+      "rule": "rc-files",
+      "snippet": "echo 'export PATH=\"/opt/homebrew/opt/llvm/bin:$PATH\"' >> ~/.zshrc"
+    },
+    {
+      "file": "tools/setup-cross-compile-env.sh",
+      "line": 23,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "case \"$(grep '^ID=' /etc/os-release | cut -d= -f2)\" in"
+    },
+    {
+      "file": "tools/setup-cross-compile-env.sh",
+      "line": 53,
+      "category": "obfuscation",
+      "rule": "eval-subshell",
+      "snippet": "eval \"$(~/.local/bin/mise activate bash)\""
+    },
+    {
+      "file": "scripts/setup-dev.sh",
+      "line": 17,
+      "category": "download_exec",
+      "rule": "curl-pipe-shell",
+      "snippet": "curl https://mise.jdx.dev/install.sh | sh"
+    },
+    {
+      "file": "scripts/setup-dev.sh",
+      "line": 80,
+      "category": "obfuscation",
+      "rule": "eval-subshell",
+      "snippet": "eval \"$(mise activate bash --shims)\""
+    },
+    {
+      "file": "scripts/setup-dev.sh",
+      "line": 81,
+      "category": "obfuscation",
+      "rule": "eval-subshell",
+      "snippet": "eval \"$(mise activate bash)\""
+    },
+    {
+      "file": "scripts/setup-dev.sh",
+      "line": 84,
+      "category": "obfuscation",
+      "rule": "eval-subshell",
+      "snippet": "eval \"$(~/.local/bin/mise activate bash --shims)\""
+    },
+    {
+      "file": "scripts/setup-dev.sh",
+      "line": 85,
+      "category": "obfuscation",
+      "rule": "eval-subshell",
+      "snippet": "eval \"$(~/.local/bin/mise activate bash)\""
+    },
+    {
+      "file": "scripts/setup-dev.sh",
+      "line": 90,
+      "category": "obfuscation",
+      "rule": "eval-subshell",
+      "snippet": "eval \"$(mise activate zsh --shims)\""
+    },
+    {
+      "file": "scripts/setup-dev.sh",
+      "line": 91,
+      "category": "obfuscation",
+      "rule": "eval-subshell",
+      "snippet": "eval \"$(mise activate zsh)\""
+    },
+    {
+      "file": "scripts/setup-dev.sh",
+      "line": 94,
+      "category": "obfuscation",
+      "rule": "eval-subshell",
+      "snippet": "eval \"$(~/.local/bin/mise activate zsh --shims)\""
+    },
+    {
+      "file": "scripts/setup-dev.sh",
+      "line": 95,
+      "category": "obfuscation",
+      "rule": "eval-subshell",
+      "snippet": "eval \"$(~/.local/bin/mise activate zsh)\""
+    },
+    {
+      "file": "scripts/setup-dev.sh",
+      "line": 102,
+      "category": "persistence",
+      "rule": "rc-files",
+      "snippet": "echo \"$MISE_BASH_ACTIVATION\" >> ~/.bashrc"
+    },
+    {
+      "file": "scripts/setup-dev.sh",
+      "line": 111,
+      "category": "persistence",
+      "rule": "rc-files",
+      "snippet": "echo \"$MISE_ZSH_ACTIVATION\" >> ~/.zshrc"
+    },
+    {
+      "file": "scripts/setup-dev.sh",
+      "line": 120,
+      "category": "obfuscation",
+      "rule": "eval-subshell",
+      "snippet": "eval \"$(mise activate bash --shims)\""
+    },
+    {
+      "file": "scripts/setup-dev.sh",
+      "line": 121,
+      "category": "obfuscation",
+      "rule": "eval-subshell",
+      "snippet": "eval \"$(mise activate bash)\""
+    },
+    {
+      "file": "scripts/setup-dev.sh",
+      "line": 123,
+      "category": "obfuscation",
+      "rule": "eval-subshell",
+      "snippet": "eval \"$(mise activate zsh --shims)\""
+    },
+    {
+      "file": "scripts/setup-dev.sh",
+      "line": 124,
+      "category": "obfuscation",
+      "rule": "eval-subshell",
+      "snippet": "eval \"$(mise activate zsh)\""
+    },
+    {
+      "file": "scripts/setup-dev.sh",
+      "line": 130,
+      "category": "obfuscation",
+      "rule": "eval-subshell",
+      "snippet": "eval \"$(~/.local/bin/mise activate bash --shims)\""
+    }
+  ],
+  "commit_sha": "ff31ced53ce0569c0bb86cceed5bbd90094a8aa9",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/boundaryml/baml",
+    "version_info": "all",
+    "threat_description": "Git Warden confirmed this repository as malicious by static analysis of its source code. The code was read, never executed. The malicious code sits in the file typescript/apps/vscode-ext/src/extension.ts around line 377. The code reaches into credential files such as private keys and cloud configuration to steal authentication material. No legitimate project ships code like this. The repository was either compromised or purpose-built to deliver malware to anyone who clones or installs it. The evidence references link the exact file and line of each finding, and the payload description names every detection rule that fired, so a reviewer can open the repository and verify each one independently. Git Warden found this repository by searching GitHub for code that matches a confirmed malware signature: eval \"Buffer.from\" \"base64\".",
+    "payload_description": "The malicious payload sits in typescript/apps/vscode-ext/src/extension.ts at line 377. The code reaches into credential files such as private keys and cloud configuration to steal authentication material. Detection rules that fired in this repository: obfuscation/eval-subshell (2 files), persistence/rc-files (2 files), credential_access/env-dump (1 file), download_exec/curl-pipe-shell (1 file), enumeration/host-recon (1 file).",
+    "publisher": "boundaryml",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "credential-theft"
+    ],
+    "evidence_references": "https://github.com/boundaryml/baml/blob/ff31ced53ce0569c0bb86cceed5bbd90094a8aa9/typescript/apps/vscode-ext/src/extension.ts#L377\nhttps://github.com/boundaryml/baml/blob/ff31ced53ce0569c0bb86cceed5bbd90094a8aa9/tools/update_macos_llvm.sh#L8\nhttps://github.com/boundaryml/baml/blob/ff31ced53ce0569c0bb86cceed5bbd90094a8aa9/tools/setup-cross-compile-env.sh#L23\nhttps://github.com/boundaryml/baml/blob/ff31ced53ce0569c0bb86cceed5bbd90094a8aa9/tools/setup-cross-compile-env.sh#L53\nhttps://github.com/boundaryml/baml/blob/ff31ced53ce0569c0bb86cceed5bbd90094a8aa9/scripts/setup-dev.sh#L17\nhttps://github.com/boundaryml/baml/blob/ff31ced53ce0569c0bb86cceed5bbd90094a8aa9/scripts/setup-dev.sh#L80\nhttps://github.com/boundaryml/baml/blob/ff31ced53ce0569c0bb86cceed5bbd90094a8aa9/scripts/setup-dev.sh#L81\nhttps://github.com/boundaryml/baml/blob/ff31ced53ce0569c0bb86cceed5bbd90094a8aa9/scripts/setup-dev.sh#L84\nhttps://github.com/boundaryml/baml/blob/ff31ced53ce0569c0bb86cceed5bbd90094a8aa9/scripts/setup-dev.sh#L85\nhttps://github.com/boundaryml/baml/blob/ff31ced53ce0569c0bb86cceed5bbd90094a8aa9/scripts/setup-dev.sh#L90\nhttps://github.com/boundaryml/baml/blob/ff31ced53ce0569c0bb86cceed5bbd90094a8aa9/scripts/setup-dev.sh#L91\nhttps://github.com/boundaryml/baml/blob/ff31ced53ce0569c0bb86cceed5bbd90094a8aa9/scripts/setup-dev.sh#L94\nhttps://github.com/boundaryml/baml/blob/ff31ced53ce0569c0bb86cceed5bbd90094a8aa9/scripts/setup-dev.sh#L95\nhttps://github.com/boundaryml/baml/blob/ff31ced53ce0569c0bb86cceed5bbd90094a8aa9/scripts/setup-dev.sh#L102\nhttps://github.com/boundaryml/baml/blob/ff31ced53ce0569c0bb86cceed5bbd90094a8aa9/scripts/setup-dev.sh#L111",
+    "verified_iocs": "mise.jdx.dev\nhttps://mise.jdx.dev/install.sh\ncurl https://mise.jdx.dev/install.sh | sh\ntypescript/apps/vscode-ext/src/extension.ts",
+    "contributors": [],
+    "first_seen": "2026-10-05T14:27:28Z",
+    "last_seen": "2026-10-05T14:27:28Z"
+  }
+}
