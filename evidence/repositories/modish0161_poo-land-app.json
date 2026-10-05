@@ -2,6 +2,7 @@
   "finding": {
     "key": "repository:modish0161/poo-land-app",
     "kind": "repository",
+    "family": "",
     "id": "modish0161/poo-land-app",
     "url": "https://github.com/modish0161/Poo-Land-App",
     "registry": "github",

@@ -2,6 +2,7 @@
   "finding": {
     "key": "repository:baum1810/grabber-detector",
     "kind": "repository",
+    "family": "minecraft",
     "id": "baum1810/grabber-detector",
     "url": "https://github.com/baum1810/grabber-detector",
     "registry": "github",

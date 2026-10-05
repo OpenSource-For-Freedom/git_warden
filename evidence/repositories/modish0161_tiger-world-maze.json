@@ -2,6 +2,7 @@
   "finding": {
     "key": "repository:modish0161/tiger-world-maze",
     "kind": "repository",
+    "family": "",
     "id": "modish0161/tiger-world-maze",
     "url": "https://github.com/modish0161/tiger-world-maze",
     "registry": "github",

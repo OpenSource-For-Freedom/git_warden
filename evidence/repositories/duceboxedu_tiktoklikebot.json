@@ -2,6 +2,7 @@
   "finding": {
     "key": "repository:duceboxedu/tiktoklikebot",
     "kind": "repository",
+    "family": "minecraft",
     "id": "duceboxedu/tiktoklikebot",
     "url": "https://github.com/DuceBoxedU/TiktokLikeBot",
     "registry": "github",
@@ -18,10 +19,10 @@
     "iocs": "discordapp.com; https://discordapp.com/api/webhooks/992873629048119336/snYJx9G748I51KktdQrQCaRRc7BkNlBOmeHs3zOMVC4AFJIT5k0Mj1R9vKtSDx6nrskL; https://github.com/Rdimo/; Tiktok Share Bot/Tiktok Like Bot.py",
     "matched_signatures": "\"launcher_accounts.json\" \"api/webhooks\"",
     "reasons": "Shares a confirmed-malware code signature ['\"launcher_accounts.json\" \"api/webhooks\"'] | Tier-2 confirmed (bash score 10)",
-    "osm_status": "submitted",
-    "osm_threat_id": "0eb4b1ad-8658-4054-aa65-819a53eebf3a",
-    "first_seen": "hunt-20261004T210412Z",
-    "last_seen": "hunt-20261004T210412Z",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20261003T093317Z",
+    "last_seen": "hunt-20261003T093317Z",
     "evidence_file": "repositories/duceboxedu_tiktoklikebot.json",
     "reviewer_decision": "",
     "notes": ""
@@ -95,7 +96,7 @@
     "evidence_references": "https://github.com/duceboxedu/tiktoklikebot/blob/613a214f236c8b885d3b0eb1fb22d7f23ecabc05/Tiktok Share Bot/Tiktok Like Bot.py#L543\nhttps://github.com/duceboxedu/tiktoklikebot/blob/613a214f236c8b885d3b0eb1fb22d7f23ecabc05/Tiktok Share Bot/Tiktok Like Bot.py#L31\nhttps://github.com/duceboxedu/tiktoklikebot/blob/613a214f236c8b885d3b0eb1fb22d7f23ecabc05/Tiktok Share Bot/Tiktok Like Bot.py#L29\nhttps://github.com/duceboxedu/tiktoklikebot/blob/613a214f236c8b885d3b0eb1fb22d7f23ecabc05/Tiktok Share Bot/Tiktok Like Bot.py#L775\nhttps://github.com/duceboxedu/tiktoklikebot/blob/613a214f236c8b885d3b0eb1fb22d7f23ecabc05/Tiktok Share Bot/Tiktok Like Bot.py#L776",
     "verified_iocs": "discordapp.com\nhttps://discordapp.com/api/webhooks/992873629048119336/snYJx9G748I51KktdQrQCaRRc7BkNlBOmeHs3zOMVC4AFJIT5k0Mj1R9vKtSDx6nrskL\nhttps://github.com/Rdimo/\nTiktok Share Bot/Tiktok Like Bot.py",
     "contributors": [],
-    "first_seen": "2026-10-04T21:04:12Z",
-    "last_seen": "2026-10-04T21:04:12Z"
+    "first_seen": "2026-10-03T09:33:17Z",
+    "last_seen": "2026-10-03T09:33:17Z"
   }
 }

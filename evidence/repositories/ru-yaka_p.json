@@ -2,6 +2,7 @@
   "finding": {
     "key": "repository:ru-yaka/p",
     "kind": "repository",
+    "family": "",
     "id": "ru-yaka/p",
     "url": "https://github.com/ru-yaka/p",
     "registry": "github",

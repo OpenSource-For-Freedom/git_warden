@@ -2,6 +2,7 @@
   "finding": {
     "key": "repository:aaryan121/code-conductor-fork",
     "kind": "repository",
+    "family": "",
     "id": "aaryan121/code-conductor-fork",
     "url": "https://github.com/Aaryan121/code-conductor-fork",
     "registry": "github",

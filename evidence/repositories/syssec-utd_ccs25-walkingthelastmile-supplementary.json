@@ -2,6 +2,7 @@
   "finding": {
     "key": "repository:syssec-utd/ccs25-walkingthelastmile-supplementary",
     "kind": "repository",
+    "family": "minecraft",
     "id": "syssec-utd/ccs25-walkingthelastmile-supplementary",
     "url": "https://github.com/syssec-utd/CCS25-WalkingTheLastMile-Supplementary",
     "registry": "github",

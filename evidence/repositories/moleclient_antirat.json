@@ -2,6 +2,7 @@
   "finding": {
     "key": "repository:moleclient/antirat",
     "kind": "repository",
+    "family": "minecraft",
     "id": "moleclient/antirat",
     "url": "https://github.com/MoleClient/AntiRat",
     "registry": "github",
