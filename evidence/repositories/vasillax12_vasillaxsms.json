@@ -2,6 +2,7 @@
   "finding": {
     "key": "repository:vasillax12/vasillaxsms",
     "kind": "repository",
+    "family": "minecraft",
     "id": "vasillax12/vasillaxsms",
     "url": "https://github.com/vasillax12/VasillaxSms",
     "registry": "github",
@@ -20,8 +21,8 @@
     "reasons": "Shares a confirmed-malware code signature ['\"launcher_accounts.json\" \"api/webhooks\"'] | Tier-2 confirmed (bash score 7)",
     "osm_status": "not_submitted",
     "osm_threat_id": "",
-    "first_seen": "hunt-20261004T210412Z",
-    "last_seen": "hunt-20261004T210412Z",
+    "first_seen": "hunt-20261003T093317Z",
+    "last_seen": "hunt-20261003T093317Z",
     "evidence_file": "repositories/vasillax12_vasillaxsms.json",
     "reviewer_decision": "",
     "notes": ""
@@ -74,7 +75,7 @@
     "evidence_references": "https://github.com/vasillax12/vasillaxsms/blob/7413cea11dd00b45b0380fbea8b397ed6dc13bdb/vasillaxsms.py#L478\nhttps://github.com/vasillax12/vasillaxsms/blob/7413cea11dd00b45b0380fbea8b397ed6dc13bdb/vasillaxsms.py#L20",
     "verified_iocs": "discord.com\nhttps://discord.com/api/webhooks/1113535070335148075/RC9hppbP9oQ2ZVkC0JjtzPERAjF29GYGU10QDNorS5kNyuSkUpLprctUD1H1yn6aUQeL\nvasillaxsms.py",
     "contributors": [],
-    "first_seen": "2026-10-04T21:04:12Z",
-    "last_seen": "2026-10-04T21:04:12Z"
+    "first_seen": "2026-10-03T09:33:17Z",
+    "last_seen": "2026-10-03T09:33:17Z"
   }
 }

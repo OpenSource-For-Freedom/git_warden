@@ -2,6 +2,7 @@
   "finding": {
     "key": "repository:tlord101/hck",
     "kind": "repository",
+    "family": "",
     "id": "tlord101/hck",
     "url": "https://github.com/tlord101/hck",
     "registry": "github",
@@ -20,8 +21,8 @@
     "reasons": "Shares a confirmed-malware code signature ['folderOpen curl filename:tasks.json'] | Tier-2 confirmed (bash score 5)",
     "osm_status": "not_submitted",
     "osm_threat_id": "",
-    "first_seen": "hunt-20260925T173032Z",
-    "last_seen": "hunt-20260925T173032Z",
+    "first_seen": "hunt-20260923T001603Z",
+    "last_seen": "hunt-20260923T001603Z",
     "evidence_file": "repositories/tlord101_hck.json",
     "reviewer_decision": "",
     "notes": ""
@@ -75,7 +76,7 @@
     "evidence_references": "https://github.com/tlord101/hck/blob/34ed2d1f6b0b81b28eb4b0d7b83b051eb6b1f188/.vscode/tasks.json\nhttps://github.com/tlord101/hck/blob/34ed2d1f6b0b81b28eb4b0d7b83b051eb6b1f188/server/.vscode/tasks.json",
     "verified_iocs": ".vscode/tasks.json",
     "contributors": [],
-    "first_seen": "2026-09-25T17:30:32Z",
-    "last_seen": "2026-09-25T17:30:32Z"
+    "first_seen": "2026-09-23T00:16:03Z",
+    "last_seen": "2026-09-23T00:16:03Z"
   }
 }

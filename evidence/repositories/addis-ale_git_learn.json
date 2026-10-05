@@ -2,6 +2,7 @@
   "finding": {
     "key": "repository:addis-ale/git_learn",
     "kind": "repository",
+    "family": "",
     "id": "addis-ale/git_learn",
     "url": "https://github.com/addis-ale/git_learn",
     "registry": "github",
