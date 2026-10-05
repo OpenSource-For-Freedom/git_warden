@@ -24,8 +24,8 @@
     "first_seen": "hunt-20261003T093317Z",
     "last_seen": "hunt-20261003T093317Z",
     "evidence_file": "repositories/moleclient_antirat.json",
-    "reviewer_decision": "",
-    "notes": ""
+    "reviewer_decision": "reject",
+    "notes": "false positive: anti-RAT scanner, matched the patterns it looks for"
   },
   "evidence": [
     {

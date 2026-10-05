@@ -24,8 +24,8 @@
     "first_seen": "hunt-20261003T093317Z",
     "last_seen": "hunt-20261003T093317Z",
     "evidence_file": "repositories/baum1810_grabber-detector.json",
-    "reviewer_decision": "",
-    "notes": ""
+    "reviewer_decision": "reject",
+    "notes": "false positive: stealer detector, matched the patterns it looks for"
   },
   "evidence": [
     {
