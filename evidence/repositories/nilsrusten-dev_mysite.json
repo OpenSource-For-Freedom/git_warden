@@ -2,6 +2,7 @@
   "finding": {
     "key": "repository:nilsrusten-dev/mysite",
     "kind": "repository",
+    "family": "",
     "id": "nilsrusten-dev/mysite",
     "url": "https://github.com/nilsrusten-dev/mysite",
     "registry": "github",

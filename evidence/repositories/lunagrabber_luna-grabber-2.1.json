@@ -19,10 +19,10 @@
     "iocs": "discord.com; https://discord.com/api/webhooks/1176363772223422526/jA77Kvap7QDlVEl4f-Z1ENiWmsNpkaAmOnXJ3f7h3zUKc0OcBMgVXjYYBGXhyNDLDuNj; Luna-Grabber-main-2.1/Luna-Grabber-main/Builder.py",
     "matched_signatures": "\"launcher_accounts.json\" \"api/webhooks\"",
     "reasons": "Shares a confirmed-malware code signature ['\"launcher_accounts.json\" \"api/webhooks\"'] | Tier-2 confirmed (bash score 13)",
-    "osm_status": "not_submitted",
-    "osm_threat_id": "",
-    "first_seen": "hunt-20261003T093317Z",
-    "last_seen": "hunt-20261003T093317Z",
+    "osm_status": "submitted",
+    "osm_threat_id": "52f396e5-b0a4-4a61-b006-5d05837c301f",
+    "first_seen": "hunt-20261004T210412Z",
+    "last_seen": "hunt-20261004T210412Z",
     "evidence_file": "repositories/lunagrabber_luna-grabber-2.1.json",
     "reviewer_decision": "",
     "notes": ""
@@ -187,7 +187,7 @@
     "evidence_references": "https://github.com/lunagrabber/luna-grabber-2.1/blob/c560c34e44d1e123c233582aa71b24e25152d969/Luna-Grabber-main-2.1/Luna-Grabber-main/Builder.py#L732\nhttps://github.com/lunagrabber/luna-grabber-2.1/blob/c560c34e44d1e123c233582aa71b24e25152d969/Luna-Grabber-main-2.1/Luna-Grabber-main/Builder.py#L25\nhttps://github.com/lunagrabber/luna-grabber-2.1/blob/c560c34e44d1e123c233582aa71b24e25152d969/Luna-Grabber-main-2.1/Luna-Grabber-main/luna.py#L147\nhttps://github.com/lunagrabber/luna-grabber-2.1/blob/c560c34e44d1e123c233582aa71b24e25152d969/Luna-Grabber-main-2.1/Luna-Grabber-main/luna.py#L215\nhttps://github.com/lunagrabber/luna-grabber-2.1/blob/c560c34e44d1e123c233582aa71b24e25152d969/Luna-Grabber-main-2.1/Luna-Grabber-main/luna.py#L216\nhttps://github.com/lunagrabber/luna-grabber-2.1/blob/c560c34e44d1e123c233582aa71b24e25152d969/Luna-Grabber-main-2.1/Luna-Grabber-main/luna.py#L217\nhttps://github.com/lunagrabber/luna-grabber-2.1/blob/c560c34e44d1e123c233582aa71b24e25152d969/Luna-Grabber-main-2.1/Luna-Grabber-main/luna.py#L218\nhttps://github.com/lunagrabber/luna-grabber-2.1/blob/c560c34e44d1e123c233582aa71b24e25152d969/Luna-Grabber-main-2.1/Luna-Grabber-main/luna.py#L753\nhttps://github.com/lunagrabber/luna-grabber-2.1/blob/c560c34e44d1e123c233582aa71b24e25152d969/Luna-Grabber-main-2.1/Luna-Grabber-main/luna.py#L833\nhttps://github.com/lunagrabber/luna-grabber-2.1/blob/c560c34e44d1e123c233582aa71b24e25152d969/Luna-Grabber-main-2.1/Luna-Grabber-main/luna.py#L846\nhttps://github.com/lunagrabber/luna-grabber-2.1/blob/c560c34e44d1e123c233582aa71b24e25152d969/Luna-Grabber-main-2.1/Luna-Grabber-main/luna.py#L905\nhttps://github.com/lunagrabber/luna-grabber-2.1/blob/c560c34e44d1e123c233582aa71b24e25152d969/Luna-Grabber-main-2.1/Luna-Grabber-main/Builder.py#L126\nhttps://github.com/lunagrabber/luna-grabber-2.1/blob/c560c34e44d1e123c233582aa71b24e25152d969/Luna-Grabber-main-2.1/Luna-Grabber-main/Builder.py#L194\nhttps://github.com/lunagrabber/luna-grabber-2.1/blob/c560c34e44d1e123c233582aa71b24e25152d969/Luna-Grabber-main-2.1/Luna-Grabber-main/Builder.py#L195\nhttps://github.com/lunagrabber/luna-grabber-2.1/blob/c560c34e44d1e123c233582aa71b24e25152d969/Luna-Grabber-main-2.1/Luna-Grabber-main/Builder.py#L196",
     "verified_iocs": "discord.com\nhttps://discord.com/api/webhooks/1176363772223422526/jA77Kvap7QDlVEl4f-Z1ENiWmsNpkaAmOnXJ3f7h3zUKc0OcBMgVXjYYBGXhyNDLDuNj\nLuna-Grabber-main-2.1/Luna-Grabber-main/Builder.py",
     "contributors": [],
-    "first_seen": "2026-10-03T09:33:17Z",
-    "last_seen": "2026-10-03T09:33:17Z"
+    "first_seen": "2026-10-04T21:04:12Z",
+    "last_seen": "2026-10-04T21:04:12Z"
   }
 }

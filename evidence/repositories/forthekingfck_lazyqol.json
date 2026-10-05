@@ -19,10 +19,10 @@
     "iocs": "discord.com; https://discord.com/api/webhooks/1097470447299330078/4lzibfuD-_nnOy1zlAaRxf3n7C6M9D1g4Lf6HneHDrpyBLJMcoLx7_tWtzWPGB27OKs8; src/main/java/com/suyako/lazyQoL/core/MacroCommand.java",
     "matched_signatures": "\"getSession().getToken()\" \"discord.com/api/webhooks\" language:Java; func_148254_d \"api/webhooks\" language:Java",
     "reasons": "Shares a confirmed-malware code signature ['\"getSession().getToken()\" \"discord.com/api/webhooks\" language:Java', 'func_148254_d \"api/webhooks\" language:Java'] | Tier-2 confirmed (bash score 7)",
-    "osm_status": "not_submitted",
-    "osm_threat_id": "",
-    "first_seen": "hunt-20261003T093317Z",
-    "last_seen": "hunt-20261003T093317Z",
+    "osm_status": "submitted",
+    "osm_threat_id": "4a44b105-8b19-489c-86bc-0d23648e41c6",
+    "first_seen": "hunt-20261004T210412Z",
+    "last_seen": "hunt-20261004T210412Z",
     "evidence_file": "repositories/forthekingfck_lazyqol.json",
     "reviewer_decision": "",
     "notes": ""
@@ -117,7 +117,7 @@
     "evidence_references": "https://github.com/forthekingfck/lazyqol/blob/1cb6c06854be1d3307bb351193611bc33397b60a/src/main/java/com/suyako/lazyQoL/core/MacroCommand.java#L24\nhttps://github.com/forthekingfck/lazyqol/blob/1cb6c06854be1d3307bb351193611bc33397b60a/src/main/java/com/suyako/lazyQoL/core/MacroCommand.java#L12\nhttps://github.com/forthekingfck/lazyqol/blob/1cb6c06854be1d3307bb351193611bc33397b60a/src/main/java/com/suyako/LazyQoL.java#L67\nhttps://github.com/forthekingfck/lazyqol/blob/1cb6c06854be1d3307bb351193611bc33397b60a/src/main/java/com/suyako/LazyQoL.java#L915\nhttps://github.com/forthekingfck/lazyqol/blob/1cb6c06854be1d3307bb351193611bc33397b60a/src/main/java/com/suyako/lazyQoL/core/MacroCommand.java#L29\nhttps://github.com/forthekingfck/lazyqol/blob/1cb6c06854be1d3307bb351193611bc33397b60a/src/main/java/com/suyako/lazyQoL/core/MacroCommand.java#L37\nhttps://github.com/forthekingfck/lazyqol/blob/1cb6c06854be1d3307bb351193611bc33397b60a/src/main/java/com/suyako/lazyQoL/core/MacroCommand.java#L43\nhttps://github.com/forthekingfck/lazyqol/blob/1cb6c06854be1d3307bb351193611bc33397b60a/src/main/java/com/suyako/lazyQoL/core/MacroCommand.java#L58",
     "verified_iocs": "discord.com\nhttps://discord.com/api/webhooks/1097470447299330078/4lzibfuD-_nnOy1zlAaRxf3n7C6M9D1g4Lf6HneHDrpyBLJMcoLx7_tWtzWPGB27OKs8\nsrc/main/java/com/suyako/lazyQoL/core/MacroCommand.java",
     "contributors": [],
-    "first_seen": "2026-10-03T09:33:17Z",
-    "last_seen": "2026-10-03T09:33:17Z"
+    "first_seen": "2026-10-04T21:04:12Z",
+    "last_seen": "2026-10-04T21:04:12Z"
   }
 }

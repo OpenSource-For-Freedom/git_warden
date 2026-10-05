@@ -2,6 +2,7 @@
   "finding": {
     "key": "repository:nurfarazi/auto-approve-hr",
     "kind": "repository",
+    "family": "",
     "id": "nurfarazi/auto-approve-hr",
     "url": "https://github.com/nurfarazi/Auto-Approve-hr",
     "registry": "github",

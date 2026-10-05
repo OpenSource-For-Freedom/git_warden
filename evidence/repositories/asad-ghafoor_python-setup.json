@@ -2,6 +2,7 @@
   "finding": {
     "key": "repository:asad-ghafoor/python-setup",
     "kind": "repository",
+    "family": "",
     "id": "asad-ghafoor/python-setup",
     "url": "https://github.com/Asad-Ghafoor/python-setup",
     "registry": "github",

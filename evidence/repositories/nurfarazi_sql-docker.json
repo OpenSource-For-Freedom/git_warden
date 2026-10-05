@@ -2,6 +2,7 @@
   "finding": {
     "key": "repository:nurfarazi/sql-docker",
     "kind": "repository",
+    "family": "",
     "id": "nurfarazi/sql-docker",
     "url": "https://github.com/nurfarazi/sql-docker",
     "registry": "github",

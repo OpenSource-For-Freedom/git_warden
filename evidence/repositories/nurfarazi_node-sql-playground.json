@@ -2,6 +2,7 @@
   "finding": {
     "key": "repository:nurfarazi/node-sql-playground",
     "kind": "repository",
+    "family": "",
     "id": "nurfarazi/node-sql-playground",
     "url": "https://github.com/nurfarazi/node-sql-playground",
     "registry": "github",

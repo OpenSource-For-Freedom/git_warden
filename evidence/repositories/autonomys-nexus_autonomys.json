@@ -2,6 +2,7 @@
   "finding": {
     "key": "repository:autonomys-nexus/autonomys",
     "kind": "repository",
+    "family": "",
     "id": "autonomys-nexus/autonomys",
     "url": "https://github.com/autonomys-nexus/autonomys",
     "registry": "github",

@@ -2,6 +2,7 @@
   "finding": {
     "key": "repository:nurfarazi/nono-chat-bot",
     "kind": "repository",
+    "family": "",
     "id": "nurfarazi/nono-chat-bot",
     "url": "https://github.com/nurfarazi/nono-chat-bot",
     "registry": "github",

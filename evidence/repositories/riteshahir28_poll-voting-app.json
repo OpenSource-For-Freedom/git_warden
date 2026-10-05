@@ -2,6 +2,7 @@
   "finding": {
     "key": "repository:riteshahir28/poll-voting-app",
     "kind": "repository",
+    "family": "",
     "id": "riteshahir28/poll-voting-app",
     "url": "https://github.com/riteshahir28/poll-voting-app",
     "registry": "github",

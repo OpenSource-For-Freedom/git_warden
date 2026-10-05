@@ -2,6 +2,7 @@
   "finding": {
     "key": "repository:bloxberg-d/jackpot",
     "kind": "repository",
+    "family": "",
     "id": "bloxberg-d/jackpot",
     "url": "https://github.com/bloxberg-d/jackpot",
     "registry": "github",

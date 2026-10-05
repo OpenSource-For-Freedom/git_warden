@@ -2,6 +2,7 @@
   "finding": {
     "key": "repository:hakeemsyd/fastapi-rag",
     "kind": "repository",
+    "family": "",
     "id": "hakeemsyd/fastapi-rag",
     "url": "https://github.com/hakeemsyd/fastapi-rag",
     "registry": "github",
