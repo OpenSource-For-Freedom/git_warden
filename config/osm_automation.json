@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "required_confidence": "auto",
+  "required_confidence": "review",
   "require_docker_sandbox": true,
   "require_positive_liveness": true,
   "require_intrinsic_evidence": true,
