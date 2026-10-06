@@ -2,7 +2,8 @@
 
 This path is intentionally stricter than the interactive/local submit command.
 Every repository is re-scanned in the hardened Tier-2 Docker sandbox, must still
-confirm at AUTO confidence, must still be live at GitHub HEAD, and must pass an
+confirm at a confidence tier the policy admits (AUTO, plus REVIEW when
+``required_confidence`` is ``review``), must still be live at GitHub HEAD, and must pass an
 authoritative OSM full-history pre-check twice: once before validation and again
 immediately before POST. Any uncertainty blocks submission.
 """
@@ -52,14 +53,23 @@ RETRY_AFTER_SECONDS = 7 * 24 * 3600
 TRANSIENT_RETRY_SECONDS = 24 * 3600
 
 
+# Minimum confidence tier -> tiers it admits. ``review`` (medium) adds the
+# human-review tier to ``auto`` (high); an untiered or unknown result never passes.
+CONFIDENCE_TIERS = {"auto": ("auto",), "review": ("auto", "review")}
+
+
+def accepted_confidence(policy: dict) -> tuple[str, ...]:
+    return CONFIDENCE_TIERS[policy["required_confidence"]]
+
+
 def _validate_policy(policy: dict) -> dict:
     """Refuse policy changes that weaken unattended-submission safety."""
     if policy.get("schema_version") != 1:
         raise RuntimeError("unsupported OSM automation policy schema")
     if policy.get("fail_closed") is not True:
         raise RuntimeError("OSM automation policy must remain fail-closed")
-    if policy.get("required_confidence") != "auto":
-        raise RuntimeError("Warden automation requires AUTO confidence")
+    if policy.get("required_confidence") not in CONFIDENCE_TIERS:
+        raise RuntimeError("Warden automation confidence must be 'auto' or 'review'")
     if policy.get("require_docker_sandbox") is not True:
         raise RuntimeError("Warden automation requires the Docker sandbox")
     if policy.get("require_positive_liveness") is not True:
@@ -234,8 +244,12 @@ def _existing_repo(full_name: str) -> dict | None:
     return None
 
 
-def _deep_validate(full_name: str):
-    """Re-scan in the sandbox. Returns ``(ok, reason, Tier2Result | None)``."""
+def _deep_validate(full_name: str, accepted: tuple[str, ...] = ("auto",)):
+    """Re-scan in the sandbox. Returns ``(ok, reason, Tier2Result | None)``.
+
+    ``accepted`` is the set of confidence tiers the policy admits; the fresh
+    re-scan must land in one of them, whatever the stored tier was.
+    """
     from .scanning.sandbox_runner import docker_available, scan_candidate_sandboxed
 
     if not docker_available():
@@ -245,12 +259,14 @@ def _deep_validate(full_name: str):
         return False, "sandbox scan produced no result", None
     if not result.confirmed:
         return False, "current Tier-2 scan no longer confirms malicious behavior", result
-    if result.confidence != "auto":
-        return False, f"current Tier-2 confidence is {result.confidence!r}, not AUTO", result
+    if result.confidence not in accepted:
+        return False, (f"current Tier-2 confidence is {result.confidence!r}, "
+                       f"not {'/'.join(t.upper() for t in accepted)}"), result
     if not result.confirming_findings and not result.package_spread:
         if not any(status == "flagged" for status in (result.scanners or {}).values()):
             return False, "current Tier-2 result has no confirming evidence", result
-    return True, f"current commit {result.commit_sha or 'HEAD'} confirmed AUTO", result
+    return True, (f"current commit {result.commit_sha or 'HEAD'} confirmed "
+                  f"{result.confidence.upper()}"), result
 
 
 # --- Markdown run summary (GitHub step summary) ------------------------------
@@ -308,7 +324,8 @@ def validated_markdown(
         f"| Repository | {url} |",
         f"| OSM status | {osm_line} |",
         "| Shared intel (Warden/KNORR) | not marked submitted by either tool |",
-        "| Tier-2 sandbox re-scan | confirmed, confidence **AUTO** |",
+        f"| Tier-2 sandbox re-scan | confirmed, confidence "
+        f"**{str(getattr(result, 'confidence', '') or 'auto').upper()}** |",
         f"| Scanned commit | {_code(sha or 'HEAD')} |",
         "| Payload live at HEAD | yes (re-fetched from raw.githubusercontent.com) |",
         f"| Severity | {_cell(report.get('severity_level'))} |",
@@ -427,7 +444,7 @@ def run(
     now: float | None = None, only: set[str] | None = None,
     validated_out: list[str] | None = None,
 ) -> tuple[int, int]:
-    """Validate AUTO-tier candidates and (unless ``dry_run``) submit them.
+    """Validate candidates at the policy's confidence tiers and (unless ``dry_run``) submit them.
 
     Returns ``(submitted, errors)``. ``limit`` caps the sandbox re-scans per run
     (the expensive step); cheap skips (already in OSM / shared intel / recently
@@ -464,12 +481,14 @@ def run(
                 "no hunt data: repo_findings is empty (data cache not restored or "
                 "evicted?) -- run The Warden hunt first")
 
-        rows = gold_for_submission(db)  # all of them; `limit` caps sandbox scans
+        accepted = accepted_confidence(policy)
+        # all of them; `limit` caps sandbox scans
+        rows = gold_for_submission(db, min_confidence=policy["required_confidence"])
         if only is not None:
             rows = [r for r in rows if r["full_name"].casefold() in only]
         if not rows:
-            print("Warden OSM automation: no AUTO-tier novel candidates.")
-            notes.append(f"No AUTO-tier novel candidates among {total} findings.")
+            print("Warden OSM automation: no submittable novel candidates.")
+            notes.append(f"No submittable novel candidates among {total} findings.")
             return 0, 0
 
         from .scanning.sandbox_runner import docker_available
@@ -510,7 +529,7 @@ def run(
                 continue
 
             scans += 1
-            valid, reason, result = _deep_validate(full_name)
+            valid, reason, result = _deep_validate(full_name, accepted)
             if not valid:
                 reason = f"deep validation failed closed: {reason}"
                 _record_failure(db, full_name, reason, now, transient=result is None)
