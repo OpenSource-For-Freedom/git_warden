@@ -214,6 +214,7 @@ def db(tmp_path, monkeypatch):
     monkeypatch.setattr(auto.bus, "submitted_targets", lambda: set())
     monkeypatch.setattr(auto.bus, "mark_submitted", lambda *a, **k: None)
     monkeypatch.setattr(auto.time, "sleep", lambda s: None)
+    monkeypatch.setattr(auto.evidence, "EVIDENCE_DIR", tmp_path / "evidence")
     yield database
     database.close()
 
@@ -571,3 +572,65 @@ def test_run_selects_and_revalidates_at_the_policy_tiers(monkeypatch, db):
     monkeypatch.setattr(auto, "submit_threat", lambda report: pytest.fail("must not POST"))
     auto.run(db, limit=1)
     assert seen == {"min_confidence": "review", "accepted": ("auto", "review")}
+
+
+# --- the committed evidence/ store gates submission --------------------------
+
+
+def _write_evidence(root, ledger=(), rows=()):
+    import csv as _csv
+
+    from git_warden import evidence
+    root.mkdir(parents=True, exist_ok=True)
+    (root / evidence.REPO_LEDGER_NAME).write_text(json.dumps(list(ledger)), encoding="utf-8")
+    with (root / evidence.CSV_NAME).open("w", newline="", encoding="utf-8") as fh:
+        writer = _csv.DictWriter(fh, fieldnames=evidence.COLUMNS, extrasaction="ignore")
+        writer.writeheader()
+        for row in rows:
+            writer.writerow(row)
+
+
+def test_evidence_skips_reads_ledger_submissions_and_rejects(tmp_path):
+    _write_evidence(
+        tmp_path,
+        ledger=[{"key": "repository:Joint/Sent", "threat_id": "3f3503ce-b924"}],
+        rows=[
+            {"key": "repository:fp/repo", "osm_status": "not_submitted",
+             "reviewer_decision": "Reject"},
+            {"key": "repository:csv/sent", "osm_status": "submitted",
+             "osm_threat_id": "cb0629b7-1253"},
+            {"key": "repository:fresh/repo", "osm_status": "not_submitted"},
+            {"key": "extension:pub.ext", "osm_status": "submitted"},
+        ])
+    skips = auto.evidence_skips(tmp_path)
+    assert set(skips) == {"joint/sent", "fp/repo", "csv/sent"}
+    assert "3f3503ce" in skips["joint/sent"]
+    assert "reject" in skips["fp/repo"]
+    assert "cb0629b7" in skips["csv/sent"]
+
+
+def test_evidence_skips_tolerates_missing_or_corrupt_store(tmp_path):
+    assert auto.evidence_skips(tmp_path / "absent") == {}
+    tmp_path.joinpath("osm_repository_ledger.json").write_text("{not json", encoding="utf-8")
+    assert auto.evidence_skips(tmp_path) == {}
+
+
+def test_run_skips_repos_the_evidence_store_records(monkeypatch, db, tmp_path):
+    from git_warden import evidence
+    _write_evidence(
+        evidence.EVIDENCE_DIR,
+        ledger=[{"key": "repository:joint/sent", "threat_id": "t-1"}],
+        rows=[{"key": "repository:fp/repo", "reviewer_decision": "reject"}])
+    rows = [{"full_name": n} for n in ("Joint/Sent", "fp/repo", "new/repo")]
+    monkeypatch.setattr(auto, "gold_for_submission", lambda db, limit=0, **_kw: rows)
+    monkeypatch.setattr(auto, "_existing_repo", lambda name: None)
+    scanned = []
+    monkeypatch.setattr(
+        auto, "_deep_validate",
+        lambda name, *_a: (scanned.append(name), (False, "n/a", None))[1])
+    out = tmp_path / "summary.md"
+    auto.run(db, limit=1, dry_run=True, summary_path=out)
+    assert scanned == ["new/repo"]  # recorded repos are cheap skips, not scans
+    md = out.read_text(encoding="utf-8")
+    assert "evidence ledger records it as submitted" in md
+    assert "reviewer marked it reject" in md

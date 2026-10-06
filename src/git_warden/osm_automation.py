@@ -20,7 +20,7 @@ from urllib.parse import quote
 
 import requests
 
-from . import config
+from . import config, evidence
 from . import intel_exchange as bus
 from .correlate import Campaign, campaign_index
 from .db import Database
@@ -123,6 +123,44 @@ def _bus_submitted(full_name: str) -> bool:
         if kind == "repository" and _resource_key(value) == want:
             return True
     return False
+
+
+def evidence_skips(evidence_dir: Path | None = None) -> dict[str, str]:
+    """Repos the committed evidence/ store says must not be submitted again.
+
+    The store is shared: the KNORR joint hunt records its submissions there, but
+    they never reach this tool's data cache or the shared-intel bus, and OSM's
+    check-malicious reports a submission as clear while it awaits review. So a
+    repo in the repository ledger, or marked submitted in findings.csv, is
+    skipped, as is any row a reviewer marked ``reject`` (a false positive).
+    Returns ``{full_name (casefolded): reason}``.
+    """
+    evidence_dir = evidence.EVIDENCE_DIR if evidence_dir is None else evidence_dir
+    out: dict[str, str] = {}
+
+    def name(key: str) -> str | None:
+        kind, _, value = (key or "").strip().casefold().partition(":")
+        return (_resource_key(value) or None) if kind == "repository" else None
+
+    try:
+        ledger = json.loads(evidence.repo_ledger_path(evidence_dir).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        ledger = []
+    for entry in ledger if isinstance(ledger, list) else []:
+        full = name(entry.get("key", "")) if isinstance(entry, dict) else None
+        if full:
+            tid = str(entry.get("threat_id") or "")[:8]
+            out[full] = f"evidence ledger records it as submitted (id {tid or 'unknown'})"
+    for key, row in evidence.read_csv(evidence_dir / evidence.CSV_NAME).items():
+        full = name(key)
+        if not full:
+            continue
+        if (row.get("reviewer_decision") or "").strip().casefold() == "reject":
+            out[full] = "reviewer marked it reject in evidence/findings.csv (false positive)"
+        elif full not in out and (row.get("osm_status") or "").strip() == "submitted":
+            tid = (row.get("osm_threat_id") or "")[:8]
+            out[full] = f"evidence/findings.csv records it as submitted (id {tid or 'unknown'})"
+    return out
 
 
 def _ensure_attempts_table(db) -> None:
@@ -497,6 +535,7 @@ def run(
 
         _ensure_attempts_table(db)
         by_repo = campaign_index(db)
+        recorded = evidence_skips()
         scans = 0
         for row in rows:
             full_name = row["full_name"]
@@ -509,6 +548,9 @@ def run(
                 continue
             if _bus_submitted(full_name):
                 skip(full_name, "shared intelligence already marks it submitted")
+                continue
+            if full_name.casefold() in recorded:
+                skip(full_name, recorded[full_name.casefold()])
                 continue
             recent = _recently_failed(db, full_name, now)
             if recent:
