@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from types import SimpleNamespace
 
 import pytest
 
@@ -136,13 +137,46 @@ def test_existing_repo_checks_only_url_form_identifiers(monkeypatch):
 def test_versioned_policy_keeps_all_fail_closed_guards():
     policy = auto.load_policy()
     assert policy["fail_closed"] is True
-    assert policy["required_confidence"] == "auto"
+    assert policy["required_confidence"] in ("auto", "review")
     assert policy["require_docker_sandbox"] is True
     assert policy["require_positive_liveness"] is True
     assert policy["osm_full_history_prechecks"] >= 2
     assert policy["require_shared_intel_dedup"] is True
     assert policy["submit_domains"] is False
     assert policy["pace_seconds"] >= 6
+
+
+def test_policy_admits_only_known_confidence_tiers():
+    policy = auto.load_policy().copy()
+    for weak in ("none", "low", "", None):
+        policy["required_confidence"] = weak
+        with pytest.raises(RuntimeError):
+            auto._validate_policy(policy)
+    assert auto.accepted_confidence({"required_confidence": "auto"}) == ("auto",)
+    assert auto.accepted_confidence({"required_confidence": "review"}) == ("auto", "review")
+
+
+def _tier2(confidence, confirmed=True):
+    return SimpleNamespace(confirmed=confirmed, confidence=confidence, commit_sha="abc",
+                           confirming_findings=[{"rule": "r"}], package_spread=[],
+                           scanners={})
+
+
+@pytest.mark.parametrize("accepted,confidence,ok", [
+    (("auto",), "auto", True),
+    (("auto",), "review", False),
+    (("auto", "review"), "review", True),
+    (("auto", "review"), "none", False),
+])
+def test_deep_validate_admits_only_policy_tiers(monkeypatch, accepted, confidence, ok):
+    from git_warden.scanning import sandbox_runner
+    monkeypatch.setattr(sandbox_runner, "docker_available", lambda: True)
+    monkeypatch.setattr(sandbox_runner, "scan_candidate_sandboxed",
+                        lambda name: _tier2(confidence))
+    valid, reason, _ = auto._deep_validate("evil/dropper", accepted)
+    assert valid is ok
+    if ok:
+        assert confidence.upper() in reason
 
 
 def test_policy_rejects_weakened_precheck_count():
@@ -191,9 +225,9 @@ def test_second_osm_precheck_closes_race_before_post(monkeypatch, db):
     row = {"full_name": "evil/dropper"}
     checks = iter([None, {"id": "race", "status": "pending"}])
 
-    monkeypatch.setattr(auto, "gold_for_submission", lambda db, limit=0: [row])
+    monkeypatch.setattr(auto, "gold_for_submission", lambda db, limit=0, **_kw: [row])
     monkeypatch.setattr(auto, "_existing_repo", lambda name: next(checks))
-    monkeypatch.setattr(auto, "_deep_validate", lambda name: (True, "AUTO", None))
+    monkeypatch.setattr(auto, "_deep_validate", lambda name, *_a: (True, "AUTO", None))
     monkeypatch.setattr(auto, "repo_payload_live", lambda finding: True)
     monkeypatch.setattr(auto, "submit_threat", lambda report: pytest.fail("must not POST"))
 
@@ -223,11 +257,11 @@ def _validated_run(monkeypatch, tmp_path, db, *, dry_run, submit=None):
     report = {"severity_level": "critical", "tags": ["dropper", "dprk"],
               "verified_iocs": "c2.example", "threat_description": "Drops a payload."}
     marks = []
-    monkeypatch.setattr(auto, "gold_for_submission", lambda db, limit=0: [row])
+    monkeypatch.setattr(auto, "gold_for_submission", lambda db, limit=0, **_kw: [row])
     monkeypatch.setattr(auto.bus, "mark_submitted", lambda *a, **k: marks.append(("bus", a)))
     monkeypatch.setattr(auto, "_existing_repo", lambda name: None)
     monkeypatch.setattr(auto, "_deep_validate",
-                        lambda name: (True, "AUTO", _Tier2([finding])))
+                        lambda name, *_a: (True, "AUTO", _Tier2([finding])))
     monkeypatch.setattr(auto, "repo_payload_live", lambda finding: True)
     monkeypatch.setattr(auto, "build_report", lambda row, **k: report)
     monkeypatch.setattr(auto, "campaign_context", lambda db, row: "")
@@ -293,9 +327,9 @@ def test_summary_groups_validated_repos_into_their_campaign(monkeypatch, tmp_pat
                       (name, task(host)))
     rows = [{"full_name": n, "score": 90, "detection_method": "signature_match"}
             for n in ("ta3pks/social", "lfirsl/morphix")]
-    monkeypatch.setattr(auto, "gold_for_submission", lambda db, limit=0: rows)
+    monkeypatch.setattr(auto, "gold_for_submission", lambda db, limit=0, **_kw: rows)
     monkeypatch.setattr(auto, "_existing_repo", lambda name: None)
-    monkeypatch.setattr(auto, "_deep_validate", lambda name: (True, "AUTO", _Tier2([])))
+    monkeypatch.setattr(auto, "_deep_validate", lambda name, *_a: (True, "AUTO", _Tier2([])))
     monkeypatch.setattr(auto, "repo_payload_live", lambda finding: True)
     monkeypatch.setattr(auto, "build_report", lambda row, **k: {})
     monkeypatch.setattr(auto, "campaign_context", lambda db, row: "")
@@ -321,10 +355,10 @@ def test_untrusted_snippet_cannot_escape_its_code_fence():
 
 def test_skipped_candidates_are_listed_in_summary(monkeypatch, tmp_path, db):
     monkeypatch.setattr(auto, "gold_for_submission",
-                        lambda db, limit=0: [{"full_name": "gone/repo"}])
+                        lambda db, limit=0, **_kw: [{"full_name": "gone/repo"}])
     monkeypatch.setattr(auto, "_existing_repo", lambda name: None)
     monkeypatch.setattr(auto, "_deep_validate",
-                        lambda name: (False, "sandbox scan produced no result", None))
+                        lambda name, *_a: (False, "sandbox scan produced no result", None))
     out = tmp_path / "summary.md"
     auto.run(db, limit=1, dry_run=True, summary_path=out)
     md = out.read_text(encoding="utf-8")
@@ -346,11 +380,11 @@ def test_cli_overrides_can_only_tighten_policy():
 def test_failed_candidates_cool_down_instead_of_starving_queue(monkeypatch, db):
     rows = [{"full_name": "a/stale"}, {"full_name": "b/fresh"}]
     scanned = []
-    monkeypatch.setattr(auto, "gold_for_submission", lambda db, limit=0: rows)
+    monkeypatch.setattr(auto, "gold_for_submission", lambda db, limit=0, **_kw: rows)
     monkeypatch.setattr(auto, "_existing_repo", lambda name: None)
     monkeypatch.setattr(
         auto, "_deep_validate",
-        lambda name: (scanned.append(name),
+        lambda name, *_a: (scanned.append(name),
                       (False, "scan no longer confirms", _Tier2([])))[1])
 
     auto.run(db, limit=1, dry_run=True, now=1_000_000)
@@ -362,12 +396,12 @@ def test_failed_candidates_cool_down_instead_of_starving_queue(monkeypatch, db):
 
 def test_transient_failures_retry_sooner(monkeypatch, db):
     monkeypatch.setattr(auto, "gold_for_submission",
-                        lambda db, limit=0: [{"full_name": "flaky/repo"}])
+                        lambda db, limit=0, **_kw: [{"full_name": "flaky/repo"}])
     monkeypatch.setattr(auto, "_existing_repo", lambda name: None)
     scanned = []
     monkeypatch.setattr(
         auto, "_deep_validate",
-        lambda name: (scanned.append(name), (False, "sandbox scan produced no result",
+        lambda name, *_a: (scanned.append(name), (False, "sandbox scan produced no result",
                                              None))[1])
     t0 = 2_000_000
     auto.run(db, dry_run=True, now=t0)
@@ -378,14 +412,14 @@ def test_transient_failures_retry_sooner(monkeypatch, db):
 
 def test_cheap_skips_do_not_consume_scan_limit(monkeypatch, db, tmp_path):
     rows = [{"full_name": f"known/r{i}"} for i in range(5)] + [{"full_name": "new/repo"}]
-    monkeypatch.setattr(auto, "gold_for_submission", lambda db, limit=0: rows)
+    monkeypatch.setattr(auto, "gold_for_submission", lambda db, limit=0, **_kw: rows)
     monkeypatch.setattr(auto, "_existing_repo",
                         lambda name: {"id": "x", "status": "verified"}
                         if name.startswith("known/") else None)
     scanned = []
     monkeypatch.setattr(
         auto, "_deep_validate",
-        lambda name: (scanned.append(name), (False, "n/a", None))[1])
+        lambda name, *_a: (scanned.append(name), (False, "n/a", None))[1])
     auto.run(db, limit=1, dry_run=True)
     assert scanned == ["new/repo"]
 
@@ -413,7 +447,7 @@ def test_missing_sandbox_blocks_run_loudly(monkeypatch, db):
     from git_warden.scanning import sandbox_runner
 
     monkeypatch.setattr(auto, "gold_for_submission",
-                        lambda db, limit=0: [{"full_name": "evil/dropper"}])
+                        lambda db, limit=0, **_kw: [{"full_name": "evil/dropper"}])
     monkeypatch.setattr(sandbox_runner, "docker_available", lambda: False)
     with pytest.raises(auto.AutomationBlocked):
         auto.run(db, dry_run=True)
@@ -444,11 +478,11 @@ def test_run_lock_rejects_overlapping_run(tmp_path):
 def test_only_restricts_run_to_approved_repos(monkeypatch, db):
     rows = [{"full_name": "evil/approved"}, {"full_name": "evil/newer"}]
     scanned, validated = [], []
-    monkeypatch.setattr(auto, "gold_for_submission", lambda db, limit=0: rows)
+    monkeypatch.setattr(auto, "gold_for_submission", lambda db, limit=0, **_kw: rows)
     monkeypatch.setattr(auto, "_existing_repo", lambda name: None)
     monkeypatch.setattr(
         auto, "_deep_validate",
-        lambda name: (scanned.append(name), (False, "n/a", None))[1])
+        lambda name, *_a: (scanned.append(name), (False, "n/a", None))[1])
     auto.run(db, dry_run=True, only={"evil/approved"}, validated_out=validated)
     assert scanned == ["evil/approved"]  # a newer, unapproved candidate is never touched
 
@@ -456,10 +490,10 @@ def test_only_restricts_run_to_approved_repos(monkeypatch, db):
 def test_validated_out_lists_repos_that_passed(monkeypatch, tmp_path, db):
     validated = []
     monkeypatch.setattr(auto, "gold_for_submission",
-                        lambda db, limit=0: [{"full_name": "evil/dropper", "score": 9,
+                        lambda db, limit=0, **_kw: [{"full_name": "evil/dropper", "score": 9,
                                               "detection_method": "signature_match"}])
     monkeypatch.setattr(auto, "_existing_repo", lambda name: None)
-    monkeypatch.setattr(auto, "_deep_validate", lambda name: (True, "AUTO", _Tier2([])))
+    monkeypatch.setattr(auto, "_deep_validate", lambda name, *_a: (True, "AUTO", _Tier2([])))
     monkeypatch.setattr(auto, "repo_payload_live", lambda row: True)
     monkeypatch.setattr(auto, "build_report", lambda row, **k: {})
     monkeypatch.setattr(auto, "campaign_context", lambda db, row: "")
@@ -509,10 +543,31 @@ def test_cli_empty_approved_list_does_nothing(monkeypatch, tmp_path):
 
 def test_known_good_owner_is_never_submitted(monkeypatch, db):
     rows = [{"full_name": "redwoodresearch/basharena_public"}]
-    monkeypatch.setattr(auto, "gold_for_submission", lambda db, limit=0: rows)
+    monkeypatch.setattr(auto, "gold_for_submission", lambda db, limit=0, **_kw: rows)
     monkeypatch.setattr(auto, "_existing_repo",
                         lambda name: pytest.fail("known-good owner must not reach OSM"))
     monkeypatch.setattr(auto, "submit_threat", lambda report: pytest.fail("must not POST"))
     validated = []
     auto.run(db, only={"redwoodresearch/basharena_public"}, validated_out=validated)
     assert validated == []
+
+
+def test_run_selects_and_revalidates_at_the_policy_tiers(monkeypatch, db):
+    seen = {}
+
+    def gold(db, limit=0, **kw):
+        seen["min_confidence"] = kw.get("min_confidence")
+        return [{"full_name": "evil/dropper"}]
+
+    def validate(name, accepted=("auto",)):
+        seen["accepted"] = accepted
+        return False, "stop here", None
+
+    monkeypatch.setattr(auto, "load_policy",
+                        lambda: {**_POLICY, "required_confidence": "review"})
+    monkeypatch.setattr(auto, "gold_for_submission", gold)
+    monkeypatch.setattr(auto, "_existing_repo", lambda name: None)
+    monkeypatch.setattr(auto, "_deep_validate", validate)
+    monkeypatch.setattr(auto, "submit_threat", lambda report: pytest.fail("must not POST"))
+    auto.run(db, limit=1)
+    assert seen == {"min_confidence": "review", "accepted": ("auto", "review")}
