@@ -109,6 +109,9 @@ _TIERB_CRED = frozenset({
     # Minecraft account theft: the session access token, or a launcher's account
     # store. A Discord/Telegram exfil in the SAME file is the classic "ratter" mod.
     ("credential_access", "mc-session-token"), ("credential_access", "mc-launcher-accounts"),
+    # Crypto wallet stores and wallet-extension vaults; with an exfil channel in
+    # the same file this is the classic infostealer/cryptostealer.
+    ("credential_access", "wallet-theft"),
 })
 _TIERB_EXFIL = frozenset({
     ("exfiltration", "discord-webhook"), ("exfiltration", "telegram-bot"),

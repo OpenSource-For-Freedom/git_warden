@@ -122,6 +122,19 @@ _RULES: dict[str, list[tuple[str, str, re.Pattern]]] = {
             r"launcher_accounts(?:_microsoft_store)?\.json|"
             r"lunarclient[/\\]+settings[/\\]+game[/\\]+accounts\.json|"
             r"\.feather[/\\]+accounts\.json|essential[/\\]+microsoft_accounts\.json", re.I)),
+        # Crypto wallet theft: the on-disk stores of desktop wallets and the
+        # browser-extension IDs of wallet add-ons (MetaMask, Phantom, Coinbase,
+        # Binance, TronLink), whose local storage holds the encrypted vault.
+        # Stealers sweep these lists; a wallet app names its own store, not a
+        # list of rivals'. Like the Minecraft rules it only SCORES alone and
+        # confirms in Tier-2 as steal-and-send, next to an exfil channel in the
+        # same file. wallet.dat is deliberately absent: Bitcoin Core forks name it.
+        ("wallet-theft", "any", re.compile(
+            r"exodus[/\\]+exodus\.wallet|electrum[/\\]+wallets|"
+            r"atomic[/\\]+Local Storage|ethereum[/\\]+keystore|coinomi[/\\]+wallets|"
+            r"com\.liberty\.jaxx|nkbihfbeogaeaoehlefnkodbefgpgknn|"
+            r"bfnaelmomeimhlpmgjnjophhpkkoljpa|hnfanknocfeofbddgcijnmhnfnkdnaad|"
+            r"fhbohimaelbohpjbbldcngcnapndodjp|ibnejdfjmmkpcnlpebklmnkoeoihofec", re.I)),
     ],
 }
 
@@ -208,6 +221,9 @@ def _is_minified(name: str) -> bool:
 # data. Scoped to the Minecraft rules only: renaming a stealer to Scanner.java
 # only drops the Minecraft credential evidence, never the webhook or loader rules.
 _MC_RULES = {"mc-session-token", "mc-launcher-accounts"}
+# Rules that are detection DATA inside detector code (the wallet-store list is
+# exactly what an anti-stealer scanner looks for, too).
+_DETECTOR_DATA_RULES = _MC_RULES | {"wallet-theft"}
 _DETECTOR_DIRS = {"scan", "scanner", "scanners", "detect", "detection", "detector",
                   "detectors", "triage", "analysis", "analyzer", "analyzers",
                   "heuristics", "antirat", "anti-rat", "antimalware", "antivirus"}
@@ -264,7 +280,7 @@ def scan_content(root, repo_name: str | None = None) -> list[BashFinding]:
                 for rule_name, rule_lang, pattern in rules:
                     if rule_lang != "any" and rule_lang != lang:
                         continue
-                    if detector and rule_name in _MC_RULES:
+                    if detector and rule_name in _DETECTOR_DATA_RULES:
                         continue
                     if pattern.search(line) and not is_benign_construct(rule_name, line):
                         snippet = line.strip()[:200]

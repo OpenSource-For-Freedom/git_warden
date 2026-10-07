@@ -14,6 +14,8 @@ Cases are drawn from real repos surfaced by the hunt on 2026-07-07:
 - tp_dprk_folderopen   <- hvmgeeks/frontendengine1 (curl <C2> | bash on folderOpen)
 - tp_literal_py_stager <- embedded base64 literal that decodes to a network dropper
 - tp_marshal_stager    <- embedded marshal/zlib/base64 compiled payload
+- tp_wallet_stealer_webhook <- ilyavafin/lol shape (wallet stores read and posted to a Discord webhook in one file)
+- fp_wallet_backup_tool <- wallet backup utility: reads its own Electrum store, notifies Discord from a different file
 
 ## Fixtures must never carry a live attacker host
 

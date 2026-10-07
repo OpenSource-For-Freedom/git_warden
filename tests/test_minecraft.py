@@ -261,3 +261,12 @@ def test_minecraft_rules_skip_detector_repos_and_attack_fixtures(tmp_path):
     as_stealer = {f.rule for f in scan_content(tmp_path, repo_name="evil/grabber")}
     assert "mc-launcher-accounts" in as_stealer            # same code, stealer repo
     assert "mc-session-token" not in as_stealer            # but never in a fixture dir
+
+
+def test_wallet_store_list_is_detector_data_in_detector_code(tmp_path):
+    (tmp_path / "main.py").write_text(
+        'targets = ["Exodus/exodus.wallet", "nkbihfbeogaeaoehlefnkodbefgpgknn"]\n',
+        encoding="utf-8")
+    assert "wallet-theft" in {f.rule for f in scan_content(tmp_path, repo_name="evil/x")}
+    assert "wallet-theft" not in {
+        f.rule for f in scan_content(tmp_path, repo_name="x/anti-stealer")}
