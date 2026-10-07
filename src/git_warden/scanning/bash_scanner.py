@@ -410,6 +410,15 @@ _SEARCH_QUERY_LITERAL = re.compile(
     r"user|size|fork|archived):\s*[\"'][^\"']*[\"']", re.I)
 
 
+# A deploy job WRITES its own key from a CI secret (echo "$KEY" > ~/.ssh/id_x)
+# or generates one; that is key setup, not theft, and next to a chat notifier
+# it confirmed ordinary deploy workflows as steal-and-send (2026-10-07). Reading
+# a key (cat/cp/base64 of ~/.ssh/id_x, or redirecting it elsewhere) still counts.
+_SSH_KEY_SETUP = re.compile(r"(?:>>?|\btee\b(?:\s+-a)?)\s*[\"']?\S*\.ssh/id_|\bssh-keygen\b")
+_SSH_KEY_READ = re.compile(
+    r"\b(?:cat|cp|scp|base64|xxd|curl|wget|nc|tar|zip)\b[^|;&>]*\.ssh/id_", re.I)
+
+
 def is_benign_construct(rule: str, line: str) -> bool:
     """True if a matched rule is a known-benign construct and must not be recorded.
 
@@ -425,6 +434,8 @@ def is_benign_construct(rule: str, line: str) -> bool:
         return _all_hosts_reputable(line)
     if rule == "shadow-read":
         return bool(_STAGED_SHADOW.search(line) or _SHADOW_WRITE.search(line))
+    if rule == "ssh-keys":
+        return bool(_SSH_KEY_SETUP.search(line)) and not _SSH_KEY_READ.search(line)
     if rule == "curl-post-data":
         # Exfiltration needs a body that could hold collected data: read from a
         # file or stdin, built from a variable or command substitution, or named

