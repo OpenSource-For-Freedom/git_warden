@@ -890,6 +890,9 @@ def hunt(
                          "rule": bf.rule, "snippet": bf.snippet[:280]}
                         for bf in ordered[:20]
                     ]
+                    # How many of those lead entries confirmed it, so a report can
+                    # describe the payload without the incidental hits after it.
+                    finding.raw_payload["confirming_count"] = len(result.confirming_findings)
                     finding.raw_payload["scanners"] = result.scanners
                     # Package spread: repos this finding publishes/depends-on that are
                     # on the malicious-package feeds, so it propagates the payload.
