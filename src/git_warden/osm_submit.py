@@ -172,6 +172,170 @@ _BEHAVIOR = {
 }
 
 
+# One line per detection rule for the report's payload bullets: what the code
+# does and why that is malicious, short enough to scan. The long _BEHAVIOR text
+# above stays for the extension reports.
+_WHY_BY_RULE = {
+    "vscode-autorun": "VS Code task with runOn: folderOpen; runs the moment the folder "
+                      "is opened, no install or click needed",
+    "mc-session-token": "reads the Minecraft session access token, which logs in as the "
+                        "victim without a password",
+    "mc-launcher-accounts": "reads Minecraft launcher account stores (Microsoft refresh "
+                            "and access tokens)",
+    "discord-webhook": "hardcoded Discord webhook, the drop point for stolen data",
+    "telegram-bot": "hardcoded Telegram bot API, the drop point for stolen data",
+    "paste-exfil": "posts data to a paste or request-capture service",
+    "secret-exfil": "uploads a secret file (SSH key, cloud credentials, .env) with curl",
+    "curl-post-data": "posts collected data to a remote host",
+    "archive-then-send": "archives local files and sends them to a remote host",
+    "curl-pipe-shell": "downloads a remote script and pipes it straight into a shell",
+    "fetch-then-exec": "downloads a file and runs it",
+    "js-exec-fetch-shell": "Node child_process runs a download piped into a shell",
+    "jvm-remote-classload": "loads Java classes from a remote jar at runtime",
+    "remote-exec": "runs a command fetched from a remote host",
+    "eval-decoded": "decodes a hidden blob and executes it at load time (obfuscated loader)",
+    "eval-base64": "decodes a base64 blob and executes it",
+    "base64-decode-exec": "decodes a base64 blob and executes it",
+    "py-decode-exec": "decodes a hidden blob and executes it with exec()",
+    "fromcharcode-blob": "rebuilds code from character codes to hide it, then runs it",
+    "jvm-decode-defineclass": "decodes a hidden Java class and defines it at runtime",
+    "keyfiles": "reads SSH private keys or cloud credential files",
+    "ssh-keys": "reads SSH private keys",
+    "cloud-creds": "reads cloud provider credentials",
+    "env-dump": "serializes the whole environment (every secret in it)",
+    "env-token-grab": "collects tokens from environment variables",
+    "shadow-read": "reads /etc/shadow password hashes",
+    "nc-exec": "netcat hands a shell to a remote host (reverse shell)",
+    "bash-i-socket": "interactive bash bound to a network socket (reverse shell)",
+    "mkfifo-shell": "named-pipe shell relayed over the network (reverse shell)",
+    "python-reverse": "Python socket connects out and hands over a shell",
+    "dev-tcp-redirect": "shell redirected over /dev/tcp to a remote host",
+    "py-system": "runs shell commands through os.system",
+    "cron": "installs a cron job so the payload survives a reboot",
+    "systemd": "installs a systemd service so the payload survives a reboot",
+    "rc-files": "edits shell startup files so the payload runs on every login",
+    "rc-local": "edits rc.local so the payload runs at boot",
+    "authorized-keys": "adds an attacker SSH key to authorized_keys",
+    "ld-preload": "injects a library into every process through LD_PRELOAD",
+}
+_WHY_BY_CATEGORY = {
+    "obfuscation": "hides code in an encoded blob that is decoded and run",
+    "reverse_shell": "opens a reverse shell to an attacker host",
+    "install_hook": "runs automatically from a package install hook",
+    "download_exec": "downloads further code and runs it",
+    "exfiltration": "sends local data to a remote endpoint",
+    "network_exfil": "sends collected data out through an external channel",
+    "credential_harvest": "collects credentials (SSH keys, cloud secrets, tokens)",
+    "credential_access": "reads credential files",
+    "malicious_dependency": "depends on a package already catalogued as malware",
+    "process_injection": "injects code into another process",
+    "code_execution": "builds or fetches code at runtime and executes it",
+    "persistence": "sets up persistence across reboots",
+}
+_EXFIL_CHANNEL = {"discord-webhook": "a Discord webhook", "telegram-bot": "a Telegram bot",
+                  "paste-exfil": "a paste service"}
+_CRED_CATS = {"credential_access", "credential_harvest"}
+_EXFIL_CATS = {"network_exfil", "exfiltration"}
+_MC_RULES = {"mc-session-token", "mc-launcher-accounts"}
+_WALLET_RE = re.compile(r"wallet|metamask|exodus|electrum|phantom|mnemonic|seed\s*phrase",
+                        re.I)
+
+
+def _loc(b: dict) -> str:
+    return f"{b.get('file')}:{b['line']}" if b.get("line") else str(b.get("file") or "")
+
+
+def _confirming(payload: dict) -> list[dict]:
+    """The findings that confirmed the repo, without the incidental hits after them.
+
+    Confirming findings are stored first. Newer findings record how many; for
+    older ones, keep the hits in the top finding's file or from its rule (a
+    steal-and-send pair always shares a file; a planted dropper shares a rule).
+    """
+    bash = payload.get("bash_findings") or []
+    if not bash:
+        return []
+    n = payload.get("confirming_count")
+    if isinstance(n, int) and n > 0:
+        return bash[:n]
+    top = bash[0]
+    return [b for b in bash
+            if b.get("file") == top.get("file") or b.get("rule") == top.get("rule")]
+
+
+def _prose_hosts(bash: list[dict]) -> list[str]:
+    """Attacker hosts worth naming in prose: no shared services (discord.com is the
+    exfil channel, named on its own) and no snippet-truncated host names."""
+    hosts = [h for h in _c2_hosts(bash) if not _is_shared_service(h)]
+    return [h for h in hosts if not any(o != h and o.startswith(h) for o in hosts)]
+
+
+def _threat_class(bash: list[dict]) -> str:
+    """One phrase naming what the malware is, from every rule that fired."""
+    rules = {b.get("rule") for b in bash}
+    cats = {b.get("category") for b in bash}
+    wallets = any(_WALLET_RE.search(b.get("snippet") or "") for b in bash)
+    if "vscode-autorun" in rules:
+        kind = "VS Code autorun dropper"
+    elif cats & _CRED_CATS and cats & _EXFIL_CATS:
+        kind = "Infostealer and cryptostealer" if wallets else "Infostealer"
+        if rules & _MC_RULES:
+            kind += " targeting Minecraft accounts"
+        return kind
+    elif rules & _MC_RULES:
+        kind = "Minecraft account stealer"
+    elif "reverse_shell" in cats:
+        kind = "Reverse shell backdoor"
+    elif "install_hook" in cats:
+        kind = "Install-hook dropper"
+    elif "download_exec" in cats:
+        kind = "Dropper"
+    elif "obfuscation" in cats:
+        kind = "Obfuscated loader"
+    elif "malicious_dependency" in cats:
+        kind = "Malicious dependency"
+    else:
+        kind = "Malware"
+    if wallets:
+        kind += " with crypto wallet theft"
+    return kind
+
+
+def _exfil_phrase(bash: list[dict]) -> str:
+    """'exfiltrating to a Discord webhook (a2.py:27)', or ''."""
+    for b in bash:
+        channel = _EXFIL_CHANNEL.get(b.get("rule", ""))
+        if channel:
+            return f"exfiltrating to {channel} ({_loc(b)})"
+    return ""
+
+
+def _payload_bullets(bash: list[dict], cap: int = 8) -> list[str]:
+    """One bullet per detection rule: first location, what it does, how many more."""
+    order: list[str] = []
+    hits: dict[str, list[dict]] = {}
+    for b in bash:
+        key = b.get("rule") or b.get("category") or "other"
+        if key not in hits:
+            order.append(key)
+            hits[key] = []
+        if not any(_loc(h) == _loc(b) for h in hits[key]):
+            hits[key].append(b)
+    lines = []
+    for key in order[:cap]:
+        first = hits[key][0]
+        why = (_WHY_BY_RULE.get(first.get("rule", ""))
+               or _WHY_BY_CATEGORY.get(first.get("category", ""), "matches malware behavior"))
+        if first.get("rule") == "vscode-autorun" and re.search(
+                r"reveal[^\n]{0,20}never|\"echo\"\s*:\s*false", first.get("snippet") or "", re.I):
+            why += "; terminal hidden (reveal: never)"
+        more = len(hits[key]) - 1
+        lines.append(f"- {_loc(first)}: {why}" + (f" (+{more} more)" if more > 0 else ""))
+    if len(order) > cap:
+        lines.append(f"- plus {len(order) - cap} more detection rules")
+    return lines
+
+
 # --- campaign context (attack vector + attacker C2), derived from the evidence ---
 _HOST_RE = re.compile(r"https?://([A-Za-z0-9.\-]+)")
 _NOT_C2 = ("github.com", "githubusercontent.com", "nodesource.com", "npmjs.org",
@@ -254,22 +418,17 @@ _CAMPAIGN_VECTORS = {"vscode-folderopen-autorun", "obfuscated-eval-atob-loader"}
 
 
 def _campaign_sentence(vectors: list[str], c2: list[str]) -> str:
-    """A plainly-written attribution paragraph, or "" when the vectors don't match."""
+    """One line naming the matching campaign tradecraft, or "" when none matches."""
     if "vscode-folderopen-autorun" in vectors:
-        s = ("The delivery method, a .vscode/tasks.json task that automatically runs a "
-             "remote shell command the moment the repository is opened in VS Code, matches "
-             "the DPRK-attributed 'Contagious Interview' campaign, in which fake recruiters "
-             "lure developers into opening a coding-task repository that silently executes a "
-             "first-stage downloader.")
+        s = ("Matches the DPRK-attributed Contagious Interview campaign "
+             "(fake-recruiter coding tasks).")
     elif "obfuscated-eval-atob-loader" in vectors:
-        s = ("The obfuscated eval(atob(...)) loader injected into a build configuration file "
-             "is the same tradecraft the DPRK-attributed 'Contagious Interview' campaign uses "
-             "to hide a second-stage payload inside otherwise-normal project files.")
+        s = ("The eval(atob(...)) loader hidden in a project file is Contagious Interview "
+             "(DPRK-attributed) tradecraft.")
     else:
         return ""
     if c2:
-        s += (f" The payload is fetched from attacker-controlled infrastructure: "
-              f"{', '.join(c2)}.")
+        s += f" Payload host: {', '.join(c2)}."
     return s
 
 
@@ -277,47 +436,37 @@ _MAX_LISTED_REPOS = 30
 _MAX_LISTED_HOSTS = 15
 
 
+_MAX_LISTED_HOSTS = 5
+
+
 def campaign_context(db, row, index: dict | None = None) -> str:
-    """The campaign this repo belongs to, with every tied repository named.
+    """One or two lines tying this repo to its Git Warden campaign.
 
     Uses the same fingerprints as the run summary and dashboard (``correlate``):
     a shared payload loader stub, or a dropper URL shape with host, OS segment
-    and parameter values removed. Names the campaign id, the fingerprint, the
-    other confirmed repositories (up to ``_MAX_LISTED_REPOS``), their owners and
-    the union of their command-and-control hosts, so an OSM reviewer can pivot
-    to the whole operation from one report. "" when the repo is in no campaign.
+    and parameter values removed. Gives the campaign id, how many repos and
+    accounts share it, the fingerprint and a few payload hosts. The member list
+    stays in Git Warden's evidence store; listing it here buried the payload.
+    "" when the repo is in no campaign.
     """
     from .correlate import campaign_index
 
     camp = (index if index is not None else campaign_index(db)).get(row["full_name"])
     if camp is None:
         return ""
-    peers = [m for m in camp.members if m != row["full_name"]]
-    if not peers:
+    if not [m for m in camp.members if m != row["full_name"]]:
         return ""
     hosts = sorted(h for h in camp.c2_hosts if _reportable_domain(h))
     if camp.kind == "payload":
-        shape = ("the same obfuscated loader stub (first characters of the encoded "
-                 f"payload: {camp.fingerprint})")
+        shape = f"loader stub {camp.fingerprint}"
     else:
-        shape = f"the same dropper URL shape ({camp.fingerprint.split(':', 1)[-1]})"
-    listed = peers[:_MAX_LISTED_REPOS]
-    more = len(peers) - len(listed)
-    repos = ", ".join(f"https://github.com/{m}" for m in listed)
-    if more > 0:
-        repos += f", and {more} more"
-    text = (f"This repository is one of {len(camp.members)} that Git Warden has "
-            f"confirmed as campaign {camp.id}, which all deliver {shape}. "
-            f"The campaign spans {len(camp.owners)} GitHub accounts. "
-            f"The other confirmed repositories are: {repos}.")
+        shape = f"dropper URL shape {camp.fingerprint.split(':', 1)[-1]}"
+    text = (f"Campaign {camp.id}: one of {len(camp.members)} confirmed repos across "
+            f"{len(camp.owners)} accounts sharing the {shape}.")
     if hosts:
         shown = hosts[:_MAX_LISTED_HOSTS]
-        text += (f" Across the campaign the payload is served from {len(hosts)} "
-                 f"distinct hosts: {', '.join(shown)}"
-                 + (f", and {len(hosts) - len(shown)} more" if len(hosts) > len(shown)
-                    else "")
-                 + ". Matching only one host would miss most of the operation; "
-                 "matching the delivery shape found all of it.")
+        text += (f" Payload served from {len(hosts)} distinct hosts, including "
+                 f"{', '.join(shown)}.")
     return text
 
 
@@ -347,72 +496,49 @@ def _rule_summary(bash: list[dict]) -> str:
 
 
 def _threat_description(row, assessment=None, campaign_ctx: str = "") -> str:
-    """A long, plainly written explanation of why the repository is malicious."""
+    """A few short lines: what the malware is, where, how it runs, who is behind it."""
     payload = json.loads(row["raw_payload"] or "{}") or {}
-    bash = payload.get("bash_findings") or []
+    bash = _confirming(payload)
     top = bash[0] if bash else {}
-    cat = top.get("category", "")
-    file = top.get("file") or "one of its source files"
-    line = top.get("line")
-    where = f"the file {file}" + (f" around line {line}" if line else "")
+    files = list(dict.fromkeys(b.get("file") for b in bash if b.get("file")))
 
-    behavior = _BEHAVIOR_BY_RULE.get(top.get("rule", "")) or _BEHAVIOR.get(cat, (
-        "The code carries out actions that fit malware rather than the stated purpose "
-        "of the project."))
+    head = _threat_class(bash)
+    exfil = _exfil_phrase(bash)
+    if exfil:
+        head += f", {exfil}"
+    if files:
+        head += f". Payload in {', '.join(files[:3])}" + (
+            f" and {len(files) - 3} more files" if len(files) > 3 else "")
+    lines = [head + "."]
 
-    # A dropper planted in several directories is deliberate coverage, not a stray
-    # file, and a reviewer should know how wide it was spread before deciding.
-    same_rule = {b.get("file") for b in bash
-                 if b.get("rule") == top.get("rule") and b.get("file")}
-    spread = ""
-    if len(same_rule) > 1:
-        spread = (f" The same dropper is planted in {len(same_rule)} separate "
-                  f"directories in this repository, so it runs whichever of them the "
-                  f"victim opens: " + ", ".join(sorted(same_rule)) + ".")
-
-    extra = ""
+    if top.get("rule") == "vscode-autorun":
+        lines.append("Runs automatically when the folder is opened in VS Code "
+                     "(hidden folderOpen task that fetches and runs a remote script).")
     snippet = top.get("snippet") or ""
     if "second-stage decode" in snippet:
-        extra = (" We decoded and read the hidden blob. It rewrites the Node module "
-                 "loader and unpacks a further concealed stage, which proves the content "
-                 "is a working loader and not harmless data.")
-    elif "dynamic stager" in snippet:
-        extra = (" The code decodes and runs content supplied at runtime, a loader "
-                 "pattern that has no place in a legitimate project file.")
+        lines.append("The decoded blob rewrites the Node module loader and unpacks a "
+                     "further hidden stage: a working multi-stage loader, not data.")
+    same_rule = {b.get("file") for b in bash
+                 if b.get("rule") == top.get("rule") and b.get("file")}
+    if len(same_rule) > 1:
+        lines.append(f"The same dropper is planted in {len(same_rule)} directories.")
 
-    sentences = [
-        "Git Warden confirmed this repository as malicious by static analysis of its "
-        "source code. The code was read, never executed.",
-        f"The malicious code sits in {where}.",
-        behavior + spread + extra,
-        "No legitimate project ships code like this. The repository was either "
-        "compromised or purpose-built to deliver malware to anyone who clones or "
-        "installs it.",
-        "The evidence references link the exact file and line of each finding, and "
-        "the payload description names every detection rule that fired, so a "
-        "reviewer can open the repository and verify each one independently.",
-    ]
-    signatures = _matched_signatures(row)
-    if signatures:
-        sentences.append(
-            "Git Warden found this repository by searching GitHub for code that "
-            "matches a confirmed malware signature: "
-            + "; ".join(signatures) + ".")
-    text = " ".join(s for s in sentences if s.strip())
-    campaign = _campaign_sentence(_vectors(bash), _c2_hosts(bash))
+    campaign = _campaign_sentence(_vectors(bash), _prose_hosts(bash))
     if campaign:
-        text += " " + campaign
+        lines.append(campaign)
     if campaign_ctx:
-        text += " " + campaign_ctx
+        lines.append(campaign_ctx)
     attribution = _attribution_paragraph(assessment)
     if attribution:
-        text += " " + attribution
+        lines.append(attribution)
     elif row["actor_key"]:
-        # No evidence-based assessment, but a source named an actor: keep it as
-        # provenance so the writeup still carries the lead.
-        text += (f" Open source threat intelligence associates this activity with "
-                 f"{row['actor_key']}.")
-    return text  # full explanation, never truncated
+        lines.append(f"Open source intelligence links this activity to {row['actor_key']}.")
+    signatures = _matched_signatures(row)
+    if signatures:
+        lines.append("Found by GitHub code search for a confirmed malware signature: "
+                     + "; ".join(signatures) + ".")
+    lines.append("Confirmed by static analysis; the code was read, never executed.")
+    return "\n".join(lines)
 
 
 def _tags(row, assessment=None) -> list[str]:
@@ -460,8 +586,8 @@ def _attribution_paragraph(assessment) -> str:
                      f"not attribute it on this evidence alone."),
     }[assessment.tier]
     if assessment.reasons:
-        lead += " The evidence behind this is: " + " ".join(
-            f"({i + 1}) {r}" for i, r in enumerate(assessment.reasons))
+        lead += " Signals: " + "; ".join(
+            r.strip().rstrip(".") for r in assessment.reasons) + "."
     return lead
 
 
@@ -497,32 +623,16 @@ def _evidence_refs(row, cap: int = 15) -> str:
 
 
 def _payload_description(row) -> str:
-    """A detailed, plainly written technical description of the malicious payload."""
+    """Where the payload is, then one bullet per detection rule saying why it matters."""
     payload = json.loads(row["raw_payload"] or "{}") or {}
-    bash = payload.get("bash_findings") or []
-    top = bash[0] if bash else {}
-    cat = top.get("category", "")
-    file = top.get("file") or "the affected source file"
-    line = top.get("line")
-    where = f"in {file}" + (f" at line {line}" if line else "")
-    base = _BEHAVIOR_BY_RULE.get(top.get("rule", "")) or _BEHAVIOR.get(cat, (
-        "The code performs actions that match malware behavior rather than the stated "
-        "purpose of the project."))
-
-    extra = ""
-    snippet = top.get("snippet") or ""
-    if "second-stage decode" in snippet:
-        extra = (" We decoded and read the encoded blob. The first stage rewrites the Node "
-                 "module loading functions and unpacks another hidden stage, so the content "
-                 "is an active multi-stage loader, not inert data.")
-    elif "dynamic stager" in snippet:
-        extra = (" The code decodes and runs content supplied at runtime, so the final "
-                 "payload comes from outside the file rather than being written plainly "
-                 "in it.")
-
-    rules = _rule_summary(bash)
-    more = f" Detection rules that fired in this repository: {rules}." if rules else ""
-    return f"The malicious payload sits {where}. {base}{extra}{more}"
+    bash = _confirming(payload)
+    files = list(dict.fromkeys(b.get("file") for b in bash if b.get("file")))
+    lines = [f"Malicious payload found in: {', '.join(files[:5]) or 'see evidence references'}"]
+    lines += _payload_bullets(bash)
+    hosts = _prose_hosts(bash)
+    if hosts:
+        lines.append(f"- Attacker hosts: {', '.join(hosts)}")
+    return "\n".join(lines)
 
 
 _EM_DASH = re.compile(r"\s*[\u2014\u2015]\s*|\s+[\u2013]\s+|\s+--\s+")

