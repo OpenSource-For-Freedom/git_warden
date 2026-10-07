@@ -30,6 +30,8 @@ Cases are drawn from real repos surfaced by the hunt on 2026-07-07:
 - fp_unicode_width_lib   <- a string-width helper checking both variation-selector ranges (no eval, no payload)
 - fp_emoji_text          <- emoji strings with single variation selectors, never a run
 - fp_ci_deploy_notify    <- a deploy workflow writing an SSH key and posting to Discord: YAML is read for malware signatures only
+- sus_marshal_stager     <- hidden marshalled bytecode, no visible outbound channel: SUSPICIOUS (egress schema)
+- sus_mc_defineclass     <- class defined from an embedded blob, no visible outbound channel: SUSPICIOUS
 - fp_wallet_backup_tool <- wallet backup utility: reads its own Electrum store, notifies Discord from a different file
 
 ## Fixtures must never carry a live attacker host

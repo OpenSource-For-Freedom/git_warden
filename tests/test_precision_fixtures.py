@@ -6,6 +6,8 @@ repo the hunt surfaced. The naming encodes the expected AUTO-tier verdict:
   tp_*  MUST confirm at the AUTO confidence tier (a high-precision capture).
   rv_*  MUST confirm at REVIEW (a real but noisy TP -- human-review, never auto).
   fp_*  MUST NOT reach AUTO -- it is either not confirmed at all, or at most REVIEW.
+  sus_* MUST be SUSPICIOUS: dodgy code (a hidden loader, a credential read) with no
+        outbound channel. The egress schema keeps it out of confirmation and OSM.
 
 AUTO is the only tier that reaches gold + submit, so this suite is the gate that
 keeps a known false positive from ever being auto-delivered again. See the README.
@@ -43,10 +45,12 @@ def test_precision_fixture_tier(case):
         assert tier == "auto", f"{case.name}: expected AUTO capture, got tier={tier!r}"
     elif case.name.startswith("rv_"):
         assert tier == "review", f"{case.name}: expected REVIEW, got tier={tier!r}"
+    elif case.name.startswith("sus_"):
+        assert tier == "suspicious", f"{case.name}: expected SUSPICIOUS, got tier={tier!r}"
     elif case.name.startswith("fp_"):
         assert tier != "auto", f"{case.name}: false positive reached AUTO (tier={tier!r})"
     else:
-        raise AssertionError(f"fixture dir must start with tp_/rv_/fp_: {case.name}")
+        raise AssertionError(f"fixture dir must start with tp_/rv_/sus_/fp_: {case.name}")
 
 
 def test_corpus_precision_and_recall():

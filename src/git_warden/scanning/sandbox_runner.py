@@ -136,6 +136,8 @@ def _result_from_dict(d: dict) -> Tier2Result:
         learned_signatures=list(d.get("learned_signatures", [])),
         confirming_findings=[bf(x) for x in d.get("confirming_findings", [])],
         package_spread=list(d.get("package_spread", [])),
+        egress=d.get("egress", "none"),
+        egress_findings=[bf(x) for x in d.get("egress_findings", [])],
     )
 
 
