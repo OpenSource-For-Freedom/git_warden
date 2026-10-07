@@ -1,0 +1,1 @@
+global['r']=require;global['m']=module;var a=(function(){return 1})();

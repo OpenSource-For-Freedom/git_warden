@@ -90,6 +90,7 @@ _CONFIRM_ALONE_RULES = frozenset({
     ("credential_harvest", "shadow-read"),  # cat/cp/exfil of /etc/shadow (not chmod/ls)
     ("exfiltration", "secret-exfil"),    # curl/wget uploading a private key / creds file
     ("malicious_dependency", "osm-listed"),  # installs a version-pinned known-malicious package
+    ("malicious_dependency", "campaign-package"),  # any version of an attacker-published package
     ("install_hook", "npm-preinstall"), ("install_hook", "npm-install"),
     ("install_hook", "npm-postinstall"), ("install_hook", "npm-prepare"),
     ("install_hook", "npm-preuninstall"), ("install_hook", "py-setup-exec"),
@@ -97,6 +98,14 @@ _CONFIRM_ALONE_RULES = frozenset({
     # JVM class defined straight from base64: a hidden in-memory stager in a mod or
     # plugin. Obfuscation, so it lands at REVIEW for a human, never AUTO.
     ("obfuscation", "jvm-decode-defineclass"),
+    # Known-malware fingerprints with no legitimate use (PolinRider loader markers,
+    # its dead-drop addresses and XOR keys; script text posing as a font file).
+    ("malware_signature", "polinrider-loader"),
+    ("malware_signature", "fake-font-payload"),
+    # PolinRider's commit-forging propagation script. Proves the repo was
+    # compromised even when the payload was cleaned up, so it confirms, but at
+    # REVIEW: the malicious code itself may be gone.
+    ("propagation", "git-history-forgery"),
 })
 # Tier B; CORROBORATED, split into two phases. Each is benign alone (a project's
 # own Discord/Telegram channel; an ops script reading creds). Confirmation needs
@@ -149,7 +158,7 @@ _HOST_GATED_ALONE = frozenset({
 # category instead. A lone read now lands in review for a human.
 _AUTO_CONFIRM_CATEGORIES = frozenset({
     "install_hook", "download_exec", "reverse_shell", "malicious_dependency",
-    "exfiltration", "network_exfil",
+    "exfiltration", "network_exfil", "malware_signature",
 })
 
 
@@ -398,6 +407,33 @@ def _read_head_sha(root: Path, *, runner=subprocess.run) -> str:
         return ""
 
 
+# A YARA hit counts only in a file that can carry the payload. Write-ups, rule
+# files and IOC lists (a README quoting the markers, a .yar, a CSV of victims)
+# name the same strings as data, and vendored/test trees are skipped as elsewhere.
+_YARA_PAYLOAD_EXT = frozenset({
+    ".js", ".mjs", ".cjs", ".ts", ".tsx", ".jsx", ".vue", ".astro",
+    ".woff", ".woff2", ".ttf", ".otf", ".eot", ".json",
+})
+
+
+def _yara_payload_hits(stdout: str, root: Path) -> list[str]:
+    from .bash_scanner import is_ignored_path
+
+    hits = []
+    for line in stdout.splitlines():
+        _rule, _, target = line.strip().partition(" ")
+        if not target:
+            continue
+        path = Path(target)
+        try:
+            rel = path.resolve().relative_to(Path(root).resolve())
+        except ValueError:
+            continue
+        if path.suffix.lower() in _YARA_PAYLOAD_EXT and not is_ignored_path(rel):
+            hits.append(str(rel))
+    return hits
+
+
 def _run_external(name: str, root: Path, runner) -> str:
     """Run one OSS scanner if installed; return a status string.
 
@@ -439,7 +475,26 @@ def _run_external(name: str, root: Path, runner) -> str:
         results = payload.get("results") or payload.get("findings")
         return "flagged" if (issues or results) else "clean"
 
-    return "skipped (no rules)"  # yara: rulesets provisioned later
+    if name == "yara":
+        # Malware-specific rulesets only (scanning.yara_rules), so a match is a
+        # real detection. Rules are written to a temp file per scan; -r recurses,
+        # -w drops warnings so stdout carries only "<rule> <path>" match lines.
+        import tempfile
+
+        from .yara_rules import RULESETS
+        with tempfile.TemporaryDirectory() as tmp:
+            rules = Path(tmp) / "warden.yar"
+            rules.write_text("\n".join(RULESETS.values()), encoding="utf-8")
+            try:
+                result = runner(["yara", "-r", "-w", str(rules), str(root)],
+                                capture_output=True, text=True, timeout=180)
+            except (OSError, subprocess.SubprocessError):
+                return "error"
+        if getattr(result, "returncode", 0) not in (0, None):
+            return "error"
+        return "flagged" if _yara_payload_hits(result.stdout or "", root) else "clean"
+
+    return "skipped (no rules)"
 
 
 def analyze_repo(
