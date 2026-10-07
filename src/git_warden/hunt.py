@@ -628,6 +628,7 @@ def hunt(
     confirmed_by_method: Counter = Counter()
     rejected_mirrors = 0
     redteam_breadcrumbs = 0  # red-team tooling kept as a breadcrumb, not confirmed
+    suspicious = 0           # matched a confirming rule but no outbound channel (egress schema)
     spread_sources = 0       # repos that PUBLISH a compromised package version
     spread_vectors = 0       # repos that DEPEND on a compromised package version
     _total = len(candidates)
@@ -846,6 +847,16 @@ def hunt(
                     # Scanned but did not meet the confirmation bar: a near-miss. This
                     # is the false-NEGATIVE / recall-gap signal -- what static signal it
                     # DID trip, so an operator can see which rules almost fired.
+                    if result.confidence == "suspicious":
+                        # Dodgy code with no outbound channel: kept visible, never
+                        # confirmed or submitted (egress schema).
+                        suspicious += 1
+                        _decide(finding, "SUSPICIOUS",
+                                "matched a confirming rule but has no outbound channel "
+                                "(no exfil, C2 or fetch-and-run)",
+                                top_signals=sorted({f"{bf.category}:{bf.rule}"
+                                                    for bf in result.confirming_findings})[:8])
+                        continue
                     _decide(finding, "NOT_CONFIRMED",
                             f"scanned; static score {result.bash_score} below confirmation bar",
                             top_signals=sorted({f"{bf.category}:{bf.rule}"
@@ -876,6 +887,12 @@ def hunt(
                     finding.raw_payload["code_hash"] = result.code_hash
                     # Confidence tier (auto|review) -- gates gold + submit downstream.
                     finding.raw_payload["confidence"] = result.confidence
+                    # The outbound channel the confirmation rests on (egress schema).
+                    finding.raw_payload["egress"] = result.egress
+                    finding.raw_payload["egress_findings"] = [
+                        {"file": bf.file, "line": bf.line, "category": bf.category,
+                         "rule": bf.rule, "snippet": bf.snippet[:280]}
+                        for bf in result.egress_findings[:5]]
                     # The exact scanned commit -> permanent /blob/<sha>/ evidence links.
                     if result.commit_sha:
                         finding.raw_payload["commit_sha"] = result.commit_sha
@@ -990,6 +1007,7 @@ def hunt(
         "confirmed_by_method": dict(confirmed_by_method),
         "rejected_mirrors": rejected_mirrors,  # unmodified red-team forks dropped
         "redteam_breadcrumbs": redteam_breadcrumbs,  # red-team tooling kept as lead
+        "suspicious": suspicious,  # dodgy code with no outbound channel (never confirmed)
         "clones_failed": len(failed_clones),   # could not Tier-2 scan (continued)
         "gold_delivered": delivered,
         "spread_sources": spread_sources,  # repos publishing a compromised pkg version

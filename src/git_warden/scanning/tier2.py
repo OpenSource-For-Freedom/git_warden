@@ -32,6 +32,8 @@ from pathlib import Path
 
 from .bash_scanner import BashFinding, scan_repo
 from .content_scanner import scan_content
+from .egress import SINK, sink_channel
+from .egress import classify as classify_egress
 from .ioc import IocSet, extract_repo_iocs, is_attacker_host
 from .manifest_scanner import scan_manifests
 from .signatures import extract_code_signatures
@@ -268,11 +270,16 @@ class Tier2Result:
     bash_score: int = 0
     scanners: dict[str, str] = field(default_factory=dict)  # name -> status/summary
     confirmed: bool = False
-    confidence: str = "none"  # "auto" | "review" | "none" -- gates gold + submit
+    confidence: str = "none"  # "auto" | "review" | "suspicious" | "none" -- gates gold + submit
     learned_iocs: IocSet = field(default_factory=IocSet)  # IOCs mined from the code
     learned_signatures: list[str] = field(default_factory=list)  # code sigs mined
     confirming_findings: list[BashFinding] = field(default_factory=list)  # what confirmed
     package_spread: list[dict] = field(default_factory=list)  # SOURCE/VECTOR spread links
+    # The egress schema (scanning.egress): the outbound channel the confirmation
+    # rests on, and the findings that show it. A static match with no channel is
+    # not confirmed; it is kept as confidence "suspicious".
+    egress: str = "none"
+    egress_findings: list[BashFinding] = field(default_factory=list)
 
     def signal_summary(self) -> list[str]:
         cats = sorted({f.category for f in self.bash_findings})
@@ -502,6 +509,27 @@ def _run_external(name: str, root: Path, runner) -> str:
     return "skipped (no rules)"
 
 
+def _file_sink(root: Path, confirming: list[BashFinding]) -> BashFinding | None:
+    """The first outbound call (the sink) in a file that confirmed, if any.
+
+    The schema works backwards from egress: a credential read or a loader on
+    one line and the fetch/POST that ships it on the next are one stealer.
+    Comment lines are skipped, as they are for confirmation.
+    """
+    for file in dict.fromkeys(f.file for f in confirming if f.file):
+        path = (Path(root) / file)
+        try:
+            if not path.is_file() or path.stat().st_size > 2_000_000:
+                continue
+            lines = path.read_text(encoding="utf-8", errors="ignore").splitlines()
+        except OSError:
+            continue
+        for lineno, line in enumerate(lines, 1):
+            if SINK.search(line) and not _is_comment_line(line.strip()):
+                return BashFinding(file, lineno, "network", "outbound-call", line.strip()[:200])
+    return None
+
+
 def analyze_repo(
     root: Path,
     full_name: str,
@@ -597,6 +625,20 @@ def analyze_repo(
     # appear in provenance via signal_summary, just not as sole proof.
     oss_confirmed = any(scanners.get(n) == "flagged" for n in ("guarddog", "yara"))
     confirmed = static_confirmed or oss_confirmed
+    # The egress schema: without an outbound channel (exfil, C2, fetch-and-run, or
+    # a documented family) there is no malicious action, however dodgy the code
+    # looks. Such a match is kept as "suspicious" and never confirmed.
+    egress, egress_findings = ("none", [])
+    suspicious = False
+    if confirmed:
+        egress, egress_findings = classify_egress(
+            confirming, findings, scanner_flagged=oss_confirmed)
+        if egress == "none":
+            sink = _file_sink(root, confirming)
+            if sink is not None:
+                egress, egress_findings = sink_channel(confirming), [sink]
+        if egress == "none":
+            confirmed, suspicious = False, True
     # Learning loop: mine IOCs and code signatures only once confirmed, from
     # trusted ground truth; the signatures hunt sibling repos of this campaign.
     learned = extract_repo_iocs(root) if confirmed else IocSet()
@@ -622,7 +664,10 @@ def analyze_repo(
         bash_score=score,
         scanners=scanners,
         confirmed=confirmed,
-        confidence=_confidence_tier(confirmed, confirming, oss_confirmed),
+        confidence=("suspicious" if suspicious
+                    else _confidence_tier(confirmed, confirming, oss_confirmed)),
+        egress=egress,
+        egress_findings=egress_findings,
         learned_iocs=learned,
         learned_signatures=learned_sigs,
         confirming_findings=confirming,
