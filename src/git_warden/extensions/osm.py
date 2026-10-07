@@ -162,12 +162,13 @@ def _severity(findings: list[dict]) -> str:
 def build_extension_report(row, result: dict, ext) -> dict:
     """The exact submit-threat-report body for one extension."""
     from ..osm_submit import (
-        _BEHAVIOR,
-        _BEHAVIOR_BY_RULE,
         OSM_CONTACT_EMAIL,
         OSM_CONTRIBUTOR,
+        _exfil_phrase,
         _no_dashes,
-        _rule_summary,
+        _payload_bullets,
+        _prose_hosts,
+        _threat_class,
     )
 
     ext_id = _ext_id(row)
@@ -177,38 +178,37 @@ def build_extension_report(row, result: dict, ext) -> dict:
     findings = result.get("confirming_findings") or []
     top = findings[0] if findings else {}
     info = result.get("extension") or {}
-    behavior = _BEHAVIOR_BY_RULE.get(top.get("rule", "")) or _BEHAVIOR.get(
-        top.get("category", ""), "The code performs actions that match malware.")
-    where = top.get("file") or "the extension package"
-    if top.get("line"):
-        where += f" at line {top['line']}"
     try:
         reasons = json.loads(row["reasons"] or "[]")
     except ValueError:
         reasons = []
     activation = ", ".join(info.get("activation_events") or []) or "none declared"
-    entry = ", ".join(info.get("entry_points") or []) or "none declared"
-    signals = ", ".join(info.get("signals") or [])
+    files = list(dict.fromkeys(f.get("file") for f in findings if f.get("file")))
 
-    threat = [
-        f"Git Warden confirmed the VS Code extension {ext_id} version {ext.version}, "
-        f"published on {registry_name} by the publisher {row['namespace']}, as malicious "
-        "by static analysis. The package was downloaded and unpacked inside an isolated "
-        "sandbox and read, never executed.",
-        f"The malicious code sits in {where} inside the package. {behavior}",
-        f"The extension declares the activation events {activation} and the entry point "
-        f"{entry}, so the code runs inside the editor of anyone who installs it.",
-    ]
+    # A few short lines: what it is, where, when it runs, why it was picked up.
+    kind = _threat_class(findings)
+    if kind == "VS Code autorun dropper":
+        kind = "Dropper"
+    head = (f"{kind} in VS Code extension {ext_id} {ext.version} "
+            f"({registry_name}, publisher {row['namespace']})")
+    exfil = _exfil_phrase(findings)
+    if exfil:
+        head += f", {exfil}"
+    threat = [head + ".",
+              f"Payload in {', '.join(files[:3]) or 'the extension package'}; "
+              "runs inside the editor "
+              + ("as soon as it starts (activation event *)." if activation == "*"
+                 else f"on activation ({activation}).")]
     if reasons:
-        threat.append("It was selected for analysis because: " + "; ".join(reasons) + ".")
-    if signals:
-        threat.append(f"Additional extension signals: {signals}.")
-    threat.append("No legitimate extension ships code like this. Removing it from the "
-                  "registry and from installed editors is recommended.")
+        threat.append("Flagged because: " + "; ".join(reasons) + ".")
+    threat.append("Confirmed by static analysis of the unpacked package in a sandbox; "
+                  "the code was read, never executed.")
 
-    rules = _rule_summary(findings)
-    payload = (f"The malicious payload sits in {where}. {behavior}"
-               + (f" Detection rules that fired in this package: {rules}." if rules else ""))
+    payload_lines = [f"Malicious payload found in: {', '.join(files[:5]) or 'see evidence'}"]
+    payload_lines += _payload_bullets(findings)
+    hosts = _prose_hosts(findings)
+    if hosts:
+        payload_lines.append(f"- Attacker hosts: {', '.join(hosts)}")
 
     tags = ["supply-chain", "vscode-extension", registry]
     if any("lookalike" in r for r in reasons):
@@ -224,8 +224,8 @@ def build_extension_report(row, result: dict, ext) -> dict:
         "package_name": ext_id,
         "resource_identifier": ext_id,
         "version_info": ext.version or row["version"] or "all",
-        "threat_description": _no_dashes(" ".join(threat)),
-        "payload_description": _no_dashes(payload),
+        "threat_description": _no_dashes("\n".join(threat)),
+        "payload_description": _no_dashes("\n".join(payload_lines)),
         "publisher": row["namespace"],
         "severity_level": _severity(findings),
         "tags": list(dict.fromkeys(tags))[:10],

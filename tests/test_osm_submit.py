@@ -542,3 +542,14 @@ def test_report_prose_drops_shared_services_and_truncated_hosts():
             {"category": "network_exfil", "rule": "discord-webhook",
              "snippet": "https://discord.com/api/webhooks/1/x"}]
     assert _prose_hosts(bash) == ["evil.vercel.app"]
+
+
+def test_wallet_theft_rule_names_a_cryptostealer():
+    r = build_report(_row(raw_payload=json.dumps({"bash_findings": [
+        {"file": "a2.py", "line": 9, "category": "credential_access",
+         "rule": "wallet-theft", "snippet": 'os.path.join(APPDATA, "Exodus", "exodus.wallet")'},
+        {"file": "a2.py", "line": 4, "category": "network_exfil",
+         "rule": "discord-webhook", "snippet": "https://discord.com/api/webhooks/1/x"}]})))
+    assert r["threat_description"].startswith(
+        "Infostealer and cryptostealer, exfiltrating to a Discord webhook (a2.py:4)")
+    assert "- a2.py:9: reads crypto wallet stores" in r["payload_description"]
