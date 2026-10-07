@@ -125,14 +125,18 @@ def _bus_submitted(full_name: str) -> bool:
     return False
 
 
+KNOWN_REPORTS_NAME = "osm_known_reports.csv"
+
+
 def evidence_skips(evidence_dir: Path | None = None) -> dict[str, str]:
     """Repos the committed evidence/ store says must not be submitted again.
 
     The store is shared: the KNORR joint hunt records its submissions there, but
     they never reach this tool's data cache or the shared-intel bus, and OSM's
     check-malicious reports a submission as clear while it awaits review. So a
-    repo in the repository ledger, or marked submitted in findings.csv, is
-    skipped, as is any row a reviewer marked ``reject`` (a false positive).
+    repo in the repository ledger, marked submitted in findings.csv, or listed in
+    osm_known_reports.csv (OSM's own published reports) is skipped, as is any row
+    a reviewer marked ``reject`` (a false positive).
     Returns ``{full_name (casefolded): reason}``.
     """
     evidence_dir = evidence.EVIDENCE_DIR if evidence_dir is None else evidence_dir
@@ -151,6 +155,14 @@ def evidence_skips(evidence_dir: Path | None = None) -> dict[str, str]:
         if full:
             tid = str(entry.get("threat_id") or "")[:8]
             out[full] = f"evidence ledger records it as submitted (id {tid or 'unknown'})"
+    # Repositories OSM itself published as reported (the PolinRider victim lists,
+    # imported by scripts/import_osm_known.py). OSM already holds these.
+    for key, row in evidence.read_csv(evidence_dir / KNOWN_REPORTS_NAME).items():
+        full = name(key)
+        if full and full not in out:
+            tid = (row.get("threat_id") or "")[:8]
+            out[full] = (f"already reported by OSM ({row.get('source') or 'osm'}, "
+                         f"id {tid or 'unknown'})")
     for key, row in evidence.read_csv(evidence_dir / evidence.CSV_NAME).items():
         full = name(key)
         if not full:

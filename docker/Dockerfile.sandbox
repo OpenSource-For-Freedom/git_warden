@@ -5,15 +5,16 @@
 # tmpfs scratch, --rm). See README "Sandboxed scanning".
 FROM python:3.12-slim
 
-# git is needed for the in-container clone; nothing else is installed, so the
-# attack surface stays minimal. No compilers, no shells beyond the base.
+# git is needed for the in-container clone; yara runs Warden's malware-specific
+# rulesets (scanning/yara_rules.py) over the checkout. Nothing else is installed,
+# so the attack surface stays minimal. No compilers, no shells beyond the base.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends git ca-certificates \
+    && apt-get install -y --no-install-recommends git ca-certificates yara \
     && rm -rf /var/lib/apt/lists/*
 
 # Install warden so the full scanning import chain resolves. Only the package and
 # its declared runtime deps land in the image; the optional OSS scanners
-# (semgrep/guarddog/yara) are absent and degrade to "skipped" by design.
+# semgrep/guarddog are absent and degrade to "skipped" by design.
 WORKDIR /opt/warden
 COPY pyproject.toml README.md ./
 COPY src ./src

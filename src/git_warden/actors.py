@@ -127,11 +127,18 @@ def attribute(flags: list[dict], actor_key: str | None,
     # 1) DPRK evidence clears the 2-signal bar -> attribute North Korea on evidence.
     if d.attributed:
         actor = actor_key if named and intel_origin == "North Korea" else None
+        # OSM names the tasks.json dropper cluster (settings/<os>?flag= hosts) and
+        # the config-file injector one campaign: PolinRider, merged with TasksJacker.
+        polinrider = ("polinrider_fingerprint" in d.signals or (
+            "vscode-folderopen-autorun" in d.vectors
+            and "dprk-dropper-path-shape" in d.vectors))
         return Attribution(
-            origin="North Korea", tier=d.tier, actor=actor,
-            campaign="Contagious Interview", signals=list(d.signals),
-            reasons=list(d.reasons), c2=list(d.c2),
-            tags=["contagious-interview", "fake-recruiter"] + _ORIGIN_TAGS["North Korea"])
+            origin="North Korea", tier=d.tier,
+            actor=actor or ("PolinRider" if polinrider else None),
+            campaign="PolinRider" if polinrider else "Contagious Interview",
+            signals=list(d.signals), reasons=list(d.reasons), c2=list(d.c2),
+            tags=(["polinrider"] if polinrider else [])
+            + ["contagious-interview", "fake-recruiter"] + _ORIGIN_TAGS["North Korea"])
 
     # 2) A specific NAMED group from intel is itself an attribution (any country).
     if named:
