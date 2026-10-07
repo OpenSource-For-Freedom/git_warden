@@ -102,6 +102,11 @@ _CONFIRM_ALONE_RULES = frozenset({
     # its dead-drop addresses and XOR keys; script text posing as a font file).
     ("malware_signature", "polinrider-loader"),
     ("malware_signature", "fake-font-payload"),
+    # GlassWorm / ForceMemo (invisible payload, decoder, wallets, marker, C2) and
+    # the Shai-Hulud worm family's own strings, webhook, C2 and payload hooks.
+    ("malware_signature", "invisible-unicode-payload"),
+    ("malware_signature", "glassworm-ioc"),
+    ("malware_signature", "shai-hulud-ioc"),
     # PolinRider's commit-forging propagation script. Proves the repo was
     # compromised even when the payload was cleaned up, so it confirms, but at
     # REVIEW: the malicious code itself may be gone.

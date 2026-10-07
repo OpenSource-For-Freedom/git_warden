@@ -103,3 +103,28 @@ def test_osm_known_reports_are_imported_and_skipped(tmp_path):
     assert mod.merge([src], out) == {"rows": 1, "added": 0}  # idempotent
     skips = auto.evidence_skips(tmp_path)
     assert skips == {"victim/app": "already reported by OSM (osm-polinrider, id 3e23fa8c)"}
+
+
+def test_glassworm_report_names_the_family():
+    r = build_report(_row([_flag("invisible-unicode-payload", "malware_signature",
+                                 "src/index.js", "eval(Buffer.from(s(`...`)))")]))
+    assert r["threat_description"].startswith(
+        "GlassWorm loader (invisible Unicode payload, Solana dead-drop C2)")
+    assert "glassworm" in r["tags"] and r["severity_level"] == "critical"
+
+
+def test_shai_hulud_report_names_the_family():
+    r = build_report(_row([_flag("shai-hulud-ioc", "malware_signature",
+                                 "package.json", "preinstall: node setup_bun.js")]))
+    assert r["threat_description"].startswith("Shai-Hulud worm")
+    assert "shai-hulud" in r["tags"]
+
+
+def test_campaign_signatures_skip_detector_code(tmp_path):
+    from git_warden.scanning.content_scanner import scan_content
+    d = tmp_path / "scanner"
+    d.mkdir()
+    (d / "iocs.js").write_text('const W = ["lzcdrtfxyqiplpd", "SHA1HULUD"];\n')
+    (tmp_path / "app.py").write_text("lzcdrtfxyqiplpd = 1\n")
+    rules = {(f.file, f.rule) for f in scan_content(tmp_path, repo_name="x/app")}
+    assert rules == {("app.py", "glassworm-ioc")}

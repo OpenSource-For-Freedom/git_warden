@@ -183,6 +183,7 @@ def _declared_deps(name: str, text: str) -> dict[str, str]:
 # allavin and blackedward accounts. Every release is malicious, so unlike the
 # OSM-compromised feed above (a legit package hijacked for ONE version) any declared
 # version confirms. tailwindcss-style-animate is the ShoeVista take-home lure's dep.
+_SHAI_HULUD_HOOK = re.compile(r"\b(?:setup_bun|bun_environment)\.js\b")
 _CAMPAIGN_PACKAGES = frozenset({
     "tailwindcss-style-animate", "tailwind-mainanimation", "tailwind-autoanimation",
     "tailwind-animationbased", "tailwindcss-typography-style",
@@ -253,6 +254,12 @@ def scan_manifests(root, malicious_packages=None) -> list[BashFinding]:
             scripts = scripts if isinstance(scripts, dict) else {}
             for hook in _LIFECYCLE:
                 cmd = scripts.get(hook)
+                # Sha1-Hulud 2.0 adds a preinstall that runs its Bun stager.
+                if cmd and _SHAI_HULUD_HOOK.search(str(cmd)):
+                    findings.append(BashFinding(
+                        rel, 0, "malware_signature", "shai-hulud-ioc",
+                        f"{hook}: {cmd}"[:200]))
+                    continue
                 if (cmd and _SUSPICIOUS_CMD.search(str(cmd))
                         and not _only_reputable_install(str(cmd))
                         and not _is_benign_node_eval(str(cmd))):

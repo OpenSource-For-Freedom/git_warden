@@ -1,0 +1,9 @@
+name: deploy
+on: push
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "$DEPLOY_KEY" > ~/.ssh/id_ed25519 && chmod 600 ~/.ssh/id_ed25519
+      - run: rsync -a dist/ deploy@example.org:/srv/site
+      - run: curl -H "Content-Type: application/json" -d '{"content":"deployed"}' https://discord.com/api/webhooks/000/fixture
