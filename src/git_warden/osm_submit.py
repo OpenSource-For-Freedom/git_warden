@@ -212,6 +212,12 @@ _WHY_BY_RULE = {
                            "the last commit with --no-verify and force-pushes to hide "
                            "the injection",
     "campaign-package": "depends on an npm package published by the PolinRider operator",
+    "invisible-unicode-payload": "long run of invisible Unicode variation selectors: an "
+                                 "encoded payload that renders as an empty string",
+    "glassworm-ioc": "GlassWorm/ForceMemo fingerprint (variation-selector decoder, Solana "
+                     "dead-drop wallet, ForceMemo marker or C2 address)",
+    "shai-hulud-ioc": "Shai-Hulud worm fingerprint (banner string, exfil webhook, rogue "
+                      "runner, Bun stager hook or C2)",
     "keyfiles": "reads SSH private keys or cloud credential files",
     "ssh-keys": "reads SSH private keys",
     "cloud-creds": "reads cloud provider credentials",
@@ -289,7 +295,11 @@ def _threat_class(bash: list[dict]) -> str:
     cats = {b.get("category") for b in bash}
     wallets = "wallet-theft" in rules or any(
         _WALLET_RE.search(b.get("snippet") or "") for b in bash)
-    if "polinrider-loader" in rules or "fake-font-payload" in rules:
+    if rules & {"invisible-unicode-payload", "glassworm-ioc"}:
+        kind = "GlassWorm loader (invisible Unicode payload, Solana dead-drop C2)"
+    elif "shai-hulud-ioc" in rules:
+        kind = "Shai-Hulud worm (self-propagating credential stealer)"
+    elif "polinrider-loader" in rules or "fake-font-payload" in rules:
         kind = "PolinRider loader (DPRK backdoor/infostealer)"
     elif "vscode-autorun" in rules:
         kind = "VS Code autorun dropper"
@@ -437,6 +447,10 @@ def _vectors(bash: list[dict]) -> list[str]:
         v.append("fake-font-loader")
     if "campaign-package" in rules:
         v.append("polinrider-npm-package")
+    if rules & {"invisible-unicode-payload", "glassworm-ioc"}:
+        v.append("glassworm")
+    if "shai-hulud-ioc" in rules:
+        v.append("shai-hulud")
     return v
 
 

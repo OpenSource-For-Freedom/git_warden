@@ -23,6 +23,13 @@ Cases are drawn from real repos surfaced by the hunt on 2026-07-07:
 - fp_polinrider_detector <- a scanner listing the PolinRider markers as detection data
 - fp_font_assets         <- a real woff2 whose bytes happen to contain require( and an HTML error page saved as .woff
 - fp_npm_security_placeholder <- npm's inert 0.0.1-security placeholder for a removed package
+- tp_glassworm_invisible_payload <- GlassWorm: 200 variation selectors in an "empty" template string, decoded and eval'd
+- tp_forcememo_marker    <- ForceMemo: marker variable appended to setup.py (payload omitted)
+- tp_shai_hulud_runner_workflow <- Sha1-Hulud 2.0 discussion.yaml on the SHA1HULUD rogue runner
+- tp_shai_hulud_preinstall <- Sha1-Hulud 2.0 preinstall running the Bun stager
+- fp_unicode_width_lib   <- a string-width helper checking both variation-selector ranges (no eval, no payload)
+- fp_emoji_text          <- emoji strings with single variation selectors, never a run
+- fp_ci_deploy_notify    <- a deploy workflow writing an SSH key and posting to Discord: YAML is read for malware signatures only
 - fp_wallet_backup_tool <- wallet backup utility: reads its own Electrum store, notifies Discord from a different file
 
 ## Fixtures must never carry a live attacker host
