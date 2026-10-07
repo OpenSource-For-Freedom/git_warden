@@ -1,0 +1,4 @@
+{
+  "name": "site",
+  "dependencies": { "tailwind-mainanimation": "0.0.1-security" }
+}

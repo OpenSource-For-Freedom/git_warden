@@ -41,6 +41,13 @@ _VECTOR_RULES = {
 }
 CAMPAIGN_VECTORS = frozenset({"vscode-folderopen-autorun", "obfuscated-eval-atob-loader"})
 
+# Rules that fingerprint PolinRider itself (OSM, github.com/OpenSourceMalware/
+# PolinRider, attributed to DPRK / Lazarus): its loader markers, dead-drop
+# addresses and XOR keys, its commit-forging propagation script, and the npm
+# packages its operator published. A match names a documented DPRK family, which
+# is a named-group attribution on its own.
+POLINRIDER_RULES = frozenset({"polinrider-loader", "git-history-forgery", "campaign-package"})
+
 # BeaverTail / InvisibleFerret decoded-stage fingerprints. These are checked ONLY
 # against evidence the scanner produced by actually decoding the blob (the
 # "second-stage decode" / "dynamic stager" verified markers), plus concrete loader
@@ -216,6 +223,13 @@ def assess(
             "Declares a known-malicious package used as the campaign's delivery "
             "dependency.")
 
+    polinrider = sorted({b.get("rule") for b in flags} & POLINRIDER_RULES)
+    if polinrider:
+        signals.append("polinrider_fingerprint")
+        reasons.append(
+            "Carries PolinRider fingerprints (" + ", ".join(polinrider) + "), a DPRK "
+            "campaign documented and attributed by OpenSourceMalware.")
+
     osm_corroborated = is_dprk_actor_key(actor_key)
     if osm_corroborated:
         reasons.append(
@@ -231,8 +245,8 @@ def assess(
     has_decoded = "decoded_family" in signals
     if (has_decoded and (has_vector or has_infra)) or n >= 3:
         tier = "confirmed"
-    elif n == 2:
-        tier = "probable"
+    elif n == 2 or "polinrider_fingerprint" in signals:
+        tier = "probable"  # a documented DPRK family's fingerprint is named-group intel
     elif n == 1:
         tier = "possible"
     else:

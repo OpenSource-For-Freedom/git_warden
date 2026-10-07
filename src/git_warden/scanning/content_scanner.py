@@ -23,7 +23,9 @@ _PY_EXT = {".py"}
 # code, so session-token stealers, remote-jar loaders and plugin backdoors live in
 # Java/Kotlin source that no other rule family reads.
 _JVM_EXT = {".java", ".kt"}
-_SOURCE_EXT = _JS_EXT | _PY_EXT | _JVM_EXT | {".rb", ".php", ".go", ".ps1"}
+# Windows batch: PolinRider's propagation script (temp_auto_push.bat) is .bat.
+_BAT_EXT = {".bat", ".cmd"}
+_SOURCE_EXT = _JS_EXT | _PY_EXT | _JVM_EXT | _BAT_EXT | {".rb", ".php", ".go", ".ps1"}
 _MAX_BYTES = 1_000_000
 
 # Each rule carries the language family it applies to so a Python pattern can't
@@ -72,6 +74,31 @@ _RULES: dict[str, list[tuple[str, str, re.Pattern]]] = {
             r"\b(?:curl|wget|iwr|irm|Invoke-WebRequest|Invoke-RestMethod)\b[^\n]*"
             r"(?:\|\s*(?:ba|z|da)?sh\b|\|\s*iex\b|\|\s*powershell|\|\s*cmd\b"
             r"|Invoke-Expression)", re.I)),
+    ],
+    # PolinRider (DPRK; OSM, github.com/OpenSourceMalware/PolinRider): a shuffle-
+    # cipher loader appended to JS config files. Each alternative is a fingerprint
+    # with no legitimate use: the two variant markers, a variant global next to its
+    # seed or decoder name (the OSM YARA rule's conditions, per line), the blockchain
+    # dead-drop addresses its second stage reads, and its two XOR keys.
+    "malware_signature": [
+        ("polinrider-loader", "any", re.compile(
+            r"rmcej%otb%|Cot%3t=shtP"
+            r"|global\[['\"]!['\"]\][^\n]*(?:2857687|_\$_1e42)"
+            r"|global\[['\"]_V['\"]\][^\n]*(?:1111436|\bMDy\b)"
+            r"|global\[['\"]_V['\"]\]\s*=\s*['\"]8-(?:st)?\d+['\"]"
+            r"|TMfKQEd7TJJa5xNZJZ2Lep838vrzrs7mAP|TXfxHUet9pJVU1BgVkBAbrES4YUc1nGzcG"
+            r"|0xbe037400670fbf1c32364f762975908dc43eeb38759263e7dfcdabc76380811e"
+            r"|0x3f0e5781d0855fb460661ac63257376db1941b2bb522499e4757ecb3ebd5dce3"
+            r"|2\[gWfGj;<:-93Z\^C|m6:tTh\^D\)cBz\?NM\]")),
+    ],
+    # PolinRider's propagation script: rewinds the Windows clock to the last
+    # commit's time, amends the commit with --no-verify and force-pushes, so the
+    # injected payload looks like it was always there. Setting the system date to
+    # a variable holding the last commit date has no legitimate use, and the file
+    # proves past compromise even after the payload was cleaned up.
+    "propagation": [
+        ("git-history-forgery", "bat", re.compile(
+            r"^\s*date\s+%LAST_COMMIT_DATE%|^\s*time\s+%LAST_COMMIT_TIME%", re.I)),
     ],
     "network_exfil": [
         ("discord-webhook", "any", re.compile(r"discord(?:app)?\.com/api/webhooks/", re.I)),
@@ -206,6 +233,8 @@ def _lang_for(suffix: str) -> str:
         return "py"
     if suffix in _JVM_EXT:
         return "jvm"
+    if suffix in _BAT_EXT:
+        return "bat"
     return "other"
 
 
@@ -223,8 +252,8 @@ def _is_minified(name: str) -> bool:
 _MC_RULES = {"mc-session-token", "mc-launcher-accounts"}
 # Rules that are detection DATA inside detector code (the wallet-store list is
 # exactly what an anti-stealer scanner looks for, too).
-_DETECTOR_DATA_RULES = _MC_RULES | {"wallet-theft"}
-_DETECTOR_DIRS = {"scan", "scanner", "scanners", "detect", "detection", "detector",
+_DETECTOR_DATA_RULES = _MC_RULES | {"wallet-theft", "polinrider-loader"}
+_DETECTOR_DIRS = {"scan", "scanner", "scanners", "scanning", "detect", "detection", "detector",
                   "detectors", "triage", "analysis", "analyzer", "analyzers",
                   "heuristics", "antirat", "anti-rat", "antimalware", "antivirus"}
 _DETECTOR_STEM = re.compile(
@@ -255,6 +284,36 @@ def is_detector_repo(full_name: str | None) -> bool:
     return bool(full_name) and bool(_DETECTOR_REPO.search(full_name.split("/")[-1]))
 
 
+# A web font starts with its format's magic bytes. PolinRider hid its loader in a
+# fake .woff2 (public/fonts/fa-solid-400.woff2) that Node runs as JavaScript, so a
+# "font" that is really script text is a payload, not an asset.
+_FONT_EXT = {".woff", ".woff2", ".ttf", ".otf", ".eot"}
+_FONT_MAGIC = (b"wOFF", b"wOF2", b"\x00\x01\x00\x00", b"OTTO", b"true", b"ttcf")
+_SCRIPT_IN_FONT = re.compile(
+    r"\brequire\s*\(|\bglobal\s*\[|\bmodule\.exports\b|\beval\s*\(|\bFunction\s*\(")
+
+
+def _fake_font_finding(path: Path, rel: str) -> BashFinding | None:
+    try:
+        if path.stat().st_size > _MAX_BYTES:
+            return None
+        data = path.read_bytes()
+    except OSError:
+        return None
+    if data[:4] in _FONT_MAGIC or (path.suffix.lower() == ".eot" and data[34:36] == b"LP"):
+        return None
+    text = data.decode("utf-8", errors="ignore")
+    if text.lstrip().startswith("<"):
+        return None  # an HTML error page or SVG saved under a font name, not a loader
+    m = _SCRIPT_IN_FONT.search(text)
+    if not m:
+        return None
+    line = text[: m.start()].count("\n") + 1
+    snippet = text[max(0, m.start() - 40): m.start() + 120].replace("\n", " ").strip()
+    return BashFinding(rel, line, "malware_signature", "fake-font-payload",
+                       f"not a font: script text in a font file | {snippet}"[:200])
+
+
 def scan_content(root, repo_name: str | None = None) -> list[BashFinding]:
     """Scan first-party source files for obfuscation / exec / exfil. Static only."""
     root = Path(root)
@@ -264,6 +323,12 @@ def scan_content(root, repo_name: str | None = None) -> list[BashFinding]:
         if not path.is_file() or is_ignored_path(path):
             continue
         suffix = path.suffix.lower()
+        if suffix in _FONT_EXT:
+            rel = str(path.relative_to(root)).replace("\\", "/")
+            fake = _fake_font_finding(path, rel)
+            if fake:
+                findings.append(fake)
+            continue
         if suffix not in _SOURCE_EXT or _is_minified(path.name.lower()):
             continue
         lang = _lang_for(suffix)

@@ -15,6 +15,14 @@ Cases are drawn from real repos surfaced by the hunt on 2026-07-07:
 - tp_literal_py_stager <- embedded base64 literal that decodes to a network dropper
 - tp_marshal_stager    <- embedded marshal/zlib/base64 compiled payload
 - tp_wallet_stealer_webhook <- ilyavafin/lol shape (wallet stores read and posted to a Discord webhook in one file)
+- tp_polinrider_config_injection <- PolinRider v1 loader appended to postcss.config.mjs (marker, seed and _$_1e42 only; no live payload)
+- tp_polinrider_v2_marker <- PolinRider v2 (Cot%3t=shtP / global['_V']='8-stN') in tailwind.config.js
+- tp_polinrider_fake_font <- AgbaD/odoo shape: loader text saved as public/fonts/fa-solid-400.woff2
+- tp_polinrider_npm_dep  <- ShoeVista take-home: depends on the PolinRider-published tailwindcss-style-animate
+- rv_polinrider_propagation_bat <- temp_auto_push.bat alone (payload cleaned up): proof of compromise, REVIEW
+- fp_polinrider_detector <- a scanner listing the PolinRider markers as detection data
+- fp_font_assets         <- a real woff2 whose bytes happen to contain require( and an HTML error page saved as .woff
+- fp_npm_security_placeholder <- npm's inert 0.0.1-security placeholder for a removed package
 - fp_wallet_backup_tool <- wallet backup utility: reads its own Electrum store, notifies Discord from a different file
 
 ## Fixtures must never carry a live attacker host

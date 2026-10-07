@@ -60,6 +60,10 @@ _CATEGORY_SEVERITY = {
     # high: loaders / injection / cred access / exfil channels / code exec
     "obfuscation": 3, "process_injection": 3, "credential_access": 3,
     "network_exfil": 3, "code_execution": 3,
+    # a known malware family's own fingerprint (PolinRider loader, fake font)
+    "malware_signature": 4,
+    # PolinRider's commit-forging propagation script (payload may be cleaned up)
+    "propagation": 3,
     # medium: persistence / lateral movement
     "persistence": 2, "lateral_movement": 2,
     # low: recon
@@ -201,6 +205,13 @@ _WHY_BY_RULE = {
     "jvm-decode-defineclass": "decodes a hidden Java class and defines it at runtime",
     "wallet-theft": "reads crypto wallet stores or wallet-extension vaults "
                     "(Exodus, Electrum, MetaMask and others)",
+    "polinrider-loader": "PolinRider shuffle-cipher loader (OSM-documented DPRK "
+                         "marker, dead-drop address or XOR key)",
+    "fake-font-payload": "script code disguised as a font file and run with Node",
+    "git-history-forgery": "PolinRider propagation script: rewinds the clock, amends "
+                           "the last commit with --no-verify and force-pushes to hide "
+                           "the injection",
+    "campaign-package": "depends on an npm package published by the PolinRider operator",
     "keyfiles": "reads SSH private keys or cloud credential files",
     "ssh-keys": "reads SSH private keys",
     "cloud-creds": "reads cloud provider credentials",
@@ -278,8 +289,14 @@ def _threat_class(bash: list[dict]) -> str:
     cats = {b.get("category") for b in bash}
     wallets = "wallet-theft" in rules or any(
         _WALLET_RE.search(b.get("snippet") or "") for b in bash)
-    if "vscode-autorun" in rules:
+    if "polinrider-loader" in rules or "fake-font-payload" in rules:
+        kind = "PolinRider loader (DPRK backdoor/infostealer)"
+    elif "vscode-autorun" in rules:
         kind = "VS Code autorun dropper"
+    elif "git-history-forgery" in rules:
+        kind = "PolinRider-compromised repository (commit-forging propagation script)"
+    elif "campaign-package" in rules:
+        kind = "Malicious npm dependency (PolinRider)"
     elif cats & _CRED_CATS and cats & _EXFIL_CATS:
         kind = "Infostealer and cryptostealer" if wallets else "Infostealer"
         if rules & _MC_RULES:
@@ -412,6 +429,14 @@ def _vectors(bash: list[dict]) -> list[str]:
         v.append("setup-py-fetch-and-run")
     if {"mc-session-token", "mc-launcher-accounts"} & rules:
         v.append("minecraft-account-stealer")
+    if "polinrider-loader" in rules:
+        v.append("polinrider-config-injection")
+    if "git-history-forgery" in rules:
+        v.append("polinrider-commit-forgery")
+    if "fake-font-payload" in rules:
+        v.append("fake-font-loader")
+    if "campaign-package" in rules:
+        v.append("polinrider-npm-package")
     return v
 
 
@@ -422,9 +447,14 @@ _CAMPAIGN_VECTORS = {"vscode-folderopen-autorun", "obfuscated-eval-atob-loader"}
 
 def _campaign_sentence(vectors: list[str], c2: list[str]) -> str:
     """One line naming the matching campaign tradecraft, or "" when none matches."""
-    if "vscode-folderopen-autorun" in vectors:
-        s = ("Matches the DPRK-attributed Contagious Interview campaign "
-             "(fake-recruiter coding tasks).")
+    polinrider = {"polinrider-config-injection", "polinrider-commit-forgery",
+                  "polinrider-npm-package"}
+    if polinrider & set(vectors):
+        s = ("PolinRider (DPRK; Lazarus, Contagious Interview cluster), as documented "
+             "by OpenSourceMalware.")
+    elif "vscode-folderopen-autorun" in vectors:
+        s = ("Matches PolinRider / Contagious Interview (DPRK): fake-recruiter coding "
+             "tasks that run a downloader when opened in VS Code.")
     elif "obfuscated-eval-atob-loader" in vectors:
         s = ("The eval(atob(...)) loader hidden in a project file is Contagious Interview "
              "(DPRK-attributed) tradecraft.")
@@ -433,10 +463,6 @@ def _campaign_sentence(vectors: list[str], c2: list[str]) -> str:
     if c2:
         s += f" Payload host: {', '.join(c2)}."
     return s
-
-
-_MAX_LISTED_REPOS = 30
-_MAX_LISTED_HOSTS = 15
 
 
 _MAX_LISTED_HOSTS = 5
@@ -579,8 +605,11 @@ def _attribution_paragraph(assessment) -> str:
     if assessment is None or assessment.tier == "unattributed":
         return ""
     who = assessment.actor or assessment.origin or "an unknown actor"
+    if assessment.actor and assessment.origin and assessment.origin not in assessment.actor:
+        who = f"{assessment.origin} {assessment.actor}"
     camp = (f" '{assessment.campaign}'"
-            if assessment.campaign and assessment.tier != "possible" else "")
+            if assessment.campaign and assessment.tier != "possible"
+            and assessment.campaign != assessment.actor else "")
     lead = {
         "confirmed": f"Attribution: we assess this repository as CONFIRMED {who}{camp} activity.",
         "probable": f"Attribution: we assess this repository as PROBABLE {who}{camp} activity.",
