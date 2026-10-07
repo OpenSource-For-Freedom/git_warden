@@ -90,6 +90,43 @@ _RULES: dict[str, list[tuple[str, str, re.Pattern]]] = {
             r"|0xbe037400670fbf1c32364f762975908dc43eeb38759263e7dfcdabc76380811e"
             r"|0x3f0e5781d0855fb460661ac63257376db1941b2bb522499e4757ecb3ebd5dce3"
             r"|2\[gWfGj;<:-93Z\^C|m6:tTh\^D\)cBz\?NM\]")),
+        # GlassWorm / ForceMemo (Koi, Aikido, StepSecurity, Socket; IOC set from
+        # afine-com/glassworm-hunter 2026-04-05): the invisible payload itself (a
+        # long run of Unicode variation selectors, which no text needs more than
+        # one of in a row), its decoder (codePointAt arithmetic on both selector
+        # ranges feeding eval/Function), the Solana dead-drop wallets, the
+        # ForceMemo Python marker variable, the loader AES key and the C2 IPs.
+        ("invisible-unicode-payload", "any", re.compile(
+            "[\ufe00-\ufe0f\U000e0100-\U000e01ef]{64,}")),
+        ("glassworm-ioc", "any", re.compile(
+            r"codePointAt[^\n]{0,300}0x(?:fe00|e0100)[^\n]{0,300}0x(?:fe00|e0100)"
+            r"[^\n]{0,300}\b(?:eval|Function)\s*\("
+            r"|\b(?:28PKnu7RzizxBzFPoLp69HLXp9bJL3JFtT2s5QzHsEA2"
+            r"|BjVeAjPrSKFiingBn4vZvghsGj9KCE8AJVtbc9S8o8SC"
+            r"|6YGcuyFRJKZtcaYCCFba9fScNUvPkGXodXE1mJiSzqDJ"
+            r"|G2YxRa6wt1qePMwfJzdXZG62ej4qaTC7YURzuh2Lwd3t"
+            r"|DSRUBTziADDHSik7WQvSMjvwCHFsbsThrbbjWMoJPUiW"
+            r"|lzcdrtfxyqiplpd|wDO6YyTm6DL0T0zJ0SXhUql5Mo0pdlSz)\b"
+            r"|(?<![\d.])(?:217\.69\.3\.218|199\.247\.10\.166|217\.69\.13\.229"
+            r"|45\.76\.45\.151|45\.32\.151\.157|107\.191\.62\.170|140\.82\.52\.31"
+            r"|199\.247\.13\.106|104\.238\.191\.54|108\.61\.208\.161|45\.32\.150\.251"
+            r"|217\.69\.11\.60|70\.34\.242\.255|217\.69\.3\.152|45\.32\.150\.97"
+            r"|217\.69\.11\.57|217\.69\.11\.99|217\.69\.0\.159|45\.76\.44\.240"
+            r"|45\.150\.34\.158)(?![\d.])", re.I)),
+        # Shai-Hulud (Sep 2025), Sha1-Hulud 2.0 (Nov 2025) and TeamPCP's Mini
+        # Shai-Hulud (Apr-May 2026; copyleftdev/mini-shai-hulud-dragnet, IC3
+        # FLASH-20260702-01): the worm's own banner strings, its exfil webhook,
+        # rogue-runner name, payload file names inside a package hook, its C2
+        # domains and IPs, and its scramble salt.
+        ("shai-hulud-ioc", "any", re.compile(
+            r"Sha1-Hulud: The Second Coming|A Mini Shai-Hulud has Appeared"
+            r"|LongLiveTheResistanceAgainstMachines|Exiting as russian language detected!"
+            r"|webhook\.site/bb8ca5f6-4175-45d2-b042-fc9ebb8170b7|\bSHA1HULUD\b"
+            r"|shai-hulud-workflow\.yml|\bctf-scramble-v2\b"
+            r"|\b(?:audit\.checkmarx\.cx|api\.masscan\.cloud|git-tanstack\.com)\b"
+            r"|(?<![\d.])(?:94\.154\.172\.43|83\.142\.209\.11|83\.142\.209\.194"
+            r"|45\.148\.10\.212)(?![\d.])"
+            r"|\bnode\s+(?:setup_bun|bun_environment)\.js\b")),
     ],
     # PolinRider's propagation script: rewinds the Windows clock to the last
     # commit's time, amends the commit with --no-verify and force-pushes, so the
@@ -252,7 +289,8 @@ def _is_minified(name: str) -> bool:
 _MC_RULES = {"mc-session-token", "mc-launcher-accounts"}
 # Rules that are detection DATA inside detector code (the wallet-store list is
 # exactly what an anti-stealer scanner looks for, too).
-_DETECTOR_DATA_RULES = _MC_RULES | {"wallet-theft", "polinrider-loader"}
+_DETECTOR_DATA_RULES = _MC_RULES | {"wallet-theft", "polinrider-loader", "glassworm-ioc",
+                                    "shai-hulud-ioc", "invisible-unicode-payload"}
 _DETECTOR_DIRS = {"scan", "scanner", "scanners", "scanning", "detect", "detection", "detector",
                   "detectors", "triage", "analysis", "analyzer", "analyzers",
                   "heuristics", "antirat", "anti-rat", "antimalware", "antivirus"}
@@ -314,6 +352,29 @@ def _fake_font_finding(path: Path, rel: str) -> BashFinding | None:
                        f"not a font: script text in a font file | {snippet}"[:200])
 
 
+_CI_EXT = {".yml", ".yaml"}
+
+
+def _scan_signatures_only(path: Path, root: Path, repo_name: str | None) -> list[BashFinding]:
+    """Known-malware fingerprints in a CI workflow (Shai-Hulud plants its own)."""
+    rel = str(path.relative_to(root)).replace("\\", "/")
+    if is_detector_repo(repo_name) or _is_detector_path(rel):
+        return []
+    try:
+        if path.stat().st_size > _MAX_BYTES:
+            return []
+        text = path.read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        return []
+    out = []
+    for lineno, line in enumerate(text.splitlines(), 1):
+        for rule_name, _lang, pattern in _RULES["malware_signature"]:
+            if pattern.search(line):
+                out.append(BashFinding(rel, lineno, "malware_signature", rule_name,
+                                       line.strip()[:200]))
+    return out
+
+
 def scan_content(root, repo_name: str | None = None) -> list[BashFinding]:
     """Scan first-party source files for obfuscation / exec / exfil. Static only."""
     root = Path(root)
@@ -328,6 +389,10 @@ def scan_content(root, repo_name: str | None = None) -> list[BashFinding]:
             fake = _fake_font_finding(path, rel)
             if fake:
                 findings.append(fake)
+            continue
+        if suffix in _CI_EXT:
+            if ".github" in path.parts or "workflows" in path.parts:
+                findings.extend(_scan_signatures_only(path, root, repo_name))
             continue
         if suffix not in _SOURCE_EXT or _is_minified(path.name.lower()):
             continue
