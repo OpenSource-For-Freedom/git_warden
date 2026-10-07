@@ -244,3 +244,14 @@ def test_joint_hunt_submissions_survive_a_later_warden_export(tmp_path):
     assert rows["repository:evil/dropper"]["osm_threat_id"] == "threat-123"
     assert rows["repository:joint/only"]["osm_status"] == "submitted"
     assert rows["repository:joint/only"]["osm_threat_id"] == "threat-456"
+
+
+def test_extension_report_is_short_and_leads_with_the_payload(db, tmp_path):
+    report, _ = _run(db, tmp_path, dry_run=True)
+    body = report["previews"][0]["report"]
+    td, pd = body["threat_description"], body["payload_description"]
+    assert td.startswith("Dropper in VS Code extension prettier-team.prettier-vscode 1.0.1")
+    assert pd.splitlines()[0] == "Malicious payload found in: extension/entry_dist/extension.js"
+    assert "- extension/entry_dist/extension.js:3: Node child_process runs a download" in pd
+    assert "- Attacker hosts: evil-cdn.example" in pd
+    assert len(td) < 600 and len(pd) < 400

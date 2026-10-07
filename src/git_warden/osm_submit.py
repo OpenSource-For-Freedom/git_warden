@@ -199,6 +199,8 @@ _WHY_BY_RULE = {
     "py-decode-exec": "decodes a hidden blob and executes it with exec()",
     "fromcharcode-blob": "rebuilds code from character codes to hide it, then runs it",
     "jvm-decode-defineclass": "decodes a hidden Java class and defines it at runtime",
+    "wallet-theft": "reads crypto wallet stores or wallet-extension vaults "
+                    "(Exodus, Electrum, MetaMask and others)",
     "keyfiles": "reads SSH private keys or cloud credential files",
     "ssh-keys": "reads SSH private keys",
     "cloud-creds": "reads cloud provider credentials",
@@ -274,7 +276,8 @@ def _threat_class(bash: list[dict]) -> str:
     """One phrase naming what the malware is, from every rule that fired."""
     rules = {b.get("rule") for b in bash}
     cats = {b.get("category") for b in bash}
-    wallets = any(_WALLET_RE.search(b.get("snippet") or "") for b in bash)
+    wallets = "wallet-theft" in rules or any(
+        _WALLET_RE.search(b.get("snippet") or "") for b in bash)
     if "vscode-autorun" in rules:
         kind = "VS Code autorun dropper"
     elif cats & _CRED_CATS and cats & _EXFIL_CATS:
