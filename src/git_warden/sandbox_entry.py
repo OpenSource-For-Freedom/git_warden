@@ -45,6 +45,8 @@ def _result_to_dict(result) -> dict:
         },
         "learned_signatures": list(result.learned_signatures),
         "package_spread": list(result.package_spread),
+        "egress": result.egress,
+        "egress_findings": [bf(f) for f in result.egress_findings],
     }
 
 

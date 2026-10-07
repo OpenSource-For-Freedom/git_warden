@@ -289,6 +289,38 @@ def _prose_hosts(bash: list[dict]) -> list[str]:
     return [h for h in hosts if not any(o != h and o.startswith(h) for o in hosts)]
 
 
+def _egress(payload: dict, bash: list[dict]) -> tuple[str, list[dict]]:
+    """The outbound channel and the findings that show it (egress schema).
+
+    Stored at scan time; older findings are classified from their evidence.
+    """
+    from .scanning.egress import classify
+    if payload.get("egress"):
+        return payload["egress"], list(payload.get("egress_findings") or [])
+    return classify(bash, payload.get("bash_findings") or [])
+
+
+def _egress_line(channel: str, shown: list[dict], bash: list[dict]) -> str:
+    """One sentence, source -> sink: what is taken or run, and where it goes."""
+    where = ", ".join(dict.fromkeys(_loc(f) for f in shown[:2])) or "see evidence"
+    hosts = _prose_hosts(shown or bash)
+    to = f" {', '.join(hosts[:2])}" if hosts else ""
+    if channel == "exfil":
+        sources = [f for f in bash if f.get("category") in
+                   ("credential_access", "credential_harvest")]
+        src = (f"reads credentials ({_loc(sources[0])}) and " if sources
+               and _loc(sources[0]) not in where else "")
+        return f"Outbound: exfil. It {src}sends data out ({where})."
+    if channel == "c2":
+        return f"Outbound: C2. It opens a remote shell to{to or ' an attacker host'} ({where})."
+    if channel == "fetch-run":
+        return (f"Outbound: fetch-and-run. It downloads code from{to or ' a remote host'} "
+                f"and executes it ({where}).")
+    if channel == "family":
+        return f"Outbound: documented for this malware family ({where})."
+    return ""
+
+
 def _threat_class(bash: list[dict]) -> str:
     """One phrase naming what the malware is, from every rule that fired."""
     rules = {b.get("rule") for b in bash}
@@ -553,6 +585,10 @@ def _threat_description(row, assessment=None, campaign_ctx: str = "") -> str:
         head += f". Payload in {', '.join(files[:3])}" + (
             f" and {len(files) - 3} more files" if len(files) > 3 else "")
     lines = [head + "."]
+    channel, shown = _egress(payload, bash)
+    egress_line = _egress_line(channel, shown, bash)
+    if egress_line:
+        lines.append(egress_line)
 
     if top.get("rule") == "vscode-autorun":
         lines.append("Runs automatically when the folder is opened in VS Code "
@@ -674,6 +710,10 @@ def _payload_description(row) -> str:
     bash = _confirming(payload)
     files = list(dict.fromkeys(b.get("file") for b in bash if b.get("file")))
     lines = [f"Malicious payload found in: {', '.join(files[:5]) or 'see evidence references'}"]
+    channel, shown = _egress(payload, bash)
+    egress_line = _egress_line(channel, shown, bash)
+    if egress_line:
+        lines.append("- " + egress_line)
     lines += _payload_bullets(bash)
     hosts = _prose_hosts(bash)
     if hosts:
