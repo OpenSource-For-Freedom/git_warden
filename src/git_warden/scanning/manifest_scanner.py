@@ -158,6 +158,8 @@ def _declared_deps(name: str, text: str) -> dict[str, str]:
             data = json.loads(text or "{}") or {}
         except ValueError:
             return deps
+        if not isinstance(data, dict):
+            return deps  # a JSON array/string named package.json declares nothing
         for key in ("dependencies", "devDependencies", "optionalDependencies",
                     "peerDependencies"):
             section = data.get(key)
@@ -174,6 +176,18 @@ def _declared_deps(name: str, text: str) -> dict[str, str]:
             if m:
                 deps[m.group(1)] = m.group(2) or ""
     return deps
+
+
+# npm packages PUBLISHED by the PolinRider operator (OSM, github.com/OpenSourceMalware/
+# PolinRider, "Malicious NPM Packages"): Tailwind/PostCSS lookalikes from the deleted
+# allavin and blackedward accounts. Every release is malicious, so unlike the
+# OSM-compromised feed above (a legit package hijacked for ONE version) any declared
+# version confirms. tailwindcss-style-animate is the ShoeVista take-home lure's dep.
+_CAMPAIGN_PACKAGES = frozenset({
+    "tailwindcss-style-animate", "tailwind-mainanimation", "tailwind-autoanimation",
+    "tailwind-animationbased", "tailwindcss-typography-style",
+    "tailwindcss-style-modify", "tailwindcss-animate-style",
+})
 
 
 def scan_manifests(root, malicious_packages=None) -> list[BashFinding]:
@@ -225,6 +239,12 @@ def scan_manifests(root, malicious_packages=None) -> list[BashFinding]:
                         f"{dep}@{declared} (OSM-compromised release)"[:120]))
 
         if name == "package.json":
+            for dep, spec in _declared_deps("package.json", text).items():
+                # npm swaps a removed package for an inert 0.0.1-security placeholder.
+                if dep.lower() in _CAMPAIGN_PACKAGES and "security" not in (spec or ""):
+                    findings.append(BashFinding(
+                        rel, 0, "malicious_dependency", "campaign-package",
+                        f"{dep}@{spec or '*'} (PolinRider-published package)"[:120]))
             try:
                 pkg = json.loads(text or "{}")
             except ValueError:
