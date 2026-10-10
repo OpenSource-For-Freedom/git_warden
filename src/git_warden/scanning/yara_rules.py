@@ -38,7 +38,7 @@ rule polinrider_payload {
         any of ($marker_*) or
         ($global_bang and ($seed1_v1 or $varname_v1)) or
         ($global_V    and ($seed1_v2 or $varname_v2)) or
-        ($global_r and $global_m and (any of ($seed1_*)))
+        ($global_r and $global_m and (any of ($seed*)))
 }
 """
 
