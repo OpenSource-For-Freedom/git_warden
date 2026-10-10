@@ -430,6 +430,7 @@ _YARA_PAYLOAD_EXT = frozenset({
 
 def _yara_payload_hits(stdout: str, root: Path) -> list[str]:
     from .bash_scanner import is_ignored_path
+    from .content_scanner import _is_detector_path
 
     hits = []
     for line in stdout.splitlines():
@@ -441,7 +442,10 @@ def _yara_payload_hits(stdout: str, root: Path) -> list[str]:
             rel = path.resolve().relative_to(Path(root).resolve())
         except ValueError:
             continue
-        if path.suffix.lower() in _YARA_PAYLOAD_EXT and not is_ignored_path(rel):
+        # The rulesets are family fingerprints, which inside detector code are
+        # detection data, as they are for the line scanner (content_scanner).
+        if (path.suffix.lower() in _YARA_PAYLOAD_EXT and not is_ignored_path(rel)
+                and not _is_detector_path(rel.as_posix())):
             hits.append(str(rel))
     return hits
 
