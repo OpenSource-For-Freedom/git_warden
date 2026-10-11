@@ -1,0 +1,108 @@
+{
+  "finding": {
+    "key": "repository:neotree/security-ci",
+    "kind": "repository",
+    "family": "",
+    "id": "neotree/security-ci",
+    "url": "https://github.com/neotree/security-ci",
+    "registry": "github",
+    "owner": "neotree",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 4,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "enumeration/host-recon; code_execution/py-system",
+    "evidence_locations": ".github/workflows/security-ci.yml:402; .github/workflows/pr-malware-gate.yml:113; security/scan_repo.py:340; security/scan_repo.py:440; security/run_project_checks.py:105; security/run_project_checks.py:114; security/run_project_checks.py:120; security/run_project_checks.py:287",
+    "c2_hosts": "",
+    "iocs": ".github/workflows/security-ci.yml",
+    "matched_signatures": "\"Cot%3t=shtP\"; e9b53a7c-2342-4b15-b02d-bd8b8f6a03f9; \"default-configuration.vercel.app\"",
+    "reasons": "Shares a confirmed-malware code signature ['\"Cot%3t=shtP\"', 'e9b53a7c-2342-4b15-b02d-bd8b8f6a03f9', '\"default-configuration.vercel.app\"'] | Tier-2 confirmed (bash score 4)",
+    "osm_status": "submitted",
+    "osm_threat_id": "e403d9d8-3b88-4a22-bfdb-8c6b2f91191c",
+    "first_seen": "hunt-20261011T211813Z",
+    "last_seen": "hunt-20261011T211813Z",
+    "evidence_file": "repositories/neotree_security-ci.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": ".github/workflows/security-ci.yml",
+      "line": 402,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "id: osvscan"
+    },
+    {
+      "file": ".github/workflows/pr-malware-gate.yml",
+      "line": 113,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "id: grant"
+    },
+    {
+      "file": "security/scan_repo.py",
+      "line": 340,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "proc = subprocess.run("
+    },
+    {
+      "file": "security/scan_repo.py",
+      "line": 440,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "proc = subprocess.run("
+    },
+    {
+      "file": "security/run_project_checks.py",
+      "line": 105,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "proc = subprocess.run(cmd, cwd=cwd, env=env, check=False)"
+    },
+    {
+      "file": "security/run_project_checks.py",
+      "line": 114,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "proc = subprocess.run(cmd, cwd=cwd, env=env, check=False)"
+    },
+    {
+      "file": "security/run_project_checks.py",
+      "line": 120,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "proc = subprocess.run(cmd, cwd=cwd, env=env, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)"
+    },
+    {
+      "file": "security/run_project_checks.py",
+      "line": 287,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "proc = subprocess.run(cmd, cwd=repo, env=env, check=False)"
+    }
+  ],
+  "commit_sha": "8c4c9fab9f6f6c1c9bdac7ce29eb1e34506292d6",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/neotree/security-ci",
+    "version_info": "all",
+    "threat_description": "Malware. Payload in .github/workflows/security-ci.yml, .github/workflows/pr-malware-gate.yml.\nOutbound: documented for this malware family (see evidence).\nThe same dropper is planted in 2 directories.\nFound by GitHub code search for a confirmed malware signature: \"Cot%3t=shtP\"; e9b53a7c-2342-4b15-b02d-bd8b8f6a03f9; \"default-configuration.vercel.app\".\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: .github/workflows/security-ci.yml, .github/workflows/pr-malware-gate.yml\n- Outbound: documented for this malware family (see evidence).\n- .github/workflows/security-ci.yml:402: matches malware behavior (+1 more)",
+    "publisher": "neotree",
+    "severity_level": "high",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "malware"
+    ],
+    "evidence_references": "https://github.com/neotree/security-ci/blob/8c4c9fab9f6f6c1c9bdac7ce29eb1e34506292d6/.github/workflows/security-ci.yml#L402\nhttps://github.com/neotree/security-ci/blob/8c4c9fab9f6f6c1c9bdac7ce29eb1e34506292d6/.github/workflows/pr-malware-gate.yml#L113\nhttps://github.com/neotree/security-ci/blob/8c4c9fab9f6f6c1c9bdac7ce29eb1e34506292d6/security/scan_repo.py#L340\nhttps://github.com/neotree/security-ci/blob/8c4c9fab9f6f6c1c9bdac7ce29eb1e34506292d6/security/scan_repo.py#L440\nhttps://github.com/neotree/security-ci/blob/8c4c9fab9f6f6c1c9bdac7ce29eb1e34506292d6/security/run_project_checks.py#L105\nhttps://github.com/neotree/security-ci/blob/8c4c9fab9f6f6c1c9bdac7ce29eb1e34506292d6/security/run_project_checks.py#L114\nhttps://github.com/neotree/security-ci/blob/8c4c9fab9f6f6c1c9bdac7ce29eb1e34506292d6/security/run_project_checks.py#L120\nhttps://github.com/neotree/security-ci/blob/8c4c9fab9f6f6c1c9bdac7ce29eb1e34506292d6/security/run_project_checks.py#L287",
+    "verified_iocs": ".github/workflows/security-ci.yml",
+    "contributors": [],
+    "first_seen": "2026-10-11T21:18:13Z",
+    "last_seen": "2026-10-11T21:18:13Z"
+  }
+}

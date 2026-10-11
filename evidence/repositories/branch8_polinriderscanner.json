@@ -1,0 +1,171 @@
+{
+  "finding": {
+    "key": "repository:branch8/polinriderscanner",
+    "kind": "repository",
+    "family": "",
+    "id": "branch8/polinriderscanner",
+    "url": "https://github.com/branch8/PolinRiderScanner",
+    "registry": "github",
+    "owner": "branch8",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 16,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "credential_harvest/env-token-grab; persistence/cron; enumeration/host-recon; network_exfil/telegram-bot",
+    "evidence_locations": "polinrider-scan-org.sh:1272; polinrider-scan-org-history.sh:1165; polinrider-scan-local.sh:853; polinrider-scan-local.sh:1537; polinrider-scan-local.sh:1540; polinrider-scan-local.sh:1543; polinrider-scan-local.sh:1547; polinrider-scan-local.sh:1550; polinrider-scan-local.sh:1557; polinrider-scan-local.sh:1563; polinrider-scan-local.sh:2093; polinrider-scan-local.sh:2094; polinrider-scan-local.sh:2263; .github/workflows/update-latest-release.yml:21; .github/workflows/update-latest-release.yml:50; polinrider-scanner-windows.ps1:2074; polinrider-scan-local-windows.ps1:2177",
+    "c2_hosts": "api.telegram.org",
+    "iocs": "api.telegram.org; curl|bash; https://api.telegram.org/bot$TG_BOT_TOKEN; polinrider-scan-org.sh",
+    "matched_signatures": "\"Cot%3t=shtP\"; \"rmcej%otb%\"; \"global['_V']\" \"8-st\"; e9b53a7c-2342-4b15-b02d-bd8b8f6a03f9; \"default-configuration.vercel.app\"; \"vscode-settings-bootstrap.vercel.app\"; \"vscode-settings-config.vercel.app\"; \"vscode-bootstrapper.vercel.app\"; \"vscode-load-config.vercel.app\"",
+    "reasons": "Shares a confirmed-malware code signature ['\"Cot%3t=shtP\"', '\"rmcej%otb%\"', '\"global[\\'_V\\']\" \"8-st\"', 'e9b53a7c-2342-4b15-b02d-bd8b8f6a03f9', '\"default-configuration.vercel.app\"', '\"vscode-settings-bootstrap.vercel.app\"', '\"vscode-settings-config.vercel.app\"', '\"vscode-bootstrapper.vercel.app\"', '\"vscode-load-config.vercel.app\"'] | Tier-2 confirmed (bash score 11)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20261011T211813Z",
+    "last_seen": "hunt-20261011T211813Z",
+    "evidence_file": "repositories/branch8_polinriderscanner.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "polinrider-scan-org.sh",
+      "line": 1272,
+      "category": "credential_harvest",
+      "rule": "env-token-grab",
+      "snippet": "git -c grep.threads=4 -C \"$bare_dir\" grep -liE '(ssh_key|private_key|api_key|secret|token|password|credential)' $all_refs -- \\"
+    },
+    {
+      "file": "polinrider-scan-org-history.sh",
+      "line": 1165,
+      "category": "credential_harvest",
+      "rule": "env-token-grab",
+      "snippet": "git -C \"$bare_dir\" grep -liE '(ssh_key|private_key|api_key|secret|token|password|credential)' $all_refs -- \\"
+    },
+    {
+      "file": "polinrider-scan-local.sh",
+      "line": 853,
+      "category": "credential_harvest",
+      "rule": "env-token-grab",
+      "snippet": "if grep -qiE '(ssh_key|private_key|api_key|secret|token|password|credential)' \"$ide_file\" 2>/dev/null; then"
+    },
+    {
+      "file": "polinrider-scan-local.sh",
+      "line": 1537,
+      "category": "persistence",
+      "rule": "cron",
+      "snippet": "# 4. Crontab"
+    },
+    {
+      "file": "polinrider-scan-local.sh",
+      "line": 1540,
+      "category": "persistence",
+      "rule": "cron",
+      "snippet": "print_section \"CRONTAB\" \"Checking scheduled tasks...\""
+    },
+    {
+      "file": "polinrider-scan-local.sh",
+      "line": 1543,
+      "category": "persistence",
+      "rule": "cron",
+      "snippet": "cron_content=$(crontab -l 2>/dev/null) || true"
+    },
+    {
+      "file": "polinrider-scan-local.sh",
+      "line": 1547,
+      "category": "persistence",
+      "rule": "cron",
+      "snippet": "add_system_finding \"CRONTAB\" \"Cron job with curl|bash pattern detected\""
+    },
+    {
+      "file": "polinrider-scan-local.sh",
+      "line": 1550,
+      "category": "persistence",
+      "rule": "cron",
+      "snippet": "add_system_finding \"CRONTAB\" \"Cron job executing node -e (potential payload)\""
+    },
+    {
+      "file": "polinrider-scan-local.sh",
+      "line": 1557,
+      "category": "persistence",
+      "rule": "cron",
+      "snippet": "add_system_finding \"CRONTAB\" \"Cron job referencing C2 domain: ${domain}\""
+    },
+    {
+      "file": "polinrider-scan-local.sh",
+      "line": 1563,
+      "category": "persistence",
+      "rule": "cron",
+      "snippet": "log_verbose \"Crontab scan complete\""
+    },
+    {
+      "file": "polinrider-scan-local.sh",
+      "line": 2093,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "printf \"  • Malicious VS Code ext    : code --uninstall-extension <id>\\n\""
+    },
+    {
+      "file": "polinrider-scan-local.sh",
+      "line": 2094,
+      "category": "persistence",
+      "rule": "cron",
+      "snippet": "printf \"  • Crontab entry            : crontab -e\\n\""
+    },
+    {
+      "file": "polinrider-scan-local.sh",
+      "line": 2263,
+      "category": "persistence",
+      "rule": "cron",
+      "snippet": "_run_fs_module \"Crontab\"            scan_crontab"
+    },
+    {
+      "file": ".github/workflows/update-latest-release.yml",
+      "line": 21,
+      "category": "credential_harvest",
+      "rule": "env-token-grab",
+      "snippet": "GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}"
+    },
+    {
+      "file": ".github/workflows/update-latest-release.yml",
+      "line": 50,
+      "category": "credential_harvest",
+      "rule": "env-token-grab",
+      "snippet": "GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}"
+    },
+    {
+      "file": "polinrider-scanner-windows.ps1",
+      "line": 2074,
+      "category": "network_exfil",
+      "rule": "telegram-bot",
+      "snippet": "$TG_API_BASE  = \"https://api.telegram.org/bot$TG_BOT_TOKEN\""
+    },
+    {
+      "file": "polinrider-scan-local-windows.ps1",
+      "line": 2177,
+      "category": "network_exfil",
+      "rule": "telegram-bot",
+      "snippet": "$TG_API_BASE  = \"https://api.telegram.org/bot$TG_BOT_TOKEN\""
+    }
+  ],
+  "commit_sha": "743c8379317d1e4a9822484dad4fc65d4f5267d1",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/branch8/polinriderscanner",
+    "version_info": "all",
+    "threat_description": "Malware. Payload in polinrider-scan-org.sh, polinrider-scan-org-history.sh, polinrider-scan-local.sh and 1 more files.\nOutbound: documented for this malware family (see evidence).\nThe same dropper is planted in 4 directories.\nFound by GitHub code search for a confirmed malware signature: \"Cot%3t=shtP\"; \"rmcej%otb%\"; \"global['_V']\" \"8-st\"; e9b53a7c-2342-4b15-b02d-bd8b8f6a03f9; \"default-configuration.vercel.app\".\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: polinrider-scan-org.sh, polinrider-scan-org-history.sh, polinrider-scan-local.sh, .github/workflows/update-latest-release.yml\n- Outbound: documented for this malware family (see evidence).\n- polinrider-scan-org.sh:1272: collects tokens from environment variables (+4 more)",
+    "publisher": "branch8",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "malware"
+    ],
+    "evidence_references": "https://github.com/branch8/polinriderscanner/blob/743c8379317d1e4a9822484dad4fc65d4f5267d1/polinrider-scan-org.sh#L1272\nhttps://github.com/branch8/polinriderscanner/blob/743c8379317d1e4a9822484dad4fc65d4f5267d1/polinrider-scan-org-history.sh#L1165\nhttps://github.com/branch8/polinriderscanner/blob/743c8379317d1e4a9822484dad4fc65d4f5267d1/polinrider-scan-local.sh#L853\nhttps://github.com/branch8/polinriderscanner/blob/743c8379317d1e4a9822484dad4fc65d4f5267d1/polinrider-scan-local.sh#L1537\nhttps://github.com/branch8/polinriderscanner/blob/743c8379317d1e4a9822484dad4fc65d4f5267d1/polinrider-scan-local.sh#L1540\nhttps://github.com/branch8/polinriderscanner/blob/743c8379317d1e4a9822484dad4fc65d4f5267d1/polinrider-scan-local.sh#L1543\nhttps://github.com/branch8/polinriderscanner/blob/743c8379317d1e4a9822484dad4fc65d4f5267d1/polinrider-scan-local.sh#L1547\nhttps://github.com/branch8/polinriderscanner/blob/743c8379317d1e4a9822484dad4fc65d4f5267d1/polinrider-scan-local.sh#L1550\nhttps://github.com/branch8/polinriderscanner/blob/743c8379317d1e4a9822484dad4fc65d4f5267d1/polinrider-scan-local.sh#L1557\nhttps://github.com/branch8/polinriderscanner/blob/743c8379317d1e4a9822484dad4fc65d4f5267d1/polinrider-scan-local.sh#L1563\nhttps://github.com/branch8/polinriderscanner/blob/743c8379317d1e4a9822484dad4fc65d4f5267d1/polinrider-scan-local.sh#L2093\nhttps://github.com/branch8/polinriderscanner/blob/743c8379317d1e4a9822484dad4fc65d4f5267d1/polinrider-scan-local.sh#L2094\nhttps://github.com/branch8/polinriderscanner/blob/743c8379317d1e4a9822484dad4fc65d4f5267d1/polinrider-scan-local.sh#L2263\nhttps://github.com/branch8/polinriderscanner/blob/743c8379317d1e4a9822484dad4fc65d4f5267d1/.github/workflows/update-latest-release.yml#L21\nhttps://github.com/branch8/polinriderscanner/blob/743c8379317d1e4a9822484dad4fc65d4f5267d1/.github/workflows/update-latest-release.yml#L50",
+    "verified_iocs": "api.telegram.org\ncurl|bash\nhttps://api.telegram.org/bot$TG_BOT_TOKEN\npolinrider-scan-org.sh",
+    "contributors": [],
+    "first_seen": "2026-10-11T21:18:13Z",
+    "last_seen": "2026-10-11T21:18:13Z"
+  }
+}

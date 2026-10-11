@@ -1,0 +1,193 @@
+{
+  "finding": {
+    "key": "repository:ndevu12/stayawakebot",
+    "kind": "repository",
+    "family": "",
+    "id": "ndevu12/stayawakebot",
+    "url": "https://github.com/Ndevu12/stayAwakeBot",
+    "registry": "github",
+    "owner": "ndevu12",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 14,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "malware_signature/shai-hulud-ioc; enumeration/host-recon; credential_harvest/env-token-grab; code_execution/py-system",
+    "evidence_locations": "src/stayawake/bots/security/hygiene/runner.py:174; Dockerfile:108; .github/workflows/stayawake-sentinel.yml:48; .github/workflows/security-sentinel.yml:42; .github/workflows/security-sentinel.yml:45; .github/workflows/release.yml:9; .github/workflows/release.yml:135; .github/workflows/release.yml:158; .github/workflows/release.yml:227; .github/workflows/release.yml:252; .github/workflows/release.yml:255; .github/workflows/image-vuln-drift.yml:48; .github/workflows/docs.yml:248; .github/workflows/docs.yml:254; src/stayawake/utils/procsnap.py:226; src/stayawake/utils/pager.py:47; src/stayawake/utils/notify.py:62; src/stayawake/utils/notify.py:94; src/stayawake/utils/hostdenial.py:64; src/stayawake/utils/hostdenial.py:166",
+    "c2_hosts": "",
+    "iocs": "src/stayawake/bots/security/hygiene/runner.py",
+    "matched_signatures": "SHA1HULUD runs-on; \"node setup_bun.js\" filename:package.json; \"A Mini Shai-Hulud has Appeared\"",
+    "reasons": "Shares a confirmed-malware code signature ['SHA1HULUD runs-on', '\"node setup_bun.js\" filename:package.json', '\"A Mini Shai-Hulud has Appeared\"'] | Tier-2 confirmed (bash score 14)",
+    "osm_status": "submitted",
+    "osm_threat_id": "41fe0662-fa65-4df8-8494-fa133e20b6cb",
+    "first_seen": "hunt-20261011T214533Z",
+    "last_seen": "hunt-20261011T214533Z",
+    "evidence_file": "repositories/ndevu12_stayawakebot.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "src/stayawake/bots/security/hygiene/runner.py",
+      "line": 174,
+      "category": "malware_signature",
+      "rule": "shai-hulud-ioc",
+      "snippet": "\"rotation (reported runner name SHA1HULUD).\","
+    },
+    {
+      "file": "Dockerfile",
+      "line": 108,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "#   docker run --rm --user \"$(id -u):$(id -g)\" -v \"$PWD:/repo\" \\"
+    },
+    {
+      "file": ".github/workflows/stayawake-sentinel.yml",
+      "line": 48,
+      "category": "credential_harvest",
+      "rule": "env-token-grab",
+      "snippet": "GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}"
+    },
+    {
+      "file": ".github/workflows/security-sentinel.yml",
+      "line": 42,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "id: scan"
+    },
+    {
+      "file": ".github/workflows/security-sentinel.yml",
+      "line": 45,
+      "category": "credential_harvest",
+      "rule": "env-token-grab",
+      "snippet": "GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}"
+    },
+    {
+      "file": ".github/workflows/release.yml",
+      "line": 9,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "#     with `id-token: write` and a protected GitHub Environment"
+    },
+    {
+      "file": ".github/workflows/release.yml",
+      "line": 135,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "id-token: write          # OIDC for Trusted Publishing — no API token"
+    },
+    {
+      "file": ".github/workflows/release.yml",
+      "line": 158,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "id-token: write          # OIDC for Trusted Publishing — no API token"
+    },
+    {
+      "file": ".github/workflows/release.yml",
+      "line": 227,
+      "category": "credential_harvest",
+      "rule": "env-token-grab",
+      "snippet": "packages: write          # push to GHCR via the built-in GITHUB_TOKEN — no extra secret"
+    },
+    {
+      "file": ".github/workflows/release.yml",
+      "line": 252,
+      "category": "credential_harvest",
+      "rule": "env-token-grab",
+      "snippet": "password: ${{ secrets.GITHUB_TOKEN }}"
+    },
+    {
+      "file": ".github/workflows/release.yml",
+      "line": 255,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "id: meta"
+    },
+    {
+      "file": ".github/workflows/image-vuln-drift.yml",
+      "line": 48,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "id: scan"
+    },
+    {
+      "file": ".github/workflows/docs.yml",
+      "line": 248,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "id-token: write     # OIDC verification of the deployment's origin"
+    },
+    {
+      "file": ".github/workflows/docs.yml",
+      "line": 254,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "id: deployment"
+    },
+    {
+      "file": "src/stayawake/utils/procsnap.py",
+      "line": 226,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "return subprocess.run([binary, *args], capture_output=True, text=True, timeout=_PS_TIMEOUT,"
+    },
+    {
+      "file": "src/stayawake/utils/pager.py",
+      "line": 47,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "proc = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, text=True)"
+    },
+    {
+      "file": "src/stayawake/utils/notify.py",
+      "line": 62,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "done = (self._run or subprocess.run)(argv, capture_output=True,"
+    },
+    {
+      "file": "src/stayawake/utils/notify.py",
+      "line": 94,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "done = (self._run or subprocess.run)(argv, capture_output=True, text=True,"
+    },
+    {
+      "file": "src/stayawake/utils/hostdenial.py",
+      "line": 64,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "r = subprocess.run([tool, \"-d\", \"--\", str(path)],"
+    },
+    {
+      "file": "src/stayawake/utils/hostdenial.py",
+      "line": 166,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "r = subprocess.run([tool, \"-i\", \"--\", str(path)],"
+    }
+  ],
+  "commit_sha": "fe734ddf40a197e6ca9b2f80d2dd7e98b70d7fdc",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/ndevu12/stayawakebot",
+    "version_info": "all",
+    "threat_description": "Shai-Hulud worm (self-propagating credential stealer). Payload in src/stayawake/bots/security/hygiene/runner.py.\nOutbound: documented for this malware family (src/stayawake/bots/security/hygiene/runner.py:174).\nFound by GitHub code search for a confirmed malware signature: SHA1HULUD runs-on; \"node setup_bun.js\" filename:package.json; \"A Mini Shai-Hulud has Appeared\".\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: src/stayawake/bots/security/hygiene/runner.py\n- Outbound: documented for this malware family (src/stayawake/bots/security/hygiene/runner.py:174).\n- src/stayawake/bots/security/hygiene/runner.py:174: Shai-Hulud worm fingerprint (banner string, exfil webhook, rogue runner, Bun stager hook or C2)",
+    "publisher": "ndevu12",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "shai-hulud",
+      "malware"
+    ],
+    "evidence_references": "https://github.com/ndevu12/stayawakebot/blob/fe734ddf40a197e6ca9b2f80d2dd7e98b70d7fdc/src/stayawake/bots/security/hygiene/runner.py#L174\nhttps://github.com/ndevu12/stayawakebot/blob/fe734ddf40a197e6ca9b2f80d2dd7e98b70d7fdc/Dockerfile#L108\nhttps://github.com/ndevu12/stayawakebot/blob/fe734ddf40a197e6ca9b2f80d2dd7e98b70d7fdc/.github/workflows/stayawake-sentinel.yml#L48\nhttps://github.com/ndevu12/stayawakebot/blob/fe734ddf40a197e6ca9b2f80d2dd7e98b70d7fdc/.github/workflows/security-sentinel.yml#L42\nhttps://github.com/ndevu12/stayawakebot/blob/fe734ddf40a197e6ca9b2f80d2dd7e98b70d7fdc/.github/workflows/security-sentinel.yml#L45\nhttps://github.com/ndevu12/stayawakebot/blob/fe734ddf40a197e6ca9b2f80d2dd7e98b70d7fdc/.github/workflows/release.yml#L9\nhttps://github.com/ndevu12/stayawakebot/blob/fe734ddf40a197e6ca9b2f80d2dd7e98b70d7fdc/.github/workflows/release.yml#L135\nhttps://github.com/ndevu12/stayawakebot/blob/fe734ddf40a197e6ca9b2f80d2dd7e98b70d7fdc/.github/workflows/release.yml#L158\nhttps://github.com/ndevu12/stayawakebot/blob/fe734ddf40a197e6ca9b2f80d2dd7e98b70d7fdc/.github/workflows/release.yml#L227\nhttps://github.com/ndevu12/stayawakebot/blob/fe734ddf40a197e6ca9b2f80d2dd7e98b70d7fdc/.github/workflows/release.yml#L252\nhttps://github.com/ndevu12/stayawakebot/blob/fe734ddf40a197e6ca9b2f80d2dd7e98b70d7fdc/.github/workflows/release.yml#L255\nhttps://github.com/ndevu12/stayawakebot/blob/fe734ddf40a197e6ca9b2f80d2dd7e98b70d7fdc/.github/workflows/image-vuln-drift.yml#L48\nhttps://github.com/ndevu12/stayawakebot/blob/fe734ddf40a197e6ca9b2f80d2dd7e98b70d7fdc/.github/workflows/docs.yml#L248\nhttps://github.com/ndevu12/stayawakebot/blob/fe734ddf40a197e6ca9b2f80d2dd7e98b70d7fdc/.github/workflows/docs.yml#L254\nhttps://github.com/ndevu12/stayawakebot/blob/fe734ddf40a197e6ca9b2f80d2dd7e98b70d7fdc/src/stayawake/utils/procsnap.py#L226",
+    "verified_iocs": "src/stayawake/bots/security/hygiene/runner.py",
+    "contributors": [],
+    "first_seen": "2026-10-11T21:45:33Z",
+    "last_seen": "2026-10-11T21:45:33Z"
+  }
+}

