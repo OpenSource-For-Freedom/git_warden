@@ -165,14 +165,39 @@
     "seen_in_run": "hunt-20260925T173032Z"
   },
   {
+    "key": "repository:muhammad-sharique/insta-download",
+    "threat_id": "b45271a2-bfc4-4651-8f75-d80822928be0",
+    "seen_in_run": "hunt-20261011T211813Z"
+  },
+  {
     "key": "repository:multi-too/luna-graber-main",
     "threat_id": "be9694c6-e3c3-4b70-8646-b0c4227470d4",
     "seen_in_run": "hunt-20261004T210412Z"
   },
   {
+    "key": "repository:ndevu12/stayawakebot",
+    "threat_id": "41fe0662-fa65-4df8-8494-fa133e20b6cb",
+    "seen_in_run": "hunt-20261011T214533Z"
+  },
+  {
+    "key": "repository:neotree/security-ci",
+    "threat_id": "e403d9d8-3b88-4a22-bfdb-8c6b2f91191c",
+    "seen_in_run": "hunt-20261011T211813Z"
+  },
+  {
+    "key": "repository:nxvh1337/pua-encoder",
+    "threat_id": "af2bbe85-a671-48d3-bc87-6aa4bbd9e909",
+    "seen_in_run": "hunt-20261011T214533Z"
+  },
+  {
     "key": "repository:prahaladbelavadi/coinlocatordemo",
     "threat_id": "65835d93-060a-49fe-985d-01da22f2fcb7",
     "seen_in_run": "hunt-20260925T173032Z"
+  },
+  {
+    "key": "repository:prodkt-cloud/prodkt-frontend-api",
+    "threat_id": "56c9cd3f-7270-40ed-88d2-b2b41332fbf4",
+    "seen_in_run": "hunt-20261011T214533Z"
   },
   {
     "key": "repository:sabbirnde/nava",
@@ -218,6 +243,11 @@
     "key": "repository:vasillax12/vasillaxsms",
     "threat_id": "b12b240e-d0f8-482f-a76c-9c3dbe05ff6c",
     "seen_in_run": "hunt-20261004T210412Z"
+  },
+  {
+    "key": "repository:vocion/vocion-core",
+    "threat_id": "128a15c1-c61e-4d6d-8bb4-7f85101cc232",
+    "seen_in_run": "hunt-20261011T211813Z"
   },
   {
     "key": "repository:yaroslav781/drainer",

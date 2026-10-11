@@ -1,0 +1,198 @@
+{
+  "finding": {
+    "key": "repository:vocion/vocion-core",
+    "kind": "repository",
+    "family": "",
+    "id": "vocion/vocion-core",
+    "url": "https://github.com/vocion/vocion-core",
+    "registry": "github",
+    "owner": "vocion",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 22,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "malware_signature/polinrider-loader; enumeration/host-recon; credential_harvest/env-token-grab; persistence/systemd",
+    "evidence_locations": "scripts/check-config-integrity.mjs:54; scripts/check-config-integrity.mjs:55; scripts/dev-preview.sh:15; scripts/dev-preview.sh:17; scripts/dev-preview.sh:55; packages/runner/entrypoint.sh:13; packages/runner/entrypoint.sh:14; packages/core/Dockerfile:152; packages/core/Dockerfile:156; packages/core/Dockerfile:196; packages/runner/hooks/guard-bash.sh:33; packages/core/templates/workspaces/larkfield-support/workflows/ticket-reply-approval/workflow.yaml:14; packages/core/templates/workspaces/larkfield-support/workflows/credit-approval/workflow.yaml:15; infra/terraform/user-data.sh:71; infra/aws/bootstrap.sh:43; infra/agentcore/smoke-invoke.sh:44; infra/agentcore/provision.sh:103; infra/agentcore/provision.sh:110; infra/agentcore/provision.sh:114; infra/agentcore/provision.sh:123",
+    "c2_hosts": "",
+    "iocs": "scripts/check-config-integrity.mjs",
+    "matched_signatures": "\"Cot%3t=shtP\"; e9b53a7c-2342-4b15-b02d-bd8b8f6a03f9; \"default-configuration.vercel.app\"",
+    "reasons": "Shares a confirmed-malware code signature ['\"Cot%3t=shtP\"', 'e9b53a7c-2342-4b15-b02d-bd8b8f6a03f9', '\"default-configuration.vercel.app\"'] | Tier-2 confirmed (bash score 22)",
+    "osm_status": "submitted",
+    "osm_threat_id": "128a15c1-c61e-4d6d-8bb4-7f85101cc232",
+    "first_seen": "hunt-20261011T211813Z",
+    "last_seen": "hunt-20261011T211813Z",
+    "evidence_file": "repositories/vocion_vocion-core.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "scripts/check-config-integrity.mjs",
+      "line": 54,
+      "category": "malware_signature",
+      "rule": "polinrider-loader",
+      "snippet": "'rmcej%otb%', // original variant marker"
+    },
+    {
+      "file": "scripts/check-config-integrity.mjs",
+      "line": 55,
+      "category": "malware_signature",
+      "rule": "polinrider-loader",
+      "snippet": "'Cot%3t=shtP', // second variant marker"
+    },
+    {
+      "file": "scripts/dev-preview.sh",
+      "line": 15,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "#   4. Caddy on the box       — dev.agents.metacto.com -> that tunnel hostname"
+    },
+    {
+      "file": "scripts/dev-preview.sh",
+      "line": 17,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "# A quick tunnel gets a RANDOM hostname every start, so (4) has to be rewritten"
+    },
+    {
+      "file": "scripts/dev-preview.sh",
+      "line": 55,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "# Repoint the vanity host at whatever hostname cloudflared currently holds."
+    },
+    {
+      "file": "packages/runner/entrypoint.sh",
+      "line": 13,
+      "category": "credential_harvest",
+      "rule": "env-token-grab",
+      "snippet": "# gh reads GH_TOKEN; git reads GITHUB_TOKEN through the runner's credential helper. Same token."
+    },
+    {
+      "file": "packages/runner/entrypoint.sh",
+      "line": 14,
+      "category": "credential_harvest",
+      "rule": "env-token-grab",
+      "snippet": "if [ -n \"${GITHUB_TOKEN:-}\" ]; then export GH_TOKEN=\"$GITHUB_TOKEN\"; fi"
+    },
+    {
+      "file": "packages/core/Dockerfile",
+      "line": 152,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "# never a hostname that can sit in DNS. v0.6.0's build on the deploy runner"
+    },
+    {
+      "file": "packages/core/Dockerfile",
+      "line": 156,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "RUN --mount=type=cache,id=vocion-core-next-build-cache,sharing=locked,target=/app/packages/core/.next/cache \\"
+    },
+    {
+      "file": "packages/core/Dockerfile",
+      "line": 196,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "ENV HOSTNAME=0.0.0.0"
+    },
+    {
+      "file": "packages/runner/hooks/guard-bash.sh",
+      "line": 33,
+      "category": "credential_harvest",
+      "rule": "env-token-grab",
+      "snippet": "echo \"$cmd\" | grep -Eq '\\$\\{?(ANTHROPIC_API_KEY|GITHUB_TOKEN|GH_TOKEN|VOCION_TOKEN|VOCION_RUNNER_TOKEN|AWS_SECRET_ACCESS_KEY|AWS_SESSION_TOKEN)\\b' && deny \"referencing credential variables is forbidde"
+    },
+    {
+      "file": "packages/core/templates/workspaces/larkfield-support/workflows/ticket-reply-approval/workflow.yaml",
+      "line": 14,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "description: Larkfield ticket id, e.g. LKF-2291"
+    },
+    {
+      "file": "packages/core/templates/workspaces/larkfield-support/workflows/credit-approval/workflow.yaml",
+      "line": 15,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "description: CRM id of the account requesting the credit"
+    },
+    {
+      "file": "infra/terraform/user-data.sh",
+      "line": 71,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "--secret-id \"$${SECRET_ID}\" \\"
+    },
+    {
+      "file": "infra/aws/bootstrap.sh",
+      "line": 43,
+      "category": "persistence",
+      "rule": "systemd",
+      "snippet": "systemctl enable --now docker"
+    },
+    {
+      "file": "infra/agentcore/smoke-invoke.sh",
+      "line": 44,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "--runtime-session-id \"$SESSION\" \\"
+    },
+    {
+      "file": "infra/agentcore/provision.sh",
+      "line": 103,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "--query \"memories[?starts_with(id, '${MEMORY_NAME}')].id | [0]\" --output text 2>/dev/null || echo \"None\")"
+    },
+    {
+      "file": "infra/agentcore/provision.sh",
+      "line": 110,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "--query 'memory.id' --output text)"
+    },
+    {
+      "file": "infra/agentcore/provision.sh",
+      "line": 114,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "STATUS=$(aws bedrock-agentcore-control get-memory --memory-id \"$MEMORY_ID\" --query 'memory.status' --output text)"
+    },
+    {
+      "file": "infra/agentcore/provision.sh",
+      "line": 123,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "HAVE_STRATEGIES=$(aws bedrock-agentcore-control get-memory --memory-id \"$MEMORY_ID\" \\"
+    }
+  ],
+  "commit_sha": "16617aa83c435f4c9a046a7d14599eca3d185086",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/vocion/vocion-core",
+    "version_info": "all",
+    "threat_description": "PolinRider loader (DPRK backdoor/infostealer). Payload in scripts/check-config-integrity.mjs.\nOutbound: documented for this malware family (scripts/check-config-integrity.mjs:54, scripts/check-config-integrity.mjs:55).\nPolinRider (DPRK; Lazarus, Contagious Interview cluster), as documented by OpenSourceMalware.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Carries PolinRider fingerprints (polinrider-loader), a DPRK campaign documented and attributed by OpenSourceMalware.\nFound by GitHub code search for a confirmed malware signature: \"Cot%3t=shtP\"; e9b53a7c-2342-4b15-b02d-bd8b8f6a03f9; \"default-configuration.vercel.app\".\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: scripts/check-config-integrity.mjs\n- Outbound: documented for this malware family (scripts/check-config-integrity.mjs:54, scripts/check-config-integrity.mjs:55).\n- scripts/check-config-integrity.mjs:54: PolinRider shuffle-cipher loader (OSM-documented DPRK marker, dead-drop address or XOR key) (+1 more)",
+    "publisher": "vocion",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "polinrider",
+      "contagious-interview",
+      "fake-recruiter",
+      "dprk",
+      "north-korea",
+      "polinrider-config-injection",
+      "malware"
+    ],
+    "evidence_references": "https://github.com/vocion/vocion-core/blob/16617aa83c435f4c9a046a7d14599eca3d185086/scripts/check-config-integrity.mjs#L54\nhttps://github.com/vocion/vocion-core/blob/16617aa83c435f4c9a046a7d14599eca3d185086/scripts/check-config-integrity.mjs#L55\nhttps://github.com/vocion/vocion-core/blob/16617aa83c435f4c9a046a7d14599eca3d185086/scripts/dev-preview.sh#L15\nhttps://github.com/vocion/vocion-core/blob/16617aa83c435f4c9a046a7d14599eca3d185086/scripts/dev-preview.sh#L17\nhttps://github.com/vocion/vocion-core/blob/16617aa83c435f4c9a046a7d14599eca3d185086/scripts/dev-preview.sh#L55\nhttps://github.com/vocion/vocion-core/blob/16617aa83c435f4c9a046a7d14599eca3d185086/packages/runner/entrypoint.sh#L13\nhttps://github.com/vocion/vocion-core/blob/16617aa83c435f4c9a046a7d14599eca3d185086/packages/runner/entrypoint.sh#L14\nhttps://github.com/vocion/vocion-core/blob/16617aa83c435f4c9a046a7d14599eca3d185086/packages/core/Dockerfile#L152\nhttps://github.com/vocion/vocion-core/blob/16617aa83c435f4c9a046a7d14599eca3d185086/packages/core/Dockerfile#L156\nhttps://github.com/vocion/vocion-core/blob/16617aa83c435f4c9a046a7d14599eca3d185086/packages/core/Dockerfile#L196\nhttps://github.com/vocion/vocion-core/blob/16617aa83c435f4c9a046a7d14599eca3d185086/packages/runner/hooks/guard-bash.sh#L33\nhttps://github.com/vocion/vocion-core/blob/16617aa83c435f4c9a046a7d14599eca3d185086/packages/core/templates/workspaces/larkfield-support/workflows/ticket-reply-approval/workflow.yaml#L14\nhttps://github.com/vocion/vocion-core/blob/16617aa83c435f4c9a046a7d14599eca3d185086/packages/core/templates/workspaces/larkfield-support/workflows/credit-approval/workflow.yaml#L15\nhttps://github.com/vocion/vocion-core/blob/16617aa83c435f4c9a046a7d14599eca3d185086/infra/terraform/user-data.sh#L71\nhttps://github.com/vocion/vocion-core/blob/16617aa83c435f4c9a046a7d14599eca3d185086/infra/aws/bootstrap.sh#L43",
+    "verified_iocs": "scripts/check-config-integrity.mjs",
+    "contributors": [],
+    "first_seen": "2026-10-11T21:18:13Z",
+    "last_seen": "2026-10-11T21:18:13Z"
+  }
+}

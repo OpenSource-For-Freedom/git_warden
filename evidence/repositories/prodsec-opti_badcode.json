@@ -1,0 +1,198 @@
+{
+  "finding": {
+    "key": "repository:prodsec-opti/badcode",
+    "kind": "repository",
+    "family": "",
+    "id": "prodsec-opti/badcode",
+    "url": "https://github.com/prodsec-opti/badCode",
+    "registry": "github",
+    "owner": "prodsec-opti",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 7,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "malware_signature/polinrider-loader; code_execution/py-system; code_execution/jvm-runtime-exec",
+    "evidence_locations": "Mlw/tailwind.config.js:22; Mlw/tailwind.config.js:34; Mlw/tailwind.config.js:49; Mlw/tailwind.config.js:52; Mlw/postcss.config.mjs:16; Mlw/postcss.config.mjs:33; Mlw/postcss.config.mjs:36; Mlw/postcss.config.mjs:40; python/users.py:16; python/user.py:26; python/tester.py:26; python/p2.py:35; python/p1.py:13; python/main.py:15; python/flask.py:10; python/flask.py:18; java/j1.java:44",
+    "c2_hosts": "",
+    "iocs": "Mlw/tailwind.config.js",
+    "matched_signatures": "\"Cot%3t=shtP\"; \"rmcej%otb%\"; \"global['_V']\" \"8-st\"; e9b53a7c-2342-4b15-b02d-bd8b8f6a03f9; \"default-configuration.vercel.app\"; \"vscode-settings-bootstrap.vercel.app\"; \"vscode-settings-config.vercel.app\"; \"vscode-bootstrapper.vercel.app\"; \"vscode-load-config.vercel.app\"",
+    "reasons": "Shares a confirmed-malware code signature ['\"Cot%3t=shtP\"', '\"rmcej%otb%\"', '\"global[\\'_V\\']\" \"8-st\"', 'e9b53a7c-2342-4b15-b02d-bd8b8f6a03f9', '\"default-configuration.vercel.app\"', '\"vscode-settings-bootstrap.vercel.app\"', '\"vscode-settings-config.vercel.app\"', '\"vscode-bootstrapper.vercel.app\"', '\"vscode-load-config.vercel.app\"'] | Tier-2 confirmed (bash score 7)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20261011T211813Z",
+    "last_seen": "hunt-20261011T211813Z",
+    "evidence_file": "repositories/prodsec-opti_badcode.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "Mlw/tailwind.config.js",
+      "line": 22,
+      "category": "malware_signature",
+      "rule": "polinrider-loader",
+      "snippet": "var _marker = \"Cot%3t=shtP\";"
+    },
+    {
+      "file": "Mlw/tailwind.config.js",
+      "line": 34,
+      "category": "malware_signature",
+      "rule": "polinrider-loader",
+      "snippet": "global['_V'] = '8-st1';"
+    },
+    {
+      "file": "Mlw/tailwind.config.js",
+      "line": 49,
+      "category": "malware_signature",
+      "rule": "polinrider-loader",
+      "snippet": "var _xor_key_primary = \"2[gWfGj;<:-93Z^C\";"
+    },
+    {
+      "file": "Mlw/tailwind.config.js",
+      "line": 52,
+      "category": "malware_signature",
+      "rule": "polinrider-loader",
+      "snippet": "var _xor_key_secondary = \"m6:tTh^D)cBz?NM]\";"
+    },
+    {
+      "file": "Mlw/postcss.config.mjs",
+      "line": 16,
+      "category": "malware_signature",
+      "rule": "polinrider-loader",
+      "snippet": "var _marker = \"rmcej%otb%\";"
+    },
+    {
+      "file": "Mlw/postcss.config.mjs",
+      "line": 33,
+      "category": "malware_signature",
+      "rule": "polinrider-loader",
+      "snippet": "var _xor_key_primary = \"2[gWfGj;<:-93Z^C\";"
+    },
+    {
+      "file": "Mlw/postcss.config.mjs",
+      "line": 36,
+      "category": "malware_signature",
+      "rule": "polinrider-loader",
+      "snippet": "var _xor_key_secondary = \"m6:tTh^D)cBz?NM]\";"
+    },
+    {
+      "file": "Mlw/postcss.config.mjs",
+      "line": 40,
+      "category": "malware_signature",
+      "rule": "polinrider-loader",
+      "snippet": "var _marker = \"Cot%3t=shtP\";"
+    },
+    {
+      "file": "python/users.py",
+      "line": 16,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "#     os.system(f\"ping {command}\")"
+    },
+    {
+      "file": "python/user.py",
+      "line": 26,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "os.system(command)"
+    },
+    {
+      "file": "python/tester.py",
+      "line": 26,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "#     os.system(\"ping -c 1 \" + host)  # Command injection"
+    },
+    {
+      "file": "python/p2.py",
+      "line": 35,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "#     os.system(f\"unzip {zip_file} -d /tmp/\")"
+    },
+    {
+      "file": "python/p1.py",
+      "line": 13,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "os.system(\"ping -c 1 \" + host)  # Command injection"
+    },
+    {
+      "file": "python/main.py",
+      "line": 15,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "os.system(tar_file)"
+    },
+    {
+      "file": "python/flask.py",
+      "line": 10,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "os.system(request.remote_addr)"
+    },
+    {
+      "file": "python/flask.py",
+      "line": 18,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "os.system(sanitized_data)"
+    },
+    {
+      "file": "java/j1.java",
+      "line": 44,
+      "category": "code_execution",
+      "rule": "jvm-runtime-exec",
+      "snippet": "Process p = Runtime.getRuntime().exec(cmd);"
+    },
+    {
+      "file": "Mlw/tailwind.config.js",
+      "line": 22,
+      "category": "malware_signature",
+      "rule": "polinrider-loader",
+      "snippet": "var _marker = \"Cot%3t=shtP\";"
+    },
+    {
+      "file": "Mlw/tailwind.config.js",
+      "line": 34,
+      "category": "malware_signature",
+      "rule": "polinrider-loader",
+      "snippet": "global['_V'] = '8-st1';"
+    },
+    {
+      "file": "Mlw/tailwind.config.js",
+      "line": 49,
+      "category": "malware_signature",
+      "rule": "polinrider-loader",
+      "snippet": "var _xor_key_primary = \"2[gWfGj;<:-93Z^C\";"
+    }
+  ],
+  "commit_sha": "8501a99fcb467cd5df255165c99399accfb2e72e",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/prodsec-opti/badcode",
+    "version_info": "all",
+    "threat_description": "PolinRider loader (DPRK backdoor/infostealer). Payload in Mlw/tailwind.config.js, Mlw/postcss.config.mjs.\nOutbound: documented for this malware family (Mlw/tailwind.config.js:22, Mlw/tailwind.config.js:34).\nThe same dropper is planted in 2 directories.\nPolinRider (DPRK; Lazarus, Contagious Interview cluster), as documented by OpenSourceMalware.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Carries PolinRider fingerprints (polinrider-loader), a DPRK campaign documented and attributed by OpenSourceMalware.\nFound by GitHub code search for a confirmed malware signature: \"Cot%3t=shtP\"; \"rmcej%otb%\"; \"global['_V']\" \"8-st\"; e9b53a7c-2342-4b15-b02d-bd8b8f6a03f9; \"default-configuration.vercel.app\".\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: Mlw/tailwind.config.js, Mlw/postcss.config.mjs\n- Outbound: documented for this malware family (Mlw/tailwind.config.js:22, Mlw/tailwind.config.js:34).\n- Mlw/tailwind.config.js:22: PolinRider shuffle-cipher loader (OSM-documented DPRK marker, dead-drop address or XOR key) (+7 more)",
+    "publisher": "prodsec-opti",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "polinrider",
+      "contagious-interview",
+      "fake-recruiter",
+      "dprk",
+      "north-korea",
+      "polinrider-config-injection",
+      "malware"
+    ],
+    "evidence_references": "https://github.com/prodsec-opti/badcode/blob/8501a99fcb467cd5df255165c99399accfb2e72e/Mlw/tailwind.config.js#L22\nhttps://github.com/prodsec-opti/badcode/blob/8501a99fcb467cd5df255165c99399accfb2e72e/Mlw/tailwind.config.js#L34\nhttps://github.com/prodsec-opti/badcode/blob/8501a99fcb467cd5df255165c99399accfb2e72e/Mlw/tailwind.config.js#L49\nhttps://github.com/prodsec-opti/badcode/blob/8501a99fcb467cd5df255165c99399accfb2e72e/Mlw/tailwind.config.js#L52\nhttps://github.com/prodsec-opti/badcode/blob/8501a99fcb467cd5df255165c99399accfb2e72e/Mlw/postcss.config.mjs#L16\nhttps://github.com/prodsec-opti/badcode/blob/8501a99fcb467cd5df255165c99399accfb2e72e/Mlw/postcss.config.mjs#L33\nhttps://github.com/prodsec-opti/badcode/blob/8501a99fcb467cd5df255165c99399accfb2e72e/Mlw/postcss.config.mjs#L36\nhttps://github.com/prodsec-opti/badcode/blob/8501a99fcb467cd5df255165c99399accfb2e72e/Mlw/postcss.config.mjs#L40\nhttps://github.com/prodsec-opti/badcode/blob/8501a99fcb467cd5df255165c99399accfb2e72e/python/users.py#L16\nhttps://github.com/prodsec-opti/badcode/blob/8501a99fcb467cd5df255165c99399accfb2e72e/python/user.py#L26\nhttps://github.com/prodsec-opti/badcode/blob/8501a99fcb467cd5df255165c99399accfb2e72e/python/tester.py#L26\nhttps://github.com/prodsec-opti/badcode/blob/8501a99fcb467cd5df255165c99399accfb2e72e/python/p2.py#L35\nhttps://github.com/prodsec-opti/badcode/blob/8501a99fcb467cd5df255165c99399accfb2e72e/python/p1.py#L13\nhttps://github.com/prodsec-opti/badcode/blob/8501a99fcb467cd5df255165c99399accfb2e72e/python/main.py#L15\nhttps://github.com/prodsec-opti/badcode/blob/8501a99fcb467cd5df255165c99399accfb2e72e/python/flask.py#L10",
+    "verified_iocs": "Mlw/tailwind.config.js",
+    "contributors": [],
+    "first_seen": "2026-10-11T21:18:13Z",
+    "last_seen": "2026-10-11T21:18:13Z"
+  }
+}

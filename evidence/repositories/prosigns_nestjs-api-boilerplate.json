@@ -1,0 +1,121 @@
+{
+  "finding": {
+    "key": "repository:prosigns/nestjs-api-boilerplate",
+    "kind": "repository",
+    "family": "",
+    "id": "prosigns/nestjs-api-boilerplate",
+    "url": "https://github.com/prosigns/nestjs-api-boilerplate",
+    "registry": "github",
+    "owner": "prosigns",
+    "status": "confirmed",
+    "confidence": "review",
+    "score": 5,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "propagation/git-history-forgery; enumeration/host-recon; code_execution/js-exec",
+    "evidence_locations": "temp_interactive_push.bat:14; temp_interactive_push.bat:15; .github/workflows/ci-cd.yml:89; src/common/database/repository/mongo.repository.ts:23; src/common/database/repository/mongo.repository.ts:34; src/common/database/repository/mongo.repository.ts:42; src/common/database/repository/mongo.repository.ts:50",
+    "c2_hosts": "",
+    "iocs": "temp_interactive_push.bat",
+    "matched_signatures": "filename:temp_auto_push.bat; LAST_COMMIT_DATE LAST_COMMIT_TIME extension:bat",
+    "reasons": "Shares a confirmed-malware code signature ['filename:temp_auto_push.bat', 'LAST_COMMIT_DATE LAST_COMMIT_TIME extension:bat'] | Tier-2 confirmed (bash score 5)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20261011T211813Z",
+    "last_seen": "hunt-20261011T211813Z",
+    "evidence_file": "repositories/prosigns_nestjs-api-boilerplate.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "temp_interactive_push.bat",
+      "line": 14,
+      "category": "propagation",
+      "rule": "git-history-forgery",
+      "snippet": "date %LAST_COMMIT_DATE%"
+    },
+    {
+      "file": "temp_interactive_push.bat",
+      "line": 15,
+      "category": "propagation",
+      "rule": "git-history-forgery",
+      "snippet": "time %LAST_COMMIT_TIME%"
+    },
+    {
+      "file": ".github/workflows/ci-cd.yml",
+      "line": 89,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "id: meta"
+    },
+    {
+      "file": "temp_interactive_push.bat",
+      "line": 14,
+      "category": "propagation",
+      "rule": "git-history-forgery",
+      "snippet": "date %LAST_COMMIT_DATE%"
+    },
+    {
+      "file": "temp_interactive_push.bat",
+      "line": 15,
+      "category": "propagation",
+      "rule": "git-history-forgery",
+      "snippet": "time %LAST_COMMIT_TIME%"
+    },
+    {
+      "file": "src/common/database/repository/mongo.repository.ts",
+      "line": 23,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "const result = await this.model.findById(id).exec();"
+    },
+    {
+      "file": "src/common/database/repository/mongo.repository.ts",
+      "line": 34,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "const result = await this.model.findOne(query).exec();"
+    },
+    {
+      "file": "src/common/database/repository/mongo.repository.ts",
+      "line": 42,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "const result = await this.model.findByIdAndUpdate(id, data, { new: true }).exec();"
+    },
+    {
+      "file": "src/common/database/repository/mongo.repository.ts",
+      "line": 50,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "const result = await this.model.findByIdAndDelete(id).exec();"
+    }
+  ],
+  "commit_sha": "703a39d4c788788f1aeea00ed4868c900e7a7c7b",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/prosigns/nestjs-api-boilerplate",
+    "version_info": "all",
+    "threat_description": "PolinRider-compromised repository (commit-forging propagation script). Payload in temp_interactive_push.bat.\nOutbound: documented for this malware family (temp_interactive_push.bat:14, temp_interactive_push.bat:15).\nPolinRider (DPRK; Lazarus, Contagious Interview cluster), as documented by OpenSourceMalware.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Carries PolinRider fingerprints (git-history-forgery), a DPRK campaign documented and attributed by OpenSourceMalware.\nFound by GitHub code search for a confirmed malware signature: filename:temp_auto_push.bat; LAST_COMMIT_DATE LAST_COMMIT_TIME extension:bat.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: temp_interactive_push.bat\n- Outbound: documented for this malware family (temp_interactive_push.bat:14, temp_interactive_push.bat:15).\n- temp_interactive_push.bat:14: PolinRider propagation script: rewinds the clock, amends the last commit with --no-verify and force-pushes to hide the injection (+1 more)",
+    "publisher": "prosigns",
+    "severity_level": "high",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "polinrider",
+      "contagious-interview",
+      "fake-recruiter",
+      "dprk",
+      "north-korea",
+      "polinrider-commit-forgery",
+      "malware"
+    ],
+    "evidence_references": "https://github.com/prosigns/nestjs-api-boilerplate/blob/703a39d4c788788f1aeea00ed4868c900e7a7c7b/temp_interactive_push.bat#L14\nhttps://github.com/prosigns/nestjs-api-boilerplate/blob/703a39d4c788788f1aeea00ed4868c900e7a7c7b/temp_interactive_push.bat#L15\nhttps://github.com/prosigns/nestjs-api-boilerplate/blob/703a39d4c788788f1aeea00ed4868c900e7a7c7b/.github/workflows/ci-cd.yml#L89\nhttps://github.com/prosigns/nestjs-api-boilerplate/blob/703a39d4c788788f1aeea00ed4868c900e7a7c7b/src/common/database/repository/mongo.repository.ts#L23\nhttps://github.com/prosigns/nestjs-api-boilerplate/blob/703a39d4c788788f1aeea00ed4868c900e7a7c7b/src/common/database/repository/mongo.repository.ts#L34\nhttps://github.com/prosigns/nestjs-api-boilerplate/blob/703a39d4c788788f1aeea00ed4868c900e7a7c7b/src/common/database/repository/mongo.repository.ts#L42\nhttps://github.com/prosigns/nestjs-api-boilerplate/blob/703a39d4c788788f1aeea00ed4868c900e7a7c7b/src/common/database/repository/mongo.repository.ts#L50",
+    "verified_iocs": "temp_interactive_push.bat",
+    "contributors": [],
+    "first_seen": "2026-10-11T21:18:13Z",
+    "last_seen": "2026-10-11T21:18:13Z"
+  }
+}

