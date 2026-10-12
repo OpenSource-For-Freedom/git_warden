@@ -21,8 +21,8 @@
     "reasons": "Shares a confirmed-malware code signature ['\"launcher_accounts.json\" \"api/webhooks\"'] | Tier-2 confirmed (bash score 13)",
     "osm_status": "not_submitted",
     "osm_threat_id": "",
-    "first_seen": "hunt-20261004T210412Z",
-    "last_seen": "hunt-20261004T210412Z",
+    "first_seen": "hunt-20261003T093317Z",
+    "last_seen": "hunt-20261003T093317Z",
     "evidence_file": "repositories/mulagoto_vespy-grabber-v2.0.json",
     "reviewer_decision": "",
     "notes": ""
@@ -187,7 +187,7 @@
     "evidence_references": "https://github.com/mulagoto/vespy-grabber-v2.0/blob/e6a0d19bf43b0d02b80f95532426a38e421444cc/utils/Wallets.py#L24\nhttps://github.com/mulagoto/vespy-grabber-v2.0/blob/e6a0d19bf43b0d02b80f95532426a38e421444cc/utils/VPNstealer.py#L9\nhttps://github.com/mulagoto/vespy-grabber-v2.0/blob/e6a0d19bf43b0d02b80f95532426a38e421444cc/vespygrabber2.0.py#L731\nhttps://github.com/mulagoto/vespy-grabber-v2.0/blob/e6a0d19bf43b0d02b80f95532426a38e421444cc/vespygrabber2.0.py#L24\nhttps://github.com/mulagoto/vespy-grabber-v2.0/blob/e6a0d19bf43b0d02b80f95532426a38e421444cc/vespygrabber2.0.py#L123\nhttps://github.com/mulagoto/vespy-grabber-v2.0/blob/e6a0d19bf43b0d02b80f95532426a38e421444cc/vespygrabber2.0.py#L191\nhttps://github.com/mulagoto/vespy-grabber-v2.0/blob/e6a0d19bf43b0d02b80f95532426a38e421444cc/vespygrabber2.0.py#L192\nhttps://github.com/mulagoto/vespy-grabber-v2.0/blob/e6a0d19bf43b0d02b80f95532426a38e421444cc/vespygrabber2.0.py#L193\nhttps://github.com/mulagoto/vespy-grabber-v2.0/blob/e6a0d19bf43b0d02b80f95532426a38e421444cc/vespygrabber2.0.py#L194\nhttps://github.com/mulagoto/vespy-grabber-v2.0/blob/e6a0d19bf43b0d02b80f95532426a38e421444cc/vespygrabber2.0.py#L811\nhttps://github.com/mulagoto/vespy-grabber-v2.0/blob/e6a0d19bf43b0d02b80f95532426a38e421444cc/vespygrabber2.0.py#L865\nhttps://github.com/mulagoto/vespy-grabber-v2.0/blob/e6a0d19bf43b0d02b80f95532426a38e421444cc/utils/Wallets.py#L100\nhttps://github.com/mulagoto/vespy-grabber-v2.0/blob/e6a0d19bf43b0d02b80f95532426a38e421444cc/utils/VPNstealer.py#L25\nhttps://github.com/mulagoto/vespy-grabber-v2.0/blob/e6a0d19bf43b0d02b80f95532426a38e421444cc/utils/Reboot.py#L4\nhttps://github.com/mulagoto/vespy-grabber-v2.0/blob/e6a0d19bf43b0d02b80f95532426a38e421444cc/utils/N3ke.py#L29",
     "verified_iocs": "discord.com\nhttps://cdn.discordapp.com/attachments/1094804863067623530/1103522104978198558/p\nhttps://discord.com/api/webhooks/1134182846341320824/SDMezD8gjL4mAbh41pFYSxcFonc3UYlFBLIMwQzGZbzZJNI9jrkvxlKba6tT9mCO85CM\nutils/Wallets.py",
     "contributors": [],
-    "first_seen": "2026-10-04T21:04:12Z",
-    "last_seen": "2026-10-04T21:04:12Z"
+    "first_seen": "2026-10-03T09:33:17Z",
+    "last_seen": "2026-10-03T09:33:17Z"
   }
 }

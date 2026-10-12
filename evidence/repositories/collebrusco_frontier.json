@@ -19,10 +19,10 @@
     "iocs": "discord.com; https://discord.com/api/webhooks/1499623650083602575/aZUKDLC65INPUnWfuN70kDMOZRTATEPTt-9omo0nk_JbV__Td6MQ-lI38BeY-rvmS72m; https://git-scm.com/download/mac; https://git-scm.com/download/linux; frontier_assets/frontier_launcher.py",
     "matched_signatures": "\"launcher_accounts.json\" \"api/webhooks\"",
     "reasons": "Shares a confirmed-malware code signature ['\"launcher_accounts.json\" \"api/webhooks\"'] | Tier-2 confirmed (bash score 10)",
-    "osm_status": "submitted",
-    "osm_threat_id": "d0ed9765-3d3e-4c55-90c4-0a8812e63f54",
-    "first_seen": "hunt-20261004T210412Z",
-    "last_seen": "hunt-20261004T210412Z",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20261003T093317Z",
+    "last_seen": "hunt-20261003T093317Z",
     "evidence_file": "repositories/collebrusco_frontier.json",
     "reviewer_decision": "",
     "notes": ""
@@ -131,7 +131,7 @@
     "evidence_references": "https://github.com/collebrusco/frontier/blob/84d9aeae59a71250af5ec5afedc74355c6d43d3d/frontier_assets/frontier_launcher.py#L1441\nhttps://github.com/collebrusco/frontier/blob/84d9aeae59a71250af5ec5afedc74355c6d43d3d/frontier_assets/frontier_launcher.py#L55\nhttps://github.com/collebrusco/frontier/blob/84d9aeae59a71250af5ec5afedc74355c6d43d3d/frontier_assets/frontier_launcher.py#L121\nhttps://github.com/collebrusco/frontier/blob/84d9aeae59a71250af5ec5afedc74355c6d43d3d/frontier_assets/frontier_launcher.py#L157\nhttps://github.com/collebrusco/frontier/blob/84d9aeae59a71250af5ec5afedc74355c6d43d3d/frontier_assets/frontier_launcher.py#L192\nhttps://github.com/collebrusco/frontier/blob/84d9aeae59a71250af5ec5afedc74355c6d43d3d/frontier_assets/frontier_launcher.py#L194\nhttps://github.com/collebrusco/frontier/blob/84d9aeae59a71250af5ec5afedc74355c6d43d3d/frontier_assets/frontier_launcher.py#L684\nhttps://github.com/collebrusco/frontier/blob/84d9aeae59a71250af5ec5afedc74355c6d43d3d/frontier_assets/frontier_launcher.py#L1353\nhttps://github.com/collebrusco/frontier/blob/84d9aeae59a71250af5ec5afedc74355c6d43d3d/frontier_assets/frontier_launcher.py#L1355\nhttps://github.com/collebrusco/frontier/blob/84d9aeae59a71250af5ec5afedc74355c6d43d3d/frontier_assets/frontier_launcher.py#L1416",
     "verified_iocs": "discord.com\nhttps://discord.com/api/webhooks/1499623650083602575/aZUKDLC65INPUnWfuN70kDMOZRTATEPTt-9omo0nk_JbV__Td6MQ-lI38BeY-rvmS72m\nhttps://git-scm.com/download/mac\nhttps://git-scm.com/download/linux\nfrontier_assets/frontier_launcher.py",
     "contributors": [],
-    "first_seen": "2026-10-04T21:04:12Z",
-    "last_seen": "2026-10-04T21:04:12Z"
+    "first_seen": "2026-10-03T09:33:17Z",
+    "last_seen": "2026-10-03T09:33:17Z"
   }
 }

