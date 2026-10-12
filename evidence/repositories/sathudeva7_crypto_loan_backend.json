@@ -1,0 +1,72 @@
+{
+  "finding": {
+    "key": "repository:sathudeva7/crypto_loan_backend",
+    "kind": "repository",
+    "family": "",
+    "id": "sathudeva7/crypto_loan_backend",
+    "url": "https://github.com/sathudeva7/crypto_loan_backend",
+    "registry": "github",
+    "owner": "sathudeva7",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 1,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "malware_signature/polinrider-loader",
+    "evidence_locations": "src/server.ts:42",
+    "c2_hosts": "",
+    "iocs": "src/server.ts",
+    "matched_signatures": "\"rmcej%otb%\"",
+    "reasons": "Shares a confirmed-malware code signature ['\"rmcej%otb%\"'] | Tier-2 confirmed (bash score 1)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20261012T053832Z",
+    "last_seen": "hunt-20261012T053832Z",
+    "evidence_file": "repositories/sathudeva7_crypto_loan_backend.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "src/server.ts",
+      "line": 42,
+      "category": "malware_signature",
+      "rule": "polinrider-loader",
+      "snippet": "export default app;                                                                                                                                                                                     "
+    },
+    {
+      "file": "src/server.ts",
+      "line": 42,
+      "category": "malware_signature",
+      "rule": "polinrider-loader",
+      "snippet": "export default app;                                                                                                                                                                                     "
+    }
+  ],
+  "commit_sha": "6373d6553ed9a17e0e91580056e196e5110fc343",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/sathudeva7/crypto_loan_backend",
+    "version_info": "all",
+    "threat_description": "PolinRider loader (DPRK backdoor/infostealer). Payload in src/server.ts.\nOutbound: documented for this malware family (src/server.ts:42).\nPolinRider (DPRK; Lazarus, Contagious Interview cluster), as documented by OpenSourceMalware.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Carries PolinRider fingerprints (polinrider-loader), a DPRK campaign documented and attributed by OpenSourceMalware.\nFound by GitHub code search for a confirmed malware signature: \"rmcej%otb%\".\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: src/server.ts\n- Outbound: documented for this malware family (src/server.ts:42).\n- src/server.ts:42: PolinRider shuffle-cipher loader (OSM-documented DPRK marker, dead-drop address or XOR key)",
+    "publisher": "sathudeva7",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "polinrider",
+      "contagious-interview",
+      "fake-recruiter",
+      "dprk",
+      "north-korea",
+      "polinrider-config-injection",
+      "malware"
+    ],
+    "evidence_references": "https://github.com/sathudeva7/crypto_loan_backend/blob/6373d6553ed9a17e0e91580056e196e5110fc343/src/server.ts#L42",
+    "verified_iocs": "src/server.ts",
+    "contributors": [],
+    "first_seen": "2026-10-12T05:38:32Z",
+    "last_seen": "2026-10-12T05:38:32Z"
+  }
+}

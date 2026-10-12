@@ -1,0 +1,72 @@
+{
+  "finding": {
+    "key": "repository:fullstack-manmohan/htw-collab",
+    "kind": "repository",
+    "family": "",
+    "id": "fullstack-manmohan/htw-collab",
+    "url": "https://github.com/FullStack-Manmohan/htw-collab",
+    "registry": "github",
+    "owner": "fullstack-manmohan",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 1,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "malware_signature/polinrider-loader",
+    "evidence_locations": "postcss.config.mjs:10",
+    "c2_hosts": "",
+    "iocs": "postcss.config.mjs",
+    "matched_signatures": "\"rmcej%otb%\"",
+    "reasons": "Shares a confirmed-malware code signature ['\"rmcej%otb%\"'] | Tier-2 confirmed (bash score 1)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20261012T053832Z",
+    "last_seen": "hunt-20261012T053832Z",
+    "evidence_file": "repositories/fullstack-manmohan_htw-collab.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "postcss.config.mjs",
+      "line": 10,
+      "category": "malware_signature",
+      "rule": "polinrider-loader",
+      "snippet": "};                                                                                                                                                                                                      "
+    },
+    {
+      "file": "postcss.config.mjs",
+      "line": 10,
+      "category": "malware_signature",
+      "rule": "polinrider-loader",
+      "snippet": "};                                                                                                                                                                                                      "
+    }
+  ],
+  "commit_sha": "c744ad052dbaa61e9b1883b93076a13a78094468",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/fullstack-manmohan/htw-collab",
+    "version_info": "all",
+    "threat_description": "PolinRider loader (DPRK backdoor/infostealer). Payload in postcss.config.mjs.\nOutbound: documented for this malware family (postcss.config.mjs:10).\nPolinRider (DPRK; Lazarus, Contagious Interview cluster), as documented by OpenSourceMalware.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Carries PolinRider fingerprints (polinrider-loader), a DPRK campaign documented and attributed by OpenSourceMalware.\nFound by GitHub code search for a confirmed malware signature: \"rmcej%otb%\".\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: postcss.config.mjs\n- Outbound: documented for this malware family (postcss.config.mjs:10).\n- postcss.config.mjs:10: PolinRider shuffle-cipher loader (OSM-documented DPRK marker, dead-drop address or XOR key)",
+    "publisher": "fullstack-manmohan",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "polinrider",
+      "contagious-interview",
+      "fake-recruiter",
+      "dprk",
+      "north-korea",
+      "polinrider-config-injection",
+      "malware"
+    ],
+    "evidence_references": "https://github.com/fullstack-manmohan/htw-collab/blob/c744ad052dbaa61e9b1883b93076a13a78094468/postcss.config.mjs#L10",
+    "verified_iocs": "postcss.config.mjs",
+    "contributors": [],
+    "first_seen": "2026-10-12T05:38:32Z",
+    "last_seen": "2026-10-12T05:38:32Z"
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "finding": {
+    "key": "repository:smartcoindev389/colorstudio-react",
+    "kind": "repository",
+    "family": "",
+    "id": "smartcoindev389/colorstudio-react",
+    "url": "https://github.com/smartcoindev389/colorstudio-react",
+    "registry": "github",
+    "owner": "smartcoindev389",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 1,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "malware_signature/polinrider-loader",
+    "evidence_locations": "src/App.js:130",
+    "c2_hosts": "",
+    "iocs": "src/App.js",
+    "matched_signatures": "\"rmcej%otb%\"",
+    "reasons": "Shares a confirmed-malware code signature ['\"rmcej%otb%\"'] | Tier-2 confirmed (bash score 1)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20261012T053832Z",
+    "last_seen": "hunt-20261012T053832Z",
+    "evidence_file": "repositories/smartcoindev389_colorstudio-react.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "src/App.js",
+      "line": 130,
+      "category": "malware_signature",
+      "rule": "polinrider-loader",
+      "snippet": "export default App;                                                                                                                                                                                     "
+    },
+    {
+      "file": "src/App.js",
+      "line": 130,
+      "category": "malware_signature",
+      "rule": "polinrider-loader",
+      "snippet": "export default App;                                                                                                                                                                                     "
+    }
+  ],
+  "commit_sha": "b0e446d4a5db3bdea7cc0c89e615c3c2210e7b94",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/smartcoindev389/colorstudio-react",
+    "version_info": "all",
+    "threat_description": "PolinRider loader (DPRK backdoor/infostealer). Payload in src/App.js.\nOutbound: documented for this malware family (src/App.js:130).\nPolinRider (DPRK; Lazarus, Contagious Interview cluster), as documented by OpenSourceMalware.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Carries PolinRider fingerprints (polinrider-loader), a DPRK campaign documented and attributed by OpenSourceMalware.\nFound by GitHub code search for a confirmed malware signature: \"rmcej%otb%\".\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: src/App.js\n- Outbound: documented for this malware family (src/App.js:130).\n- src/App.js:130: PolinRider shuffle-cipher loader (OSM-documented DPRK marker, dead-drop address or XOR key)",
+    "publisher": "smartcoindev389",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "polinrider",
+      "contagious-interview",
+      "fake-recruiter",
+      "dprk",
+      "north-korea",
+      "polinrider-config-injection",
+      "malware"
+    ],
+    "evidence_references": "https://github.com/smartcoindev389/colorstudio-react/blob/b0e446d4a5db3bdea7cc0c89e615c3c2210e7b94/src/App.js#L130",
+    "verified_iocs": "src/App.js",
+    "contributors": [],
+    "first_seen": "2026-10-12T05:38:32Z",
+    "last_seen": "2026-10-12T05:38:32Z"
+  }
+}

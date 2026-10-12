@@ -1,0 +1,135 @@
+{
+  "finding": {
+    "key": "repository:speedydevv1/buildthisnow-saas-skeleton",
+    "kind": "repository",
+    "family": "",
+    "id": "speedydevv1/buildthisnow-saas-skeleton",
+    "url": "https://github.com/speedydevv1/buildthisnow-saas-skeleton",
+    "registry": "github",
+    "owner": "speedydevv1",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 13,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "malware_signature/polinrider-loader; credential_harvest/env-token-grab; credential_harvest/ssh-keys; code_execution/node-child-process; code_execution/js-exec",
+    "evidence_locations": "webapp/scripts/scan-malware.mjs:38; scripts/security-scan-staged.sh:76; scripts/security-scan-staged.sh:183; webapp/playwright.config.ts:2; webapp/scripts/scan-malware.mjs:36; webapp/components/Plasma.tsx:15; webapp/components/Grainient.tsx:32; webapp/components/Grainient.jsx:6; webapp/app/api/setup/check/route.ts:2",
+    "c2_hosts": "",
+    "iocs": "webapp/scripts/scan-malware.mjs",
+    "matched_signatures": "\"rmcej%otb%\"",
+    "reasons": "Shares a confirmed-malware code signature ['\"rmcej%otb%\"'] | Tier-2 confirmed (bash score 13)",
+    "osm_status": "submitted",
+    "osm_threat_id": "b8d6d018-3160-4afa-a389-0961dd31c058",
+    "first_seen": "hunt-20261012T061450Z",
+    "last_seen": "hunt-20261012T061450Z",
+    "evidence_file": "repositories/speedydevv1_buildthisnow-saas-skeleton.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "webapp/scripts/scan-malware.mjs",
+      "line": 38,
+      "category": "malware_signature",
+      "rule": "polinrider-loader",
+      "snippet": "[/8-1449|8-1695-2|rmcej%otb%/, \"known campaign marker\"],"
+    },
+    {
+      "file": "scripts/security-scan-staged.sh",
+      "line": 76,
+      "category": "credential_harvest",
+      "rule": "env-token-grab",
+      "snippet": "block \"AWS Secret Key in $f\" \"$(grep -n -i 'aws_secret' \"$f\" | head -3)\""
+    },
+    {
+      "file": "scripts/security-scan-staged.sh",
+      "line": 183,
+      "category": "credential_harvest",
+      "rule": "ssh-keys",
+      "snippet": "*credentials.json|*service-account*.json|*keyfile*.json|*.pem|*.p12|*.pfx|*.key|*id_rsa|*id_ed25519|*id_ecdsa)"
+    },
+    {
+      "file": "webapp/playwright.config.ts",
+      "line": 2,
+      "category": "code_execution",
+      "rule": "node-child-process",
+      "snippet": "import { execFileSync } from 'child_process'"
+    },
+    {
+      "file": "webapp/scripts/scan-malware.mjs",
+      "line": 36,
+      "category": "code_execution",
+      "rule": "node-child-process",
+      "snippet": "[/child_process[\\s\\S]{0,60}spawn[\\s\\S]{0,120}detached/, \"detached child_process.spawn (persistence)\"],"
+    },
+    {
+      "file": "webapp/scripts/scan-malware.mjs",
+      "line": 36,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "[/child_process[\\s\\S]{0,60}spawn[\\s\\S]{0,120}detached/, \"detached child_process.spawn (persistence)\"],"
+    },
+    {
+      "file": "webapp/scripts/scan-malware.mjs",
+      "line": 38,
+      "category": "malware_signature",
+      "rule": "polinrider-loader",
+      "snippet": "[/8-1449|8-1695-2|rmcej%otb%/, \"known campaign marker\"],"
+    },
+    {
+      "file": "webapp/components/Plasma.tsx",
+      "line": 15,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "const result = /^#?([a-f\\d]{2})([a-f\\d]{2})([a-f\\d]{2})$/i.exec(hex);"
+    },
+    {
+      "file": "webapp/components/Grainient.tsx",
+      "line": 32,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "const result = /^#?([a-f\\d]{2})([a-f\\d]{2})([a-f\\d]{2})$/i.exec(hex);"
+    },
+    {
+      "file": "webapp/components/Grainient.jsx",
+      "line": 6,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "const result = /^#?([a-f\\d]{2})([a-f\\d]{2})([a-f\\d]{2})$/i.exec(hex);"
+    },
+    {
+      "file": "webapp/app/api/setup/check/route.ts",
+      "line": 2,
+      "category": "code_execution",
+      "rule": "node-child-process",
+      "snippet": "import { execFileSync } from \"child_process\";"
+    }
+  ],
+  "commit_sha": "03030e0877586d37c35feb4b75f27355991b9071",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/speedydevv1/buildthisnow-saas-skeleton",
+    "version_info": "all",
+    "threat_description": "PolinRider loader (DPRK backdoor/infostealer). Payload in webapp/scripts/scan-malware.mjs.\nOutbound: documented for this malware family (webapp/scripts/scan-malware.mjs:38).\nPolinRider (DPRK; Lazarus, Contagious Interview cluster), as documented by OpenSourceMalware.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Carries PolinRider fingerprints (polinrider-loader), a DPRK campaign documented and attributed by OpenSourceMalware.\nFound by GitHub code search for a confirmed malware signature: \"rmcej%otb%\".\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: webapp/scripts/scan-malware.mjs\n- Outbound: documented for this malware family (webapp/scripts/scan-malware.mjs:38).\n- webapp/scripts/scan-malware.mjs:38: PolinRider shuffle-cipher loader (OSM-documented DPRK marker, dead-drop address or XOR key)",
+    "publisher": "speedydevv1",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "polinrider",
+      "contagious-interview",
+      "fake-recruiter",
+      "dprk",
+      "north-korea",
+      "polinrider-config-injection",
+      "malware"
+    ],
+    "evidence_references": "https://github.com/speedydevv1/buildthisnow-saas-skeleton/blob/03030e0877586d37c35feb4b75f27355991b9071/webapp/scripts/scan-malware.mjs#L38\nhttps://github.com/speedydevv1/buildthisnow-saas-skeleton/blob/03030e0877586d37c35feb4b75f27355991b9071/scripts/security-scan-staged.sh#L76\nhttps://github.com/speedydevv1/buildthisnow-saas-skeleton/blob/03030e0877586d37c35feb4b75f27355991b9071/scripts/security-scan-staged.sh#L183\nhttps://github.com/speedydevv1/buildthisnow-saas-skeleton/blob/03030e0877586d37c35feb4b75f27355991b9071/webapp/playwright.config.ts#L2\nhttps://github.com/speedydevv1/buildthisnow-saas-skeleton/blob/03030e0877586d37c35feb4b75f27355991b9071/webapp/scripts/scan-malware.mjs#L36\nhttps://github.com/speedydevv1/buildthisnow-saas-skeleton/blob/03030e0877586d37c35feb4b75f27355991b9071/webapp/components/Plasma.tsx#L15\nhttps://github.com/speedydevv1/buildthisnow-saas-skeleton/blob/03030e0877586d37c35feb4b75f27355991b9071/webapp/components/Grainient.tsx#L32\nhttps://github.com/speedydevv1/buildthisnow-saas-skeleton/blob/03030e0877586d37c35feb4b75f27355991b9071/webapp/components/Grainient.jsx#L6\nhttps://github.com/speedydevv1/buildthisnow-saas-skeleton/blob/03030e0877586d37c35feb4b75f27355991b9071/webapp/app/api/setup/check/route.ts#L2",
+    "verified_iocs": "webapp/scripts/scan-malware.mjs",
+    "contributors": [],
+    "first_seen": "2026-10-12T06:14:50Z",
+    "last_seen": "2026-10-12T06:14:50Z"
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "finding": {
+    "key": "repository:lithira-silva/trueclaim---itpm-",
+    "kind": "repository",
+    "family": "",
+    "id": "lithira-silva/trueclaim---itpm-",
+    "url": "https://github.com/Lithira-Silva/TrueClaim---ITPM-",
+    "registry": "github",
+    "owner": "lithira-silva",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 1,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "malware_signature/polinrider-loader",
+    "evidence_locations": "client/postcss.config.mjs:13",
+    "c2_hosts": "",
+    "iocs": "client/postcss.config.mjs",
+    "matched_signatures": "\"rmcej%otb%\"",
+    "reasons": "Shares a confirmed-malware code signature ['\"rmcej%otb%\"'] | Tier-2 confirmed (bash score 1)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20261012T061450Z",
+    "last_seen": "hunt-20261012T061450Z",
+    "evidence_file": "repositories/lithira-silva_trueclaim---itpm-.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "client/postcss.config.mjs",
+      "line": 13,
+      "category": "malware_signature",
+      "rule": "polinrider-loader",
+      "snippet": "export default config;                                                                                                                                                                                  "
+    },
+    {
+      "file": "client/postcss.config.mjs",
+      "line": 13,
+      "category": "malware_signature",
+      "rule": "polinrider-loader",
+      "snippet": "export default config;                                                                                                                                                                                  "
+    }
+  ],
+  "commit_sha": "c2399f5525696bbd84894c3b107c04e0a30202ee",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/lithira-silva/trueclaim---itpm-",
+    "version_info": "all",
+    "threat_description": "PolinRider loader (DPRK backdoor/infostealer). Payload in client/postcss.config.mjs.\nOutbound: documented for this malware family (client/postcss.config.mjs:13).\nPolinRider (DPRK; Lazarus, Contagious Interview cluster), as documented by OpenSourceMalware.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Carries PolinRider fingerprints (polinrider-loader), a DPRK campaign documented and attributed by OpenSourceMalware.\nFound by GitHub code search for a confirmed malware signature: \"rmcej%otb%\".\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: client/postcss.config.mjs\n- Outbound: documented for this malware family (client/postcss.config.mjs:13).\n- client/postcss.config.mjs:13: PolinRider shuffle-cipher loader (OSM-documented DPRK marker, dead-drop address or XOR key)",
+    "publisher": "lithira-silva",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "polinrider",
+      "contagious-interview",
+      "fake-recruiter",
+      "dprk",
+      "north-korea",
+      "polinrider-config-injection",
+      "malware"
+    ],
+    "evidence_references": "https://github.com/lithira-silva/trueclaim---itpm-/blob/c2399f5525696bbd84894c3b107c04e0a30202ee/client/postcss.config.mjs#L13",
+    "verified_iocs": "client/postcss.config.mjs",
+    "contributors": [],
+    "first_seen": "2026-10-12T06:14:50Z",
+    "last_seen": "2026-10-12T06:14:50Z"
+  }
+}

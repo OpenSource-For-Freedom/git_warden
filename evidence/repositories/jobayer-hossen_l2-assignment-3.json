@@ -1,0 +1,72 @@
+{
+  "finding": {
+    "key": "repository:jobayer-hossen/l2-assignment-3",
+    "kind": "repository",
+    "family": "",
+    "id": "jobayer-hossen/l2-assignment-3",
+    "url": "https://github.com/jobayer-hossen/L2-Assignment-3",
+    "registry": "github",
+    "owner": "jobayer-hossen",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 1,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "malware_signature/polinrider-loader",
+    "evidence_locations": "src/app.ts:32",
+    "c2_hosts": "",
+    "iocs": "src/app.ts",
+    "matched_signatures": "\"rmcej%otb%\"",
+    "reasons": "Shares a confirmed-malware code signature ['\"rmcej%otb%\"'] | Tier-2 confirmed (bash score 1)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20261012T061450Z",
+    "last_seen": "hunt-20261012T061450Z",
+    "evidence_file": "repositories/jobayer-hossen_l2-assignment-3.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "src/app.ts",
+      "line": 32,
+      "category": "malware_signature",
+      "rule": "polinrider-loader",
+      "snippet": "export default app;                                                                                                                                                                                     "
+    },
+    {
+      "file": "src/app.ts",
+      "line": 32,
+      "category": "malware_signature",
+      "rule": "polinrider-loader",
+      "snippet": "export default app;                                                                                                                                                                                     "
+    }
+  ],
+  "commit_sha": "e5d1a1f6815e8053677bafce2896d7086b8007dc",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/jobayer-hossen/l2-assignment-3",
+    "version_info": "all",
+    "threat_description": "PolinRider loader (DPRK backdoor/infostealer). Payload in src/app.ts.\nOutbound: documented for this malware family (src/app.ts:32).\nPolinRider (DPRK; Lazarus, Contagious Interview cluster), as documented by OpenSourceMalware.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Carries PolinRider fingerprints (polinrider-loader), a DPRK campaign documented and attributed by OpenSourceMalware.\nFound by GitHub code search for a confirmed malware signature: \"rmcej%otb%\".\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: src/app.ts\n- Outbound: documented for this malware family (src/app.ts:32).\n- src/app.ts:32: PolinRider shuffle-cipher loader (OSM-documented DPRK marker, dead-drop address or XOR key)",
+    "publisher": "jobayer-hossen",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "polinrider",
+      "contagious-interview",
+      "fake-recruiter",
+      "dprk",
+      "north-korea",
+      "polinrider-config-injection",
+      "malware"
+    ],
+    "evidence_references": "https://github.com/jobayer-hossen/l2-assignment-3/blob/e5d1a1f6815e8053677bafce2896d7086b8007dc/src/app.ts#L32",
+    "verified_iocs": "src/app.ts",
+    "contributors": [],
+    "first_seen": "2026-10-12T06:14:50Z",
+    "last_seen": "2026-10-12T06:14:50Z"
+  }
+}

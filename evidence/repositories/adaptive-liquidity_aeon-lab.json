@@ -1,0 +1,193 @@
+{
+  "finding": {
+    "key": "repository:adaptive-liquidity/aeon-lab",
+    "kind": "repository",
+    "family": "",
+    "id": "adaptive-liquidity/aeon-lab",
+    "url": "https://github.com/Adaptive-Liquidity/aeon-lab",
+    "registry": "github",
+    "owner": "adaptive-liquidity",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 17,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "malware_signature/shai-hulud-ioc; enumeration/host-recon",
+    "evidence_locations": "scripts/ci/scan-supply-chain-iocs.js:268; scripts/ci/scan-supply-chain-iocs.js:274; scripts/ci/scan-supply-chain-iocs.js:275; scripts/ci/scan-supply-chain-iocs.js:280; scripts/ci/scan-supply-chain-iocs.js:284; scripts/ci/scan-supply-chain-iocs.js:370; scripts/ci/scan-supply-chain-iocs.js:387; skills/ios-icon-gen/scripts/iconify_gen.sh:7; skills/ios-icon-gen/scripts/iconify_gen.sh:38; skills/ios-icon-gen/scripts/iconify_gen.sh:40; skills/ios-icon-gen/scripts/iconify_gen.sh:52; skills/ios-icon-gen/scripts/iconify_gen.sh:101; skills/ios-icon-gen/scripts/iconify_gen.sh:102; skills/ios-icon-gen/scripts/iconify_gen.sh:225; skills/ios-icon-gen/scripts/iconify_gen.sh:232; skills/continuous-learning-v2/scripts/detect-project.sh:141; skills/continuous-learning-v2/scripts/detect-project.sh:293; skills/continuous-learning-v2/agents/observer-loop.sh:157; skills/continuous-learning-v2/agents/observer-loop.sh:163; skills/continuous-learning-v2/agents/observer-loop.sh:179",
+    "c2_hosts": "",
+    "iocs": "scripts/ci/scan-supply-chain-iocs.js",
+    "matched_signatures": "codePointAt 0xFE00 0xE0100 Function; \"A Mini Shai-Hulud has Appeared\"",
+    "reasons": "Shares a confirmed-malware code signature ['codePointAt 0xFE00 0xE0100 Function', '\"A Mini Shai-Hulud has Appeared\"'] | Tier-2 confirmed (bash score 17)",
+    "osm_status": "submitted",
+    "osm_threat_id": "eb884544-d818-45ed-9efc-c71181423a63",
+    "first_seen": "hunt-20261012T053832Z",
+    "last_seen": "hunt-20261012T053832Z",
+    "evidence_file": "repositories/adaptive-liquidity_aeon-lab.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "scripts/ci/scan-supply-chain-iocs.js",
+      "line": 268,
+      "category": "malware_signature",
+      "rule": "shai-hulud-ioc",
+      "snippet": "'git-tanstack.com',"
+    },
+    {
+      "file": "scripts/ci/scan-supply-chain-iocs.js",
+      "line": 274,
+      "category": "malware_signature",
+      "rule": "shai-hulud-ioc",
+      "snippet": "'83.142.209.194',"
+    },
+    {
+      "file": "scripts/ci/scan-supply-chain-iocs.js",
+      "line": 275,
+      "category": "malware_signature",
+      "rule": "shai-hulud-ioc",
+      "snippet": "'api.masscan.cloud',"
+    },
+    {
+      "file": "scripts/ci/scan-supply-chain-iocs.js",
+      "line": 280,
+      "category": "malware_signature",
+      "rule": "shai-hulud-ioc",
+      "snippet": "'A Mini Shai-Hulud has Appeared',"
+    },
+    {
+      "file": "scripts/ci/scan-supply-chain-iocs.js",
+      "line": 284,
+      "category": "malware_signature",
+      "rule": "shai-hulud-ioc",
+      "snippet": "'shai-hulud-workflow.yml',"
+    },
+    {
+      "file": "scripts/ci/scan-supply-chain-iocs.js",
+      "line": 370,
+      "category": "malware_signature",
+      "rule": "shai-hulud-ioc",
+      "snippet": "'shai-hulud-workflow.yml',"
+    },
+    {
+      "file": "scripts/ci/scan-supply-chain-iocs.js",
+      "line": 387,
+      "category": "malware_signature",
+      "rule": "shai-hulud-ioc",
+      "snippet": "'shai-hulud-workflow.yml',"
+    },
+    {
+      "file": "skills/ios-icon-gen/scripts/iconify_gen.sh",
+      "line": 7,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "#   iconify_gen.sh <icon-id> <asset-name> [options]"
+    },
+    {
+      "file": "skills/ios-icon-gen/scripts/iconify_gen.sh",
+      "line": 38,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "iconify_gen.sh <icon-id> <asset-name> [options]    Generate an icon imageset"
+    },
+    {
+      "file": "skills/ios-icon-gen/scripts/iconify_gen.sh",
+      "line": 40,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "iconify_gen.sh preview <icon-id>                    Download preview SVG"
+    },
+    {
+      "file": "skills/ios-icon-gen/scripts/iconify_gen.sh",
+      "line": 52,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "Icon ID Format: <collection>:<icon-name>"
+    },
+    {
+      "file": "skills/ios-icon-gen/scripts/iconify_gen.sh",
+      "line": 101,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "echo \"Generate with: iconify_gen.sh <icon-id> <asset-name>\""
+    },
+    {
+      "file": "skills/ios-icon-gen/scripts/iconify_gen.sh",
+      "line": 102,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "echo \"Preview with:  iconify_gen.sh preview <icon-id>\""
+    },
+    {
+      "file": "skills/ios-icon-gen/scripts/iconify_gen.sh",
+      "line": 225,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "[[ $# -eq 0 ]] && { echo \"Usage: iconify_gen.sh preview <icon-id>\"; exit 1; }"
+    },
+    {
+      "file": "skills/ios-icon-gen/scripts/iconify_gen.sh",
+      "line": 232,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "[[ $# -lt 2 ]] && { echo \"Usage: iconify_gen.sh <icon-id> <asset-name> [options]\"; exit 1; }"
+    },
+    {
+      "file": "skills/continuous-learning-v2/scripts/detect-project.sh",
+      "line": 141,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "# Derive project ID: prefer git remote URL hash (portable across machines),"
+    },
+    {
+      "file": "skills/continuous-learning-v2/scripts/detect-project.sh",
+      "line": 293,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "\"id\": os.environ[\"_CLV2_REG_PID\"],"
+    },
+    {
+      "file": "skills/continuous-learning-v2/agents/observer-loop.sh",
+      "line": 157,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "If you find 3+ occurrences of the same pattern, you MUST write an instinct file directly to ${INSTINCTS_DIR}/<id>.md using the Write tool."
+    },
+    {
+      "file": "skills/continuous-learning-v2/agents/observer-loop.sh",
+      "line": 163,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "id: kebab-case-name"
+    },
+    {
+      "file": "skills/continuous-learning-v2/agents/observer-loop.sh",
+      "line": 179,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "- Observed N times in session <id>"
+    }
+  ],
+  "commit_sha": "a7ff40a7996087fc46f414fe5b5e06995ef26ac6",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/adaptive-liquidity/aeon-lab",
+    "version_info": "all",
+    "threat_description": "Shai-Hulud worm (self-propagating credential stealer). Payload in scripts/ci/scan-supply-chain-iocs.js.\nOutbound: documented for this malware family (scripts/ci/scan-supply-chain-iocs.js:268, scripts/ci/scan-supply-chain-iocs.js:274).\nFound by GitHub code search for a confirmed malware signature: codePointAt 0xFE00 0xE0100 Function; \"A Mini Shai-Hulud has Appeared\".\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: scripts/ci/scan-supply-chain-iocs.js\n- Outbound: documented for this malware family (scripts/ci/scan-supply-chain-iocs.js:268, scripts/ci/scan-supply-chain-iocs.js:274).\n- scripts/ci/scan-supply-chain-iocs.js:268: Shai-Hulud worm fingerprint (banner string, exfil webhook, rogue runner, Bun stager hook or C2) (+6 more)",
+    "publisher": "adaptive-liquidity",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "shai-hulud",
+      "malware"
+    ],
+    "evidence_references": "https://github.com/adaptive-liquidity/aeon-lab/blob/a7ff40a7996087fc46f414fe5b5e06995ef26ac6/scripts/ci/scan-supply-chain-iocs.js#L268\nhttps://github.com/adaptive-liquidity/aeon-lab/blob/a7ff40a7996087fc46f414fe5b5e06995ef26ac6/scripts/ci/scan-supply-chain-iocs.js#L274\nhttps://github.com/adaptive-liquidity/aeon-lab/blob/a7ff40a7996087fc46f414fe5b5e06995ef26ac6/scripts/ci/scan-supply-chain-iocs.js#L275\nhttps://github.com/adaptive-liquidity/aeon-lab/blob/a7ff40a7996087fc46f414fe5b5e06995ef26ac6/scripts/ci/scan-supply-chain-iocs.js#L280\nhttps://github.com/adaptive-liquidity/aeon-lab/blob/a7ff40a7996087fc46f414fe5b5e06995ef26ac6/scripts/ci/scan-supply-chain-iocs.js#L284\nhttps://github.com/adaptive-liquidity/aeon-lab/blob/a7ff40a7996087fc46f414fe5b5e06995ef26ac6/scripts/ci/scan-supply-chain-iocs.js#L370\nhttps://github.com/adaptive-liquidity/aeon-lab/blob/a7ff40a7996087fc46f414fe5b5e06995ef26ac6/scripts/ci/scan-supply-chain-iocs.js#L387\nhttps://github.com/adaptive-liquidity/aeon-lab/blob/a7ff40a7996087fc46f414fe5b5e06995ef26ac6/skills/ios-icon-gen/scripts/iconify_gen.sh#L7\nhttps://github.com/adaptive-liquidity/aeon-lab/blob/a7ff40a7996087fc46f414fe5b5e06995ef26ac6/skills/ios-icon-gen/scripts/iconify_gen.sh#L38\nhttps://github.com/adaptive-liquidity/aeon-lab/blob/a7ff40a7996087fc46f414fe5b5e06995ef26ac6/skills/ios-icon-gen/scripts/iconify_gen.sh#L40\nhttps://github.com/adaptive-liquidity/aeon-lab/blob/a7ff40a7996087fc46f414fe5b5e06995ef26ac6/skills/ios-icon-gen/scripts/iconify_gen.sh#L52\nhttps://github.com/adaptive-liquidity/aeon-lab/blob/a7ff40a7996087fc46f414fe5b5e06995ef26ac6/skills/ios-icon-gen/scripts/iconify_gen.sh#L101\nhttps://github.com/adaptive-liquidity/aeon-lab/blob/a7ff40a7996087fc46f414fe5b5e06995ef26ac6/skills/ios-icon-gen/scripts/iconify_gen.sh#L102\nhttps://github.com/adaptive-liquidity/aeon-lab/blob/a7ff40a7996087fc46f414fe5b5e06995ef26ac6/skills/ios-icon-gen/scripts/iconify_gen.sh#L225\nhttps://github.com/adaptive-liquidity/aeon-lab/blob/a7ff40a7996087fc46f414fe5b5e06995ef26ac6/skills/ios-icon-gen/scripts/iconify_gen.sh#L232",
+    "verified_iocs": "scripts/ci/scan-supply-chain-iocs.js",
+    "contributors": [],
+    "first_seen": "2026-10-12T05:38:32Z",
+    "last_seen": "2026-10-12T05:38:32Z"
+  }
+}

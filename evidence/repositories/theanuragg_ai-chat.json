@@ -1,0 +1,79 @@
+{
+  "finding": {
+    "key": "repository:theanuragg/ai-chat",
+    "kind": "repository",
+    "family": "",
+    "id": "theanuragg/ai-chat",
+    "url": "https://github.com/theanuragg/AI-chat",
+    "registry": "github",
+    "owner": "theanuragg",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 4,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "malware_signature/polinrider-loader; code_execution/js-exec",
+    "evidence_locations": "postcss.config.mjs:9; Components/landing/messagelist.tsx:85",
+    "c2_hosts": "",
+    "iocs": "postcss.config.mjs",
+    "matched_signatures": "\"rmcej%otb%\"",
+    "reasons": "Shares a confirmed-malware code signature ['\"rmcej%otb%\"'] | Tier-2 confirmed (bash score 4)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20261012T053832Z",
+    "last_seen": "hunt-20261012T053832Z",
+    "evidence_file": "repositories/theanuragg_ai-chat.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "postcss.config.mjs",
+      "line": 9,
+      "category": "malware_signature",
+      "rule": "polinrider-loader",
+      "snippet": "export default config;                                                                                                                                                                                  "
+    },
+    {
+      "file": "postcss.config.mjs",
+      "line": 9,
+      "category": "malware_signature",
+      "rule": "polinrider-loader",
+      "snippet": "export default config;                                                                                                                                                                                  "
+    },
+    {
+      "file": "Components/landing/messagelist.tsx",
+      "line": 85,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "const match = /language-(\\w+)/.exec(className || \"\");"
+    }
+  ],
+  "commit_sha": "1d846142b61b2009b9f0d8cada30b4e48c202fb3",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/theanuragg/ai-chat",
+    "version_info": "all",
+    "threat_description": "PolinRider loader (DPRK backdoor/infostealer). Payload in postcss.config.mjs.\nOutbound: documented for this malware family (postcss.config.mjs:9).\nPolinRider (DPRK; Lazarus, Contagious Interview cluster), as documented by OpenSourceMalware.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Carries PolinRider fingerprints (polinrider-loader), a DPRK campaign documented and attributed by OpenSourceMalware.\nFound by GitHub code search for a confirmed malware signature: \"rmcej%otb%\".\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: postcss.config.mjs\n- Outbound: documented for this malware family (postcss.config.mjs:9).\n- postcss.config.mjs:9: PolinRider shuffle-cipher loader (OSM-documented DPRK marker, dead-drop address or XOR key)",
+    "publisher": "theanuragg",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "polinrider",
+      "contagious-interview",
+      "fake-recruiter",
+      "dprk",
+      "north-korea",
+      "polinrider-config-injection",
+      "malware"
+    ],
+    "evidence_references": "https://github.com/theanuragg/ai-chat/blob/1d846142b61b2009b9f0d8cada30b4e48c202fb3/postcss.config.mjs#L9\nhttps://github.com/theanuragg/ai-chat/blob/1d846142b61b2009b9f0d8cada30b4e48c202fb3/Components/landing/messagelist.tsx#L85",
+    "verified_iocs": "postcss.config.mjs",
+    "contributors": [],
+    "first_seen": "2026-10-12T05:38:32Z",
+    "last_seen": "2026-10-12T05:38:32Z"
+  }
+}

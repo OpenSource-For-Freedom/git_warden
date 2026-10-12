@@ -1,0 +1,72 @@
+{
+  "finding": {
+    "key": "repository:osasalohan/blusalt2",
+    "kind": "repository",
+    "family": "",
+    "id": "osasalohan/blusalt2",
+    "url": "https://github.com/osasalohan/blusalt2",
+    "registry": "github",
+    "owner": "osasalohan",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 1,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "malware_signature/polinrider-loader",
+    "evidence_locations": "postcss.config.mjs:9",
+    "c2_hosts": "",
+    "iocs": "postcss.config.mjs",
+    "matched_signatures": "\"rmcej%otb%\"",
+    "reasons": "Shares a confirmed-malware code signature ['\"rmcej%otb%\"'] | Tier-2 confirmed (bash score 1)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20261012T053832Z",
+    "last_seen": "hunt-20261012T053832Z",
+    "evidence_file": "repositories/osasalohan_blusalt2.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "postcss.config.mjs",
+      "line": 9,
+      "category": "malware_signature",
+      "rule": "polinrider-loader",
+      "snippet": "export default config;                                                                                                                                                                                  "
+    },
+    {
+      "file": "postcss.config.mjs",
+      "line": 9,
+      "category": "malware_signature",
+      "rule": "polinrider-loader",
+      "snippet": "export default config;                                                                                                                                                                                  "
+    }
+  ],
+  "commit_sha": "a83dacc56e9a195bcaefa4186288d6fcb92a8a0a",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/osasalohan/blusalt2",
+    "version_info": "all",
+    "threat_description": "PolinRider loader (DPRK backdoor/infostealer). Payload in postcss.config.mjs.\nOutbound: documented for this malware family (postcss.config.mjs:9).\nPolinRider (DPRK; Lazarus, Contagious Interview cluster), as documented by OpenSourceMalware.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Carries PolinRider fingerprints (polinrider-loader), a DPRK campaign documented and attributed by OpenSourceMalware.\nFound by GitHub code search for a confirmed malware signature: \"rmcej%otb%\".\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: postcss.config.mjs\n- Outbound: documented for this malware family (postcss.config.mjs:9).\n- postcss.config.mjs:9: PolinRider shuffle-cipher loader (OSM-documented DPRK marker, dead-drop address or XOR key)",
+    "publisher": "osasalohan",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "polinrider",
+      "contagious-interview",
+      "fake-recruiter",
+      "dprk",
+      "north-korea",
+      "polinrider-config-injection",
+      "malware"
+    ],
+    "evidence_references": "https://github.com/osasalohan/blusalt2/blob/a83dacc56e9a195bcaefa4186288d6fcb92a8a0a/postcss.config.mjs#L9",
+    "verified_iocs": "postcss.config.mjs",
+    "contributors": [],
+    "first_seen": "2026-10-12T05:38:32Z",
+    "last_seen": "2026-10-12T05:38:32Z"
+  }
+}

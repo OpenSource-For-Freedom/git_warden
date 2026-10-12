@@ -1,0 +1,72 @@
+{
+  "finding": {
+    "key": "repository:lambeboluwatife/nextjs-crash-course",
+    "kind": "repository",
+    "family": "",
+    "id": "lambeboluwatife/nextjs-crash-course",
+    "url": "https://github.com/lambeboluwatife/nextjs-crash-course",
+    "registry": "github",
+    "owner": "lambeboluwatife",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 1,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "malware_signature/polinrider-loader",
+    "evidence_locations": "next.config.mjs:8",
+    "c2_hosts": "",
+    "iocs": "next.config.mjs",
+    "matched_signatures": "\"rmcej%otb%\"",
+    "reasons": "Shares a confirmed-malware code signature ['\"rmcej%otb%\"'] | Tier-2 confirmed (bash score 1)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20261012T053832Z",
+    "last_seen": "hunt-20261012T053832Z",
+    "evidence_file": "repositories/lambeboluwatife_nextjs-crash-course.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "next.config.mjs",
+      "line": 8,
+      "category": "malware_signature",
+      "rule": "polinrider-loader",
+      "snippet": "export default nextConfig;                                                                                                                                                                              "
+    },
+    {
+      "file": "next.config.mjs",
+      "line": 8,
+      "category": "malware_signature",
+      "rule": "polinrider-loader",
+      "snippet": "export default nextConfig;                                                                                                                                                                              "
+    }
+  ],
+  "commit_sha": "4e5c04d6c5e7905250a407357a2f7ac85cfb28fb",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/lambeboluwatife/nextjs-crash-course",
+    "version_info": "all",
+    "threat_description": "PolinRider loader (DPRK backdoor/infostealer). Payload in next.config.mjs.\nOutbound: documented for this malware family (next.config.mjs:8).\nPolinRider (DPRK; Lazarus, Contagious Interview cluster), as documented by OpenSourceMalware.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Carries PolinRider fingerprints (polinrider-loader), a DPRK campaign documented and attributed by OpenSourceMalware.\nFound by GitHub code search for a confirmed malware signature: \"rmcej%otb%\".\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: next.config.mjs\n- Outbound: documented for this malware family (next.config.mjs:8).\n- next.config.mjs:8: PolinRider shuffle-cipher loader (OSM-documented DPRK marker, dead-drop address or XOR key)",
+    "publisher": "lambeboluwatife",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "polinrider",
+      "contagious-interview",
+      "fake-recruiter",
+      "dprk",
+      "north-korea",
+      "polinrider-config-injection",
+      "malware"
+    ],
+    "evidence_references": "https://github.com/lambeboluwatife/nextjs-crash-course/blob/4e5c04d6c5e7905250a407357a2f7ac85cfb28fb/next.config.mjs#L8",
+    "verified_iocs": "next.config.mjs",
+    "contributors": [],
+    "first_seen": "2026-10-12T05:38:32Z",
+    "last_seen": "2026-10-12T05:38:32Z"
+  }
+}
