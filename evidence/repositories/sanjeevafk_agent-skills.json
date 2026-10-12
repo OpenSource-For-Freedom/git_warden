@@ -1,0 +1,193 @@
+{
+  "finding": {
+    "key": "repository:sanjeevafk/agent-skills",
+    "kind": "repository",
+    "family": "",
+    "id": "sanjeevafk/agent-skills",
+    "url": "https://github.com/sanjeevafk/agent-skills",
+    "registry": "github",
+    "owner": "sanjeevafk",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 43,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "malware_signature/shai-hulud-ioc; download_exec/curl-pipe-shell; exfiltration/curl-post-data; enumeration/host-recon; credential_harvest/env-token-grab",
+    "evidence_locations": "collections/ecc-upstream/scripts/ci/scan-supply-chain-iocs.js:268; collections/ecc-upstream/scripts/ci/scan-supply-chain-iocs.js:274; collections/ecc-upstream/scripts/ci/scan-supply-chain-iocs.js:275; collections/ecc-upstream/scripts/ci/scan-supply-chain-iocs.js:280; collections/ecc-upstream/scripts/ci/scan-supply-chain-iocs.js:284; collections/ecc-upstream/scripts/ci/scan-supply-chain-iocs.js:370; collections/ecc-upstream/scripts/ci/scan-supply-chain-iocs.js:387; skills/bro/install.sh:11; skills/vercel-deploy/scripts/deploy.sh:239; skills/turnstile-spin/scripts/widget-create.sh:21; skills/turnstile-spin/scripts/widget-create.sh:32; skills/turnstile-spin/scripts/validate.sh:9; skills/turnstile-spin/scripts/validate.sh:30; skills/turnstile-spin/scripts/persist-skill.sh:10; skills/turnstile-spin/scripts/auth-probe.sh:19; skills/turnstile-spin/scripts/auth-probe.sh:86; skills/turnstile-spin/scripts/auth-probe.sh:108; skills/turnstile-spin/scripts/auth-probe.sh:125; skills/turnstile-spin/scripts/auth-probe.sh:144; skills/turnstile-spin/scripts/auth-probe.sh:149",
+    "c2_hosts": "",
+    "iocs": "curl | bash; collections/ecc-upstream/scripts/ci/scan-supply-chain-iocs.js",
+    "matched_signatures": "codePointAt 0xFE00 0xE0100 Function; \"A Mini Shai-Hulud has Appeared\"",
+    "reasons": "Shares a confirmed-malware code signature ['codePointAt 0xFE00 0xE0100 Function', '\"A Mini Shai-Hulud has Appeared\"'] | Tier-2 confirmed (bash score 43)",
+    "osm_status": "submitted",
+    "osm_threat_id": "5089bca3-e03b-4c2f-8866-66d5475c51fc",
+    "first_seen": "hunt-20261012T053832Z",
+    "last_seen": "hunt-20261012T053832Z",
+    "evidence_file": "repositories/sanjeevafk_agent-skills.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "collections/ecc-upstream/scripts/ci/scan-supply-chain-iocs.js",
+      "line": 268,
+      "category": "malware_signature",
+      "rule": "shai-hulud-ioc",
+      "snippet": "'git-tanstack.com',"
+    },
+    {
+      "file": "collections/ecc-upstream/scripts/ci/scan-supply-chain-iocs.js",
+      "line": 274,
+      "category": "malware_signature",
+      "rule": "shai-hulud-ioc",
+      "snippet": "'83.142.209.194',"
+    },
+    {
+      "file": "collections/ecc-upstream/scripts/ci/scan-supply-chain-iocs.js",
+      "line": 275,
+      "category": "malware_signature",
+      "rule": "shai-hulud-ioc",
+      "snippet": "'api.masscan.cloud',"
+    },
+    {
+      "file": "collections/ecc-upstream/scripts/ci/scan-supply-chain-iocs.js",
+      "line": 280,
+      "category": "malware_signature",
+      "rule": "shai-hulud-ioc",
+      "snippet": "'A Mini Shai-Hulud has Appeared',"
+    },
+    {
+      "file": "collections/ecc-upstream/scripts/ci/scan-supply-chain-iocs.js",
+      "line": 284,
+      "category": "malware_signature",
+      "rule": "shai-hulud-ioc",
+      "snippet": "'shai-hulud-workflow.yml',"
+    },
+    {
+      "file": "collections/ecc-upstream/scripts/ci/scan-supply-chain-iocs.js",
+      "line": 370,
+      "category": "malware_signature",
+      "rule": "shai-hulud-ioc",
+      "snippet": "'shai-hulud-workflow.yml',"
+    },
+    {
+      "file": "collections/ecc-upstream/scripts/ci/scan-supply-chain-iocs.js",
+      "line": 387,
+      "category": "malware_signature",
+      "rule": "shai-hulud-ioc",
+      "snippet": "'shai-hulud-workflow.yml',"
+    },
+    {
+      "file": "skills/bro/install.sh",
+      "line": 11,
+      "category": "download_exec",
+      "rule": "curl-pipe-shell",
+      "snippet": "# Resolve SKILL.md — local copy first, otherwise download (supports curl | bash)"
+    },
+    {
+      "file": "skills/vercel-deploy/scripts/deploy.sh",
+      "line": 239,
+      "category": "exfiltration",
+      "rule": "curl-post-data",
+      "snippet": "RESPONSE=$(curl -s -X POST \"$DEPLOY_ENDPOINT\" -F \"file=@$TARBALL\" -F \"framework=$FRAMEWORK\")"
+    },
+    {
+      "file": "skills/turnstile-spin/scripts/widget-create.sh",
+      "line": 21,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "--account-id) need_arg \"$1\" \"${2-}\"; ACCOUNT_ID=\"$2\"; shift 2 ;;"
+    },
+    {
+      "file": "skills/turnstile-spin/scripts/widget-create.sh",
+      "line": 32,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "[[ -n \"$ACCOUNT_ID\" ]] || { echo \"widget-create: --account-id required\" >&2; exit 2; }"
+    },
+    {
+      "file": "skills/turnstile-spin/scripts/validate.sh",
+      "line": 9,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "echo \"Usage: printf '%s' \\\"\\$TURNSTILE_SECRET\\\" | $0 --sitekey <sitekey> --account-id <account-id> --expected-domains '<json-array>'\" >&2"
+    },
+    {
+      "file": "skills/turnstile-spin/scripts/validate.sh",
+      "line": 30,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "--account-id)"
+    },
+    {
+      "file": "skills/turnstile-spin/scripts/persist-skill.sh",
+      "line": 10,
+      "category": "credential_harvest",
+      "rule": "env-token-grab",
+      "snippet": "unset GITHUB_TOKEN GH_TOKEN GITLAB_TOKEN NPM_TOKEN"
+    },
+    {
+      "file": "skills/turnstile-spin/scripts/auth-probe.sh",
+      "line": 19,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "# Account enumeration uses `WRANGLER_BIN whoami --json` only when WRANGLER_BIN is"
+    },
+    {
+      "file": "skills/turnstile-spin/scripts/auth-probe.sh",
+      "line": 86,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "whoami_json=$(CLOUDFLARE_API_TOKEN=\"$token\" \"$wrangler_bin\" whoami --json 2>/dev/null || true)"
+    },
+    {
+      "file": "skills/turnstile-spin/scripts/auth-probe.sh",
+      "line": 108,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "accounts_json=\"[{\\\"id\\\":$(python3 -I -c 'import json, sys; print(json.dumps(sys.argv[1]))' \"$declared_account\")}]\""
+    },
+    {
+      "file": "skills/turnstile-spin/scripts/auth-probe.sh",
+      "line": 125,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "print(\"true\" if any((a or {}).get(\"id\") == target for a in accounts) else \"false\")"
+    },
+    {
+      "file": "skills/turnstile-spin/scripts/auth-probe.sh",
+      "line": 144,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "print(json.load(sys.stdin)[0][\"id\"])"
+    },
+    {
+      "file": "skills/turnstile-spin/scripts/auth-probe.sh",
+      "line": 149,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "echo \"auth-probe: accounts list had one entry but no id field.\" >&2"
+    }
+  ],
+  "commit_sha": "73fc9273344cbdca8bfcef1ca32c4bb8dec7aba9",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/sanjeevafk/agent-skills",
+    "version_info": "all",
+    "threat_description": "Shai-Hulud worm (self-propagating credential stealer). Payload in collections/ecc-upstream/scripts/ci/scan-supply-chain-iocs.js.\nOutbound: documented for this malware family (collections/ecc-upstream/scripts/ci/scan-supply-chain-iocs.js:268, collections/ecc-upstream/scripts/ci/scan-supply-chain-iocs.js:274).\nFound by GitHub code search for a confirmed malware signature: codePointAt 0xFE00 0xE0100 Function; \"A Mini Shai-Hulud has Appeared\".\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: collections/ecc-upstream/scripts/ci/scan-supply-chain-iocs.js\n- Outbound: documented for this malware family (collections/ecc-upstream/scripts/ci/scan-supply-chain-iocs.js:268, collections/ecc-upstream/scripts/ci/scan-supply-chain-iocs.js:274).\n- collections/ecc-upstream/scripts/ci/scan-supply-chain-iocs.js:268: Shai-Hulud worm fingerprint (banner string, exfil webhook, rogue runner, Bun stager hook or C2) (+6 more)",
+    "publisher": "sanjeevafk",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "shai-hulud",
+      "malware"
+    ],
+    "evidence_references": "https://github.com/sanjeevafk/agent-skills/blob/73fc9273344cbdca8bfcef1ca32c4bb8dec7aba9/collections/ecc-upstream/scripts/ci/scan-supply-chain-iocs.js#L268\nhttps://github.com/sanjeevafk/agent-skills/blob/73fc9273344cbdca8bfcef1ca32c4bb8dec7aba9/collections/ecc-upstream/scripts/ci/scan-supply-chain-iocs.js#L274\nhttps://github.com/sanjeevafk/agent-skills/blob/73fc9273344cbdca8bfcef1ca32c4bb8dec7aba9/collections/ecc-upstream/scripts/ci/scan-supply-chain-iocs.js#L275\nhttps://github.com/sanjeevafk/agent-skills/blob/73fc9273344cbdca8bfcef1ca32c4bb8dec7aba9/collections/ecc-upstream/scripts/ci/scan-supply-chain-iocs.js#L280\nhttps://github.com/sanjeevafk/agent-skills/blob/73fc9273344cbdca8bfcef1ca32c4bb8dec7aba9/collections/ecc-upstream/scripts/ci/scan-supply-chain-iocs.js#L284\nhttps://github.com/sanjeevafk/agent-skills/blob/73fc9273344cbdca8bfcef1ca32c4bb8dec7aba9/collections/ecc-upstream/scripts/ci/scan-supply-chain-iocs.js#L370\nhttps://github.com/sanjeevafk/agent-skills/blob/73fc9273344cbdca8bfcef1ca32c4bb8dec7aba9/collections/ecc-upstream/scripts/ci/scan-supply-chain-iocs.js#L387\nhttps://github.com/sanjeevafk/agent-skills/blob/73fc9273344cbdca8bfcef1ca32c4bb8dec7aba9/skills/bro/install.sh#L11\nhttps://github.com/sanjeevafk/agent-skills/blob/73fc9273344cbdca8bfcef1ca32c4bb8dec7aba9/skills/vercel-deploy/scripts/deploy.sh#L239\nhttps://github.com/sanjeevafk/agent-skills/blob/73fc9273344cbdca8bfcef1ca32c4bb8dec7aba9/skills/turnstile-spin/scripts/widget-create.sh#L21\nhttps://github.com/sanjeevafk/agent-skills/blob/73fc9273344cbdca8bfcef1ca32c4bb8dec7aba9/skills/turnstile-spin/scripts/widget-create.sh#L32\nhttps://github.com/sanjeevafk/agent-skills/blob/73fc9273344cbdca8bfcef1ca32c4bb8dec7aba9/skills/turnstile-spin/scripts/validate.sh#L9\nhttps://github.com/sanjeevafk/agent-skills/blob/73fc9273344cbdca8bfcef1ca32c4bb8dec7aba9/skills/turnstile-spin/scripts/validate.sh#L30\nhttps://github.com/sanjeevafk/agent-skills/blob/73fc9273344cbdca8bfcef1ca32c4bb8dec7aba9/skills/turnstile-spin/scripts/persist-skill.sh#L10\nhttps://github.com/sanjeevafk/agent-skills/blob/73fc9273344cbdca8bfcef1ca32c4bb8dec7aba9/skills/turnstile-spin/scripts/auth-probe.sh#L19",
+    "verified_iocs": "curl | bash\ncollections/ecc-upstream/scripts/ci/scan-supply-chain-iocs.js",
+    "contributors": [],
+    "first_seen": "2026-10-12T05:38:32Z",
+    "last_seen": "2026-10-12T05:38:32Z"
+  }
+}

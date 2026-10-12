@@ -1,0 +1,198 @@
+{
+  "finding": {
+    "key": "repository:16navigabraham/stakely-miniapp",
+    "kind": "repository",
+    "family": "",
+    "id": "16navigabraham/stakely-miniapp",
+    "url": "https://github.com/16navigabraham/stakely-miniapp",
+    "registry": "github",
+    "owner": "16navigabraham",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 7,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "malware_signature/polinrider-loader; code_execution/node-child-process; code_execution/js-exec",
+    "evidence_locations": "postcss.config.mjs:12; scripts/dev.js:2; scripts/dev.js:56; scripts/dev.js:61; scripts/dev.js:67; scripts/dev.js:150; scripts/deploy.ts:1; scripts/deploy.ts:273; scripts/deploy.ts:288; scripts/deploy.ts:302; scripts/deploy.ts:328; scripts/deploy.ts:361; scripts/deploy.ts:378; scripts/deploy.ts:477; scripts/deploy.ts:505; scripts/deploy.ts:649; scripts/deploy.ts:650; scripts/deploy.ts:742; scripts/deploy.ts:823",
+    "c2_hosts": "",
+    "iocs": "postcss.config.mjs",
+    "matched_signatures": "\"rmcej%otb%\"",
+    "reasons": "Shares a confirmed-malware code signature ['\"rmcej%otb%\"'] | Tier-2 confirmed (bash score 7)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20261012T061450Z",
+    "last_seen": "hunt-20261012T061450Z",
+    "evidence_file": "repositories/16navigabraham_stakely-miniapp.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "postcss.config.mjs",
+      "line": 12,
+      "category": "malware_signature",
+      "rule": "polinrider-loader",
+      "snippet": "export default config;                                                                                                                                                                                  "
+    },
+    {
+      "file": "postcss.config.mjs",
+      "line": 12,
+      "category": "malware_signature",
+      "rule": "polinrider-loader",
+      "snippet": "export default config;                                                                                                                                                                                  "
+    },
+    {
+      "file": "scripts/dev.js",
+      "line": 2,
+      "category": "code_execution",
+      "rule": "node-child-process",
+      "snippet": "import { spawn } from 'child_process';"
+    },
+    {
+      "file": "scripts/dev.js",
+      "line": 56,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "const netstat = spawn('netstat', ['-ano', '|', 'findstr', `:${port}`]);"
+    },
+    {
+      "file": "scripts/dev.js",
+      "line": 61,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "spawn('taskkill', ['/F', '/PID', pid]);"
+    },
+    {
+      "file": "scripts/dev.js",
+      "line": 67,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "const lsof = spawn('lsof', ['-ti', `:${port}`]);"
+    },
+    {
+      "file": "scripts/dev.js",
+      "line": 150,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "nextDev = spawn(nextBin, ['dev', '-p', port.toString()], {"
+    },
+    {
+      "file": "scripts/deploy.ts",
+      "line": 1,
+      "category": "code_execution",
+      "rule": "node-child-process",
+      "snippet": "import { execSync, spawn } from 'child_process';"
+    },
+    {
+      "file": "scripts/deploy.ts",
+      "line": 273,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "const remoteUrl = execSync('git remote get-url origin', {"
+    },
+    {
+      "file": "scripts/deploy.ts",
+      "line": 288,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "execSync('vercel --version', {"
+    },
+    {
+      "file": "scripts/deploy.ts",
+      "line": 302,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "execSync('npm install -g vercel', {"
+    },
+    {
+      "file": "scripts/deploy.ts",
+      "line": 328,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "const whoamiOutput = execSync('vercel whoami', {"
+    },
+    {
+      "file": "scripts/deploy.ts",
+      "line": 361,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "const child = spawn('vercel', ['login'], {"
+    },
+    {
+      "file": "scripts/deploy.ts",
+      "line": 378,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "execSync('vercel whoami', { stdio: 'ignore' });"
+    },
+    {
+      "file": "scripts/deploy.ts",
+      "line": 477,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "execSync(`vercel env rm ${key} production -y`, {"
+    },
+    {
+      "file": "scripts/deploy.ts",
+      "line": 505,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "execSync(command, {"
+    },
+    {
+      "file": "scripts/deploy.ts",
+      "line": 649,
+      "category": "code_execution",
+      "rule": "node-child-process",
+      "snippet": "const { spawn } = await import('child_process');"
+    },
+    {
+      "file": "scripts/deploy.ts",
+      "line": 650,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "const vercelSetup = spawn('vercel', [], {"
+    },
+    {
+      "file": "scripts/deploy.ts",
+      "line": 742,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "const inspectOutput = execSync("
+    },
+    {
+      "file": "scripts/deploy.ts",
+      "line": 823,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "execSync('vercel link', {"
+    }
+  ],
+  "commit_sha": "277ff22efae2874caf38a95f003e91e4c784d8a5",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/16navigabraham/stakely-miniapp",
+    "version_info": "all",
+    "threat_description": "PolinRider loader (DPRK backdoor/infostealer). Payload in postcss.config.mjs.\nOutbound: documented for this malware family (postcss.config.mjs:12).\nPolinRider (DPRK; Lazarus, Contagious Interview cluster), as documented by OpenSourceMalware.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Carries PolinRider fingerprints (polinrider-loader), a DPRK campaign documented and attributed by OpenSourceMalware.\nFound by GitHub code search for a confirmed malware signature: \"rmcej%otb%\".\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: postcss.config.mjs\n- Outbound: documented for this malware family (postcss.config.mjs:12).\n- postcss.config.mjs:12: PolinRider shuffle-cipher loader (OSM-documented DPRK marker, dead-drop address or XOR key)",
+    "publisher": "16navigabraham",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "polinrider",
+      "contagious-interview",
+      "fake-recruiter",
+      "dprk",
+      "north-korea",
+      "polinrider-config-injection",
+      "malware"
+    ],
+    "evidence_references": "https://github.com/16navigabraham/stakely-miniapp/blob/277ff22efae2874caf38a95f003e91e4c784d8a5/postcss.config.mjs#L12\nhttps://github.com/16navigabraham/stakely-miniapp/blob/277ff22efae2874caf38a95f003e91e4c784d8a5/scripts/dev.js#L2\nhttps://github.com/16navigabraham/stakely-miniapp/blob/277ff22efae2874caf38a95f003e91e4c784d8a5/scripts/dev.js#L56\nhttps://github.com/16navigabraham/stakely-miniapp/blob/277ff22efae2874caf38a95f003e91e4c784d8a5/scripts/dev.js#L61\nhttps://github.com/16navigabraham/stakely-miniapp/blob/277ff22efae2874caf38a95f003e91e4c784d8a5/scripts/dev.js#L67\nhttps://github.com/16navigabraham/stakely-miniapp/blob/277ff22efae2874caf38a95f003e91e4c784d8a5/scripts/dev.js#L150\nhttps://github.com/16navigabraham/stakely-miniapp/blob/277ff22efae2874caf38a95f003e91e4c784d8a5/scripts/deploy.ts#L1\nhttps://github.com/16navigabraham/stakely-miniapp/blob/277ff22efae2874caf38a95f003e91e4c784d8a5/scripts/deploy.ts#L273\nhttps://github.com/16navigabraham/stakely-miniapp/blob/277ff22efae2874caf38a95f003e91e4c784d8a5/scripts/deploy.ts#L288\nhttps://github.com/16navigabraham/stakely-miniapp/blob/277ff22efae2874caf38a95f003e91e4c784d8a5/scripts/deploy.ts#L302\nhttps://github.com/16navigabraham/stakely-miniapp/blob/277ff22efae2874caf38a95f003e91e4c784d8a5/scripts/deploy.ts#L328\nhttps://github.com/16navigabraham/stakely-miniapp/blob/277ff22efae2874caf38a95f003e91e4c784d8a5/scripts/deploy.ts#L361\nhttps://github.com/16navigabraham/stakely-miniapp/blob/277ff22efae2874caf38a95f003e91e4c784d8a5/scripts/deploy.ts#L378\nhttps://github.com/16navigabraham/stakely-miniapp/blob/277ff22efae2874caf38a95f003e91e4c784d8a5/scripts/deploy.ts#L477\nhttps://github.com/16navigabraham/stakely-miniapp/blob/277ff22efae2874caf38a95f003e91e4c784d8a5/scripts/deploy.ts#L505",
+    "verified_iocs": "postcss.config.mjs",
+    "contributors": [],
+    "first_seen": "2026-10-12T06:14:50Z",
+    "last_seen": "2026-10-12T06:14:50Z"
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "finding": {
+    "key": "repository:siamarefin/cardiovascular-disease-prediction",
+    "kind": "repository",
+    "family": "",
+    "id": "siamarefin/cardiovascular-disease-prediction",
+    "url": "https://github.com/siamarefin/CardioVascular-Disease-Prediction",
+    "registry": "github",
+    "owner": "siamarefin",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 2,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "malware_signature/polinrider-loader; enumeration/host-recon",
+    "evidence_locations": "client/postcss.config.mjs:9; .github/workflows/main_cvd.yml:63",
+    "c2_hosts": "",
+    "iocs": "client/postcss.config.mjs",
+    "matched_signatures": "\"rmcej%otb%\"",
+    "reasons": "Shares a confirmed-malware code signature ['\"rmcej%otb%\"'] | Tier-2 confirmed (bash score 2)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20261012T053832Z",
+    "last_seen": "hunt-20261012T053832Z",
+    "evidence_file": "repositories/siamarefin_cardiovascular-disease-prediction.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "client/postcss.config.mjs",
+      "line": 9,
+      "category": "malware_signature",
+      "rule": "polinrider-loader",
+      "snippet": "export default config;                                                                                                                                                                                  "
+    },
+    {
+      "file": ".github/workflows/main_cvd.yml",
+      "line": 63,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "id: deploy-to-webapp"
+    },
+    {
+      "file": "client/postcss.config.mjs",
+      "line": 9,
+      "category": "malware_signature",
+      "rule": "polinrider-loader",
+      "snippet": "export default config;                                                                                                                                                                                  "
+    }
+  ],
+  "commit_sha": "acbbdf88fdec137f7cd0e75eaf1f0a1a8df195b5",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/siamarefin/cardiovascular-disease-prediction",
+    "version_info": "all",
+    "threat_description": "PolinRider loader (DPRK backdoor/infostealer). Payload in client/postcss.config.mjs.\nOutbound: documented for this malware family (client/postcss.config.mjs:9).\nPolinRider (DPRK; Lazarus, Contagious Interview cluster), as documented by OpenSourceMalware.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Carries PolinRider fingerprints (polinrider-loader), a DPRK campaign documented and attributed by OpenSourceMalware.\nFound by GitHub code search for a confirmed malware signature: \"rmcej%otb%\".\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: client/postcss.config.mjs\n- Outbound: documented for this malware family (client/postcss.config.mjs:9).\n- client/postcss.config.mjs:9: PolinRider shuffle-cipher loader (OSM-documented DPRK marker, dead-drop address or XOR key)",
+    "publisher": "siamarefin",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "polinrider",
+      "contagious-interview",
+      "fake-recruiter",
+      "dprk",
+      "north-korea",
+      "polinrider-config-injection",
+      "malware"
+    ],
+    "evidence_references": "https://github.com/siamarefin/cardiovascular-disease-prediction/blob/acbbdf88fdec137f7cd0e75eaf1f0a1a8df195b5/client/postcss.config.mjs#L9\nhttps://github.com/siamarefin/cardiovascular-disease-prediction/blob/acbbdf88fdec137f7cd0e75eaf1f0a1a8df195b5/.github/workflows/main_cvd.yml#L63",
+    "verified_iocs": "client/postcss.config.mjs",
+    "contributors": [],
+    "first_seen": "2026-10-12T05:38:32Z",
+    "last_seen": "2026-10-12T05:38:32Z"
+  }
+}

@@ -1,0 +1,198 @@
+{
+  "finding": {
+    "key": "repository:bernardonuh/rubic-test1",
+    "kind": "repository",
+    "family": "",
+    "id": "bernardonuh/rubic-test1",
+    "url": "https://github.com/BernardOnuh/rubic-test1",
+    "registry": "github",
+    "owner": "bernardonuh",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 4,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "malware_signature/polinrider-loader; enumeration/host-recon; lateral_movement/sshpass",
+    "evidence_locations": ".eslintrc.js:140; .github/workflows/ci.yml:19; .github/workflows/cd-widget-production.yml:18; .github/workflows/cd-widget-production.yml:28; .github/workflows/cd-widget-production.yml:30; .github/workflows/cd-widget-production.yml:37; .github/workflows/cd-widget-develop.yml:45; .github/workflows/cd-widget-develop.yml:47; .github/workflows/cd-widget-develop.yml:51; .github/workflows/cd-widget-develop.yml:66; .github/workflows/cd-widget-develop.yml:67; .github/workflows/cd-widget-develop.yml:68; .github/workflows/cd-production.yml:19; .github/workflows/cd-production.yml:36; .github/workflows/cd-production.yml:38; .github/workflows/cd-production.yml:48; .github/workflows/cd-production.yml:77; .github/workflows/cd-production.yml:82; .github/workflows/cd-develop.yml:51; .github/workflows/cd-develop.yml:53",
+    "c2_hosts": "",
+    "iocs": ".eslintrc.js",
+    "matched_signatures": "\"rmcej%otb%\"",
+    "reasons": "Shares a confirmed-malware code signature ['\"rmcej%otb%\"'] | Tier-2 confirmed (bash score 4)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20261012T061450Z",
+    "last_seen": "hunt-20261012T061450Z",
+    "evidence_file": "repositories/bernardonuh_rubic-test1.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": ".eslintrc.js",
+      "line": 140,
+      "category": "malware_signature",
+      "rule": "polinrider-loader",
+      "snippet": "};                                                                                                                                                                                                      "
+    },
+    {
+      "file": ".github/workflows/ci.yml",
+      "line": 19,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "id: nvm"
+    },
+    {
+      "file": ".github/workflows/cd-widget-production.yml",
+      "line": 18,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "id: nvm"
+    },
+    {
+      "file": ".github/workflows/cd-widget-production.yml",
+      "line": 28,
+      "category": "lateral_movement",
+      "rule": "sshpass",
+      "snippet": "- name: Set up sshpass and yarn"
+    },
+    {
+      "file": ".github/workflows/cd-widget-production.yml",
+      "line": 30,
+      "category": "lateral_movement",
+      "rule": "sshpass",
+      "snippet": "sudo apt-get install sshpass"
+    },
+    {
+      "file": ".github/workflows/cd-widget-production.yml",
+      "line": 37,
+      "category": "lateral_movement",
+      "rule": "sshpass",
+      "snippet": "run: sshpass -p ${{ secrets.PROD_WIDGET_SERVER_PASS }} rsync -e \"ssh -p ${{ secrets.PROD_WIDGET_SERVER_PORT }} -o StrictHostKeyChecking=no\" -rltzh -O --delete dist/rubic/ ${{ secrets.PROD_WIDGET_SERVE"
+    },
+    {
+      "file": ".github/workflows/cd-widget-develop.yml",
+      "line": 45,
+      "category": "lateral_movement",
+      "rule": "sshpass",
+      "snippet": "- name: Install sshpass"
+    },
+    {
+      "file": ".github/workflows/cd-widget-develop.yml",
+      "line": 47,
+      "category": "lateral_movement",
+      "rule": "sshpass",
+      "snippet": "sudo apt-get install sshpass"
+    },
+    {
+      "file": ".github/workflows/cd-widget-develop.yml",
+      "line": 51,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "id: nvm"
+    },
+    {
+      "file": ".github/workflows/cd-widget-develop.yml",
+      "line": 66,
+      "category": "lateral_movement",
+      "rule": "sshpass",
+      "snippet": "sshpass -p \"${{ env.PASS }}\" ssh -o StrictHostKeyChecking=no -tt \"${{ env.USER }}@${{ env.HOST }}\" \"sudo chmod 777 -R ${{ env.TARGET_PATH }}\""
+    },
+    {
+      "file": ".github/workflows/cd-widget-develop.yml",
+      "line": 67,
+      "category": "lateral_movement",
+      "rule": "sshpass",
+      "snippet": "sshpass -p ${{ env.PASS }} rsync -e \"ssh -o StrictHostKeyChecking=no\" -rltzh -O --delete dist/rubic/ ${{ env.USER }}@${{ env.HOST }}:${{ env.TARGET_PATH }}"
+    },
+    {
+      "file": ".github/workflows/cd-widget-develop.yml",
+      "line": 68,
+      "category": "lateral_movement",
+      "rule": "sshpass",
+      "snippet": "sshpass -p \"${{ env.PASS }}\" ssh -o StrictHostKeyChecking=no -tt \"${{ env.USER }}@${{ env.HOST }}\" \"sudo chmod 777 -R ${{ env.TARGET_PATH }}\""
+    },
+    {
+      "file": ".github/workflows/cd-production.yml",
+      "line": 19,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "id: nvm"
+    },
+    {
+      "file": ".github/workflows/cd-production.yml",
+      "line": 36,
+      "category": "lateral_movement",
+      "rule": "sshpass",
+      "snippet": "- name: Set up sshpass and npm"
+    },
+    {
+      "file": ".github/workflows/cd-production.yml",
+      "line": 38,
+      "category": "lateral_movement",
+      "rule": "sshpass",
+      "snippet": "sudo apt-get install sshpass"
+    },
+    {
+      "file": ".github/workflows/cd-production.yml",
+      "line": 48,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "id: changed-files-yaml"
+    },
+    {
+      "file": ".github/workflows/cd-production.yml",
+      "line": 77,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "id: branch-names"
+    },
+    {
+      "file": ".github/workflows/cd-production.yml",
+      "line": 82,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "id: regex-match"
+    },
+    {
+      "file": ".github/workflows/cd-develop.yml",
+      "line": 51,
+      "category": "lateral_movement",
+      "rule": "sshpass",
+      "snippet": "- name: Install sshpass"
+    },
+    {
+      "file": ".github/workflows/cd-develop.yml",
+      "line": 53,
+      "category": "lateral_movement",
+      "rule": "sshpass",
+      "snippet": "sudo apt-get install sshpass"
+    }
+  ],
+  "commit_sha": "4e0d206b4527193b48a7b91cf79b7f7da9fcbc55",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/bernardonuh/rubic-test1",
+    "version_info": "all",
+    "threat_description": "PolinRider loader (DPRK backdoor/infostealer). Payload in .eslintrc.js.\nOutbound: documented for this malware family (.eslintrc.js:140).\nPolinRider (DPRK; Lazarus, Contagious Interview cluster), as documented by OpenSourceMalware.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Carries PolinRider fingerprints (polinrider-loader), a DPRK campaign documented and attributed by OpenSourceMalware.\nFound by GitHub code search for a confirmed malware signature: \"rmcej%otb%\".\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: .eslintrc.js\n- Outbound: documented for this malware family (.eslintrc.js:140).\n- .eslintrc.js:140: PolinRider shuffle-cipher loader (OSM-documented DPRK marker, dead-drop address or XOR key)",
+    "publisher": "bernardonuh",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "polinrider",
+      "contagious-interview",
+      "fake-recruiter",
+      "dprk",
+      "north-korea",
+      "polinrider-config-injection",
+      "malware"
+    ],
+    "evidence_references": "https://github.com/bernardonuh/rubic-test1/blob/4e0d206b4527193b48a7b91cf79b7f7da9fcbc55/.eslintrc.js#L140\nhttps://github.com/bernardonuh/rubic-test1/blob/4e0d206b4527193b48a7b91cf79b7f7da9fcbc55/.github/workflows/ci.yml#L19\nhttps://github.com/bernardonuh/rubic-test1/blob/4e0d206b4527193b48a7b91cf79b7f7da9fcbc55/.github/workflows/cd-widget-production.yml#L18\nhttps://github.com/bernardonuh/rubic-test1/blob/4e0d206b4527193b48a7b91cf79b7f7da9fcbc55/.github/workflows/cd-widget-production.yml#L28\nhttps://github.com/bernardonuh/rubic-test1/blob/4e0d206b4527193b48a7b91cf79b7f7da9fcbc55/.github/workflows/cd-widget-production.yml#L30\nhttps://github.com/bernardonuh/rubic-test1/blob/4e0d206b4527193b48a7b91cf79b7f7da9fcbc55/.github/workflows/cd-widget-production.yml#L37\nhttps://github.com/bernardonuh/rubic-test1/blob/4e0d206b4527193b48a7b91cf79b7f7da9fcbc55/.github/workflows/cd-widget-develop.yml#L45\nhttps://github.com/bernardonuh/rubic-test1/blob/4e0d206b4527193b48a7b91cf79b7f7da9fcbc55/.github/workflows/cd-widget-develop.yml#L47\nhttps://github.com/bernardonuh/rubic-test1/blob/4e0d206b4527193b48a7b91cf79b7f7da9fcbc55/.github/workflows/cd-widget-develop.yml#L51\nhttps://github.com/bernardonuh/rubic-test1/blob/4e0d206b4527193b48a7b91cf79b7f7da9fcbc55/.github/workflows/cd-widget-develop.yml#L66\nhttps://github.com/bernardonuh/rubic-test1/blob/4e0d206b4527193b48a7b91cf79b7f7da9fcbc55/.github/workflows/cd-widget-develop.yml#L67\nhttps://github.com/bernardonuh/rubic-test1/blob/4e0d206b4527193b48a7b91cf79b7f7da9fcbc55/.github/workflows/cd-widget-develop.yml#L68\nhttps://github.com/bernardonuh/rubic-test1/blob/4e0d206b4527193b48a7b91cf79b7f7da9fcbc55/.github/workflows/cd-production.yml#L19\nhttps://github.com/bernardonuh/rubic-test1/blob/4e0d206b4527193b48a7b91cf79b7f7da9fcbc55/.github/workflows/cd-production.yml#L36\nhttps://github.com/bernardonuh/rubic-test1/blob/4e0d206b4527193b48a7b91cf79b7f7da9fcbc55/.github/workflows/cd-production.yml#L38",
+    "verified_iocs": ".eslintrc.js",
+    "contributors": [],
+    "first_seen": "2026-10-12T06:14:50Z",
+    "last_seen": "2026-10-12T06:14:50Z"
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "finding": {
+    "key": "repository:exquisify/hello-world-api",
+    "kind": "repository",
+    "family": "",
+    "id": "exquisify/hello-world-api",
+    "url": "https://github.com/Exquisify/Hello-world-api",
+    "registry": "github",
+    "owner": "exquisify",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 5,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "malware_signature/polinrider-loader; obfuscation/base64-buffer",
+    "evidence_locations": "eslint.config.mjs:37; src/api/lib/auth.ts:36",
+    "c2_hosts": "",
+    "iocs": "eslint.config.mjs",
+    "matched_signatures": "\"rmcej%otb%\"",
+    "reasons": "Shares a confirmed-malware code signature ['\"rmcej%otb%\"'] | Tier-2 confirmed (bash score 5)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20261012T053832Z",
+    "last_seen": "hunt-20261012T053832Z",
+    "evidence_file": "repositories/exquisify_hello-world-api.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "eslint.config.mjs",
+      "line": 37,
+      "category": "malware_signature",
+      "rule": "polinrider-loader",
+      "snippet": ");                                                                                                                                                                                                      "
+    },
+    {
+      "file": "eslint.config.mjs",
+      "line": 37,
+      "category": "malware_signature",
+      "rule": "polinrider-loader",
+      "snippet": ");                                                                                                                                                                                                      "
+    },
+    {
+      "file": "src/api/lib/auth.ts",
+      "line": 36,
+      "category": "obfuscation",
+      "rule": "base64-buffer",
+      "snippet": "return Buffer.from(padded, 'base64').toString('utf8');"
+    }
+  ],
+  "commit_sha": "30aa01806e328b685f83ead93d15740edfbcbc43",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/exquisify/hello-world-api",
+    "version_info": "all",
+    "threat_description": "PolinRider loader (DPRK backdoor/infostealer). Payload in eslint.config.mjs.\nOutbound: documented for this malware family (eslint.config.mjs:37).\nPolinRider (DPRK; Lazarus, Contagious Interview cluster), as documented by OpenSourceMalware.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Carries PolinRider fingerprints (polinrider-loader), a DPRK campaign documented and attributed by OpenSourceMalware.\nFound by GitHub code search for a confirmed malware signature: \"rmcej%otb%\".\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: eslint.config.mjs\n- Outbound: documented for this malware family (eslint.config.mjs:37).\n- eslint.config.mjs:37: PolinRider shuffle-cipher loader (OSM-documented DPRK marker, dead-drop address or XOR key)",
+    "publisher": "exquisify",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "polinrider",
+      "contagious-interview",
+      "fake-recruiter",
+      "dprk",
+      "north-korea",
+      "polinrider-config-injection",
+      "malware"
+    ],
+    "evidence_references": "https://github.com/exquisify/hello-world-api/blob/30aa01806e328b685f83ead93d15740edfbcbc43/eslint.config.mjs#L37\nhttps://github.com/exquisify/hello-world-api/blob/30aa01806e328b685f83ead93d15740edfbcbc43/src/api/lib/auth.ts#L36",
+    "verified_iocs": "eslint.config.mjs",
+    "contributors": [],
+    "first_seen": "2026-10-12T05:38:32Z",
+    "last_seen": "2026-10-12T05:38:32Z"
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "finding": {
+    "key": "repository:heamlk/next.js-automation",
+    "kind": "repository",
+    "family": "",
+    "id": "heamlk/next.js-automation",
+    "url": "https://github.com/heamlk/Next.js-automation",
+    "registry": "github",
+    "owner": "heamlk",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 1,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "malware_signature/polinrider-loader",
+    "evidence_locations": "tailwind.config.js:71",
+    "c2_hosts": "",
+    "iocs": "tailwind.config.js",
+    "matched_signatures": "\"rmcej%otb%\"",
+    "reasons": "Shares a confirmed-malware code signature ['\"rmcej%otb%\"'] | Tier-2 confirmed (bash score 1)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20261012T053832Z",
+    "last_seen": "hunt-20261012T053832Z",
+    "evidence_file": "repositories/heamlk_next.js-automation.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "tailwind.config.js",
+      "line": 71,
+      "category": "malware_signature",
+      "rule": "polinrider-loader",
+      "snippet": "};                                                                                                                                                                                                      "
+    },
+    {
+      "file": "tailwind.config.js",
+      "line": 71,
+      "category": "malware_signature",
+      "rule": "polinrider-loader",
+      "snippet": "};                                                                                                                                                                                                      "
+    }
+  ],
+  "commit_sha": "fdc41f63532ad412dee6288e30fe837d3441e602",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/heamlk/next.js-automation",
+    "version_info": "all",
+    "threat_description": "PolinRider loader (DPRK backdoor/infostealer). Payload in tailwind.config.js.\nOutbound: documented for this malware family (tailwind.config.js:71).\nPolinRider (DPRK; Lazarus, Contagious Interview cluster), as documented by OpenSourceMalware.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Carries PolinRider fingerprints (polinrider-loader), a DPRK campaign documented and attributed by OpenSourceMalware.\nFound by GitHub code search for a confirmed malware signature: \"rmcej%otb%\".\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: tailwind.config.js\n- Outbound: documented for this malware family (tailwind.config.js:71).\n- tailwind.config.js:71: PolinRider shuffle-cipher loader (OSM-documented DPRK marker, dead-drop address or XOR key)",
+    "publisher": "heamlk",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "polinrider",
+      "contagious-interview",
+      "fake-recruiter",
+      "dprk",
+      "north-korea",
+      "polinrider-config-injection",
+      "malware"
+    ],
+    "evidence_references": "https://github.com/heamlk/next.js-automation/blob/fdc41f63532ad412dee6288e30fe837d3441e602/tailwind.config.js#L71",
+    "verified_iocs": "tailwind.config.js",
+    "contributors": [],
+    "first_seen": "2026-10-12T05:38:32Z",
+    "last_seen": "2026-10-12T05:38:32Z"
+  }
+}

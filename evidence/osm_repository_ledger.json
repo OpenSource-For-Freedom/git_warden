@@ -10,6 +10,16 @@
     "seen_in_run": "hunt-20260928T024937Z"
   },
   {
+    "key": "repository:adaptive-liquidity/aeon-lab",
+    "threat_id": "eb884544-d818-45ed-9efc-c71181423a63",
+    "seen_in_run": "hunt-20261012T053832Z"
+  },
+  {
+    "key": "repository:ahmadraza382/apis-integration",
+    "threat_id": "f7caf43d-d6f2-4e12-b8c5-130665abc664",
+    "seen_in_run": "hunt-20261012T061450Z"
+  },
+  {
     "key": "repository:aidevshakil055/achillcomfort_ai_repo",
     "threat_id": "46a9fe46-e5b0-4d96-8112-345e531952df",
     "seen_in_run": "hunt-20260928T024937Z"
@@ -78,6 +88,11 @@
     "key": "repository:devba/w3agregador",
     "threat_id": "18cffde3-a3f5-4ec7-a332-6d9e36f221c8",
     "seen_in_run": "hunt-20260925T173032Z"
+  },
+  {
+    "key": "repository:differenz-system/addressbook.nextjs",
+    "threat_id": "2bacb46a-be6c-42c6-aa61-658d231e9152",
+    "seen_in_run": "hunt-20261012T061450Z"
   },
   {
     "key": "repository:duceboxedu/tiktoklikebot",
@@ -200,6 +215,11 @@
     "seen_in_run": "hunt-20261011T214533Z"
   },
   {
+    "key": "repository:ryane23/buseasejunefinal",
+    "threat_id": "dc02e020-057f-4dee-99c3-c4aa1546b353",
+    "seen_in_run": "hunt-20261012T061450Z"
+  },
+  {
     "key": "repository:sabbirnde/nava",
     "threat_id": "688c6d68-016a-4063-815f-efe6fc16c2d2",
     "seen_in_run": "hunt-20260925T173032Z"
@@ -208,6 +228,11 @@
     "key": "repository:saifullah-max/sound-cloud-downloader",
     "threat_id": "1eef4bdb-d239-4e79-9e37-98fc61709af3",
     "seen_in_run": "hunt-20260928T024937Z"
+  },
+  {
+    "key": "repository:sanjeevafk/agent-skills",
+    "threat_id": "5089bca3-e03b-4c2f-8866-66d5475c51fc",
+    "seen_in_run": "hunt-20261012T053832Z"
   },
   {
     "key": "repository:shimul-12/token-presale-dapp",
@@ -228,6 +253,11 @@
     "key": "repository:smit455/arc",
     "threat_id": "cdbaf5d1-b721-408f-abeb-ba63508be0ef",
     "seen_in_run": "hunt-20260928T024937Z"
+  },
+  {
+    "key": "repository:speedydevv1/buildthisnow-saas-skeleton",
+    "threat_id": "b8d6d018-3160-4afa-a389-0961dd31c058",
+    "seen_in_run": "hunt-20261012T061450Z"
   },
   {
     "key": "repository:umershafiq19/connectify",
