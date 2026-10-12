@@ -5,6 +5,11 @@
     "seen_in_run": "hunt-20261003T060042Z"
   },
   {
+    "key": "repository:aaryan121/code-conductor-fork",
+    "threat_id": "ad53790f-e66d-45d4-aeb4-2685b453f2e4",
+    "seen_in_run": "hunt-20261003T093317Z"
+  },
+  {
     "key": "repository:adan-asim/e-commerce-admin-app-backend",
     "threat_id": "cb0629b7-1253-436b-86c8-511b3156e493",
     "seen_in_run": "hunt-20260928T024937Z"
@@ -258,6 +263,11 @@
     "key": "repository:speedydevv1/buildthisnow-saas-skeleton",
     "threat_id": "b8d6d018-3160-4afa-a389-0961dd31c058",
     "seen_in_run": "hunt-20261012T061450Z"
+  },
+  {
+    "key": "repository:syssec-utd/ccs25-walkingthelastmile-supplementary",
+    "threat_id": "9954b416-d1b8-49c8-a807-e5db55e0ba09",
+    "seen_in_run": "hunt-20261003T093317Z"
   },
   {
     "key": "repository:umershafiq19/connectify",

