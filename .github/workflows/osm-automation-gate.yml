@@ -2,7 +2,7 @@ name: OSM Automation Gate
 
 on:
   push:
-    branches: ['**']
+    branches: [main]
     paths:
       - 'src/git_warden/osm_automation.py'
       - 'src/git_warden/config.py'
