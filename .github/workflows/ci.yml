@@ -1,9 +1,8 @@
 name: CI
 
 on:
-  push:
-    branches: [main]
-  pull_request:
+  # Manual only: run it from the Actions tab (Run workflow). No push, PR or schedule triggers.
+  workflow_dispatch:
 
 permissions:
   contents: read

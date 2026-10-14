@@ -1,12 +1,6 @@
 name: The Warden
 on:
-  # Weekly (Mondays 09:23 UTC) with the Minecraft mod/plugin stealer family searched
-  # first, and on demand via "Run workflow" in the Actions tab. Locally:
-  #   gw ingest && gw hunt --scan --gold        (uses a local data/git_warden.sqlite)
-  # The DB persists in the Actions cache between runs (best-effort: GitHub
-  # evicts a cache after ~7 idle days).
-  schedule:
-    - cron: '23 9 * * 1'
+  # Manual only: run it from the Actions tab (Run workflow). No push, PR or schedule triggers.
   workflow_dispatch:
     inputs:
       limit:
