@@ -1,21 +1,7 @@
 name: OSM Automation Gate
 
 on:
-  push:
-    branches: ['**']
-    paths:
-      - 'src/git_warden/osm_automation.py'
-      - 'src/git_warden/config.py'
-      - 'config/osm_automation.json'
-      - 'tests/test_osm_automation.py'
-      - '.github/workflows/osm-automation-gate.yml'
-  pull_request:
-    paths:
-      - 'src/git_warden/osm_automation.py'
-      - 'src/git_warden/config.py'
-      - 'config/osm_automation.json'
-      - 'tests/test_osm_automation.py'
-      - '.github/workflows/osm-automation-gate.yml'
+  # Manual only: run it from the Actions tab (Run workflow). No push, PR or schedule triggers.
   workflow_dispatch:
 
 permissions:

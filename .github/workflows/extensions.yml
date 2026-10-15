@@ -1,12 +1,6 @@
 name: Warden VS Code Extension Hunt
 on:
-  # Weekly (Mondays 07:43 UTC), and on demand. Screens Open VSX and VS Marketplace
-  # metadata, then fetches and statically analyzes the top candidates inside
-  # the Tier-2 sandbox container. Confirmed extensions are previewed for OSM
-  # (exact report bodies in the run summary); the `submit` job sends only what
-  # a reviewer approves on the protected osm-submission environment.
-  schedule:
-    - cron: '43 7 * * 1'
+  # Manual only: run it from the Actions tab (Run workflow). No push, PR or schedule triggers.
   workflow_dispatch:
     inputs:
       registry:
