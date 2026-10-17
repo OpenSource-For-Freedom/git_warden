@@ -1,0 +1,78 @@
+{
+  "finding": {
+    "key": "repository:abdurrahman224/kodesolution",
+    "kind": "repository",
+    "family": "",
+    "id": "abdurrahman224/kodesolution",
+    "url": "https://github.com/abdurrahman224/kodesolution",
+    "registry": "github",
+    "owner": "abdurrahman224",
+    "status": "confirmed",
+    "confidence": "",
+    "score": 9,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "obfuscation/eval-decoded; obfuscation/atob",
+    "evidence_locations": "vite.config.ts:25; vite.config.ts:9",
+    "c2_hosts": "",
+    "iocs": "vite.config.ts",
+    "matched_signatures": "eval atob filename:vite.config.ts",
+    "reasons": "Shares a confirmed-malware code signature ['eval atob filename:vite.config.ts'] | Tier-2 confirmed (bash score 8)",
+    "osm_status": "submitted",
+    "osm_threat_id": "68ce4bf2-82a7-4097-83f6-e8e226a05580",
+    "first_seen": "hunt-20260702T052939Z",
+    "last_seen": "hunt-20260702T052939Z",
+    "evidence_file": "repositories/abdurrahman224_kodesolution.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "vite.config.ts",
+      "line": 25,
+      "category": "obfuscation",
+      "rule": "eval-decoded",
+      "snippet": "decoded payload -> require/module hijack, second-stage decode | });                                                                                                                                     "
+    },
+    {
+      "file": "vite.config.ts",
+      "line": 9,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "const src = atob(process.env.AUTH_API_KEY);"
+    },
+    {
+      "file": "vite.config.ts",
+      "line": 25,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "});                                                                                                                                                                                                     "
+    }
+  ],
+  "commit_sha": null,
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/abdurrahman224/kodesolution",
+    "version_info": "all",
+    "threat_description": "Obfuscated loader. Payload in vite.config.ts.\nThe decoded blob rewrites the Node module loader and unpacks a further hidden stage: a working multi-stage loader, not data.\nThe eval(atob(...)) loader hidden in a project file is Contagious Interview (DPRK-attributed) tradecraft.\nAttribution: we assess this repository as CONFIRMED North Korea 'Contagious Interview' activity. Signals: Delivery vector matches Contagious-Interview tradecraft: obfuscated-eval-atob-loader; Decoded second stage matches the BeaverTail/InvisibleFerret loader fingerprint (module-loader hijack / child_process exec / credential paths), verified by decoding the blob.\nFound by GitHub code search for a confirmed malware signature: eval atob filename:vite.config.ts.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: vite.config.ts\n- vite.config.ts:25: decodes a hidden blob and executes it at load time (obfuscated loader)\n- vite.config.ts:9: hides code in an encoded blob that is decoded and run (+1 more)",
+    "publisher": "abdurrahman224",
+    "severity_level": "high",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "contagious-interview",
+      "fake-recruiter",
+      "dprk",
+      "north-korea",
+      "obfuscated-eval-atob-loader",
+      "obfuscated-loader"
+    ],
+    "evidence_references": "https://github.com/abdurrahman224/kodesolution/blob/HEAD/vite.config.ts#L25\nhttps://github.com/abdurrahman224/kodesolution/blob/HEAD/vite.config.ts#L9",
+    "verified_iocs": "vite.config.ts",
+    "contributors": [],
+    "first_seen": "2026-07-02T05:29:39Z",
+    "last_seen": "2026-07-02T05:29:39Z"
+  }
+}

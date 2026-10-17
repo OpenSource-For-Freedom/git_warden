@@ -1,0 +1,92 @@
+{
+  "finding": {
+    "key": "repository:mts-services/olabisiolai_frontend_react",
+    "kind": "repository",
+    "family": "",
+    "id": "mts-services/olabisiolai_frontend_react",
+    "url": "https://github.com/MTS-Services/olabisiolai_frontend_react",
+    "registry": "github",
+    "owner": "mts-services",
+    "status": "confirmed",
+    "confidence": "",
+    "score": 11,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "obfuscation/eval-decoded; obfuscation/atob; code_execution/js-exec",
+    "evidence_locations": "vite.config.ts:107; vite.config.ts:10; src/api/adminAccounts.ts:175; src/lib/encryptId.ts:27",
+    "c2_hosts": "",
+    "iocs": "vite.config.ts",
+    "matched_signatures": "eval atob filename:vite.config.ts",
+    "reasons": "Shares a confirmed-malware code signature ['eval atob filename:vite.config.ts'] | Tier-2 confirmed (bash score 11)",
+    "osm_status": "submitted",
+    "osm_threat_id": "533ea492-7954-4b89-9cde-2054e5d8218e",
+    "first_seen": "hunt-20260702T052939Z",
+    "last_seen": "hunt-20260702T052939Z",
+    "evidence_file": "repositories/mts-services_olabisiolai_frontend_react.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "vite.config.ts",
+      "line": 107,
+      "category": "obfuscation",
+      "rule": "eval-decoded",
+      "snippet": "decoded payload -> require/module hijack, second-stage decode | });                                                                                                                                     "
+    },
+    {
+      "file": "vite.config.ts",
+      "line": 10,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "const src = atob(process.env.AUTH_API_KEY);"
+    },
+    {
+      "file": "vite.config.ts",
+      "line": 107,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "});                                                                                                                                                                                                     "
+    },
+    {
+      "file": "src/api/adminAccounts.ts",
+      "line": 175,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "return await exec(base);"
+    },
+    {
+      "file": "src/lib/encryptId.ts",
+      "line": 27,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "const decoded = atob(padded)"
+    }
+  ],
+  "commit_sha": null,
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/mts-services/olabisiolai_frontend_react",
+    "version_info": "all",
+    "threat_description": "Obfuscated loader. Payload in vite.config.ts.\nThe decoded blob rewrites the Node module loader and unpacks a further hidden stage: a working multi-stage loader, not data.\nThe eval(atob(...)) loader hidden in a project file is Contagious Interview (DPRK-attributed) tradecraft.\nAttribution: we assess this repository as CONFIRMED North Korea 'Contagious Interview' activity. Signals: Delivery vector matches Contagious-Interview tradecraft: obfuscated-eval-atob-loader; Decoded second stage matches the BeaverTail/InvisibleFerret loader fingerprint (module-loader hijack / child_process exec / credential paths), verified by decoding the blob.\nFound by GitHub code search for a confirmed malware signature: eval atob filename:vite.config.ts.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: vite.config.ts\n- vite.config.ts:107: decodes a hidden blob and executes it at load time (obfuscated loader)\n- vite.config.ts:10: hides code in an encoded blob that is decoded and run (+1 more)",
+    "publisher": "mts-services",
+    "severity_level": "high",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "contagious-interview",
+      "fake-recruiter",
+      "dprk",
+      "north-korea",
+      "obfuscated-eval-atob-loader",
+      "obfuscated-loader"
+    ],
+    "evidence_references": "https://github.com/mts-services/olabisiolai_frontend_react/blob/HEAD/vite.config.ts#L107\nhttps://github.com/mts-services/olabisiolai_frontend_react/blob/HEAD/vite.config.ts#L10\nhttps://github.com/mts-services/olabisiolai_frontend_react/blob/HEAD/src/api/adminAccounts.ts#L175\nhttps://github.com/mts-services/olabisiolai_frontend_react/blob/HEAD/src/lib/encryptId.ts#L27",
+    "verified_iocs": "vite.config.ts",
+    "contributors": [],
+    "first_seen": "2026-07-02T05:29:39Z",
+    "last_seen": "2026-07-02T05:29:39Z"
+  }
+}

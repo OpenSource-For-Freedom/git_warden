@@ -1,0 +1,192 @@
+{
+  "finding": {
+    "key": "repository:mlflow/mlflow",
+    "kind": "repository",
+    "family": "",
+    "id": "mlflow/mlflow",
+    "url": "https://github.com/mlflow/mlflow",
+    "registry": "github",
+    "owner": "mlflow",
+    "status": "confirmed",
+    "confidence": "review",
+    "score": 44,
+    "detection_method": "package_ref",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "credential_access/env-dump; download_exec/curl-pipe-shell; credential_harvest/ssh-keys; persistence/authorized-keys; enumeration/host-recon; credential_harvest/env-token-grab",
+    "evidence_locations": "dev/benchmarks/gateway/run.py:711; dev\\install-skinny.sh:3; dev\\install-skinny.sh:6; dev\\install-skinny.sh:9; dev\\setup-ssh.sh:2; dev\\setup-ssh.sh:4; dev\\setup-ssh.sh:6; dev\\setup-ssh.sh:7; .github\\workflows\\autoformat-label-notify.yml:23; .github\\workflows\\autoformat.yml:38; .github\\workflows\\autoformat.yml:91; .github\\workflows\\autoformat.yml:93; .github\\workflows\\autoformat.yml:193; .github\\workflows\\autoformat.yml:221; .github\\workflows\\autoformat.yml:223; .github\\workflows\\autoformat.yml:236; .github\\workflows\\autoformat.yml:252; .github\\workflows\\autoformat.yml:263; .github\\workflows\\autoformat.yml:265",
+    "c2_hosts": "",
+    "iocs": "https://raw.githubusercontent.com/mlflow/mlflow/HEAD/dev/install-skinny.sh; curl -LsSf https://raw.githubusercontent.com/mlflow/mlflow/HEAD/dev/install-skinny.sh | sh; dev/benchmarks/gateway/run.py",
+    "matched_signatures": "data-fetching-client",
+    "reasons": "References known-malicious package(s) ['data-fetching-client'] | Tier-2 confirmed (bash score 44)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20260721T220226Z",
+    "last_seen": "hunt-20260721T220226Z",
+    "evidence_file": "repositories/mlflow_mlflow.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "dev/benchmarks/gateway/run.py",
+      "line": 711,
+      "category": "credential_access",
+      "rule": "env-dump",
+      "snippet": "default=int(os.environ.get(\"REQUESTS\", \"2000\")),"
+    },
+    {
+      "file": "dev\\install-skinny.sh",
+      "line": 3,
+      "category": "download_exec",
+      "rule": "curl-pipe-shell",
+      "snippet": "# curl -LsSf https://raw.githubusercontent.com/mlflow/mlflow/HEAD/dev/install-skinny.sh | sh"
+    },
+    {
+      "file": "dev\\install-skinny.sh",
+      "line": 6,
+      "category": "download_exec",
+      "rule": "curl-pipe-shell",
+      "snippet": "# curl -LsSf https://raw.githubusercontent.com/mlflow/mlflow/HEAD/dev/install-skinny.sh | sh -s <branch>"
+    },
+    {
+      "file": "dev\\install-skinny.sh",
+      "line": 9,
+      "category": "download_exec",
+      "rule": "curl-pipe-shell",
+      "snippet": "# curl -LsSf https://raw.githubusercontent.com/mlflow/mlflow/HEAD/dev/install-skinny.sh | sh -s pull/<pr_num>/merge"
+    },
+    {
+      "file": "dev\\setup-ssh.sh",
+      "line": 2,
+      "category": "credential_harvest",
+      "rule": "ssh-keys",
+      "snippet": "ssh-keygen -t rsa -N '' -f ~/.ssh/id_rsa"
+    },
+    {
+      "file": "dev\\setup-ssh.sh",
+      "line": 4,
+      "category": "persistence",
+      "rule": "authorized-keys",
+      "snippet": "cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys"
+    },
+    {
+      "file": "dev\\setup-ssh.sh",
+      "line": 4,
+      "category": "credential_harvest",
+      "rule": "ssh-keys",
+      "snippet": "cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys"
+    },
+    {
+      "file": "dev\\setup-ssh.sh",
+      "line": 6,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "ssh $(whoami)@localhost exit"
+    },
+    {
+      "file": "dev\\setup-ssh.sh",
+      "line": 7,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "export LOGNAME=$(whoami)"
+    },
+    {
+      "file": ".github\\workflows\\autoformat-label-notify.yml",
+      "line": 23,
+      "category": "credential_harvest",
+      "rule": "env-token-grab",
+      "snippet": "GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}"
+    },
+    {
+      "file": ".github\\workflows\\autoformat.yml",
+      "line": 38,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "id: judge"
+    },
+    {
+      "file": ".github\\workflows\\autoformat.yml",
+      "line": 91,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "id: diff"
+    },
+    {
+      "file": ".github\\workflows\\autoformat.yml",
+      "line": 93,
+      "category": "credential_harvest",
+      "rule": "env-token-grab",
+      "snippet": "GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}"
+    },
+    {
+      "file": ".github\\workflows\\autoformat.yml",
+      "line": 193,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "id: patch"
+    },
+    {
+      "file": ".github\\workflows\\autoformat.yml",
+      "line": 221,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "id: app-token"
+    },
+    {
+      "file": ".github\\workflows\\autoformat.yml",
+      "line": 223,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "client-id: ${{ secrets.APP_CLIENT_ID }}"
+    },
+    {
+      "file": ".github\\workflows\\autoformat.yml",
+      "line": 236,
+      "category": "credential_harvest",
+      "rule": "env-token-grab",
+      "snippet": "# code using `GITHUB_TOKEN`, that won't trigger new workflow runs on the PR."
+    },
+    {
+      "file": ".github\\workflows\\autoformat.yml",
+      "line": 252,
+      "category": "credential_harvest",
+      "rule": "env-token-grab",
+      "snippet": "GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}"
+    },
+    {
+      "file": ".github\\workflows\\autoformat.yml",
+      "line": 263,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "ID=$(gh api \"users/$LOGIN\" --jq '.id')"
+    },
+    {
+      "file": ".github\\workflows\\autoformat.yml",
+      "line": 265,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "git config user.email \"${ID}+${LOGIN}@users.noreply.github.com\""
+    }
+  ],
+  "commit_sha": "13a8a1b97e6b46d0a1709977c1fc235dd776daa6",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/mlflow/mlflow",
+    "version_info": "all",
+    "threat_description": "Malware. Payload in dev/benchmarks/gateway/run.py.\nFound by GitHub code search for a confirmed malware signature: data-fetching-client.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: dev/benchmarks/gateway/run.py\n- dev/benchmarks/gateway/run.py:711: serializes the whole environment (every secret in it)",
+    "publisher": "mlflow",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "credential-theft"
+    ],
+    "evidence_references": "https://github.com/mlflow/mlflow/blob/13a8a1b97e6b46d0a1709977c1fc235dd776daa6/dev/benchmarks/gateway/run.py#L711\nhttps://github.com/mlflow/mlflow/blob/13a8a1b97e6b46d0a1709977c1fc235dd776daa6/dev\\install-skinny.sh#L3\nhttps://github.com/mlflow/mlflow/blob/13a8a1b97e6b46d0a1709977c1fc235dd776daa6/dev\\install-skinny.sh#L6\nhttps://github.com/mlflow/mlflow/blob/13a8a1b97e6b46d0a1709977c1fc235dd776daa6/dev\\install-skinny.sh#L9\nhttps://github.com/mlflow/mlflow/blob/13a8a1b97e6b46d0a1709977c1fc235dd776daa6/dev\\setup-ssh.sh#L2\nhttps://github.com/mlflow/mlflow/blob/13a8a1b97e6b46d0a1709977c1fc235dd776daa6/dev\\setup-ssh.sh#L4\nhttps://github.com/mlflow/mlflow/blob/13a8a1b97e6b46d0a1709977c1fc235dd776daa6/dev\\setup-ssh.sh#L6\nhttps://github.com/mlflow/mlflow/blob/13a8a1b97e6b46d0a1709977c1fc235dd776daa6/dev\\setup-ssh.sh#L7\nhttps://github.com/mlflow/mlflow/blob/13a8a1b97e6b46d0a1709977c1fc235dd776daa6/.github\\workflows\\autoformat-label-notify.yml#L23\nhttps://github.com/mlflow/mlflow/blob/13a8a1b97e6b46d0a1709977c1fc235dd776daa6/.github\\workflows\\autoformat.yml#L38\nhttps://github.com/mlflow/mlflow/blob/13a8a1b97e6b46d0a1709977c1fc235dd776daa6/.github\\workflows\\autoformat.yml#L91\nhttps://github.com/mlflow/mlflow/blob/13a8a1b97e6b46d0a1709977c1fc235dd776daa6/.github\\workflows\\autoformat.yml#L93\nhttps://github.com/mlflow/mlflow/blob/13a8a1b97e6b46d0a1709977c1fc235dd776daa6/.github\\workflows\\autoformat.yml#L193\nhttps://github.com/mlflow/mlflow/blob/13a8a1b97e6b46d0a1709977c1fc235dd776daa6/.github\\workflows\\autoformat.yml#L221\nhttps://github.com/mlflow/mlflow/blob/13a8a1b97e6b46d0a1709977c1fc235dd776daa6/.github\\workflows\\autoformat.yml#L223",
+    "verified_iocs": "https://raw.githubusercontent.com/mlflow/mlflow/HEAD/dev/install-skinny.sh\ncurl -LsSf https://raw.githubusercontent.com/mlflow/mlflow/HEAD/dev/install-skinny.sh | sh\ndev/benchmarks/gateway/run.py",
+    "contributors": [],
+    "first_seen": "2026-07-21T22:02:26Z",
+    "last_seen": "2026-07-21T22:02:26Z"
+  }
+}

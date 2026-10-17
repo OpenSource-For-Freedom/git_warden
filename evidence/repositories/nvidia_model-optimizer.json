@@ -1,0 +1,194 @@
+{
+  "finding": {
+    "key": "repository:nvidia/model-optimizer",
+    "kind": "repository",
+    "family": "",
+    "id": "nvidia/model-optimizer",
+    "url": "https://github.com/NVIDIA/Model-Optimizer",
+    "registry": "github",
+    "owner": "nvidia",
+    "status": "confirmed",
+    "confidence": "review",
+    "score": 30,
+    "detection_method": "package_ref",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "obfuscation/base64-decode-exec; enumeration/host-recon",
+    "evidence_locations": ".agents\\skills\\common\\remote_exec.sh:356; tools\\debugger\\client.sh:85; tools\\debugger\\client.sh:108; tools\\debugger\\server.sh:66; tools\\debugger\\server.sh:70; tools\\debugger\\server.sh:135; tools\\debugger\\server.sh:151; tools\\debugger\\server.sh:168; tools\\debugger\\server.sh:197; tools\\launcher\\common\\eagle3\\train_eagle_streaming.sh:132; tools\\launcher\\common\\eagle3\\train_eagle_streaming.sh:137; tools\\launcher\\common\\eagle3\\train_eagle_streaming.sh:138; tools\\launcher\\common\\eagle3\\train_eagle_streaming.sh:139; tools\\launcher\\common\\smoke\\hostname.sh:20; tools\\launcher\\common\\smoke\\nvidia_smi.sh:20; tools\\launcher\\common\\specdec\\dflash_online_training.sh:78; tools\\launcher\\common\\specdec_bench\\upload_to_s3.sh:37; tools\\launcher\\common\\tensorrt_llm\\query.sh:75; tools\\launcher\\common\\tensorrt_llm\\query.sh:103; tools\\launcher\\common\\tensorrt_llm\\query.sh:119",
+    "c2_hosts": "",
+    "iocs": "http://$(hostname; .agents\\skills\\common\\remote_exec.sh",
+    "matched_signatures": "modelopt-launcher",
+    "reasons": "References known-malicious package(s) ['modelopt-launcher'] | Tier-2 confirmed (bash score 30)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20260722T060253Z",
+    "last_seen": "hunt-20260722T060253Z",
+    "evidence_file": "repositories/nvidia_model-optimizer.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": ".agents\\skills\\common\\remote_exec.sh",
+      "line": 356,
+      "category": "obfuscation",
+      "rule": "base64-decode-exec",
+      "snippet": "result=$(eval \"$(_ssh_base_cmd)\" \"'echo $encoded | base64 -d | bash'\" 2>&1) && rc=$? || rc=$?"
+    },
+    {
+      "file": "tools\\debugger\\client.sh",
+      "line": 85,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "echo \"$(hostname):$$:$(date -Iseconds)\" > \"$RELAY_DIR/client.ready\""
+    },
+    {
+      "file": "tools\\debugger\\client.sh",
+      "line": 108,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "# Generate a unique command ID (timestamp + PID to avoid collisions)"
+    },
+    {
+      "file": "tools\\debugger\\server.sh",
+      "line": 66,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "# Unique id for this server instance. Servers can share one relay dir over NFS"
+    },
+    {
+      "file": "tools\\debugger\\server.sh",
+      "line": 70,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "SERVER_ID=\"$(hostname):$$:$(date +%s%N)\""
+    },
+    {
+      "file": "tools\\debugger\\server.sh",
+      "line": 135,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "echo \"$(hostname):$$:$(date -Iseconds)\" > \"$RELAY_DIR/server.ready\""
+    },
+    {
+      "file": "tools\\debugger\\server.sh",
+      "line": 151,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "echo \"$(hostname):$$:$(date -Iseconds)\" > \"$RELAY_DIR/handshake.done\""
+    },
+    {
+      "file": "tools\\debugger\\server.sh",
+      "line": 168,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "echo \"$(hostname):$$:$(date -Iseconds)\" > \"$RELAY_DIR/handshake.done\""
+    },
+    {
+      "file": "tools\\debugger\\server.sh",
+      "line": 197,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "# Track the running command (ID and PID) — atomic write to prevent partial reads"
+    },
+    {
+      "file": "tools\\launcher\\common\\eagle3\\train_eagle_streaming.sh",
+      "line": 132,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "# Resolve a routable IP (other nodes must dial it). `hostname -I` can list a"
+    },
+    {
+      "file": "tools\\launcher\\common\\eagle3\\train_eagle_streaming.sh",
+      "line": 137,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "[ -z \"$ip\" ] && ip=$(getent hosts \"${SLURMD_NODENAME:-$(hostname)}\" 2>/dev/null | awk '{print $1}' | head -1)"
+    },
+    {
+      "file": "tools\\launcher\\common\\eagle3\\train_eagle_streaming.sh",
+      "line": 138,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "[ -z \"$ip\" ] && ip=$(hostname -I | tr ' ' '\\n' | grep -vE '^(127\\.|169\\.254\\.|fe80:|::1)' | head -1)"
+    },
+    {
+      "file": "tools\\launcher\\common\\eagle3\\train_eagle_streaming.sh",
+      "line": 139,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "[ -z \"$ip\" ] && ip=$(hostname -I | awk '{print $1}')"
+    },
+    {
+      "file": "tools\\launcher\\common\\smoke\\hostname.sh",
+      "line": 20,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "hostname"
+    },
+    {
+      "file": "tools\\launcher\\common\\smoke\\nvidia_smi.sh",
+      "line": 20,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "hostname"
+    },
+    {
+      "file": "tools\\launcher\\common\\specdec\\dflash_online_training.sh",
+      "line": 78,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "HEAD_NODE_IP=$(hostname -I 2>/dev/null | awk '{print $1}')"
+    },
+    {
+      "file": "tools\\launcher\\common\\specdec_bench\\upload_to_s3.sh",
+      "line": 37,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "# Required env (or pass via --endpoint / --key-id / --secret to the underlying script):"
+    },
+    {
+      "file": "tools\\launcher\\common\\tensorrt_llm\\query.sh",
+      "line": 75,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "QUERY_ARGS=(--shard-id-begin ${TASK_ID} --shard-id-step ${TASK_COUNT})"
+    },
+    {
+      "file": "tools\\launcher\\common\\tensorrt_llm\\query.sh",
+      "line": 103,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "response=$(curl -s -o /dev/null -w \"%{http_code}\" \"http://$(hostname -f):8000/health\" || true)"
+    },
+    {
+      "file": "tools\\launcher\\common\\tensorrt_llm\\query.sh",
+      "line": 119,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "response=$(curl -s -o /dev/null -w \"%{http_code}\" \"http://$(hostname -f):8000/health\" || true)"
+    }
+  ],
+  "commit_sha": "8813b7001e5e7f2167ea8ee6c30213a4cb955e8e",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/nvidia/model-optimizer",
+    "version_info": "all",
+    "threat_description": "Obfuscated loader. Payload in .agents\\skills\\common\\remote_exec.sh.\nThe eval(atob(...)) loader hidden in a project file is Contagious Interview (DPRK-attributed) tradecraft.\nAttribution: the tradecraft is consistent with North Korea, but a single signal is a lead rather than an attribution, so we do not attribute it on this evidence alone. Signals: Delivery vector matches Contagious-Interview tradecraft: obfuscated-eval-atob-loader.\nFound by GitHub code search for a confirmed malware signature: modelopt-launcher.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: .agents\\skills\\common\\remote_exec.sh\n- .agents\\skills\\common\\remote_exec.sh:356: decodes a base64 blob and executes it",
+    "publisher": "nvidia",
+    "severity_level": "high",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "dprk-consistent-tradecraft",
+      "obfuscated-eval-atob-loader",
+      "obfuscated-loader"
+    ],
+    "evidence_references": "https://github.com/nvidia/model-optimizer/blob/8813b7001e5e7f2167ea8ee6c30213a4cb955e8e/.agents\\skills\\common\\remote_exec.sh#L356\nhttps://github.com/nvidia/model-optimizer/blob/8813b7001e5e7f2167ea8ee6c30213a4cb955e8e/tools\\debugger\\client.sh#L85\nhttps://github.com/nvidia/model-optimizer/blob/8813b7001e5e7f2167ea8ee6c30213a4cb955e8e/tools\\debugger\\client.sh#L108\nhttps://github.com/nvidia/model-optimizer/blob/8813b7001e5e7f2167ea8ee6c30213a4cb955e8e/tools\\debugger\\server.sh#L66\nhttps://github.com/nvidia/model-optimizer/blob/8813b7001e5e7f2167ea8ee6c30213a4cb955e8e/tools\\debugger\\server.sh#L70\nhttps://github.com/nvidia/model-optimizer/blob/8813b7001e5e7f2167ea8ee6c30213a4cb955e8e/tools\\debugger\\server.sh#L135\nhttps://github.com/nvidia/model-optimizer/blob/8813b7001e5e7f2167ea8ee6c30213a4cb955e8e/tools\\debugger\\server.sh#L151\nhttps://github.com/nvidia/model-optimizer/blob/8813b7001e5e7f2167ea8ee6c30213a4cb955e8e/tools\\debugger\\server.sh#L168\nhttps://github.com/nvidia/model-optimizer/blob/8813b7001e5e7f2167ea8ee6c30213a4cb955e8e/tools\\debugger\\server.sh#L197\nhttps://github.com/nvidia/model-optimizer/blob/8813b7001e5e7f2167ea8ee6c30213a4cb955e8e/tools\\launcher\\common\\eagle3\\train_eagle_streaming.sh#L132\nhttps://github.com/nvidia/model-optimizer/blob/8813b7001e5e7f2167ea8ee6c30213a4cb955e8e/tools\\launcher\\common\\eagle3\\train_eagle_streaming.sh#L137\nhttps://github.com/nvidia/model-optimizer/blob/8813b7001e5e7f2167ea8ee6c30213a4cb955e8e/tools\\launcher\\common\\eagle3\\train_eagle_streaming.sh#L138\nhttps://github.com/nvidia/model-optimizer/blob/8813b7001e5e7f2167ea8ee6c30213a4cb955e8e/tools\\launcher\\common\\eagle3\\train_eagle_streaming.sh#L139\nhttps://github.com/nvidia/model-optimizer/blob/8813b7001e5e7f2167ea8ee6c30213a4cb955e8e/tools\\launcher\\common\\smoke\\hostname.sh#L20\nhttps://github.com/nvidia/model-optimizer/blob/8813b7001e5e7f2167ea8ee6c30213a4cb955e8e/tools\\launcher\\common\\smoke\\nvidia_smi.sh#L20",
+    "verified_iocs": "http://$(hostname\n.agents\\skills\\common\\remote_exec.sh",
+    "contributors": [],
+    "first_seen": "2026-07-22T06:02:53Z",
+    "last_seen": "2026-07-22T06:02:53Z"
+  }
+}

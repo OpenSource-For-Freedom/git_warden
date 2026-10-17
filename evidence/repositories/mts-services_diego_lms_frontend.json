@@ -1,0 +1,59 @@
+{
+  "finding": {
+    "key": "repository:mts-services/diego_lms_frontend",
+    "kind": "repository",
+    "family": "",
+    "id": "mts-services/diego_lms_frontend",
+    "url": "https://github.com/MTS-Services/Diego_LMS_Frontend",
+    "registry": "github",
+    "owner": "mts-services",
+    "status": "confirmed",
+    "confidence": "",
+    "score": 3,
+    "detection_method": "malicious_owner",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "credential_access/env-dump",
+    "evidence_locations": "webpack.config.js:54",
+    "c2_hosts": "",
+    "iocs": "webpack.config.js",
+    "matched_signatures": "",
+    "reasons": "repository under owner MTS-Services of a known-malicious repo | Tier-2 confirmed (bash score 3)",
+    "osm_status": "submitted",
+    "osm_threat_id": "053d1c97-1f6d-429e-a40f-b43dd030dfc4",
+    "first_seen": "hunt-20260702T053958Z",
+    "last_seen": "hunt-20260702T053958Z",
+    "evidence_file": "repositories/mts-services_diego_lms_frontend.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "webpack.config.js",
+      "line": 54,
+      "category": "credential_access",
+      "rule": "env-dump",
+      "snippet": "'process.env': JSON.stringify(process.env),"
+    }
+  ],
+  "commit_sha": null,
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/mts-services/diego_lms_frontend",
+    "version_info": "all",
+    "threat_description": "Malware. Payload in webpack.config.js.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: webpack.config.js\n- webpack.config.js:54: serializes the whole environment (every secret in it)",
+    "publisher": "mts-services",
+    "severity_level": "high",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "credential-theft"
+    ],
+    "evidence_references": "https://github.com/mts-services/diego_lms_frontend/blob/HEAD/webpack.config.js#L54",
+    "verified_iocs": "webpack.config.js",
+    "contributors": [],
+    "first_seen": "2026-07-02T05:39:58Z",
+    "last_seen": "2026-07-02T05:39:58Z"
+  }
+}

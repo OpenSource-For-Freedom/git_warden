@@ -1,0 +1,171 @@
+{
+  "finding": {
+    "key": "repository:photoprism/photoprism",
+    "kind": "repository",
+    "family": "",
+    "id": "photoprism/photoprism",
+    "url": "https://github.com/photoprism/photoprism",
+    "registry": "github",
+    "owner": "photoprism",
+    "status": "confirmed",
+    "confidence": "review",
+    "score": 28,
+    "detection_method": "ioc_search",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "credential_harvest/shadow-read; enumeration/host-recon; download_exec/curl-pipe-shell; persistence/systemd; enumeration/net-recon; persistence/authorized-keys; credential_harvest/ssh-keys; code_execution/node-child-process; code_execution/js-exec; obfuscation/base64-buffer",
+    "evidence_locations": "setup\\cloud\\digitalocean\\init\\check.sh:69; Makefile:53; Makefile:54; Makefile:379; frontend\\Makefile:6; frontend\\Makefile:7; setup\\podman\\install.sh:19; setup\\cloud\\digitalocean\\setup.sh:7; setup\\cloud\\digitalocean\\setup.sh:99; setup\\cloud\\digitalocean\\init\\check.sh:163; setup\\cloud\\digitalocean\\init\\check.sh:174; setup\\cloud\\digitalocean\\init\\check.sh:271; setup\\cloud\\digitalocean\\init\\check.sh:281; setup\\cloud\\digitalocean\\init\\cleanup.sh:38; scripts/gettext-lint.mjs:27; scripts/gettext-lint.mjs:131; assets/static/plugins/maplibre-gl-rtl-text/v0.2.3/maplibre-gl-rtl-text.js:3",
+    "c2_hosts": "claude.ai",
+    "iocs": "claude.ai; https://claude.ai/install.sh; curl -fsSL https://claude.ai/install.sh | bash; setup\\cloud\\digitalocean\\init\\check.sh",
+    "matched_signatures": "beneb.info",
+    "reasons": "Code references OSM IOC(s) ['beneb.info'] in ['frontend/NOTICE'] | Tier-2 confirmed (bash score 28)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20260721T220226Z",
+    "last_seen": "hunt-20260721T220226Z",
+    "evidence_file": "repositories/photoprism_photoprism.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "setup\\cloud\\digitalocean\\init\\check.sh",
+      "line": 69,
+      "category": "credential_harvest",
+      "rule": "shadow-read",
+      "snippet": "SHADOW=$(cat /etc/shadow)"
+    },
+    {
+      "file": "Makefile",
+      "line": 53,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "UID := $(shell id -u)"
+    },
+    {
+      "file": "Makefile",
+      "line": 54,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "GID := $(shell id -g)"
+    },
+    {
+      "file": "Makefile",
+      "line": 379,
+      "category": "download_exec",
+      "rule": "curl-pipe-shell",
+      "snippet": "curl -fsSL https://claude.ai/install.sh | bash; \\"
+    },
+    {
+      "file": "frontend\\Makefile",
+      "line": 6,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "UID := $(shell id -u)"
+    },
+    {
+      "file": "frontend\\Makefile",
+      "line": 7,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "GID := $(shell id -g)"
+    },
+    {
+      "file": "setup\\podman\\install.sh",
+      "line": 19,
+      "category": "persistence",
+      "rule": "systemd",
+      "snippet": "sudo systemctl enable podman"
+    },
+    {
+      "file": "setup\\cloud\\digitalocean\\setup.sh",
+      "line": 7,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "if [[ $(id -u) != \"0\" ]]; then"
+    },
+    {
+      "file": "setup\\cloud\\digitalocean\\setup.sh",
+      "line": 99,
+      "category": "enumeration",
+      "rule": "net-recon",
+      "snippet": "PUBLIC_IP=$(curl -sfSL ifconfig.me)"
+    },
+    {
+      "file": "setup\\cloud\\digitalocean\\init\\check.sh",
+      "line": 163,
+      "category": "persistence",
+      "rule": "authorized-keys",
+      "snippet": "if  [ \"${key}\" == \"${uhome}/.ssh/authorized_keys\" ]; then"
+    },
+    {
+      "file": "setup\\cloud\\digitalocean\\init\\check.sh",
+      "line": 174,
+      "category": "credential_harvest",
+      "rule": "ssh-keys",
+      "snippet": "elif  [ \"${key}\" == \"${uhome}/.ssh/id_rsa\" ]; then"
+    },
+    {
+      "file": "setup\\cloud\\digitalocean\\init\\check.sh",
+      "line": 271,
+      "category": "persistence",
+      "rule": "authorized-keys",
+      "snippet": "if  [ \"${key}\" == \"${uhome}/.ssh/authorized_keys\" ]; then"
+    },
+    {
+      "file": "setup\\cloud\\digitalocean\\init\\check.sh",
+      "line": 281,
+      "category": "credential_harvest",
+      "rule": "ssh-keys",
+      "snippet": "elif  [ \"${key}\" == \"${uhome}/.ssh/id_rsa\" ]; then"
+    },
+    {
+      "file": "setup\\cloud\\digitalocean\\init\\cleanup.sh",
+      "line": 38,
+      "category": "persistence",
+      "rule": "authorized-keys",
+      "snippet": "rm -f /root/.ssh/authorized_keys /etc/ssh/*key*"
+    },
+    {
+      "file": "scripts/gettext-lint.mjs",
+      "line": 27,
+      "category": "code_execution",
+      "rule": "node-child-process",
+      "snippet": "import { spawnSync } from \"node:child_process\";"
+    },
+    {
+      "file": "scripts/gettext-lint.mjs",
+      "line": 131,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "const r = spawnSync(\"msgfmt\", [\"-c\", \"--check-format\", \"-o\", \"/dev/null\", path], {"
+    },
+    {
+      "file": "assets/static/plugins/maplibre-gl-rtl-text/v0.2.3/maplibre-gl-rtl-text.js",
+      "line": 3,
+      "category": "obfuscation",
+      "rule": "base64-buffer",
+      "snippet": ";var tempDoublePtr=71104;var ENV={};function ___buildEnvironment(environ){var MAX_ENV_VALUES=64;var TOTAL_ENV_SIZE=1024;var poolPtr;var envPtr;if(!___buildEnvironment.called){___buildEnvironment.calle"
+    }
+  ],
+  "commit_sha": "7835bbae878e050cd1c571a6146d4bccba8e3cda",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/photoprism/photoprism",
+    "version_info": "all",
+    "threat_description": "Malware. Payload in setup\\cloud\\digitalocean\\init\\check.sh.\nFound by GitHub code search for a confirmed malware signature: beneb.info.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: setup\\cloud\\digitalocean\\init\\check.sh\n- setup\\cloud\\digitalocean\\init\\check.sh:69: reads /etc/shadow password hashes\n- setup\\cloud\\digitalocean\\init\\check.sh:163: adds an attacker SSH key to authorized_keys (+1 more)\n- setup\\cloud\\digitalocean\\init\\check.sh:174: reads SSH private keys (+1 more)",
+    "publisher": "photoprism",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "malware"
+    ],
+    "evidence_references": "https://github.com/photoprism/photoprism/blob/7835bbae878e050cd1c571a6146d4bccba8e3cda/setup\\cloud\\digitalocean\\init\\check.sh#L69\nhttps://github.com/photoprism/photoprism/blob/7835bbae878e050cd1c571a6146d4bccba8e3cda/Makefile#L53\nhttps://github.com/photoprism/photoprism/blob/7835bbae878e050cd1c571a6146d4bccba8e3cda/Makefile#L54\nhttps://github.com/photoprism/photoprism/blob/7835bbae878e050cd1c571a6146d4bccba8e3cda/Makefile#L379\nhttps://github.com/photoprism/photoprism/blob/7835bbae878e050cd1c571a6146d4bccba8e3cda/frontend\\Makefile#L6\nhttps://github.com/photoprism/photoprism/blob/7835bbae878e050cd1c571a6146d4bccba8e3cda/frontend\\Makefile#L7\nhttps://github.com/photoprism/photoprism/blob/7835bbae878e050cd1c571a6146d4bccba8e3cda/setup\\podman\\install.sh#L19\nhttps://github.com/photoprism/photoprism/blob/7835bbae878e050cd1c571a6146d4bccba8e3cda/setup\\cloud\\digitalocean\\setup.sh#L7\nhttps://github.com/photoprism/photoprism/blob/7835bbae878e050cd1c571a6146d4bccba8e3cda/setup\\cloud\\digitalocean\\setup.sh#L99\nhttps://github.com/photoprism/photoprism/blob/7835bbae878e050cd1c571a6146d4bccba8e3cda/setup\\cloud\\digitalocean\\init\\check.sh#L163\nhttps://github.com/photoprism/photoprism/blob/7835bbae878e050cd1c571a6146d4bccba8e3cda/setup\\cloud\\digitalocean\\init\\check.sh#L174\nhttps://github.com/photoprism/photoprism/blob/7835bbae878e050cd1c571a6146d4bccba8e3cda/setup\\cloud\\digitalocean\\init\\check.sh#L271\nhttps://github.com/photoprism/photoprism/blob/7835bbae878e050cd1c571a6146d4bccba8e3cda/setup\\cloud\\digitalocean\\init\\check.sh#L281\nhttps://github.com/photoprism/photoprism/blob/7835bbae878e050cd1c571a6146d4bccba8e3cda/setup\\cloud\\digitalocean\\init\\cleanup.sh#L38\nhttps://github.com/photoprism/photoprism/blob/7835bbae878e050cd1c571a6146d4bccba8e3cda/scripts/gettext-lint.mjs#L27",
+    "verified_iocs": "claude.ai\nhttps://claude.ai/install.sh\ncurl -fsSL https://claude.ai/install.sh | bash\nsetup\\cloud\\digitalocean\\init\\check.sh",
+    "contributors": [],
+    "first_seen": "2026-07-21T22:02:26Z",
+    "last_seen": "2026-07-21T22:02:26Z"
+  }
+}

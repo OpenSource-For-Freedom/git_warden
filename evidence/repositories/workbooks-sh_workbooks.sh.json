@@ -1,0 +1,197 @@
+{
+  "finding": {
+    "key": "repository:workbooks-sh/workbooks.sh",
+    "kind": "repository",
+    "family": "",
+    "id": "workbooks-sh/workbooks.sh",
+    "url": "https://github.com/workbooks-sh/workbooks.sh",
+    "registry": "github",
+    "owner": "workbooks-sh",
+    "status": "confirmed",
+    "confidence": "review",
+    "score": 39,
+    "detection_method": "package_ref",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "obfuscation/base64-decode-exec; download_exec/curl-pipe-shell; enumeration/host-recon",
+    "evidence_locations": ".github\\workflows\\site-publish.yml:25; ci\\Dockerfile:51; nexus\\Dockerfile:44; nexus\\Dockerfile:45; nexus\\Dockerfile:49; nexus\\Dockerfile:50; nexus\\Dockerfile:68; toolkits\\wrangler\\deploy\\cf-d1.sh:41; toolkits\\wrangler\\deploy\\cf-d1.sh:47; toolkits\\wrangler\\deploy\\cf-d1.sh:60; toolkits\\wrangler\\deploy\\cf-d1.sh:61; toolkits\\wrangler\\deploy\\cf-d1.sh:69; toolkits\\wrangler\\deploy\\cf-d1.sh:133; toolkits\\wrangler\\deploy\\cloudflare.sh:12; toolkits\\wrangler\\deploy\\cloudflare.sh:21; toolkits\\wrangler\\deploy\\cloudflare.sh:23; toolkits\\wrangler\\deploy\\cloudflare.sh:27; toolkits\\wrangler\\deploy\\cloudflare.sh:53; toolkits\\wrangler\\deploy\\cloudflare.sh:61; toolkits\\railway\\deploy\\bootstrap.sh:40",
+    "c2_hosts": "wasmtime.dev",
+    "iocs": "wasmtime.dev; https://wasmtime.dev/install.sh; curl -fsSL https://wasmtime.dev/install.sh | bash; .github\\workflows\\site-publish.yml",
+    "matched_signatures": "justuskarlsson.plan-uml; huanent.node-runner; bioinfo.markitdown-vscode",
+    "reasons": "References known-malicious package(s) ['justuskarlsson.plan-uml', 'huanent.node-runner', 'bioinfo.markitdown-vscode'] | Tier-2 confirmed (bash score 38)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20260722T060253Z",
+    "last_seen": "hunt-20260722T060253Z",
+    "evidence_file": "repositories/workbooks-sh_workbooks.sh.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": ".github\\workflows\\site-publish.yml",
+      "line": 25,
+      "category": "obfuscation",
+      "rule": "base64-decode-exec",
+      "snippet": "flyctl ssh console -a wb-site -C \"sh -c 'echo $B64 | base64 -d | sh'\""
+    },
+    {
+      "file": "ci\\Dockerfile",
+      "line": 51,
+      "category": "download_exec",
+      "rule": "curl-pipe-shell",
+      "snippet": "RUN curl -fsSL https://wasmtime.dev/install.sh | bash \\"
+    },
+    {
+      "file": "nexus\\Dockerfile",
+      "line": 44,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "RUN --mount=type=cache,target=/app/deps,id=nexus-deps \\"
+    },
+    {
+      "file": "nexus\\Dockerfile",
+      "line": 45,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "--mount=type=cache,target=/app/_build,id=nexus-build \\"
+    },
+    {
+      "file": "nexus\\Dockerfile",
+      "line": 49,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "RUN --mount=type=cache,target=/app/deps,id=nexus-deps \\"
+    },
+    {
+      "file": "nexus\\Dockerfile",
+      "line": 50,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "--mount=type=cache,target=/app/_build,id=nexus-build \\"
+    },
+    {
+      "file": "nexus\\Dockerfile",
+      "line": 68,
+      "category": "download_exec",
+      "rule": "curl-pipe-shell",
+      "snippet": "RUN curl -fsSL https://wasmtime.dev/install.sh | bash -s -- --version ${WASMTIME_VERSION} \\"
+    },
+    {
+      "file": "toolkits\\wrangler\\deploy\\cf-d1.sh",
+      "line": 41,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "if ! wrangler whoami >/dev/null 2>&1; then"
+    },
+    {
+      "file": "toolkits\\wrangler\\deploy\\cf-d1.sh",
+      "line": 47,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "wrangler whoami >/dev/null 2>&1 || { echo \"login did not complete — aborting.\" >&2; exit 1; }"
+    },
+    {
+      "file": "toolkits\\wrangler\\deploy\\cf-d1.sh",
+      "line": 60,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "# 1. D1 database (idempotent: `d1 create` prints the id; if the name is taken,"
+    },
+    {
+      "file": "toolkits\\wrangler\\deploy\\cf-d1.sh",
+      "line": 61,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "#    look the id up via `d1 list`)."
+    },
+    {
+      "file": "toolkits\\wrangler\\deploy\\cf-d1.sh",
+      "line": 69,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "[ -n \"$db_id\" ] || { echo \"could not determine D1 database id for '$db_name'\" >&2; exit 1; }"
+    },
+    {
+      "file": "toolkits\\wrangler\\deploy\\cf-d1.sh",
+      "line": 133,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "echo \"    mint a dev tenant token: work forge app token --secret '<GATEWAY_JWT_SECRET>' --tenant <id>\""
+    },
+    {
+      "file": "toolkits\\wrangler\\deploy\\cloudflare.sh",
+      "line": 12,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "#   CLOUDFLARE_ACCOUNT_ID  auto-derived from `wrangler whoami` when the login"
+    },
+    {
+      "file": "toolkits\\wrangler\\deploy\\cloudflare.sh",
+      "line": 21,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "# `wrangler whoami`: exactly one account → export it; multiple → list + exit"
+    },
+    {
+      "file": "toolkits\\wrangler\\deploy\\cloudflare.sh",
+      "line": 23,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "# Caller must ensure `wrangler whoami` already succeeds (auth done first)."
+    },
+    {
+      "file": "toolkits\\wrangler\\deploy\\cloudflare.sh",
+      "line": 27,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "who=\"$(wrangler whoami 2>/dev/null || true)\""
+    },
+    {
+      "file": "toolkits\\wrangler\\deploy\\cloudflare.sh",
+      "line": 53,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "if ! wrangler whoami >/dev/null 2>&1; then"
+    },
+    {
+      "file": "toolkits\\wrangler\\deploy\\cloudflare.sh",
+      "line": 61,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "wrangler whoami >/dev/null 2>&1 || { echo \"login did not complete — aborting.\" >&2; exit 1; }"
+    },
+    {
+      "file": "toolkits\\railway\\deploy\\bootstrap.sh",
+      "line": 40,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "# registry image is a serviceInstanceUpdate on the service's ID, not its name)."
+    }
+  ],
+  "commit_sha": "62d514c1763ac31821ab5630db497da8aefd2b79",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/workbooks-sh/workbooks.sh",
+    "version_info": "all",
+    "threat_description": "Obfuscated loader. Payload in .github\\workflows\\site-publish.yml.\nThe eval(atob(...)) loader hidden in a project file is Contagious Interview (DPRK-attributed) tradecraft.\nAttribution: the tradecraft is consistent with North Korea, but a single signal is a lead rather than an attribution, so we do not attribute it on this evidence alone. Signals: Delivery vector matches Contagious-Interview tradecraft: obfuscated-eval-atob-loader.\nFound by GitHub code search for a confirmed malware signature: justuskarlsson.plan-uml; huanent.node-runner; bioinfo.markitdown-vscode.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: .github\\workflows\\site-publish.yml\n- .github\\workflows\\site-publish.yml:25: decodes a base64 blob and executes it",
+    "publisher": "workbooks-sh",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "dprk-consistent-tradecraft",
+      "container",
+      "dockerfile",
+      "build-time-rce",
+      "obfuscated-eval-atob-loader",
+      "obfuscated-loader"
+    ],
+    "evidence_references": "https://github.com/workbooks-sh/workbooks.sh/blob/62d514c1763ac31821ab5630db497da8aefd2b79/.github\\workflows\\site-publish.yml#L25\nhttps://github.com/workbooks-sh/workbooks.sh/blob/62d514c1763ac31821ab5630db497da8aefd2b79/ci\\Dockerfile#L51\nhttps://github.com/workbooks-sh/workbooks.sh/blob/62d514c1763ac31821ab5630db497da8aefd2b79/nexus\\Dockerfile#L44\nhttps://github.com/workbooks-sh/workbooks.sh/blob/62d514c1763ac31821ab5630db497da8aefd2b79/nexus\\Dockerfile#L45\nhttps://github.com/workbooks-sh/workbooks.sh/blob/62d514c1763ac31821ab5630db497da8aefd2b79/nexus\\Dockerfile#L49\nhttps://github.com/workbooks-sh/workbooks.sh/blob/62d514c1763ac31821ab5630db497da8aefd2b79/nexus\\Dockerfile#L50\nhttps://github.com/workbooks-sh/workbooks.sh/blob/62d514c1763ac31821ab5630db497da8aefd2b79/nexus\\Dockerfile#L68\nhttps://github.com/workbooks-sh/workbooks.sh/blob/62d514c1763ac31821ab5630db497da8aefd2b79/toolkits\\wrangler\\deploy\\cf-d1.sh#L41\nhttps://github.com/workbooks-sh/workbooks.sh/blob/62d514c1763ac31821ab5630db497da8aefd2b79/toolkits\\wrangler\\deploy\\cf-d1.sh#L47\nhttps://github.com/workbooks-sh/workbooks.sh/blob/62d514c1763ac31821ab5630db497da8aefd2b79/toolkits\\wrangler\\deploy\\cf-d1.sh#L60\nhttps://github.com/workbooks-sh/workbooks.sh/blob/62d514c1763ac31821ab5630db497da8aefd2b79/toolkits\\wrangler\\deploy\\cf-d1.sh#L61\nhttps://github.com/workbooks-sh/workbooks.sh/blob/62d514c1763ac31821ab5630db497da8aefd2b79/toolkits\\wrangler\\deploy\\cf-d1.sh#L69\nhttps://github.com/workbooks-sh/workbooks.sh/blob/62d514c1763ac31821ab5630db497da8aefd2b79/toolkits\\wrangler\\deploy\\cf-d1.sh#L133\nhttps://github.com/workbooks-sh/workbooks.sh/blob/62d514c1763ac31821ab5630db497da8aefd2b79/toolkits\\wrangler\\deploy\\cloudflare.sh#L12\nhttps://github.com/workbooks-sh/workbooks.sh/blob/62d514c1763ac31821ab5630db497da8aefd2b79/toolkits\\wrangler\\deploy\\cloudflare.sh#L21",
+    "verified_iocs": "wasmtime.dev\nhttps://wasmtime.dev/install.sh\ncurl -fsSL https://wasmtime.dev/install.sh | bash\n.github\\workflows\\site-publish.yml",
+    "contributors": [],
+    "first_seen": "2026-07-22T06:02:53Z",
+    "last_seen": "2026-07-22T06:02:53Z"
+  }
+}

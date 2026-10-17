@@ -1,0 +1,192 @@
+{
+  "finding": {
+    "key": "repository:cline/cline",
+    "kind": "repository",
+    "family": "",
+    "id": "cline/cline",
+    "url": "https://github.com/cline/cline",
+    "registry": "github",
+    "owner": "cline",
+    "status": "confirmed",
+    "confidence": "review",
+    "score": 31,
+    "detection_method": "package_ref",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "credential_access/env-dump; enumeration/host-recon; credential_harvest/env-token-grab",
+    "evidence_locations": "apps/vscode/src/standalone/cline-core.ts:32; sdk\\packages\\core\\package.json:67; apps\\vscode\\package.json:60; apps\\vscode\\package.json:65; apps\\vscode\\package.json:73; apps\\vscode\\package.json:81; apps\\vscode\\package.json:89; apps\\vscode\\package.json:97; apps\\vscode\\package.json:113; apps\\vscode\\package.json:123; apps\\vscode\\package.json:530; .github\\workflows\\cli-publish.yml:32; .github\\workflows\\cli-publish.yml:43; .github\\workflows\\cli-publish.yml:87; .github\\workflows\\cli-publish.yml:90; .github\\workflows\\cli-publish.yml:200; .github\\workflows\\cli-publish.yml:208; .github\\workflows\\cli-publish.yml:226; .github\\workflows\\cli-publish.yml:261; .github\\workflows\\cli-publish.yml:281",
+    "c2_hosts": "",
+    "iocs": "apps/vscode/src/standalone/cline-core.ts",
+    "matched_signatures": "vscode-test-web",
+    "reasons": "References known-malicious package(s) ['vscode-test-web'] | Tier-2 confirmed (bash score 31)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20260708T153840Z",
+    "last_seen": "hunt-20260708T153840Z",
+    "evidence_file": "repositories/cline_cline.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "apps/vscode/src/standalone/cline-core.ts",
+      "line": 32,
+      "category": "credential_access",
+      "rule": "env-dump",
+      "snippet": "log(`Environment variables: ${JSON.stringify(process.env)}`)"
+    },
+    {
+      "file": "sdk\\packages\\core\\package.json",
+      "line": 67,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "\"node-machine-id\": \"^1.1.12\","
+    },
+    {
+      "file": "apps\\vscode\\package.json",
+      "line": 60,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "\"id\": \"ClineWalkthrough\","
+    },
+    {
+      "file": "apps\\vscode\\package.json",
+      "line": 65,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "\"id\": \"welcome\","
+    },
+    {
+      "file": "apps\\vscode\\package.json",
+      "line": 73,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "\"id\": \"learn\","
+    },
+    {
+      "file": "apps\\vscode\\package.json",
+      "line": 81,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "\"id\": \"advanced-features\","
+    },
+    {
+      "file": "apps\\vscode\\package.json",
+      "line": 89,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "\"id\": \"mcp\","
+    },
+    {
+      "file": "apps\\vscode\\package.json",
+      "line": 97,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "\"id\": \"getting-started\","
+    },
+    {
+      "file": "apps\\vscode\\package.json",
+      "line": 113,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "\"id\": \"claude-dev-ActivityBar\","
+    },
+    {
+      "file": "apps\\vscode\\package.json",
+      "line": 123,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "\"id\": \"claude-dev.SidebarProvider\","
+    },
+    {
+      "file": "apps\\vscode\\package.json",
+      "line": 530,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "\"node-machine-id\": \"^1.1.12\","
+    },
+    {
+      "file": ".github\\workflows\\cli-publish.yml",
+      "line": 32,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "id-token: write"
+    },
+    {
+      "file": ".github\\workflows\\cli-publish.yml",
+      "line": 43,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "id-token: write"
+    },
+    {
+      "file": ".github\\workflows\\cli-publish.yml",
+      "line": 87,
+      "category": "credential_harvest",
+      "rule": "env-token-grab",
+      "snippet": "GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}"
+    },
+    {
+      "file": ".github\\workflows\\cli-publish.yml",
+      "line": 90,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "id: version"
+    },
+    {
+      "file": ".github\\workflows\\cli-publish.yml",
+      "line": 200,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "id: prev_tag"
+    },
+    {
+      "file": ".github\\workflows\\cli-publish.yml",
+      "line": 208,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "id: changelog"
+    },
+    {
+      "file": ".github\\workflows\\cli-publish.yml",
+      "line": 226,
+      "category": "credential_harvest",
+      "rule": "env-token-grab",
+      "snippet": "GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}"
+    },
+    {
+      "file": ".github\\workflows\\cli-publish.yml",
+      "line": 261,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "id-token: write"
+    },
+    {
+      "file": ".github\\workflows\\cli-publish.yml",
+      "line": 281,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "id: check_commits"
+    }
+  ],
+  "commit_sha": "10dece667757ad968fdbf847c7c61b50e98d7fc2",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/cline/cline",
+    "version_info": "all",
+    "threat_description": "Malware. Payload in apps/vscode/src/standalone/cline-core.ts.\nFound by GitHub code search for a confirmed malware signature: vscode-test-web.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: apps/vscode/src/standalone/cline-core.ts\n- apps/vscode/src/standalone/cline-core.ts:32: serializes the whole environment (every secret in it)",
+    "publisher": "cline",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "credential-theft"
+    ],
+    "evidence_references": "https://github.com/cline/cline/blob/10dece667757ad968fdbf847c7c61b50e98d7fc2/apps/vscode/src/standalone/cline-core.ts#L32\nhttps://github.com/cline/cline/blob/10dece667757ad968fdbf847c7c61b50e98d7fc2/sdk\\packages\\core\\package.json#L67\nhttps://github.com/cline/cline/blob/10dece667757ad968fdbf847c7c61b50e98d7fc2/apps\\vscode\\package.json#L60\nhttps://github.com/cline/cline/blob/10dece667757ad968fdbf847c7c61b50e98d7fc2/apps\\vscode\\package.json#L65\nhttps://github.com/cline/cline/blob/10dece667757ad968fdbf847c7c61b50e98d7fc2/apps\\vscode\\package.json#L73\nhttps://github.com/cline/cline/blob/10dece667757ad968fdbf847c7c61b50e98d7fc2/apps\\vscode\\package.json#L81\nhttps://github.com/cline/cline/blob/10dece667757ad968fdbf847c7c61b50e98d7fc2/apps\\vscode\\package.json#L89\nhttps://github.com/cline/cline/blob/10dece667757ad968fdbf847c7c61b50e98d7fc2/apps\\vscode\\package.json#L97\nhttps://github.com/cline/cline/blob/10dece667757ad968fdbf847c7c61b50e98d7fc2/apps\\vscode\\package.json#L113\nhttps://github.com/cline/cline/blob/10dece667757ad968fdbf847c7c61b50e98d7fc2/apps\\vscode\\package.json#L123\nhttps://github.com/cline/cline/blob/10dece667757ad968fdbf847c7c61b50e98d7fc2/apps\\vscode\\package.json#L530\nhttps://github.com/cline/cline/blob/10dece667757ad968fdbf847c7c61b50e98d7fc2/.github\\workflows\\cli-publish.yml#L32\nhttps://github.com/cline/cline/blob/10dece667757ad968fdbf847c7c61b50e98d7fc2/.github\\workflows\\cli-publish.yml#L43\nhttps://github.com/cline/cline/blob/10dece667757ad968fdbf847c7c61b50e98d7fc2/.github\\workflows\\cli-publish.yml#L87\nhttps://github.com/cline/cline/blob/10dece667757ad968fdbf847c7c61b50e98d7fc2/.github\\workflows\\cli-publish.yml#L90",
+    "verified_iocs": "apps/vscode/src/standalone/cline-core.ts",
+    "contributors": [],
+    "first_seen": "2026-07-08T15:38:40Z",
+    "last_seen": "2026-07-08T15:38:40Z"
+  }
+}

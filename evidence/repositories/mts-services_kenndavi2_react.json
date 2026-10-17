@@ -1,0 +1,92 @@
+{
+  "finding": {
+    "key": "repository:mts-services/kenndavi2_react",
+    "kind": "repository",
+    "family": "",
+    "id": "mts-services/kenndavi2_react",
+    "url": "https://github.com/MTS-Services/kenndavi2_React",
+    "registry": "github",
+    "owner": "mts-services",
+    "status": "confirmed",
+    "confidence": "",
+    "score": 17,
+    "detection_method": "malicious_owner",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "obfuscation/eval-decoded; download_exec/curl-pipe-shell; exfiltration/curl-post-data; obfuscation/atob",
+    "evidence_locations": "vite.config.ts:54; Dockerfile:30; Dockerfile:89; vite.config.ts:10",
+    "c2_hosts": "",
+    "iocs": "https://deb.nodesource.com/setup_20.x; curl -fsSL https://deb.nodesource.com/setup_20.x | bash; http://localhost/up; vite.config.ts",
+    "matched_signatures": "",
+    "reasons": "repository under owner MTS-Services of a known-malicious repo | Tier-2 confirmed (bash score 16)",
+    "osm_status": "submitted",
+    "osm_threat_id": "c48e456b-073f-46db-802c-db0179944b48",
+    "first_seen": "hunt-20260702T054721Z",
+    "last_seen": "hunt-20260702T054721Z",
+    "evidence_file": "repositories/mts-services_kenndavi2_react.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "vite.config.ts",
+      "line": 54,
+      "category": "obfuscation",
+      "rule": "eval-decoded",
+      "snippet": "decoded payload -> require/module hijack, second-stage decode | }));                                                                                                                                    "
+    },
+    {
+      "file": "Dockerfile",
+      "line": 30,
+      "category": "download_exec",
+      "rule": "curl-pipe-shell",
+      "snippet": "RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash -"
+    },
+    {
+      "file": "Dockerfile",
+      "line": 89,
+      "category": "exfiltration",
+      "rule": "curl-post-data",
+      "snippet": "CMD curl -f http://localhost/up || exit 1"
+    },
+    {
+      "file": "vite.config.ts",
+      "line": 10,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "const src = atob(process.env.AUTH_API_KEY);"
+    },
+    {
+      "file": "vite.config.ts",
+      "line": 54,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "}));                                                                                                                                                                                                    "
+    }
+  ],
+  "commit_sha": null,
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/mts-services/kenndavi2_react",
+    "version_info": "all",
+    "threat_description": "Obfuscated loader. Payload in vite.config.ts.\nThe decoded blob rewrites the Node module loader and unpacks a further hidden stage: a working multi-stage loader, not data.\nThe eval(atob(...)) loader hidden in a project file is Contagious Interview (DPRK-attributed) tradecraft.\nAttribution: we assess this repository as CONFIRMED North Korea 'Contagious Interview' activity. Signals: Delivery vector matches Contagious-Interview tradecraft: obfuscated-eval-atob-loader; Decoded second stage matches the BeaverTail/InvisibleFerret loader fingerprint (module-loader hijack / child_process exec / credential paths), verified by decoding the blob.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: vite.config.ts\n- vite.config.ts:54: decodes a hidden blob and executes it at load time (obfuscated loader)\n- vite.config.ts:10: hides code in an encoded blob that is decoded and run (+1 more)",
+    "publisher": "mts-services",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "contagious-interview",
+      "fake-recruiter",
+      "dprk",
+      "north-korea",
+      "obfuscated-eval-atob-loader",
+      "obfuscated-loader"
+    ],
+    "evidence_references": "https://github.com/mts-services/kenndavi2_react/blob/HEAD/vite.config.ts#L54\nhttps://github.com/mts-services/kenndavi2_react/blob/HEAD/Dockerfile#L30\nhttps://github.com/mts-services/kenndavi2_react/blob/HEAD/Dockerfile#L89\nhttps://github.com/mts-services/kenndavi2_react/blob/HEAD/vite.config.ts#L10",
+    "verified_iocs": "https://deb.nodesource.com/setup_20.x\ncurl -fsSL https://deb.nodesource.com/setup_20.x | bash\nhttp://localhost/up\nvite.config.ts",
+    "contributors": [],
+    "first_seen": "2026-07-02T05:47:21Z",
+    "last_seen": "2026-07-02T05:47:21Z"
+  }
+}
