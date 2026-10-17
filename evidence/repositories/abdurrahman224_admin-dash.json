@@ -1,0 +1,82 @@
+{
+  "finding": {
+    "key": "repository:abdurrahman224/admin-dash",
+    "kind": "repository",
+    "family": "",
+    "id": "abdurrahman224/admin-dash",
+    "url": "https://github.com/abdurrahman224/admin-dash",
+    "registry": "github",
+    "owner": "abdurrahman224",
+    "status": "confirmed",
+    "confidence": "",
+    "score": 11,
+    "detection_method": "malicious_owner",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "obfuscation/eval-decoded; credential_harvest/env-token-grab; obfuscation/atob",
+    "evidence_locations": "tailwind.config.js:29; .github\\workflows\\ci.yml:79; .github\\workflows\\ci.yml:111",
+    "c2_hosts": "",
+    "iocs": "tailwind.config.js",
+    "matched_signatures": "",
+    "reasons": "repository under owner abdurrahman224 of a known-malicious repo | Tier-2 confirmed (bash score 11)",
+    "osm_status": "submitted",
+    "osm_threat_id": "a023c1e7-3b52-4bb3-b86a-88db4650e150",
+    "first_seen": "hunt-20260702T053958Z",
+    "last_seen": "hunt-20260702T053958Z",
+    "evidence_file": "repositories/abdurrahman224_admin-dash.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "tailwind.config.js",
+      "line": 29,
+      "category": "obfuscation",
+      "rule": "eval-decoded",
+      "snippet": "decoded payload -> require/module hijack, second-stage decode | };                                                                                                                                      "
+    },
+    {
+      "file": ".github\\workflows\\ci.yml",
+      "line": 79,
+      "category": "credential_harvest",
+      "rule": "env-token-grab",
+      "snippet": "run: echo \"${{ secrets.GITHUB_TOKEN }}\" | docker login ghcr.io -u ${{ github.actor }} --password-stdin"
+    },
+    {
+      "file": ".github\\workflows\\ci.yml",
+      "line": 111,
+      "category": "credential_harvest",
+      "rule": "env-token-grab",
+      "snippet": "sudo docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}"
+    },
+    {
+      "file": "tailwind.config.js",
+      "line": 29,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "};                                                                                                                                                                                                      "
+    }
+  ],
+  "commit_sha": null,
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/abdurrahman224/admin-dash",
+    "version_info": "all",
+    "threat_description": "Obfuscated loader. Payload in tailwind.config.js.\nThe decoded blob rewrites the Node module loader and unpacks a further hidden stage: a working multi-stage loader, not data.\nThe eval(atob(...)) loader hidden in a project file is Contagious Interview (DPRK-attributed) tradecraft.\nAttribution: the tradecraft is consistent with North Korea, but a single signal is a lead rather than an attribution, so we do not attribute it on this evidence alone. Signals: Delivery vector matches Contagious-Interview tradecraft: obfuscated-eval-atob-loader.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: tailwind.config.js\n- tailwind.config.js:29: decodes a hidden blob and executes it at load time (obfuscated loader)\n- tailwind.config.js:29: hides code in an encoded blob that is decoded and run",
+    "publisher": "abdurrahman224",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "dprk-consistent-tradecraft",
+      "obfuscated-eval-atob-loader",
+      "obfuscated-loader"
+    ],
+    "evidence_references": "https://github.com/abdurrahman224/admin-dash/blob/HEAD/tailwind.config.js#L29\nhttps://github.com/abdurrahman224/admin-dash/blob/HEAD/.github\\workflows\\ci.yml#L79\nhttps://github.com/abdurrahman224/admin-dash/blob/HEAD/.github\\workflows\\ci.yml#L111",
+    "verified_iocs": "tailwind.config.js",
+    "contributors": [],
+    "first_seen": "2026-07-02T05:39:58Z",
+    "last_seen": "2026-07-02T05:39:58Z"
+  }
+}

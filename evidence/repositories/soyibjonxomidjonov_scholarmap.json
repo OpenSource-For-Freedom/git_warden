@@ -1,0 +1,87 @@
+{
+  "finding": {
+    "key": "repository:soyibjonxomidjonov/scholarmap",
+    "kind": "repository",
+    "family": "",
+    "id": "soyibjonxomidjonov/scholarmap",
+    "url": "https://github.com/soyibjonxomidjonov/ScholarMap",
+    "registry": "github",
+    "owner": "soyibjonxomidjonov",
+    "status": "confirmed",
+    "confidence": "review",
+    "score": 11,
+    "detection_method": "package_ref",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "credential_access/env-dump; code_execution/js-exec; network_exfil/telegram-bot",
+    "evidence_locations": "config/settings.py:109; staticfiles/drf-yasg/swagger-ui-dist/swagger-ui-es-bundle-core.js:2; staticfiles/drf-yasg/swagger-ui-dist/swagger-ui-standalone-preset.js:2; staticfiles/drf-yasg/swagger-ui-dist/swagger-ui-standalone-preset.js:3; api/views/eslatma_view.py:80",
+    "c2_hosts": "api.telegram.org",
+    "iocs": "api.telegram.org; https://api.telegram.org/bot{bot_token}/{method}; config/settings.py",
+    "matched_signatures": "gunicorm",
+    "reasons": "References known-malicious package(s) ['gunicorm'] | Tier-2 confirmed (bash score 10)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20260721T220226Z",
+    "last_seen": "hunt-20260721T220226Z",
+    "evidence_file": "repositories/soyibjonxomidjonov_scholarmap.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "config/settings.py",
+      "line": 109,
+      "category": "credential_access",
+      "rule": "env-dump",
+      "snippet": "'PORT': os.environ.get('PORT'), #va post yoziladi va tayyor"
+    },
+    {
+      "file": "staticfiles/drf-yasg/swagger-ui-dist/swagger-ui-es-bundle-core.js",
+      "line": 2,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "import*as e from\"ieee754\";import*as t from\"to-buffer\";import*as r from\"base64-js\";import*as n from\"react\";import*as a from\"redux\";import*as o from\"immutable\";import*as s from\"redux-immutable\";import*a"
+    },
+    {
+      "file": "staticfiles/drf-yasg/swagger-ui-dist/swagger-ui-standalone-preset.js",
+      "line": 2,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "!function webpackUniversalModuleDefinition(t,e){\"object\"==typeof exports&&\"object\"==typeof module?module.exports=e():\"function\"==typeof define&&define.amd?define([],e):\"object\"==typeof exports?exports"
+    },
+    {
+      "file": "staticfiles/drf-yasg/swagger-ui-dist/swagger-ui-standalone-preset.js",
+      "line": 3,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "\":95===t?\" \":76===t?\"\\u2028\":80===t?\"\\u2029\":\"\"}function charFromCodepoint(t){return t<=65535?String.fromCharCode(t):String.fromCharCode(55296+(t-65536>>10),56320+(t-65536&1023))}function setProperty("
+    },
+    {
+      "file": "api/views/eslatma_view.py",
+      "line": 80,
+      "category": "network_exfil",
+      "rule": "telegram-bot",
+      "snippet": "url=f\"https://api.telegram.org/bot{bot_token}/{method}\","
+    }
+  ],
+  "commit_sha": "df35464544e62f78e75e28996c217be93237f3a9",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/soyibjonxomidjonov/scholarmap",
+    "version_info": "all",
+    "threat_description": "Malware. Payload in config/settings.py.\nFound by GitHub code search for a confirmed malware signature: gunicorm.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: config/settings.py\n- config/settings.py:109: serializes the whole environment (every secret in it)",
+    "publisher": "soyibjonxomidjonov",
+    "severity_level": "high",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "credential-theft"
+    ],
+    "evidence_references": "https://github.com/soyibjonxomidjonov/scholarmap/blob/df35464544e62f78e75e28996c217be93237f3a9/config/settings.py#L109\nhttps://github.com/soyibjonxomidjonov/scholarmap/blob/df35464544e62f78e75e28996c217be93237f3a9/staticfiles/drf-yasg/swagger-ui-dist/swagger-ui-es-bundle-core.js#L2\nhttps://github.com/soyibjonxomidjonov/scholarmap/blob/df35464544e62f78e75e28996c217be93237f3a9/staticfiles/drf-yasg/swagger-ui-dist/swagger-ui-standalone-preset.js#L2\nhttps://github.com/soyibjonxomidjonov/scholarmap/blob/df35464544e62f78e75e28996c217be93237f3a9/staticfiles/drf-yasg/swagger-ui-dist/swagger-ui-standalone-preset.js#L3\nhttps://github.com/soyibjonxomidjonov/scholarmap/blob/df35464544e62f78e75e28996c217be93237f3a9/api/views/eslatma_view.py#L80",
+    "verified_iocs": "api.telegram.org\nhttps://api.telegram.org/bot{bot_token}/{method}\nconfig/settings.py",
+    "contributors": [],
+    "first_seen": "2026-07-21T22:02:26Z",
+    "last_seen": "2026-07-21T22:02:26Z"
+  }
+}

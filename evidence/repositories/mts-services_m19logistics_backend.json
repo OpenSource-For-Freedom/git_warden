@@ -1,0 +1,85 @@
+{
+  "finding": {
+    "key": "repository:mts-services/m19logistics_backend",
+    "kind": "repository",
+    "family": "",
+    "id": "mts-services/m19logistics_backend",
+    "url": "https://github.com/MTS-Services/m19logistics_backend",
+    "registry": "github",
+    "owner": "mts-services",
+    "status": "confirmed",
+    "confidence": "",
+    "score": 14,
+    "detection_method": "malicious_owner",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "obfuscation/eval-decoded; code_execution/node-child-process; code_execution/js-exec; obfuscation/atob",
+    "evidence_locations": "src/routes/adminRoutes.js:685; prisma/migrate-to-new-db.js:10; prisma/migrate-to-new-db.js:62",
+    "c2_hosts": "",
+    "iocs": "src/routes/adminRoutes.js",
+    "matched_signatures": "",
+    "reasons": "repository under owner MTS-Services of a known-malicious repo | Tier-2 confirmed (bash score 14)",
+    "osm_status": "submitted",
+    "osm_threat_id": "b08040f0-854e-4b95-89cd-2a80849c1698",
+    "first_seen": "hunt-20260702T054721Z",
+    "last_seen": "hunt-20260702T054721Z",
+    "evidence_file": "repositories/mts-services_m19logistics_backend.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "src/routes/adminRoutes.js",
+      "line": 685,
+      "category": "obfuscation",
+      "rule": "eval-decoded",
+      "snippet": "decoded payload -> require/module hijack, second-stage decode | module.exports = router;                                                                                                                "
+    },
+    {
+      "file": "prisma/migrate-to-new-db.js",
+      "line": 10,
+      "category": "code_execution",
+      "rule": "node-child-process",
+      "snippet": "const { execSync } = require(\"child_process\");"
+    },
+    {
+      "file": "prisma/migrate-to-new-db.js",
+      "line": 62,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "execSync(\"npx prisma migrate deploy\", {"
+    },
+    {
+      "file": "src/routes/adminRoutes.js",
+      "line": 685,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "module.exports = router;                                                                                                                                                                                "
+    }
+  ],
+  "commit_sha": null,
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/mts-services/m19logistics_backend",
+    "version_info": "all",
+    "threat_description": "Obfuscated loader. Payload in src/routes/adminRoutes.js.\nThe decoded blob rewrites the Node module loader and unpacks a further hidden stage: a working multi-stage loader, not data.\nThe eval(atob(...)) loader hidden in a project file is Contagious Interview (DPRK-attributed) tradecraft.\nAttribution: we assess this repository as CONFIRMED North Korea 'Contagious Interview' activity. Signals: Delivery vector matches Contagious-Interview tradecraft: obfuscated-eval-atob-loader; Decoded second stage matches the BeaverTail/InvisibleFerret loader fingerprint (module-loader hijack / child_process exec / credential paths), verified by decoding the blob.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: src/routes/adminRoutes.js\n- src/routes/adminRoutes.js:685: decodes a hidden blob and executes it at load time (obfuscated loader)\n- src/routes/adminRoutes.js:685: hides code in an encoded blob that is decoded and run",
+    "publisher": "mts-services",
+    "severity_level": "high",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "contagious-interview",
+      "fake-recruiter",
+      "dprk",
+      "north-korea",
+      "obfuscated-eval-atob-loader",
+      "obfuscated-loader"
+    ],
+    "evidence_references": "https://github.com/mts-services/m19logistics_backend/blob/HEAD/src/routes/adminRoutes.js#L685\nhttps://github.com/mts-services/m19logistics_backend/blob/HEAD/prisma/migrate-to-new-db.js#L10\nhttps://github.com/mts-services/m19logistics_backend/blob/HEAD/prisma/migrate-to-new-db.js#L62",
+    "verified_iocs": "src/routes/adminRoutes.js",
+    "contributors": [],
+    "first_seen": "2026-07-02T05:47:21Z",
+    "last_seen": "2026-07-02T05:47:21Z"
+  }
+}

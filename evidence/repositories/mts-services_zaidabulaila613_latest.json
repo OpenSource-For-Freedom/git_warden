@@ -1,0 +1,68 @@
+{
+  "finding": {
+    "key": "repository:mts-services/zaidabulaila613_latest",
+    "kind": "repository",
+    "family": "",
+    "id": "mts-services/zaidabulaila613_latest",
+    "url": "https://github.com/MTS-Services/zaidabulaila613_latest",
+    "registry": "github",
+    "owner": "mts-services",
+    "status": "confirmed",
+    "confidence": "",
+    "score": 9,
+    "detection_method": "malicious_owner",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "obfuscation/eval-decoded; obfuscation/atob",
+    "evidence_locations": "tailwind.config.ts:121",
+    "c2_hosts": "",
+    "iocs": "tailwind.config.ts",
+    "matched_signatures": "",
+    "reasons": "repository under owner MTS-Services of a known-malicious repo | Tier-2 confirmed (bash score 8)",
+    "osm_status": "submitted",
+    "osm_threat_id": "22886f53-115e-4a25-8d54-8e627bb2f5bc",
+    "first_seen": "hunt-20260702T053958Z",
+    "last_seen": "hunt-20260702T053958Z",
+    "evidence_file": "repositories/mts-services_zaidabulaila613_latest.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "tailwind.config.ts",
+      "line": 121,
+      "category": "obfuscation",
+      "rule": "eval-decoded",
+      "snippet": "decoded payload -> require/module hijack, second-stage decode | export default config;                                                                                                                  "
+    },
+    {
+      "file": "tailwind.config.ts",
+      "line": 121,
+      "category": "obfuscation",
+      "rule": "atob",
+      "snippet": "export default config;                                                                                                                                                                                  "
+    }
+  ],
+  "commit_sha": null,
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/mts-services/zaidabulaila613_latest",
+    "version_info": "all",
+    "threat_description": "Obfuscated loader. Payload in tailwind.config.ts.\nThe decoded blob rewrites the Node module loader and unpacks a further hidden stage: a working multi-stage loader, not data.\nThe eval(atob(...)) loader hidden in a project file is Contagious Interview (DPRK-attributed) tradecraft.\nAttribution: the tradecraft is consistent with North Korea, but a single signal is a lead rather than an attribution, so we do not attribute it on this evidence alone. Signals: Delivery vector matches Contagious-Interview tradecraft: obfuscated-eval-atob-loader.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: tailwind.config.ts\n- tailwind.config.ts:121: decodes a hidden blob and executes it at load time (obfuscated loader)\n- tailwind.config.ts:121: hides code in an encoded blob that is decoded and run",
+    "publisher": "mts-services",
+    "severity_level": "high",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "dprk-consistent-tradecraft",
+      "obfuscated-eval-atob-loader",
+      "obfuscated-loader"
+    ],
+    "evidence_references": "https://github.com/mts-services/zaidabulaila613_latest/blob/HEAD/tailwind.config.ts#L121",
+    "verified_iocs": "tailwind.config.ts",
+    "contributors": [],
+    "first_seen": "2026-07-02T05:39:58Z",
+    "last_seen": "2026-07-02T05:39:58Z"
+  }
+}

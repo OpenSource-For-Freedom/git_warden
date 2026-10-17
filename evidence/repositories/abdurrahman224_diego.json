@@ -1,0 +1,59 @@
+{
+  "finding": {
+    "key": "repository:abdurrahman224/diego",
+    "kind": "repository",
+    "family": "",
+    "id": "abdurrahman224/diego",
+    "url": "https://github.com/abdurrahman224/diego",
+    "registry": "github",
+    "owner": "abdurrahman224",
+    "status": "confirmed",
+    "confidence": "review",
+    "score": 3,
+    "detection_method": "malicious_owner",
+    "attribution": "",
+    "campaign_id": "",
+    "rules": "credential_access/env-dump",
+    "evidence_locations": "webpack.config.js:54",
+    "c2_hosts": "",
+    "iocs": "webpack.config.js",
+    "matched_signatures": "",
+    "reasons": "repository under owner abdurrahman224 of a known-malicious repo | Tier-2 confirmed (bash score 3)",
+    "osm_status": "not_submitted",
+    "osm_threat_id": "",
+    "first_seen": "hunt-20260721T220226Z",
+    "last_seen": "hunt-20260721T220226Z",
+    "evidence_file": "repositories/abdurrahman224_diego.json",
+    "reviewer_decision": "",
+    "notes": ""
+  },
+  "evidence": [
+    {
+      "file": "webpack.config.js",
+      "line": 54,
+      "category": "credential_access",
+      "rule": "env-dump",
+      "snippet": "'process.env': JSON.stringify(process.env),"
+    }
+  ],
+  "commit_sha": "f10b6cea115e69c3dc62b18ecce0b0f1ab817476",
+  "osm_report": {
+    "report_type": "repository",
+    "resource_identifier": "https://github.com/abdurrahman224/diego",
+    "version_info": "all",
+    "threat_description": "Malware. Payload in webpack.config.js.\nConfirmed by static analysis; the code was read, never executed.",
+    "payload_description": "Malicious payload found in: webpack.config.js\n- webpack.config.js:54: serializes the whole environment (every secret in it)",
+    "publisher": "abdurrahman224",
+    "severity_level": "high",
+    "tags": [
+      "supply-chain",
+      "github-repo",
+      "credential-theft"
+    ],
+    "evidence_references": "https://github.com/abdurrahman224/diego/blob/f10b6cea115e69c3dc62b18ecce0b0f1ab817476/webpack.config.js#L54",
+    "verified_iocs": "webpack.config.js",
+    "contributors": [],
+    "first_seen": "2026-07-21T22:02:26Z",
+    "last_seen": "2026-07-21T22:02:26Z"
+  }
+}
