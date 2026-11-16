@@ -338,8 +338,3 @@ Or invoke the tools directly: `ruff check src tests gw.py` and `pytest -q`.
 
 <p align="center"><img src="docs/sculk-divider.png" alt="" width="900"></p>
 
-<p align="center">
-  <a href="https://opensourcemalware.com/my-submissions">
-    <img src="docs/osm-reports.png" alt="OSM Submissions" width="900">
-  </a>
-</p>
